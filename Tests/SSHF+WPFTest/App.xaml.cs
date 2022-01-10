@@ -8,9 +8,7 @@ using System.Windows;
 
 namespace SSHF_WPFTest
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
+    
     public partial class App : Application
     {
     }
