@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace SSHF_.ViewModels.Base
 {
-    internal abstract class ViewModels : INotifyPropertyChanged, IDisposable
+    internal abstract class ViewModel : INotifyPropertyChanged, IDisposable
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
