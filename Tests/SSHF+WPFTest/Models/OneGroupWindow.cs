@@ -12,15 +12,25 @@ namespace SSHF_WPFTest.Models
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentNullException(path, "Путь к файлу не может быть пустым");
                        
-           _Path = path;
+           _PathBackground = path;
            
         }
 
-        private string _Path;
+        private bool _isVisvible;
+
+        public bool Visvible
+        {
+            get { return _isVisvible; }
+            set { _isVisvible = value; }
+        }
+
+
+
+        private string _PathBackground;
         public string PathBackground
         {
-            get => _Path;
-            set => _Path = value;
+            get => _PathBackground;
+            set => _PathBackground = value;
         }
 
         private int _X;
