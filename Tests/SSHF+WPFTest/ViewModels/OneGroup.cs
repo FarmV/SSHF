@@ -1,39 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using SSHF_WPFTest.ViewModels.Base;
+using SSHF_WPFTest.Models.OneGroupModel;
+
 namespace SSHF_WPFTest.Models
 {
-    internal class OneGroup
+    internal class OneGroup: ViewModel
     {   
         /// <summary>Коллекция окон в группе</summary>
-        private readonly List<OneGroupWindow> _oneGroups = new List<OneGroupWindow>();
-        
-        /// <summary>Добавить окно в коллекцию</summary>
-        public bool AddWindow(OneGroupWindow window)
+        private ObservableCollection<OneGroupWindow>? _oneGroups;
+        private OneGroupModel.OneGroupModel _OneGroupModel = new OneGroupModel.OneGroupModel();
+
+        public ObservableCollection<OneGroupWindow> CollectionWindow
         {
-            if (window is null || _oneGroups.Contains(window))  return false;
-            else
+            get
             {
-                _oneGroups.Add(window);
-                return true;
+                if (_oneGroups is null) _oneGroups = new ObservableCollection<OneGroupWindow>();
+
+                return _oneGroups; 
             }
+            set 
+            {
+                if (value is null) return;
+                if (_oneGroups is null) _oneGroups = new ObservableCollection<OneGroupWindow>();
 
-
+            }
         }
 
-        /// <summary>Удалить окно из коллекции</summary>
-        public bool RemoveWindow(OneGroupWindow window)
-        {
-            if (window is null) return false;
-            if (_oneGroups.Contains(window)) 
-            {
-                if (!_oneGroups.Remove(window)) return false;
-            }
-            return true;
-        }
+
+
+       
+
+
 
 
         /// <summary>Путь к файлу изображения по умолчанию</summary>

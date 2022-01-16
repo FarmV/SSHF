@@ -5,11 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:l="clr-namespace:SSHF_WPFTest" 
         xmlns:vm="clr-namespace:SSHF_WPFTest.ViewModels"
-        Title="MainWindow" Height="450" Width="800"
+        Title="MainWindow" 
+        Height="{Binding  ElementName = Pnael1, Path=Height}" 
+        Width="{Binding  ElementName = Pnael1, Path=Width}"
         Background="Transparent"
         WindowStyle="None" 
         AllowsTransparency="True"
-        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+        >
 
 
     <Window.DataContext>
@@ -17,9 +19,21 @@
     </Window.DataContext>
 
 
-    <Grid>
+    <!--<Grid>
         <Grid.Background>
             <ImageBrush ImageSource="/Views/Windows/MainWindowRes/F_Logo.png" Stretch="Uniform"></ImageBrush>
         </Grid.Background>
-    </Grid>
+    </Grid>-->
+
+  
+        
+        
+
+        <WrapPanel x:Name="Pnael1" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Button Margin="15" MinWidth="100" MaxWidth="120" MinHeight="70"></Button>
+        <Button Margin="15" MaxWidth="120" MinWidth="100"  MinHeight="70"></Button>
+        </WrapPanel>
+    
+    
+    
 </Window>

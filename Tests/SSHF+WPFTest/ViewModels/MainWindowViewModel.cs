@@ -11,7 +11,7 @@ namespace SSHF_WPFTest.ViewModels
     internal class MainWindowViewModel : ViewModel
     {
         #region Заголовок окна
-        private string _Title = "Агрегация закладок";
+        private string _Title = "Окно быстрого доступа";
         /// <summary>Заголовок окна</summary>
         public string Title
         {

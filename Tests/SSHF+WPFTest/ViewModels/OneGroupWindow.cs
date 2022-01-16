@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using SSHF_WPFTest.ViewModels.Base;
+
 namespace SSHF_WPFTest.Models
 {
-    internal class OneGroupWindow
+    internal class OneGroupWindow: ViewModel
     {
 
         private bool _isVisvible;
