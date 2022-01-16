@@ -8,64 +8,65 @@ namespace SSHF_WPFTest.Models
 {
     internal class OneGroupWindow
     {
-        public OneGroupWindow(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentNullException(path, "Путь к файлу не может быть пустым");
-                       
-           _PathBackground = path;
-           
-        }
 
         private bool _isVisvible;
 
         public bool Visvible
         {
-            get { return _isVisvible; }
-            set { _isVisvible = value; }
+            get => _isVisvible;
+            set => _isVisvible = value; 
         }
 
 
 
-        private string _PathBackground;
+        private string _PathBackground = "/Views/Windows/MainWindowRes/F_Logo.png";
         public string PathBackground
         {
             get => _PathBackground;
             set => _PathBackground = value;
         }
 
+        /// <summary>Позиция X окна изображения группы на экране</summary>
         private int _X;
 
+        /// <summary>Позиция X окна изображения группы на экране</summary>
         public int XPosition
         {
-            get { return _X; }
-            set { _X = value; }
+            get => _X; 
+            set => _X = value; 
         }
 
+        /// <summary>Позиция Y окна изображения группы на экране</summary>
         private int _Y;
 
+        /// <summary>Позиция Y окна изображения группы на экране</summary>
         public int YPosition
         {
-            get { return _Y; }
-            set { _X = value; }
+            get => _Y; 
+            set => _Y = value; 
         }
 
+        /// <summary>Длинна окна</summary>
         private int _Length;
 
+        /// <summary>Длинна окна</summary>
         public int Length
         {
-            get { return _Length; }
+            get => _Length; 
             set 
             {
                 if (value < 0) throw new ArgumentOutOfRangeException(nameof(value), "Размер окна не может быть отрицательным");
                 _Length = value; 
             }
         }
- 
+
+        /// <summary>Ширина окна</summary>
         private int _Width;
 
+        /// <summary>Ширина окна</summary>
         public int Width
         {
-            get { return _Width; }
+            get => _Width;
             set
             {
                 if (value < 0) throw new ArgumentOutOfRangeException(nameof(value),"Размер окна не может быть отрицательным");
