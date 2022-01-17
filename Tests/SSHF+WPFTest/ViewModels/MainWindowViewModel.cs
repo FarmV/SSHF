@@ -22,7 +22,7 @@ namespace SSHF_WPFTest.ViewModels
         }
         #endregion
         RelayCommand? TestCommand;
-        public ICommand AddClient
+        public ICommand MyCommand
         {
             get
             {
