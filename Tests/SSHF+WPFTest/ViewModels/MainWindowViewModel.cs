@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
+using SSHF_WPFTest.Infrastructure;
 using SSHF_WPFTest.ViewModels.Base;
 
 namespace SSHF_WPFTest.ViewModels
@@ -19,6 +21,26 @@ namespace SSHF_WPFTest.ViewModels
             set => Set(ref _Title, value);
         }
         #endregion
+        RelayCommand? TestCommand;
+        public ICommand AddClient
+        {
+            get
+            {
+                if (TestCommand == null)
+                    TestCommand = new RelayCommand(CommandExecute, CanCommandExecute);
+                return TestCommand;
+            }
+        }
+        private void CommandExecute(object parameter)
+        {
+            //MessageBox.Show("Привет " + Convert.ToString(parameter));
+        }
+
+        private bool CanCommandExecute(object parameter)
+        {
+            return true;
+            //return TextBox1.Text != string.Empty;
+        }
 
     }
 }
