@@ -50,6 +50,46 @@ namespace SSHF_WPFTest.Models.MainWindowModel
         }
 
 
+        private static bool CursorPosOn = false;
+
+
+
+        private static void RefreshWindow()
+        {
+            CursorPosOn = true;
+            while (CursorPosOn)
+            {
+                Point point = GetWindosPosToCursor();
+                App.Current.MainWindow.Top = point.Y;
+                App.Current.MainWindow.Left = point.X;
+            }
+        }
+         
+        public static void CommandExecuteRefreshWindowOn(object? parameter)
+        {
+            RefreshWindow();
+            //MessageBox.Show("Привет " + Convert.ToString(parameter));
+        }
+
+        public static bool CanCommandExecuteRefreshWindowOn(object? parameter)
+        {
+
+            return CursorPosOn is false;
+            //return TextBox1.Text != string.Empty;
+        }
+
+        public static void CommandExecuteRefreshWindowOFF(object? parameter)
+        {
+            CursorPosOn = false;
+            //MessageBox.Show("Привет " + Convert.ToString(parameter));
+        }
+
+        public static bool CanCommandExecuteRefreshWindowOFF(object? parameter)
+        {
+
+            return CursorPosOn is true;
+            //return TextBox1.Text != string.Empty;
+        }
 
     }
 }

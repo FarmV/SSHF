@@ -7,6 +7,7 @@ using System.Windows.Input;
 
 using SSHF_WPFTest.Infrastructure;
 using SSHF_WPFTest.ViewModels.Base;
+using SSHF_WPFTest.Models.MainWindowModel;
 
 namespace SSHF_WPFTest.ViewModels
 {
@@ -21,26 +22,24 @@ namespace SSHF_WPFTest.ViewModels
             set => Set(ref _Title, value);
         }
         #endregion
-        RelayCommand? TestCommand;
-        public ICommand MyCommand
+        RelayCommand? _Command;
+        public ICommand RefreshON
         {
             get
             {
-                if (TestCommand == null)
-                    TestCommand = new RelayCommand(CommandExecute, CanCommandExecute);
-                return TestCommand;
+                if (_Command is null) _Command = new RelayCommand(MainWindowModel.CommandExecuteRefreshWindowOn, MainWindowModel.CanCommandExecuteRefreshWindowOn);
+                return _Command;
             }
         }
-        private void CommandExecute(object parameter)
+        public ICommand RefreshOFF
         {
-            //MessageBox.Show("Привет " + Convert.ToString(parameter));
+            get
+            {
+                if (_Command is null) _Command = new RelayCommand(MainWindowModel.CommandExecuteRefreshWindowOn, MainWindowModel.CanCommandExecuteRefreshWindowOn);
+                return _Command;
+            }
         }
 
-        private bool CanCommandExecute(object parameter)
-        {
-            return true;
-            //return TextBox1.Text != string.Empty;
-        }
 
     }
 }
