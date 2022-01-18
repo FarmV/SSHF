@@ -24,55 +24,9 @@ namespace SSHF_WPFTest
     {
         public MainWindow()
         {
-            InitializeComponent();
-            CommandBinding binding = new CommandBinding(ApplicationCommands.Help);
-            binding.Executed += new ExecutedRoutedEventHandler(binding_Executed);
-            this.CommandBindings.Add(binding);
-           
+            InitializeComponent();          
         }
 
-        void binding_Executed(object sender, ExecutedRoutedEventArgs e)
-        {
-            // MessageBox.Show("Команда 'New' была вызвана.");
-
-            //this.box1.Content = this.Left.ToString();
-            //this.box2.Content = this.Top.ToString();
-
-            //Point myP = App.Current.MainWindow.PointToScreen(new Point(this.Left, this.Top));
-
-            // Point myPa = new Point();
-            Point myB = GetCursorPosition();
-            this.box1.Content =$"Это Х : {myB.X}";
-            this.box2.Content = $"Это Y : {myB.Y}";
-
-        }
-
-
-        //[DllImport("user32.dll",CallingConvention = CallingConvention.StdCall,SetLastError = false)]
-        //public static extern Point GetCursorPos(out Point CursorPoint);
-
-
-
-        //[StructLayout(LayoutKind.Sequential)]
-        public struct POINT
-        {
-            public int X;
-            public int Y;
-
-            public static implicit operator Point(POINT point)
-            {
-                return new Point(point.X, point.Y);
-            }
-        }
-
-        [DllImport("user32.dll",CallingConvention = CallingConvention.StdCall, SetLastError = false)]
-        public static extern bool GetCursorPos(out POINT lpPoint);
-
-        public static Point GetCursorPosition()
-        {
-            GetCursorPos(out POINT lpPoint);
-            return lpPoint;
-        }
 
     }
 }
