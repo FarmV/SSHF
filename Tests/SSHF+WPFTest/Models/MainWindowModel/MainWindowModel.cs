@@ -54,9 +54,11 @@ namespace SSHF_WPFTest.Models.MainWindowModel
 
         #endregion
 
+        #region Обновление окна
+
         private static bool _FlagRefreshCurrentWindow = false;
      
-        private static void RefreshWindow()
+        public static void ExecuteRefreshWindowOn(object? parameter)
         {
             Process currentProcess = Process.GetCurrentProcess();
             IntPtr currentProcessHandle = currentProcess.MainWindowHandle;
@@ -64,30 +66,14 @@ namespace SSHF_WPFTest.Models.MainWindowModel
             while (_FlagRefreshCurrentWindow)
             {
                 POINT cursorPoint = new POINT();
-                GetCursorPos(out cursorPoint);                                
-                SetWindowPos(currentProcessHandle, -1, cursorPoint.X+7, cursorPoint.Y+7, 200, 200, 0x0400);             
+                GetCursorPos(out cursorPoint);
+                SetWindowPos(currentProcessHandle, -1, cursorPoint.X + 7, cursorPoint.Y + 7, 200, 200, 0x0400);
             }
         }
+        public static bool CanExecuteRefreshWindowOn(object? parameter) => _FlagRefreshCurrentWindow is false;
+        public static void CommandExecuteRefreshWindowOFF(object? parameter) => _FlagRefreshCurrentWindow = false;
+        public static bool CanCommandExecuteRefreshWindowOFF(object? parameter) => _FlagRefreshCurrentWindow is true;
 
-        public static void ExecuteRefreshWindowOn(object? parameter)
-        {
-            RefreshWindow();
-        }
-
-        public static bool CanExecuteRefreshWindowOn(object? parameter)
-        {
-            return _FlagRefreshCurrentWindow is false;
-        }
-
-        public static void CommandExecuteRefreshWindowOFF(object? parameter)
-        {
-            _FlagRefreshCurrentWindow = false;
-        }
-
-        public static bool CanCommandExecuteRefreshWindowOFF(object? parameter)
-        {
-            return _FlagRefreshCurrentWindow is true;
-        }
-
+        #endregion
     }
 }
