@@ -67,7 +67,6 @@ namespace SSHF_WPFTest.Models.MainWindowModel
                 GetCursorPos(out cursorPoint);                                
                 SetWindowPos(currentProcessHandle, -1, cursorPoint.X+7, cursorPoint.Y+7, 200, 200, 0x0400);             
             }
-
         }
 
         public static void ExecuteRefreshWindowOn(object? parameter)

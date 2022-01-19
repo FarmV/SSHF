@@ -8,7 +8,7 @@ using SSHF_WPFTest.ViewModels.Base;
 
 namespace SSHF_WPFTest.Models
 {
-    internal class OneGroupWindowViewModel: ViewModel
+    internal class WindowViewModel: ViewModel
     {
 
         private bool _isVisvible;

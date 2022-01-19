@@ -10,24 +10,24 @@ using SSHF_WPFTest.Models.OneGroupModel;
 
 namespace SSHF_WPFTest.Models
 {
-    internal class OneGroupViewModel: ViewModel
+    internal class GroupViewModel: ViewModel
     {   
         /// <summary>Коллекция окон в группе</summary>
-        private ObservableCollection<OneGroupWindowViewModel>? _oneGroups;
+        private ObservableCollection<WindowViewModel>? _oneGroups;
         private OneGroupModel.OneGroupModel _OneGroupModel = new OneGroupModel.OneGroupModel();
 
-        public ObservableCollection<OneGroupWindowViewModel> CollectionWindow
+        public ObservableCollection<WindowViewModel> CollectionWindow
         {
             get
             {
-                if (_oneGroups is null) _oneGroups = new ObservableCollection<OneGroupWindowViewModel>();
+                if (_oneGroups is null) _oneGroups = new ObservableCollection<WindowViewModel>();
 
                 return _oneGroups; 
             }
             set 
             {
                 if (value is null) return;
-                if (_oneGroups is null) _oneGroups = new ObservableCollection<OneGroupWindowViewModel>();
+                if (_oneGroups is null) _oneGroups = new ObservableCollection<WindowViewModel>();
 
             }
         }
