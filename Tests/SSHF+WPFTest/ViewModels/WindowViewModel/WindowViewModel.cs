@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using SSHF_WPFTest.ViewModels.Base;
+using SSHF.ViewModels.Base;
 
-namespace SSHF_WPFTest.Models
+namespace SSHF.Models
 {
     internal class WindowViewModel: ViewModel
     {

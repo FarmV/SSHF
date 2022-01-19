@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace SSHF_WPFTest.Models.MainWindowModel
+namespace SSHF.Models.MainWindowModel
 {
     internal class MainWindowModel
     {

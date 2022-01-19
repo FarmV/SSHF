@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SSHF_WPFTest.Models.OneGroupModel
+namespace SSHF.Models.OneGroupModel
 {
     internal class OneGroupModel
     {

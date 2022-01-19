@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace SSHF_WPFTest
+namespace SSHF
 {
     
     public partial class App : Application

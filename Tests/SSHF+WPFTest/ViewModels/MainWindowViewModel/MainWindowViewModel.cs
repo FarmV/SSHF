@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-using SSHF_WPFTest.Infrastructure;
-using SSHF_WPFTest.ViewModels.Base;
-using SSHF_WPFTest.Models.MainWindowModel;
+using SSHF.Infrastructure;
+using SSHF.ViewModels.Base;
+using SSHF.Models.MainWindowModel;
 
-namespace SSHF_WPFTest.ViewModels
+namespace SSHF.ViewModels
 {
     internal partial class MainWindowViewModel : ViewModel
     {

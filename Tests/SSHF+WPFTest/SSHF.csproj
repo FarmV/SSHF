@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
-    <RootNamespace>SSHF_WPFTest</RootNamespace>
+    <RootNamespace>SSHF</RootNamespace>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
@@ -12,6 +12,7 @@
     <None Remove="F logo.png" />
     <None Remove="Views\Windows\F_Logo.png" />
     <None Remove="Views\Windows\F_Logo2.png" />
+    <None Remove="Views\Windows\MainWindowRes\F_Logo2.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Views\Windows\F_Logo2.png" />
     <Resource Include="Views\Windows\MainWindowRes\F_Logo.png" />
+    <Resource Include="Views\Windows\MainWindowRes\F_Logo2.png" />
   </ItemGroup>
 
 </Project>

@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using SSHF_WPFTest.ViewModels.Base;
-using SSHF_WPFTest.Models.OneGroupModel;
+using SSHF.ViewModels.Base;
+using SSHF.Models.OneGroupModel;
 
-namespace SSHF_WPFTest.Models
+namespace SSHF.Models
 {
     internal class GroupViewModel: ViewModel
     {   

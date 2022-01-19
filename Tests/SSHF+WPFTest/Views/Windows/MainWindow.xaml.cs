@@ -15,7 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 
-namespace SSHF_WPFTest
+namespace SSHF
 {
     
     

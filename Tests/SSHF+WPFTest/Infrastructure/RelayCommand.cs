@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace SSHF_WPFTest.Infrastructure
+namespace SSHF.Infrastructure
 {
     class RelayCommand : ICommand
     {
