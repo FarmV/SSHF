@@ -33,7 +33,7 @@ namespace ProjectInvokeFunctionAndPressKey
         
         public delegate void KeyEventForUser(object sender, NotificationPressKeys e);
 
-        public event KeyEventForUser EnvetKeys;
+        public event KeyEventForUser? EnvetKeys;
 
         public class KeyUPorDown
         {
@@ -136,12 +136,14 @@ namespace ProjectInvokeFunctionAndPressKey
             result = string.Concat(massKeys).Trim().TrimEnd(_ConcatenationString.ToCharArray()).Trim();
             bool ChekFunc = false;
             string myFunc = string.Empty;
+            string keyFunc = string.Empty;
             foreach (var item in Functions)
             {
                 if (item._KeyCombination == result)
                 {
                     ChekFunc = true;
                     myFunc = item._Name;
+                    keyFunc = item._KeyCombination;
                     break;
                 }
             }
@@ -165,20 +167,22 @@ namespace ProjectInvokeFunctionAndPressKey
                     return;
                 }
 
-                MyEventHandler?.Invoke(this, new MyInvoceFuntion(myFunc));
+                MyEventHandler?.Invoke(this, new MyInvoceFuntion(myFunc,keyFunc));
              
             }
 
         }
-        public event EventHandler<MyInvoceFuntion> MyEventHandler = null;
+        public event EventHandler<MyInvoceFuntion>? MyEventHandler = null;
         
         public class MyInvoceFuntion
         {
-            public MyInvoceFuntion(string function)
+            public MyInvoceFuntion(string Function, string KeyCombination)
             {
-                _Function = function;
+                _Function = Function;
+                _KeyCombination = KeyCombination;
             }
-            public string _Function { get; } // readonly
+            public string _Function { get; }
+               public string _KeyCombination { get; }
         }
         public void RegisterAFunction(string Name, string DefoltKeyCombination)
         {
