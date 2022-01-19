@@ -9,7 +9,7 @@ namespace FuncKeyHandler
 {
     class FkeyHandler
     {
-        public FkeyHandler(string ConcatenationString = "" )
+        public FkeyHandler(string ConcatenationString = "")
         {
             _ConcatenationString = ConcatenationString;
             _KeyboardHook.Install();
@@ -137,6 +137,8 @@ namespace FuncKeyHandler
             bool ChekFunc = false;
             string myFunc = string.Empty;
             string keyFunc = string.Empty;
+            Action? action = default;
+            bool isInvoce = default;
             foreach (var item in Functions)
             {
                 if (item._KeyCombination == result)
@@ -144,6 +146,8 @@ namespace FuncKeyHandler
                     ChekFunc = true;
                     myFunc = item._Name;
                     keyFunc = item._KeyCombination;
+                    action = item._Action;
+                    isInvoce = item._Invoce;
                     break;
                 }
             }
@@ -167,7 +171,7 @@ namespace FuncKeyHandler
                     return;
                 }
 
-                FuncHandler?.Invoke(this, new MyInvoceFuntion(myFunc,keyFunc));
+                FuncHandler?.Invoke(this, new MyInvoceFuntion(myFunc,keyFunc, action, isInvoce));
              
             }
 
@@ -176,15 +180,24 @@ namespace FuncKeyHandler
         
         public class MyInvoceFuntion
         {
-            public MyInvoceFuntion(string Function, string KeyCombination)
+            public MyInvoceFuntion(string Function, string KeyCombination, Action? Action,bool Invoce = false)
             {
                 _Function = Function;
                 _KeyCombination = KeyCombination;
+                _Action = Action;
+                _Invoce = Invoce;
+
+                if (Action is not null && Invoce == true) Action.Invoke();
+
             }
             public string _Function { get; }
-               public string _KeyCombination { get; }
+            public string _KeyCombination { get; }
+            public Action? _Action { get; }
+            public bool _Invoce { get; }
+
+
         }
-        public void RegisterAFunction(string Name, string DefoltKeyCombination)
+        public void RegisterAFunction(string Name, string DefoltKeyCombination, Action? Action = null, bool Invoce = false)
         {
             if (string.IsNullOrWhiteSpace(Name))
             {
@@ -198,7 +211,7 @@ namespace FuncKeyHandler
                 }
             }
 
-            Functions.Add(new RegisteredFunction(Name, DefoltKeyCombination));
+            Functions.Add(new RegisteredFunction(Name, DefoltKeyCombination, Action, Invoce));
 
         }
 
@@ -242,7 +255,7 @@ namespace FuncKeyHandler
 
         } 
 
-        public bool ReplaceRegisteredFunction(string Name,string KeyCombination)
+        public bool ReplaceRegisteredFunction(string Name,string KeyCombination, Action? Action)
         {
             RegisteredFunction Function = Functions.Find(x => x._Name == Name);
             if (Function is null)
@@ -250,7 +263,7 @@ namespace FuncKeyHandler
                 return false;
             }
             Functions.Remove(Function);
-            RegisteredFunction functionNew = new RegisteredFunction(Name, KeyCombination);
+            RegisteredFunction functionNew = new RegisteredFunction(Name, KeyCombination, Action);
             FunctionNotDuplicate(functionNew);
             Functions.Add(functionNew);
 
@@ -264,10 +277,15 @@ namespace FuncKeyHandler
 
             public string _KeyCombination;
 
-            public RegisteredFunction(string Name, string KeyCombination)
+            public Action? _Action;
+
+            public bool _Invoce;
+
+            public RegisteredFunction(string Name, string KeyCombination, Action? Action = null, bool Invoce = false)
             {
                 _Name = Name;
                 _KeyCombination = KeyCombination;
+                _Action = Action;
             }
         }
 

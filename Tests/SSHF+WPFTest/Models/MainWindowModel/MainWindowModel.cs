@@ -20,9 +20,13 @@ namespace SSHF.Models.MainWindowModel
         public MainWindowModel(MainWindowViewModel ViewModel)
         {
             _ViewModel = ViewModel;
-            RegKeys();
-            _FuncAndKeyHadler.FuncHandler += (s, e) => _ViewModel.RefreshWindow = true;
+            RegisterFunctions();
+
         }
+
+
+
+
 
         #region Работа с курсором
 
@@ -68,10 +72,11 @@ namespace SSHF.Models.MainWindowModel
 
         #region Обновление окна
 
-       
 
-        public  void ExecuteRefreshWindowOn(object? parameter)
+
+        public async void ExecuteRefreshWindowOn(object? parameter) => await Task.Run(() =>
         {
+                               
             Process currentProcess = Process.GetCurrentProcess();
             IntPtr currentProcessHandle = currentProcess.MainWindowHandle;
             _ViewModel.RefreshWindow = true;
@@ -81,7 +86,9 @@ namespace SSHF.Models.MainWindowModel
                 GetCursorPos(out cursorPoint);
                 SetWindowPos(currentProcessHandle, -1, cursorPoint.X - (1920 / 2) + 15, cursorPoint.Y - (1080 / 2), 1920, 1080, 0x0400);
             }
-        }
+            
+        });
+
 
         public bool CanExecuteRefreshWindowOn(object? parameter) => _ViewModel.RefreshWindow is false;
         public void CommandExecuteRefreshWindowOFF(object? parameter) => _ViewModel.RefreshWindow = false;
@@ -98,12 +105,13 @@ namespace SSHF.Models.MainWindowModel
 
 
 
-        void RegKeys()
+        void RegisterFunctions()
         {
-            _FuncAndKeyHadler.RegisterAFunction("CanCommandExecuteRefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3");
+            _FuncAndKeyHadler.RegisterAFunction("CanCommandExecuteRefreshWindowOFF", "KEY_1 + KEY2 + KEY3", new Action(() => { _ViewModel.RefreshOFF.Execute(new object()); }), true);
         }
 
-        
+
+
 
 
         #endregion
