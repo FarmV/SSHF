@@ -43,13 +43,13 @@ AllowsTransparency="True"
             MaxHeight="512"
     >
             <Button.Background>
-                <ImageBrush ImageSource="/Views/Windows/F_Logo2.png"/>
+                <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo2.png"/>
             </Button.Background>
             <Button.Foreground>
-                <ImageBrush ImageSource="/Views/Windows/F_Logo2.png"/>
+                <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo2.png"/>
             </Button.Foreground>
             <Button.OpacityMask>
-                <ImageBrush ImageSource="\Views\Windows\MainWindowRes\F_Logo.png"/>
+                <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo.png"/>
             </Button.OpacityMask>
             
 

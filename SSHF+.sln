@@ -16,7 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NewFolder1", "NewFolder1", "{7B06043A-282B-4954-B744-75CE5107ED13}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{D2EEFB2F-8D40-4ACC-A477-0249A9B919B9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,6 +43,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{AC1A5FB9-834A-49FE-86C0-97A87B1867F0} = {77B1B603-A9AD-466F-AA05-EC850FA7623A}
 		{EAEA7D62-6C87-4D79-A358-92541E505CB9} = {77B1B603-A9AD-466F-AA05-EC850FA7623A}
+		{78F47A34-8410-4C03-B666-BC67958DB582} = {D2EEFB2F-8D40-4ACC-A477-0249A9B919B9}
 		{BF39D7CE-0B9C-49B4-A252-7DD009B63FCD} = {77B1B603-A9AD-466F-AA05-EC850FA7623A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
