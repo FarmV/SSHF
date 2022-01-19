@@ -12,6 +12,7 @@ namespace SSHF_WPFTest.Models.MainWindowModel
 {
     internal class MainWindowModel
     {
+        #region Работа с курсором
 
         [StructLayout(LayoutKind.Sequential)]
         public struct POINT
@@ -34,6 +35,14 @@ namespace SSHF_WPFTest.Models.MainWindowModel
             return lpPoint;
         }
 
+        [DllImport("user32.dll")]
+        static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
+      
+        public static Point GetWindosPosToCursor()
+        {
+            return App.Current.MainWindow.TranslatePoint(GetCursorXY(), App.Current.MainWindow);
+        }
+
         private static Point GetCursorXY()
         {
 
@@ -43,33 +52,20 @@ namespace SSHF_WPFTest.Models.MainWindowModel
          
         }
 
-        [DllImport("user32.dll")]
-        static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
-      
-        public static Point GetWindosPosToCursor()
-        {
-            return App.Current.MainWindow.TranslatePoint(GetCursorXY(), App.Current.MainWindow);
-        }
+        #endregion
 
-        private static bool CursorPosOn = false;
+        private static bool _FlagRefreshCurrentWindow = false;
      
         private static void RefreshWindow()
         {
-            Process a = Process.GetCurrentProcess();
-            IntPtr b = a.MainWindowHandle;
-            CursorPosOn = true;
-            while (CursorPosOn)
+            Process currentProcess = Process.GetCurrentProcess();
+            IntPtr currentProcessHandle = currentProcess.MainWindowHandle;
+            _FlagRefreshCurrentWindow = true;
+            while (_FlagRefreshCurrentWindow)
             {
-                POINT point1 = new POINT();
-
-                GetCursorPos( out point1);
-                
-                
-                   SetWindowPos(b, -1, point1.X+7, point1.Y+7, 200, 200, 0x0400);
-                    //App.Current.MainWindow.Top = point.Y;
-                    //App.Current.MainWindow.Left = point.X;
-                
-
+                POINT cursorPoint = new POINT();
+                GetCursorPos(out cursorPoint);                                
+                SetWindowPos(currentProcessHandle, -1, cursorPoint.X+7, cursorPoint.Y+7, 200, 200, 0x0400);             
             }
 
         }
@@ -81,20 +77,17 @@ namespace SSHF_WPFTest.Models.MainWindowModel
 
         public static bool CanExecuteRefreshWindowOn(object? parameter)
         {
-
-            return CursorPosOn is false;
+            return _FlagRefreshCurrentWindow is false;
         }
 
         public static void CommandExecuteRefreshWindowOFF(object? parameter)
         {
-            CursorPosOn = false;
+            _FlagRefreshCurrentWindow = false;
         }
 
         public static bool CanCommandExecuteRefreshWindowOFF(object? parameter)
         {
-
-            return CursorPosOn is true;
-
+            return _FlagRefreshCurrentWindow is true;
         }
 
     }
