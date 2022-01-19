@@ -87,13 +87,13 @@ namespace SSHF_WPFTest.Models.MainWindowModel
 
         }
 
-        public static void CommandExecuteRefreshWindowOn(object? parameter)
+        public static void ExecuteRefreshWindowOn(object? parameter)
         {
             RefreshWindow();
             //MessageBox.Show("Привет " + Convert.ToString(parameter));
         }
 
-        public static bool CanCommandExecuteRefreshWindowOn(object? parameter)
+        public static bool CanExecuteRefreshWindowOn(object? parameter)
         {
 
             return CursorPosOn is false;

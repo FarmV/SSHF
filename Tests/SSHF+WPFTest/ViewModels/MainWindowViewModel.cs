@@ -14,32 +14,19 @@ namespace SSHF_WPFTest.ViewModels
     internal class MainWindowViewModel : ViewModel
     {
         #region Заголовок окна
+
         private string _Title = "Окно быстрого доступа";
         /// <summary>Заголовок окна</summary>
-        public string Title
-        {
-            get => _Title; 
-            set => Set(ref _Title, value);
-        }
+        public string Title { get => _Title; set => Set(ref _Title, value); }
+        
         #endregion
 
-        RelayCommand? _Command;
-        public ICommand RefreshON
-        {
-            get
-            {
-                if (_Command is null) _Command = new RelayCommand(MainWindowModel.CommandExecuteRefreshWindowOn, MainWindowModel.CanCommandExecuteRefreshWindowOn);
-                return _Command;
-            }
-        }
-        public ICommand RefreshOFF
-        {
-            get
-            {
-                if (_Command is null) _Command = new RelayCommand(MainWindowModel.CommandExecuteRefreshWindowOFF, MainWindowModel.CanCommandExecuteRefreshWindowOFF);
-                return _Command;
-            }
-        }
+        RelayCommand? _RCom;
+
+        public ICommand RefreshON =>  new RelayCommand(MainWindowModel.ExecuteRefreshWindowOn, MainWindowModel.CanExecuteRefreshWindowOn);
+
+        public ICommand RefreshOFF => new RelayCommand(MainWindowModel.CommandExecuteRefreshWindowOFF, MainWindowModel.CanCommandExecuteRefreshWindowOFF);
+
 
 
     }
