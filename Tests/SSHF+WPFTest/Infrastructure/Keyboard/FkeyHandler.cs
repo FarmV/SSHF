@@ -5,11 +5,11 @@ using System.Text.RegularExpressions;
 
 using GlobalLowLevelHooks;
 
-namespace ProjectInvokeFunctionAndPressKey
+namespace FuncKeyHandler
 {
-    class GlobalKeysHookHandlerAndFunctions
+    class FkeyHandler
     {
-        public GlobalKeysHookHandlerAndFunctions(string ConcatenationString = "" )
+        public FkeyHandler(string ConcatenationString = "" )
         {
             _ConcatenationString = ConcatenationString;
             _KeyboardHook.Install();
@@ -167,12 +167,12 @@ namespace ProjectInvokeFunctionAndPressKey
                     return;
                 }
 
-                MyEventHandler?.Invoke(this, new MyInvoceFuntion(myFunc,keyFunc));
+                FuncHandler?.Invoke(this, new MyInvoceFuntion(myFunc,keyFunc));
              
             }
 
         }
-        public event EventHandler<MyInvoceFuntion>? MyEventHandler = null;
+        public event EventHandler<MyInvoceFuntion>? FuncHandler = null;
         
         public class MyInvoceFuntion
         {

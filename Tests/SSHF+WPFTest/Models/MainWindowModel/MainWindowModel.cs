@@ -8,10 +8,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
+using FuncKeyHandler;
+
+using SSHF.ViewModels;
+
 namespace SSHF.Models.MainWindowModel
 {
     internal class MainWindowModel
     {
+        readonly MainWindowViewModel _ViewModel;
+        public MainWindowModel(MainWindowViewModel ViewModel)
+        {
+            _ViewModel = ViewModel;
+            RegKeys();
+            _FuncAndKeyHadler.FuncHandler += (s, e) => _ViewModel.RefreshWindow = true;
+        }
+
         #region Работа с курсором
 
         [StructLayout(LayoutKind.Sequential)]
@@ -56,14 +68,14 @@ namespace SSHF.Models.MainWindowModel
 
         #region Обновление окна
 
-        private static bool _FlagRefreshCurrentWindow = false;
+       
 
-        public static void ExecuteRefreshWindowOn(object? parameter)
+        public  void ExecuteRefreshWindowOn(object? parameter)
         {
             Process currentProcess = Process.GetCurrentProcess();
             IntPtr currentProcessHandle = currentProcess.MainWindowHandle;
-            _FlagRefreshCurrentWindow = true;
-            while (_FlagRefreshCurrentWindow)
+            _ViewModel.RefreshWindow = true;
+            while (_ViewModel.RefreshWindow)
             {
                 POINT cursorPoint = new POINT();
                 GetCursorPos(out cursorPoint);
@@ -71,12 +83,28 @@ namespace SSHF.Models.MainWindowModel
             }
         }
 
-        public static bool CanExecuteRefreshWindowOn(object? parameter) => _FlagRefreshCurrentWindow is false;
-        public static void CommandExecuteRefreshWindowOFF(object? parameter) => _FlagRefreshCurrentWindow = false;
-        public static bool CanCommandExecuteRefreshWindowOFF(object? parameter)
+        public bool CanExecuteRefreshWindowOn(object? parameter) => _ViewModel.RefreshWindow is false;
+        public void CommandExecuteRefreshWindowOFF(object? parameter) => _ViewModel.RefreshWindow = false;
+        public bool CanCommandExecuteRefreshWindowOFF(object? parameter)
         {
-            return _FlagRefreshCurrentWindow is true;
+            return _ViewModel.RefreshWindow is true;
         }
+
+        #endregion
+
+        #region Обработчик клавиатурного вввода
+
+        public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler("+");
+
+
+
+        void RegKeys()
+        {
+            _FuncAndKeyHadler.RegisterAFunction("CanCommandExecuteRefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3");
+        }
+
+        
+
 
         #endregion
     }
