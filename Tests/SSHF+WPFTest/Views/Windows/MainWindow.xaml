@@ -6,8 +6,8 @@
  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
  xmlns:l="clr-namespace:SSHF_WPFTest"
- MaxHeight="100"
- MaxWidth="220"
+ MaxHeight="1080"
+ MaxWidth="1920"
  xmlns:vm="clr-namespace:SSHF_WPFTest.ViewModels"
  Title="MainWindow" 
 AllowsTransparency="True"
@@ -31,26 +31,62 @@ AllowsTransparency="True"
 
 
 
-
-        <WrapPanel MaxWidth="205" MaxHeight="100" x:Name="Pnael1" VerticalAlignment="Center" HorizontalAlignment="Center">
+    <WrapPanel x:Name="Pnael1" VerticalAlignment="Center" HorizontalAlignment="Center">
         <Button 
-            x:Name="box1" 
+            x:Name="box1"
             Command ="{Binding RefreshON}"
-            Content="{Binding ElementName=Fast, Path=Top, UpdateSourceTrigger=PropertyChanged }"
-            Margin="0,0,5,0" 
-            MinWidth="100" 
-            MaxWidth="120" 
-            MinHeight="70">
+            Content="{Binding ElementName=Fast, Path=Top, UpdateSourceTrigger=PropertyChanged }" 
+            Margin="0,0,0,0" 
+            MinWidth="512" 
+            MaxWidth="512" 
+            MinHeight="512"
+            MaxHeight="512"
+    >
+            <Button.Background>
+                <ImageBrush ImageSource="/Views/Windows/F_Logo2.png"/>
+            </Button.Background>
+            <Button.Foreground>
+                <ImageBrush ImageSource="/Views/Windows/F_Logo2.png"/>
+            </Button.Foreground>
+            <Button.OpacityMask>
+                <ImageBrush ImageSource="\Views\Windows\MainWindowRes\F_Logo.png"/>
+            </Button.OpacityMask>
+            
+
+
+
         </Button>
+
+
         <Button 
             x:Name="box2"
+            Foreground="DarkOrange"
+            
             Command ="{Binding RefreshOFF}"
-            Content="{Binding ElementName=Fast, Path=Left, UpdateSourceTrigger=PropertyChanged }" 
-            Margin="0,0,0,0" 
-            MinWidth="100" 
-            MaxWidth="120" 
-            MinHeight="70"></Button>
-         </WrapPanel>
+            Content="{Binding ElementName=Fast, Path=Left, UpdateSourceTrigger=PropertyChanged }"
+            Margin="0,0,5,0" 
+            MinWidth="512" 
+            MaxWidth="512" 
+            MinHeight="512"
+            MaxHeight="512"
+                    >
+
+        </Button>
+
+
+        <!--<Image Width="512" Height="512" Source="\Views\Windows\MainWindowRes\F_Logo2.png"/>-->
+
+        <!--<Image
+              Width="1200" Height="900"
+              Source="\Views\Windows\MainWindowRes\F_Logo.png"
+              Margin="10"
+              HorizontalAlignment="Left">
+            <Image.OpacityMask>
+                <ImageBrush ImageSource="\Views\Windows\MainWindowRes\F_Logo.png">
+                </ImageBrush>
+            </Image.OpacityMask>
+        </Image>-->
+    </WrapPanel>
 
 
 

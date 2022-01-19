@@ -11,6 +11,7 @@
   <ItemGroup>
     <None Remove="F logo.png" />
     <None Remove="Views\Windows\F_Logo.png" />
+    <None Remove="Views\Windows\F_Logo2.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Views\Windows\F_Logo2.png" />
     <Resource Include="Views\Windows\MainWindowRes\F_Logo.png" />
   </ItemGroup>
 
