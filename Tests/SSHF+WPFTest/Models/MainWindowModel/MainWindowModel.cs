@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -32,17 +33,27 @@ namespace SSHF_WPFTest.Models.MainWindowModel
             GetCursorPos(out POINT lpPoint);
             return lpPoint;
         }
-                  
+
         [DllImport("user32.dll")]
         public static extern IntPtr GetForegroundWindow();
-       
+
         private static Point GetCursorXY()
         {
+
             var transform = PresentationSource.FromVisual(App.Current.MainWindow).CompositionTarget.TransformFromDevice;
             Point mouse = transform.Transform(MainWindowModel.GetCursorPosition());
             return mouse;
-            
+         
         }
+        [DllImport("user32.dll")]
+        static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
+
+        //[DllImport("user32.dll")]
+        //static extern IntPtr FindWindowA(string a, string b);
+
+        //static IntPtr check = FindWindowA(null, "SSHF+WPFTest");
+        
+        
 
         public static Point GetWindosPosToCursor()
         {
@@ -53,18 +64,29 @@ namespace SSHF_WPFTest.Models.MainWindowModel
         private static bool CursorPosOn = false;
 
 
-
+      
         private static void RefreshWindow()
         {
+            Process a = Process.GetCurrentProcess();
+            IntPtr b = a.MainWindowHandle;
             CursorPosOn = true;
             while (CursorPosOn)
             {
-                Point point = GetWindosPosToCursor();
-                App.Current.MainWindow.Top = point.Y;
-                App.Current.MainWindow.Left = point.X;
+                POINT point1 = new POINT();
+
+                GetCursorPos( out point1);
+                
+                
+                    SetWindowPos(b, -1, point1.X+7, point1.Y+7, 200, 200, 0x0400);
+                    //App.Current.MainWindow.Top = point.Y;
+                    //App.Current.MainWindow.Left = point.X;
+                
+
             }
+
+
         }
-         
+
         public static void CommandExecuteRefreshWindowOn(object? parameter)
         {
             RefreshWindow();

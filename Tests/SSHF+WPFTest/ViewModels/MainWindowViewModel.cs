@@ -22,6 +22,7 @@ namespace SSHF_WPFTest.ViewModels
             set => Set(ref _Title, value);
         }
         #endregion
+
         RelayCommand? _Command;
         public ICommand RefreshON
         {
@@ -35,7 +36,7 @@ namespace SSHF_WPFTest.ViewModels
         {
             get
             {
-                if (_Command is null) _Command = new RelayCommand(MainWindowModel.CommandExecuteRefreshWindowOn, MainWindowModel.CanCommandExecuteRefreshWindowOn);
+                if (_Command is null) _Command = new RelayCommand(MainWindowModel.CommandExecuteRefreshWindowOFF, MainWindowModel.CanCommandExecuteRefreshWindowOFF);
                 return _Command;
             }
         }
