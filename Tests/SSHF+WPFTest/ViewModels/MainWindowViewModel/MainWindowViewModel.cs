@@ -11,7 +11,7 @@ using SSHF_WPFTest.Models.MainWindowModel;
 
 namespace SSHF_WPFTest.ViewModels
 {
-    internal class MainWindowViewModel : ViewModel
+    internal partial class MainWindowViewModel : ViewModel
     {
         #region Заголовок окна
 
@@ -21,11 +21,8 @@ namespace SSHF_WPFTest.ViewModels
         
         #endregion
 
-        RelayCommand? _RCom;
 
-        public ICommand RefreshON =>  new RelayCommand(MainWindowModel.ExecuteRefreshWindowOn, MainWindowModel.CanExecuteRefreshWindowOn);
 
-        public ICommand RefreshOFF => new RelayCommand(MainWindowModel.CommandExecuteRefreshWindowOFF, MainWindowModel.CanCommandExecuteRefreshWindowOFF);
 
 
 
