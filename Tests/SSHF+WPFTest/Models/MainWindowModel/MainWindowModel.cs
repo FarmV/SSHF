@@ -37,7 +37,7 @@ namespace SSHF.Models.MainWindowModel
 
         [DllImport("user32.dll")]
         static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
-      
+
         public static Point GetWindosPosToCursor()
         {
             return App.Current.MainWindow.TranslatePoint(GetCursorXY(), App.Current.MainWindow);
@@ -49,7 +49,7 @@ namespace SSHF.Models.MainWindowModel
             var transform = PresentationSource.FromVisual(App.Current.MainWindow).CompositionTarget.TransformFromDevice;
             Point mouse = transform.Transform(MainWindowModel.GetCursorPosition());
             return mouse;
-         
+
         }
 
         #endregion
@@ -57,7 +57,7 @@ namespace SSHF.Models.MainWindowModel
         #region Обновление окна
 
         private static bool _FlagRefreshCurrentWindow = false;
-     
+
         public static void ExecuteRefreshWindowOn(object? parameter)
         {
             Process currentProcess = Process.GetCurrentProcess();
@@ -67,13 +67,16 @@ namespace SSHF.Models.MainWindowModel
             {
                 POINT cursorPoint = new POINT();
                 GetCursorPos(out cursorPoint);
-                SetWindowPos(currentProcessHandle, -1, cursorPoint.X - (1920/2)+15, cursorPoint.Y - (1080/2), 1920, 1080, 0x0400);
+                SetWindowPos(currentProcessHandle, -1, cursorPoint.X - (1920 / 2) + 15, cursorPoint.Y - (1080 / 2), 1920, 1080, 0x0400);
             }
         }
 
         public static bool CanExecuteRefreshWindowOn(object? parameter) => _FlagRefreshCurrentWindow is false;
         public static void CommandExecuteRefreshWindowOFF(object? parameter) => _FlagRefreshCurrentWindow = false;
-        public static bool CanCommandExecuteRefreshWindowOFF(object? parameter) => _FlagRefreshCurrentWindow is true;
+        public static bool CanCommandExecuteRefreshWindowOFF(object? parameter)
+        {
+            return _FlagRefreshCurrentWindow is true;
+        }
 
         #endregion
     }
