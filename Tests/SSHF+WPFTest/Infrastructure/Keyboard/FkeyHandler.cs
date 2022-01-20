@@ -26,11 +26,11 @@ namespace FuncKeyHandler
 
         public string _ConcatenationString { get; } 
 
-        KeyboardHook _KeyboardHook = new KeyboardHook();
+        readonly KeyboardHook _KeyboardHook = new KeyboardHook();
 
-        Dictionary<string, bool> KeyBools = new Dictionary<string, bool>();
+        readonly Dictionary<string, bool> KeyBools = new Dictionary<string, bool>();
 
-        List<RegisteredFunction> Functions = new List<RegisteredFunction>();
+        readonly  List<RegisteredFunction> Functions = new List<RegisteredFunction>();
 
 
         private event KeyEventHandler MyEnvetKeys;
@@ -59,19 +59,25 @@ namespace FuncKeyHandler
         }
 
         private void KeyboardHook_KeyUp(KeyboardHook.VKeys key)
-        {           
-             MyEnvetKeys?.Invoke(Enum.Parse(typeof(KeyboardHook.VKeys), key.ToString()).ToString(), new KeyUPorDown(false));
+        {
+            string? parse = Enum.Parse(typeof(KeyboardHook.VKeys), key.ToString()).ToString();
+            if (parse is null) throw new ArgumentNullException(nameof(key));
+            MyEnvetKeys.Invoke(parse, new KeyUPorDown(false));
         }
 
         private void KeyboardHook_KeyDown(KeyboardHook.VKeys key)
         {
-            MyEnvetKeys?.Invoke(Enum.Parse(typeof(KeyboardHook.VKeys), key.ToString()).ToString(), new KeyUPorDown(true));
+            string? parse = Enum.Parse(typeof(KeyboardHook.VKeys), key.ToString()).ToString();
+            if (parse is null) throw new ArgumentNullException(nameof(key));
+            MyEnvetKeys.Invoke(parse, new KeyUPorDown(true));
         }
 
         private void CheckAndSwitchKeyInKeyBools(object sender, KeyUPorDown e)
         {
+           
             if (e._isKeyDown)
             {
+                
                 KeyBools[sender.ToString()] = true;
                 EnvetKeys?.Invoke(this, new NotificationPressKeys(PrintKeysIsDown()));           
             }
