@@ -10,5 +10,7 @@ namespace SSHF.ViewModels.NotifyIconViewModel
 {
     internal class NotifyIconViewModel: ViewModel
     {
+        #region Подготовка
+        #endregion
     }
 }
