@@ -16,6 +16,8 @@ using FuncKeyHandler;
 using SSHF.Infrastructure.SharedFunctions;
 using SSHF.ViewModels;
 
+using static SSHF.Infrastructure.SharedFunctions.CursorFunction;
+
 namespace SSHF.Models.MainWindowModel
 {
     internal class MainWindowModel
@@ -29,51 +31,6 @@ namespace SSHF.Models.MainWindowModel
             _Icon = new NotificatioIcon();
         }
 
-
-
-
-
-        #region Работа с курсором
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct POINT
-        {
-            public int X;
-            public int Y;
-
-            public static implicit operator Point(POINT point)
-            {
-                return new Point(point.X, point.Y);
-            }
-        }
-
-        [DllImport("user32.dll")]
-        public static extern bool GetCursorPos(out POINT lpPoint);
-
-        private static Point GetCursorPosition()
-        {
-            GetCursorPos(out POINT lpPoint);
-            return lpPoint;
-        }
-
-        [DllImport("user32.dll")]
-        static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
-
-        public static Point GetWindosPosToCursor()
-        {
-            return App.Current.MainWindow.TranslatePoint(GetCursorXY(), App.Current.MainWindow);
-        }
-
-        private static Point GetCursorXY()
-        {
-
-            var transform = PresentationSource.FromVisual(App.Current.MainWindow).CompositionTarget.TransformFromDevice;
-            Point mouse = transform.Transform(MainWindowModel.GetCursorPosition());
-            return mouse;
-
-        }
-
-        #endregion
 
         #region Обновление окна
         IntPtr _MainWindowHandle => new Func<IntPtr>(() => { Process currentProcess = Process.GetCurrentProcess(); return currentProcess.MainWindowHandle; }).Invoke();
@@ -90,7 +47,7 @@ namespace SSHF.Models.MainWindowModel
             while (_ViewModel.RefreshWindow)
             {                
                 GetCursorPos(out _CursorPoint);
-                SetWindowPos(_MainWindowHandle, -1, _CursorPoint.X - _PositionShift.X, _CursorPoint.Y - _PositionShift.Y, 1920, 1080, 0x0400);
+                WindowFunction.SetWindowPos(_MainWindowHandle, -1, _CursorPoint.X - _PositionShift.X, _CursorPoint.Y - _PositionShift.Y, 1920, 1080, 0x0400);
             }
             
         });
