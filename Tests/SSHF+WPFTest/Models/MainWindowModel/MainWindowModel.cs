@@ -71,20 +71,21 @@ namespace SSHF.Models.MainWindowModel
         #endregion
 
         #region Обновление окна
-
-
-
-        public async void ExecuteRefreshWindowOn(object? parameter) => await Task.Run(() =>
+        IntPtr _MainWindowHandle => new Func<IntPtr>(() => { Process currentProcess = Process.GetCurrentProcess(); return currentProcess.MainWindowHandle; }).Invoke();
+        POINT _CursorPoint = default;
+        readonly POINT _PositionShift = new POINT
         {
-                               
-            Process currentProcess = Process.GetCurrentProcess();
-            IntPtr currentProcessHandle = currentProcess.MainWindowHandle;
+             X = (1920 / 2) + 15,
+             Y = (1080 / 2)
+        };
+       
+    public async void ExecuteRefreshWindowOn(object? parameter) => await Task.Run(() =>
+        {                                 
             _ViewModel.RefreshWindow = true;
             while (_ViewModel.RefreshWindow)
-            {
-                POINT cursorPoint = new POINT();
-                GetCursorPos(out cursorPoint);
-                SetWindowPos(currentProcessHandle, -1, cursorPoint.X - (1920 / 2) + 15, cursorPoint.Y - (1080 / 2), 1920, 1080, 0x0400);
+            {                
+                GetCursorPos(out _CursorPoint);
+                SetWindowPos(_MainWindowHandle, -1, _CursorPoint.X - _PositionShift.X, _CursorPoint.Y - _PositionShift.Y, 1920, 1080, 0x0400);
             }
             
         });

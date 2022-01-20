@@ -34,14 +34,13 @@ AllowsTransparency="True"
     <WrapPanel x:Name="Pnael1" VerticalAlignment="Center" HorizontalAlignment="Center">
         <Button 
             x:Name="box1"
-            Command ="{Binding RefreshON}"
-            Content="{Binding ElementName=Fast, Path=Top, UpdateSourceTrigger=PropertyChanged }" 
+            Command ="{Binding RefreshON}"          
             Margin="0,0,0,0" 
             MinWidth="512" 
             MaxWidth="512" 
             MinHeight="512"
             MaxHeight="512"
-    >
+       >
             <Button.Background>
                 <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo2.png"/>
             </Button.Background>
@@ -59,17 +58,23 @@ AllowsTransparency="True"
 
 
         <Button 
-            x:Name="box2"
-            Foreground="DarkOrange"
-            
-            Command ="{Binding RefreshOFF}"
-            Content="{Binding ElementName=Fast, Path=Left, UpdateSourceTrigger=PropertyChanged }"
-            Margin="0,0,5,0" 
+            x:Name="box2"                      
+            Command ="{Binding Refresh}"         
             MinWidth="512" 
             MaxWidth="512" 
             MinHeight="512"
             MaxHeight="512"
-                    >
+       >
+
+            <Button.Background>
+                <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo2.png"/>
+            </Button.Background>
+            <Button.Foreground>
+                <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo2.png"/>
+            </Button.Foreground>
+            <Button.OpacityMask>
+                <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo.png"/>
+            </Button.OpacityMask>
 
         </Button>
 
