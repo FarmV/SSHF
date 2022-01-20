@@ -1,0 +1,19 @@
+﻿<Window x:Class="SSHF.Views.Windows.NotifyIcon.Menu_icon"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" mc:Ignorable="d"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SSHF.Views.Windows.NotifyIcon"
+       
+        Title="Menu_icon" Height="450" Width="800">
+
+
+
+
+
+    <Menu>
+        <MenuItem>
+            <Button MinHeight="50" MinWidth="70"></Button>
+        </MenuItem>
+    </Menu>
+</Window>

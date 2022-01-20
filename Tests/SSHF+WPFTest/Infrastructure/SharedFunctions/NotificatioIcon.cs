@@ -11,7 +11,7 @@ namespace SSHF.Infrastructure.SharedFunctions
 {
     internal class NotificatioIcon
     {
-        public System.Windows.Forms.NotifyIcon _notifyIcon;
+        private readonly System.Windows.Forms.NotifyIcon _notifyIcon;
         public bool NotificationMenuIsOpen = default;
 
         public NotificatioIcon()
