@@ -16,6 +16,12 @@ namespace FuncKeyHandler
             _KeyboardHook.KeyUp += new KeyboardHook.KeyboardHookCallback(KeyboardHook_KeyUp);
             _KeyboardHook.KeyDown += new KeyboardHook.KeyboardHookCallback(KeyboardHook_KeyDown);
             MyEnvetKeys += CheckAndSwitchKeyInKeyBools;
+           
+
+
+
+
+
         }
 
         public string _ConcatenationString { get; } 
@@ -141,7 +147,7 @@ namespace FuncKeyHandler
             bool isInvoce = default;
             foreach (var item in Functions)
             {
-                if (item._KeyCombination == result)
+               if (item._KeyCombination == result)
                 {
                     ChekFunc = true;
                     myFunc = item._Name;
@@ -170,33 +176,17 @@ namespace FuncKeyHandler
                 {
                     return;
                 }
-
-                FuncHandler?.Invoke(this, new MyInvoceFuntion(myFunc,keyFunc, action, isInvoce));
+                if (FuncHandler is null) if (action is not null && isInvoce == true) action.Invoke();
+                if (FuncHandler is not null) FuncHandler.Invoke(this, new MyInvoceFuntion(myFunc, keyFunc, action, isInvoce));
              
             }
 
         }
-        public event EventHandler<MyInvoceFuntion>? FuncHandler = null;
+        public event EventHandler<MyInvoceFuntion>? FuncHandler;
+
         
-        public class MyInvoceFuntion
-        {
-            public MyInvoceFuntion(string Function, string KeyCombination, Action? Action,bool Invoce = false)
-            {
-                _Function = Function;
-                _KeyCombination = KeyCombination;
-                _Action = Action;
-                _Invoce = Invoce;
 
-                if (Action is not null && Invoce == true) Action.Invoke();
-
-            }
-            public string _Function { get; }
-            public string _KeyCombination { get; }
-            public Action? _Action { get; }
-            public bool _Invoce { get; }
-
-
-        }
+ 
         public void RegisterAFunction(string Name, string DefoltKeyCombination, Action? Action = null, bool Invoce = false)
         {
             if (string.IsNullOrWhiteSpace(Name))
@@ -217,21 +207,17 @@ namespace FuncKeyHandler
 
         public bool ContainsListRegisteredFunctionKeyCombination(string KeyCombination)
         {
-            RegisteredFunction Function = Functions.Find(x=>x._KeyCombination == KeyCombination);
-            if (Function is null)
-            {
-                return false;
-            }
+            RegisteredFunction? Function = Functions.Find(x=>x._KeyCombination == KeyCombination);
+            if (Function is null) return false;
+
             return true;
         }
 
         public bool ContainsListRegisteredFunctionName(string Name)
         {
-            RegisteredFunction Function = Functions.Find(x => x._Name == Name);
-            if (Function is null)
-            {
-                return false;
-            }
+            RegisteredFunction? Function = Functions.Find(x => x._Name == Name);
+            if (Function is null) return false;
+
             return true;
         }
 
@@ -241,15 +227,9 @@ namespace FuncKeyHandler
           
             while (true)
             {
-                RegisteredFunction findFuncton = Functions.Find(x => x._Name == FunctionNew._Name);
-                if (findFuncton is null)
-                {
-                    return;
-                }
-                else
-                {
-                    Functions.Remove(findFuncton);
-                }
+                RegisteredFunction? findFuncton = Functions.Find(x => x._Name == FunctionNew._Name);
+                if (findFuncton is null) return;
+                else Functions.Remove(findFuncton);
             }
 
 
@@ -257,16 +237,12 @@ namespace FuncKeyHandler
 
         public bool ReplaceRegisteredFunction(string Name,string KeyCombination, Action? Action)
         {
-            RegisteredFunction Function = Functions.Find(x => x._Name == Name);
-            if (Function is null)
-            {
-                return false;
-            }
+            RegisteredFunction? Function = Functions.Find(x => x._Name == Name);
+            if (Function is null) return false;
             Functions.Remove(Function);
             RegisteredFunction functionNew = new RegisteredFunction(Name, KeyCombination, Action);
             FunctionNotDuplicate(functionNew);
             Functions.Add(functionNew);
-
 
             return true;
         }
@@ -286,11 +262,78 @@ namespace FuncKeyHandler
                 _Name = Name;
                 _KeyCombination = KeyCombination;
                 _Action = Action;
+                _Invoce = Invoce;
             }
+
+            public override int GetHashCode()
+            {
+                int function = _Name.GetHashCode();
+                int keyCombination = _KeyCombination.GetHashCode();
+                int action = _Action?.GetHashCode() ?? 0;
+                int invoce = _Invoce.GetHashCode();
+
+                return HashCode.Combine(function, keyCombination, action, invoce);
+            }
+            public override bool Equals(object? obj)
+            {
+                if (obj is null) return false;
+                RegisteredFunction? inFun = obj as RegisteredFunction;
+                if (inFun is null) return false;
+
+                if (inFun._Action is null) return inFun._Name == this._Name && inFun._KeyCombination == this._KeyCombination && inFun._Invoce == this._Invoce;
+                else return inFun._Name == this._Name && inFun._KeyCombination == this._KeyCombination && inFun._Action == this._Action && inFun._Invoce == this._Invoce;
+
+
+            }
+
+            //public bool Equals(RegisteredFunction other)
+            //{
+            //    if (other == null) return false;
+            //    return (this._KeyCombination.Equals(other._KeyCombination));
+            //}
+
         }
 
     }
+    public class MyInvoceFuntion
+    {
+        public MyInvoceFuntion(string Function, string KeyCombination, Action? Action, bool Invoce = false)
+        {
+            _Function = Function;
+            _KeyCombination = KeyCombination;
+            _Action = Action;
+            _Invoce = Invoce;
 
+            if (Action is not null && Invoce == true) Action.Invoke();
+
+        }
+        public string _Function { get; }
+        public string _KeyCombination { get; }
+        public Action? _Action { get; }
+        public bool _Invoce { get; }
+
+        public override int GetHashCode()
+        {
+            int function = _Function.GetHashCode();
+            int keyCombination = _KeyCombination.GetHashCode();
+            int action = _Action?.GetHashCode() ?? 0;
+            int invoce = _Invoce.GetHashCode();
+
+            return HashCode.Combine(function, keyCombination, action, invoce);
+        }
+        public override bool Equals(object? obj)
+        {
+            if (obj is null) return false;
+            MyInvoceFuntion? inFun = obj as MyInvoceFuntion;
+            if (inFun is null) return false;
+
+            if (inFun._Action is null) return inFun._Function == this._Function && inFun._KeyCombination == this._KeyCombination && inFun._Invoce == this._Invoce;
+            else return inFun._Function == this._Function && inFun._KeyCombination == this._KeyCombination && inFun._Action == this._Action && inFun._Invoce == this._Invoce;
+
+
+        }
+
+    }
 
 
 
