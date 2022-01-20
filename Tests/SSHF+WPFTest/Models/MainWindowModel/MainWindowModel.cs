@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 
 using FuncKeyHandler;
 
+using SSHF.Infrastructure.SharedFunctions;
 using SSHF.ViewModels;
 
 namespace SSHF.Models.MainWindowModel
@@ -20,11 +21,12 @@ namespace SSHF.Models.MainWindowModel
     internal class MainWindowModel
     {
         readonly MainWindowViewModel _ViewModel;
+        readonly NotificatioIcon _Icon;
         public MainWindowModel(MainWindowViewModel ViewModel)
         {
             _ViewModel = ViewModel;
             RegisterFunctions();
-
+            _Icon = new NotificatioIcon();
         }
 
 

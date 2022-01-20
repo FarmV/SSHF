@@ -22,7 +22,8 @@ namespace SSHF.Infrastructure.SharedFunctions
 
         private void SetIconToMainApplication()
         {
-            _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon($"{AppContext.BaseDirectory}{Process.GetCurrentProcess().ProcessName}.exe");
+           // _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon($"{AppContext.BaseDirectory}{Process.GetCurrentProcess().ProcessName}.exe");
+            _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(@"D:\Downloads\UnderRail GOG\setup_underrail_1.1.4.5_(49811).exe");
             _notifyIcon.Visible = true;
            // _notifyIcon.Click += ClickNotifyIcon;
 
