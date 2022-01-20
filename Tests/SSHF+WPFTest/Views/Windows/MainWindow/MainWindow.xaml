@@ -6,9 +6,10 @@
  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
  xmlns:l="clr-namespace:SSHF"
- MaxHeight="1080"
  MaxWidth="1920"
+ MaxHeight="1080"
  xmlns:vm="clr-namespace:SSHF.ViewModels"
+ xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
  Title="MainWindow" 
 AllowsTransparency="True"
 
@@ -40,6 +41,7 @@ AllowsTransparency="True"
             MaxWidth="512" 
             MinHeight="512"
             MaxHeight="512"
+           
        >
             <Button.Background>
                 <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo2.png"/>
@@ -50,7 +52,17 @@ AllowsTransparency="True"
             <Button.OpacityMask>
                 <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo.png"/>
             </Button.OpacityMask>
-            
+
+            <behaviors:Interaction.Triggers>
+                <behaviors:EventTrigger EventName="MouseRightButtonUp">
+
+                    <behaviors:InvokeCommandAction Command="{Binding RefreshON}"/>
+
+                </behaviors:EventTrigger>
+            </behaviors:Interaction.Triggers>
+
+
+
 
 
 

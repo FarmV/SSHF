@@ -12,6 +12,10 @@
     <Folder Include="Data\" />
     <Folder Include="Services\" />
   </ItemGroup>
+    
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
+  </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Views\Windows\MainWindow\MainWindowRes\F_Logo.png" />
