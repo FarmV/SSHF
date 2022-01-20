@@ -1,0 +1,121 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media;
+
+namespace SSHF.Infrastructure.SharedFunctions
+{
+    internal class NotificatioIcon
+    {
+        public System.Windows.Forms.NotifyIcon _notifyIcon;
+        public bool NotificationMenuIsOpen = default;
+
+        public NotificatioIcon()
+        {
+            _notifyIcon = new System.Windows.Forms.NotifyIcon();
+            SetIconToMainApplication();
+        }
+
+        private void SetIconToMainApplication()
+        {
+            _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon($"{AppContext.BaseDirectory}{Process.GetCurrentProcess().ProcessName}.exe");
+            _notifyIcon.Visible = true;
+           // _notifyIcon.Click += ClickNotifyIcon;
+
+        }
+
+
+        //public void ClickNotifyIcon(object? sender, EventArgs e)
+        //{
+        //    if (NotificationMenuIsOpen)
+        //    {
+        //        WindowCollection adssad = App.Current.Windows;
+              
+        //        foreach (var item in App.Current.Windows)
+        //        {
+        //            if (item is WPF_Traslate_Test.MenuContent)
+        //            {
+        //                MenuContent menu = (MenuContent)item;
+        //                //menu.Dispose();
+        //                MenuCheckedButton.Clear();
+        //                foreach (RadioButton radioButton in MainWindow.FindVisualChildren<RadioButton>(menu))
+        //                {
+        //                    if (radioButton.IsChecked == true)
+        //                    {
+        //                        MenuCheckedButton.Add(radioButton.Name, true);
+
+        //                    }
+        //                }
+        //                menu.Close();
+        //                NotificationMenuIsOpen = false;
+        //            }
+        //        }
+        //        return;
+        //    }
+        //    NotificationMenuIsOpen = true;
+        //    App.Current.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
+        //    One.Visibility = Visibility.Collapsed;
+        //    One.Hide();
+        //    MenuContent menuContent = new MenuContent(this);
+        //    Point positionCursor = GetCursorPosition();
+        //    menuContent.Topmost = true;
+        //    double resolutionWidth = SystemParameters.PrimaryScreenWidth;
+        //    double resolutionHeight = SystemParameters.PrimaryScreenHeight;
+
+        //    WindowCollection windowsMyApp = App.Current.Windows;
+
+        //    double posT = menuContent.Top = positionCursor.Y - 200.00;
+        //    double posL = menuContent.Left = positionCursor.X + 5;
+        //    menuContent.Show();
+        //    double menuWidth = default;
+        //    double menuHeight = default;
+        //    foreach (var item in App.Current.Windows)
+        //    {
+        //        if (item is WPF_Traslate_Test.MenuContent)
+        //        {
+        //            MenuContent menu = (MenuContent)item;
+
+        //            menuWidth = menu.ActualWidth;
+        //            menuHeight = menu.ActualHeight;
+        //        }
+        //    }
+
+        //    if (menuWidth + positionCursor.X > resolutionWidth)
+        //    {
+        //        menuContent.Left = resolutionWidth - menuWidth;
+        //        menuContent.Left = positionCursor.X - (menuWidth + 5);
+        //    }
+        //    if (menuHeight + positionCursor.Y < resolutionHeight)
+        //    {
+        //        menuContent.Top = resolutionHeight - menuHeight;
+        //        menuContent.Top = positionCursor.Y - (menuHeight - 200.00);
+        //    }
+
+
+        //}
+
+        public static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject /// невозможно перебрать элементы если окно не отображется
+        {
+            if (depObj != null)
+            {
+                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+                {
+                    DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
+                    if (child != null && child is T)
+                    {
+                        yield return (T)child;
+                    }
+
+                    foreach (T childOfChild in FindVisualChildren<T>(child))
+                    {
+                        yield return childOfChild;
+                    }
+                }
+            }
+        }
+    }
+}
