@@ -4,16 +4,22 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SSHF.Views.Windows.NotifyIcon"
-       
-        Title="Menu_icon" Height="450" Width="800">
+        AllowDrop="True"
+        Background="Transparent"
+        WindowStyle="None"
+        Title="Menu_icon"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        >
 
 
 
 
 
-    <Menu>
-        <MenuItem>
-            <Button MinHeight="50" MinWidth="70"></Button>
-        </MenuItem>
-    </Menu>
+    <StackPanel>
+        <Button FontFamily="Franklin Gothic" FontSize="32" Content="1"></Button>
+        <Button FontFamily="Franklin Gothic" FontSize="32" Content="2"></Button>
+        <Button FontFamily="Franklin Gothic" FontSize="32" Content="3"></Button>
+        <Button FontFamily="Franklin Gothic" FontSize="32" Content="4"></Button>
+    </StackPanel>
 </Window>
