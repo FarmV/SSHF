@@ -9,8 +9,9 @@ namespace FuncKeyHandler
 {
     class FkeyHandler
     {
-        public FkeyHandler(string ConcatenationString = "")
+        public FkeyHandler(KeyboardHook hook, string ConcatenationString = "")
         {
+            _KeyboardHook = hook;
             _ConcatenationString = ConcatenationString;
             _KeyboardHook.Install();
             _KeyboardHook.KeyUp += new KeyboardHook.KeyboardHookCallback(KeyboardHook_KeyUp);
@@ -26,7 +27,7 @@ namespace FuncKeyHandler
 
         public string _ConcatenationString { get; } 
 
-        readonly KeyboardHook _KeyboardHook = new KeyboardHook();
+        readonly KeyboardHook _KeyboardHook;
 
         readonly Dictionary<string, bool> KeyBools = new Dictionary<string, bool>();
 

@@ -64,7 +64,7 @@ namespace SSHF.Models.MainWindowModel
 
         #region Обработчик клавиатурного вввода
 
-        public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler("+");
+        public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(new GlobalLowLevelHooks.KeyboardHook(),"+");
 
 
 
