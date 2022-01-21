@@ -9,7 +9,7 @@ using SSHF.Infrastructure;
 using SSHF.ViewModels.Base;
 using SSHF.Models.MainWindowModel;
 
-namespace SSHF.ViewModels
+namespace SSHF.ViewModels.MainWindowViewModel
 {
     internal partial class MainWindowViewModel : ViewModel
     {

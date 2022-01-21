@@ -13,6 +13,7 @@ using SSHF.ViewModels;
 using SSHF.Infrastructure;
 
 using static SSHF.Infrastructure.SharedFunctions.CursorFunction;
+using SSHF.ViewModels.MainWindowViewModel;
 
 namespace SSHF.Models.MainWindowModel
 {

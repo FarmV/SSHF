@@ -8,66 +8,43 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using SSHF.Infrastructure.SharedFunctions;
+using SSHF.Views.Windows.NotifyIcon;
+
 namespace SSHF.Models.NotifyIconModel
 {
     internal class NotifyIconModel
     {
+       private readonly Menu_icon icon;
 
-        //public static Rectangle GetIconRect(NotifyIcon icon)
+       public NotifyIconModel()
+       {
+            icon = new Menu_icon();
+            NotificatioIcon._notifyIcon.MouseDown += _notifyIcon_MouseDown; ;
+       }
+
+        private void _notifyIcon_MouseDown(object? sender, MouseEventArgs e)
+        {
+            MessageBox.Show("Test255"); 
+        }
+
+        //private void NotifyIcon_MouseDown(object? sender, System.Windows.Forms.MouseEventArgs e)
         //{
-        //    RECT rect = new RECT();
-        //    NOTIFYICONIDENTIFIER notifyIcon = new NOTIFYICONIDENTIFIER();
 
-        //    notifyIcon.cbSize = Marshal.SizeOf(notifyIcon);
-        //    //use hWnd and id of NotifyIcon instead of guid is needed
-        //    notifyIcon.hWnd = GetHandle(icon);
-        //    notifyIcon.uID = GetId(icon);
+        //    System.Windows.Forms.MouseButtons buttonMouse = e.Button;
 
-        //    int hresult = Shell_NotifyIconGetRect(ref notifyIcon, out rect);
-        //    //rect now has the position and size of icon
+        //    if (NotificatioIcon.NotificationMenuIsOpen && buttonMouse == System.Windows.Forms.MouseButtons.Left)
+        //    {
+        //        icon.Hide();
+        //        NotificatioIcon.NotificationMenuIsOpen = false;
+        //        return;
+        //    }
+        //    if (!NotificatioIcon.NotificationMenuIsOpen && buttonMouse == System.Windows.Forms.MouseButtons.Left)
+        //    {
+        //        icon.Show();
+        //        NotificatioIcon.NotificationMenuIsOpen = true;
 
-        //    return new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
-        //}
-
-        //[StructLayout(LayoutKind.Sequential)]
-        //private struct RECT
-        //{
-        //    public Int32 left;
-        //    public Int32 top;
-        //    public Int32 right;
-        //    public Int32 bottom;
-        //}
-
-        //[StructLayout(LayoutKind.Sequential)]
-        //private struct NOTIFYICONIDENTIFIER
-        //{
-        //    public Int32 cbSize;
-        //    public IntPtr hWnd;
-        //    public Int32 uID;
-        //    public Guid guidItem;
-        //}
-
-        //[DllImport("shell32.dll", SetLastError = true)]
-        //private static extern int Shell_NotifyIconGetRect([In] ref NOTIFYICONIDENTIFIER identifier, [Out] out RECT iconLocation);
-
-        //private static FieldInfo? windowField =
-        //    typeof(NotifyIcon).GetField("window", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        //private static IntPtr GetHandle(NotifyIcon icon)
-        //{
-           
-            
-        //    if (windowField == null) throw new InvalidOperationException("[Useful error message]");
-        //    NativeWindow window = windowField.GetValue(icon) as NativeWindow;
-
-        //    if (window == null) throw new InvalidOperationException("[Useful error message]");  // should not happen?
-        //    return window.Handle;
-        //}
-
-        //private static FieldInfo? idField = typeof(NotifyIcon).GetField("id", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        //private static int GetId(NotifyIcon icon)
-        //{
-        //    if (idField == null) throw new InvalidOperationException("[Useful error message]");
-        //    return (int)idField.GetValue(icon);
+        //    }
         //}
 
     }

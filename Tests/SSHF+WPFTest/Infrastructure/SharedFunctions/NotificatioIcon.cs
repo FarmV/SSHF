@@ -18,61 +18,30 @@ namespace SSHF.Infrastructure.SharedFunctions
 {
     internal class NotificatioIcon
     {
-        private readonly System.Windows.Forms.NotifyIcon _notifyIcon;
-        public bool NotificationMenuIsOpen = default;
-        private Menu_icon? icon;
+        public static readonly NotifyIcon _notifyIcon = new NotifyIcon();
 
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct NOTIFYICONIDENTIFIER
-        {
-            public uint SizeStructure; // размер структуры
-            public IntPtr handle; //handle родительского окна используемое функцией вызова
-            public uint uID;// Определенный приложением идентификатор значка уведомления
-            public Guid guid;
-        }
-
+        public static volatile bool NotificationMenuIsOpen = default;
+        
         public NotificatioIcon()
         {
-            _notifyIcon = new System.Windows.Forms.NotifyIcon();
+            
             SetIconToMainApplication();
         }
+        public static Rectangle GetRectanglePosition => NotifyIconHelper.GetIconRect(_notifyIcon);
 
         private void SetIconToMainApplication()
         {
             // _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon($"{AppContext.BaseDirectory}{Process.GetCurrentProcess().ProcessName}.exe");
             _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(@"D:\Downloads\UnderRail GOG\setup_underrail_1.1.4.5_(49811).exe");
             _notifyIcon.Visible = true;
-           
-
             _notifyIcon.MouseDown += _notifyIcon_MouseDown;
         }
 
-        //public static Rectangle
-
-        private void _notifyIcon_MouseDown(object? sender, System.Windows.Forms.MouseEventArgs e)
+        private void _notifyIcon_MouseDown(object? sender, MouseEventArgs e)
         {
-
-            System.Windows.Forms.MouseButtons buttonMouse = e.Button;
-
-            Rectangle c = NotifyIconHelper.GetIconRect(_notifyIcon);
-
-            if (NotificationMenuIsOpen && buttonMouse == System.Windows.Forms.MouseButtons.Left)
-            {
-                icon?.Close();
-                NotificationMenuIsOpen = false;
-                return;
-            }
-            if (!NotificationMenuIsOpen && buttonMouse == System.Windows.Forms.MouseButtons.Left)
-            {
-                icon = new Menu_icon();
-                NotificationMenuIsOpen = true;
-
-            }
+            System.Windows.Forms.MessageBox.Show("Test");
         }
-      
 
-   
         public static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject /// невозможно перебрать элементы если окно не отображется
         {
             if (depObj != null)
