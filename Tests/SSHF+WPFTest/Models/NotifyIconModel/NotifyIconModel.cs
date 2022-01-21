@@ -15,17 +15,18 @@ namespace SSHF.Models.NotifyIconModel
 {
     internal class NotifyIconModel
     {
-       private readonly Menu_icon icon;
+       //private readonly Menu_icon icon;
 
        public NotifyIconModel()
        {
-            icon = new Menu_icon();
-            NotificatioIcon._notifyIcon.MouseDown += _notifyIcon_MouseDown; ;
+            //icon = new Menu_icon();
+            NotificatioIcon._notifyIcon.MouseDown += _notifyIcon_MouseDown;
        }
 
         private void _notifyIcon_MouseDown(object? sender, MouseEventArgs e)
         {
-            MessageBox.Show("Test255"); 
+            MessageBox.Show("Test255");
+            Window
         }
 
         //private void NotifyIcon_MouseDown(object? sender, System.Windows.Forms.MouseEventArgs e)

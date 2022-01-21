@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SSHF.Views.Windows.NotifyIcon"
-        xmlns:vm="clr-namespace:SSHF.ViewModels.NotifyIconViewModel"
+        xmlns:vmN="clr-namespace:SSHF.ViewModels.NotifyIconViewModel"
         AllowDrop="True"
         Background="Transparent"
         WindowStyle="None"
@@ -14,7 +14,7 @@
         >
 
     <Window.DataContext>
-        <vm:NotifyIconViewModel/>
+        <vmN:NotifyIconViewModel/>
     </Window.DataContext>
 
 

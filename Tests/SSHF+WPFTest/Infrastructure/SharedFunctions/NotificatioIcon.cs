@@ -34,13 +34,10 @@ namespace SSHF.Infrastructure.SharedFunctions
             // _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon($"{AppContext.BaseDirectory}{Process.GetCurrentProcess().ProcessName}.exe");
             _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(@"D:\Downloads\UnderRail GOG\setup_underrail_1.1.4.5_(49811).exe");
             _notifyIcon.Visible = true;
-            _notifyIcon.MouseDown += _notifyIcon_MouseDown;
+
         }
 
-        private void _notifyIcon_MouseDown(object? sender, MouseEventArgs e)
-        {
-            System.Windows.Forms.MessageBox.Show("Test");
-        }
+
 
         public static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject /// невозможно перебрать элементы если окно не отображется
         {
