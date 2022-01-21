@@ -50,7 +50,6 @@ namespace SSHF.Infrastructure.SharedFunctions
         }
         #endregion
 
-
         #region Сохранение изображения на диск
         /// <summary>
         ///     <br>Путь для сохранения <see cref="Uri"/> <paramref name="path"/></br>

@@ -10,6 +10,7 @@ using FuncKeyHandler;
 
 using SSHF.Infrastructure.SharedFunctions;
 using SSHF.ViewModels;
+using SSHF.Infrastructure;
 
 using static SSHF.Infrastructure.SharedFunctions.CursorFunction;
 
@@ -19,10 +20,12 @@ namespace SSHF.Models.MainWindowModel
     {
         readonly MainWindowViewModel _ViewModel;
         readonly NotificatioIcon _Icon;
+        readonly Initialize _Initialize;
         public MainWindowModel(MainWindowViewModel ViewModel)
         {
             _ViewModel = ViewModel;
             RegisterFunctions();
+            _Initialize = new Initialize();
             _Icon = new NotificatioIcon();
         }
 
@@ -59,14 +62,13 @@ namespace SSHF.Models.MainWindowModel
 
         #region Обработчик клавиатурного вввода
 
-        public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(new GlobalLowLevelHooks.KeyboardHook(),"+");
+        public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(Initialize._GlobaKeyboardHook, "+");
 
 
 
         void RegisterFunctions()
         {
-            _FuncAndKeyHadler.RegisterAFunction("CanCommandExecuteRefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => {_ViewModel.RefreshOFF.Execute(new object()); }), true);
-           
+            _FuncAndKeyHadler.RegisterAFunction("CanCommandExecuteRefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => {_ViewModel.RefreshOFF.Execute(new object()); }), true);           
         }
 
 
