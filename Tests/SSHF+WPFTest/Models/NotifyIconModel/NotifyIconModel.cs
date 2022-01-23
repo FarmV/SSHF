@@ -26,7 +26,7 @@ namespace SSHF.Models.NotifyIconModel
         private void _notifyIcon_MouseDown(object? sender, MouseEventArgs e)
         {
             MessageBox.Show("Test255");
-            Window
+           
         }
 
         //private void NotifyIcon_MouseDown(object? sender, System.Windows.Forms.MouseEventArgs e)

@@ -19,20 +19,17 @@ namespace SSHF.ViewModels.NotifyIconViewModel
         public NotifyIconViewModel()
         {
             _Model = new NotifyIconModel();
-            
-        
+
         }
-
-
-
 
         private Menu_icon? _window;
 
         public Menu_icon? Menu_iconWindow
         {
             get { return _window; }
-            init {
-                _window = ;
+            init
+            {
+
             }
         }
     }
