@@ -11,7 +11,7 @@
  xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
  xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
  Title="MainWindow" 
-AllowsTransparency="True"
+ AllowsTransparency="True"
 
  Background="Transparent"
  WindowStyle="None" 

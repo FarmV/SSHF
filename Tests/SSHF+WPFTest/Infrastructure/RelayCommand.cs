@@ -17,7 +17,7 @@ namespace SSHF.Infrastructure
         //{
         //}
 
-        public RelayCommand(Action<object> execute, Predicate<object>?canExecute = null)
+        public RelayCommand(Action<object> execute, Predicate<object>? canExecute = null)
         {
             if (execute is null) throw new ArgumentNullException(nameof(execute));
  
@@ -28,7 +28,7 @@ namespace SSHF.Infrastructure
             
         public bool CanExecute(object? parameter)
         {
-           // if (_canExecute is null) return true; else _canExecute.Invoke(parameter);
+           
 
 
             return _canExecute == null || _canExecute.Invoke(parameter);

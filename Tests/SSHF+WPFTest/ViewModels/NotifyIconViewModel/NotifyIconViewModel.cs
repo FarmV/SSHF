@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,19 +19,20 @@ namespace SSHF.ViewModels.NotifyIconViewModel
         NotifyIconModel _Model;
         public NotifyIconViewModel()
         {
+            
+
             _Model = new NotifyIconModel();
-
         }
 
-        private Menu_icon? _window;
+        bool _visible = default;    
 
-        public Menu_icon? Menu_iconWindow
+        public bool MyProperty
         {
-            get { return _window; }
-            init
-            {
-
-            }
+            get { return _visible; }
+            set { _visible = value; }
         }
+
+
+
     }
 }

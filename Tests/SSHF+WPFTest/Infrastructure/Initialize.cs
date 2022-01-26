@@ -10,9 +10,9 @@ namespace SSHF.Infrastructure
 {
     internal class Initialize
     {
-        
 
-        readonly static public System.Windows.Window _GlobalWindowFast = App.Current.MainWindow;
+
+        readonly static public System.Windows.Window _GlobalWindowFast = new Func<MainWindow>(() => { if (App.Current.MainWindow is not MainWindow window) throw new NullReferenceException("MainWindow is null?"); return window; }).Invoke();
 
         readonly static public GlobalLowLevelHooks.KeyboardHook _GlobaKeyboardHook = new GlobalLowLevelHooks.KeyboardHook();
 
@@ -20,8 +20,8 @@ namespace SSHF.Infrastructure
 
         readonly NotifyIconViewModel _NotifyIconViewModel;
 
-      public  Initialize()
-      {
+        public Initialize()
+        {
             if (_SingleCopy is true) throw new InvalidOperationException("Попытка создать более 1 копии экземляра класса инициализации");
             _SingleCopy = true;
 
