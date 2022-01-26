@@ -21,12 +21,10 @@ namespace SSHF.Models.MainWindowModel
     {
         readonly MainWindowViewModel _ViewModel;
         readonly NotificatioIcon _Icon;
-        readonly Initialize _Initialize;
         public MainWindowModel(MainWindowViewModel ViewModel)
         {
             _ViewModel = ViewModel;
-            RegisterFunctions();
-            _Initialize = new Initialize();
+            RegisterFunctions();            
             _Icon = new NotificatioIcon();
         }
 
@@ -63,7 +61,7 @@ namespace SSHF.Models.MainWindowModel
 
         #region Обработчик клавиатурного вввода
 
-        public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(Initialize._GlobaKeyboardHook, "+");
+        public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(App._GlobaKeyboardHook, "+");
 
 
 
