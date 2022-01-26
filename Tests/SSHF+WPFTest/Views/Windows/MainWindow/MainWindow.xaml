@@ -9,8 +9,8 @@
  MaxWidth="1920"
  MaxHeight="1080"
  xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
- xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
  Title="MainWindow" 
+ xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
  AllowsTransparency="True"
 
  Background="Transparent"

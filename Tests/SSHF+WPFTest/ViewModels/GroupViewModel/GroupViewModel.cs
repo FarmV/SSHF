@@ -11,23 +11,27 @@ using SSHF.Models.OneGroupModel;
 namespace SSHF.Models
 {
     internal class GroupViewModel: ViewModel
-    {   
+    {
+        public override object ProvideValue(IServiceProvider serviceProvider) => this;
+
+
+
         /// <summary>Коллекция окон в группе</summary>
-        private ObservableCollection<WindowViewModel>? _oneGroups;
+        private ObservableCollection<OneOfTheGroupViewModel>? _oneGroups;
         private OneGroupModel.OneGroupModel _OneGroupModel = new OneGroupModel.OneGroupModel();
 
-        public ObservableCollection<WindowViewModel> CollectionWindow
+        public ObservableCollection<OneOfTheGroupViewModel> CollectionWindow
         {
             get
             {
-                if (_oneGroups is null) _oneGroups = new ObservableCollection<WindowViewModel>();
+                if (_oneGroups is null) _oneGroups = new ObservableCollection<OneOfTheGroupViewModel>();
 
                 return _oneGroups; 
             }
             set 
             {
                 if (value is null) return;
-                if (_oneGroups is null) _oneGroups = new ObservableCollection<WindowViewModel>();
+                if (_oneGroups is null) _oneGroups = new ObservableCollection<OneOfTheGroupViewModel>();
 
             }
         }
@@ -98,9 +102,6 @@ namespace SSHF.Models
                 _Width = value;
             }
         }
-
-
-
 
 
     }

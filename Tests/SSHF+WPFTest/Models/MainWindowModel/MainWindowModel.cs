@@ -24,8 +24,8 @@ namespace SSHF.Models.MainWindowModel
         public MainWindowModel(MainWindowViewModel ViewModel)
         {
             _ViewModel = ViewModel;
-            RegisterFunctions();            
-            _Icon = new NotificatioIcon();
+            RegisterFunctions();
+
         }
 
 
@@ -34,23 +34,24 @@ namespace SSHF.Models.MainWindowModel
         POINT _CursorPoint = default;
         readonly POINT _PositionShift = new POINT
         {
-             X = (1920 / 2) + 15,
-             Y = (1080 / 2)
+            X = (1920 / 2) + 15,
+            Y = (1080 / 2)
         };
-       
+
         public async void RefreshWindowOnExecute(object? parameter) => await Task.Run(() =>
-        {                                 
+        {
             _ViewModel.RefreshWindow = true;
             while (_ViewModel.RefreshWindow)
-            {                
+            {
                 GetCursorPos(out _CursorPoint);
                 WindowFunction.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X - _PositionShift.X, _CursorPoint.Y - _PositionShift.Y, 1920, 1080, 0x0400);
             }
-            
+
         });
-
-
         public bool IsRefreshWindowOn(object? parameter) => _ViewModel.RefreshWindow is false;
+
+
+
         public void RefreshWindowOffExecute(object? parameter) => _ViewModel.RefreshWindow = false;
         public bool IsExecuteRefreshWindowOff(object? parameter)
         {
@@ -58,6 +59,17 @@ namespace SSHF.Models.MainWindowModel
         }
 
         #endregion
+
+        #region Вызов окна Help
+
+        public void HelpInvoce(object? parameter) => new Action(() => { }).Invoke();
+        public bool IsExecuteHelp(object? parameter)
+        {
+            return true;
+        }
+
+        #endregion
+
 
         #region Обработчик клавиатурного вввода
 

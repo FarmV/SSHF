@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,17 +9,20 @@ using System.Windows.Input;
 using SSHF.Infrastructure;
 using SSHF.ViewModels.Base;
 using SSHF.Models.MainWindowModel;
+using SSHF.Models;
 
 namespace SSHF.ViewModels.MainWindowViewModel
 {
     internal partial class MainWindowViewModel : ViewModel
     {
+        public override object ProvideValue(IServiceProvider serviceProvider) => this;
+
         readonly MainWindowModel _Model;
-       
-        
+
+
         public MainWindowViewModel()
         {
-            _Model = new MainWindowModel(this);
+            _Model = new MainWindowModel(this);            
         }
         #region Заголовок окна
 

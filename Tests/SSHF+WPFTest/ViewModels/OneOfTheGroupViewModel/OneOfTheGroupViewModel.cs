@@ -8,8 +8,15 @@ using SSHF.ViewModels.Base;
 
 namespace SSHF.Models
 {
-    internal class WindowViewModel: ViewModel
+    internal class OneOfTheGroupViewModel: ViewModel
     {
+        public override object ProvideValue(IServiceProvider serviceProvider) => this;
+        public OneOfTheGroupViewModel()
+        {
+        }
+
+
+
 
         private bool _isVisvible;
 
@@ -76,10 +83,6 @@ namespace SSHF.Models
                 _Width = value; 
             }
         }
-
-
-
-
 
 
     }

@@ -1,11 +1,15 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Markup;
 
 namespace SSHF.ViewModels.Base
 {
-    internal abstract class ViewModel : INotifyPropertyChanged, IDisposable
+    internal abstract class ViewModel : MarkupExtension, INotifyPropertyChanged, IDisposable
     {
+        public override object ProvideValue(IServiceProvider serviceProvider) => throw new NotImplementedException("Наследник базового класса не перопределил провайдера");
+
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public void Dispose()

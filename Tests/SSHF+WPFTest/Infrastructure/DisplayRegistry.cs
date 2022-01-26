@@ -9,7 +9,7 @@ namespace SSHF.Infrastructure
 {
     internal class DisplayRegistry
     {
-        Dictionary<Type, Type> vmToWindowMapping = new Dictionary<Type, Type>();
+        internal Dictionary<Type, Type> vmToWindowMapping = new Dictionary<Type, Type>();
 
         public void RegisterWindowType<VM, Win>() where Win : Window, new() where VM : class
         {
@@ -55,12 +55,18 @@ namespace SSHF.Infrastructure
             openWindows[vm] = window;
         }
 
-        public void HidePresentation(object vm)
+        public void CloseAndRemovePresentation(object vm)
         {
             if (!openWindows.TryGetValue(vm, out Window? window)) throw new InvalidOperationException("Пользовательский интерфейс для ViewModel не отображается");
             window.Close();
             openWindows.Remove(vm);
         }
+
+        //public void HidePresentation(object vm)
+        //{
+        //    if (!openWindows.TryGetValue(vm, out Window? window)) throw new InvalidOperationException("Пользовательский интерфейс для ViewModel не отображается");
+        //    window.Hide();          
+        //}
 
         public async Task ShowModalPresentation(object vm)
         {

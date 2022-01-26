@@ -13,15 +13,12 @@ namespace SSHF.ViewModels.NotifyIconViewModel
 {
     internal class NotifyIconViewModel : ViewModel
     {
+        public override object ProvideValue(IServiceProvider serviceProvider) => this;
 
-
-
-        NotifyIconModel _Model;
+        readonly NotifyIconModel _model;
         public NotifyIconViewModel()
-        {
-            
-
-            _Model = new NotifyIconModel();
+        {          
+            _model = new NotifyIconModel();
         }
 
         bool _visible = default;    
@@ -31,7 +28,6 @@ namespace SSHF.ViewModels.NotifyIconViewModel
             get { return _visible; }
             set { _visible = value; }
         }
-
 
 
     }
