@@ -5,24 +5,41 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SSHF.Views.Windows.NotifyIcon"
         xmlns:vmN="clr-namespace:SSHF.ViewModels.NotifyIconViewModel"
+        xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
+        xmlns:vmD="clr-namespace:SSHF.Models.NotifyIconModel"
         AllowDrop="True"
         Background="Transparent"
         WindowStyle="None"
         Title="Menu_icon"
         SizeToContent="WidthAndHeight"
         ResizeMode="NoResize"
-        >
+        Topmost="True"
+        
+        
+      
+        
+       >
 
     <Window.DataContext>
+        
         <vmN:NotifyIconViewModel/>
     </Window.DataContext>
 
+    <behaviors:Interaction.Triggers>
+        <behaviors:EventTrigger EventName="PreviewMouseDown"  >
 
+            <behaviors:InvokeCommandAction Command="{Binding CheckOutside}"/>
 
-    <StackPanel>
+        </behaviors:EventTrigger>
+    </behaviors:Interaction.Triggers>
+
+    <StackPanel >
+
         <Button FontFamily="Franklin Gothic" FontSize="32" Content="1"></Button>
         <Button FontFamily="Franklin Gothic" FontSize="32" Content="2"></Button>
         <Button FontFamily="Franklin Gothic" FontSize="32" Content="3"></Button>
         <Button FontFamily="Franklin Gothic" FontSize="32" Content="4"></Button>
     </StackPanel>
+
+
 </Window>

@@ -12,6 +12,8 @@ using SSHF.Infrastructure.SharedFunctions;
 using SSHF.ViewModels;
 using SSHF.Infrastructure;
 
+using System.Windows.Forms;
+
 using static SSHF.Infrastructure.SharedFunctions.CursorFunction;
 using SSHF.ViewModels.MainWindowViewModel;
 
@@ -20,7 +22,7 @@ namespace SSHF.Models.MainWindowModel
     internal class MainWindowModel
     {
         readonly MainWindowViewModel _ViewModel;
-        readonly NotificatioIcon _Icon;
+        readonly System.Windows.Forms.NotifyIcon? _Icon;
         public MainWindowModel(MainWindowViewModel ViewModel)
         {
             _ViewModel = ViewModel;
@@ -66,6 +68,8 @@ namespace SSHF.Models.MainWindowModel
         public bool IsExecuteHelp(object? parameter)
         {
             return true;
+
+            
         }
 
         #endregion

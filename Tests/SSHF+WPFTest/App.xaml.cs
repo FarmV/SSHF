@@ -10,6 +10,7 @@ using SSHF.Infrastructure;
 using SSHF.ViewModels.NotifyIconViewModel;
 using SSHF.ViewModels.MainWindowViewModel;
 using SSHF.Views.Windows.NotifyIcon;
+using GlobalLowLevelHooks;
 
 namespace SSHF
 {
@@ -20,9 +21,9 @@ namespace SSHF
 
         readonly static public GlobalLowLevelHooks.KeyboardHook _GlobaKeyboardHook = new GlobalLowLevelHooks.KeyboardHook();
 
-        static bool _SingleCopy = default;
+      //  static bool _SingleCopy = default;
 
-        
+        internal static MouseHook mouseHook = new MouseHook();
         internal static readonly DisplayRegistry _displayRegistry = new DisplayRegistry();
 
         internal static readonly Menu_icon _menu_icon;

@@ -69,7 +69,7 @@
         </Button>
 
 
-        <Button 
+        <!--<Button 
             x:Name="box2"                      
             Command ="{Binding Refresh}"         
             MinWidth="512" 
@@ -88,7 +88,7 @@
                 <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo.png"/>
             </Button.OpacityMask>
 
-        </Button>
+        </Button>-->
 
 
         <!--<Image Width="512" Height="512" Source="\Views\Windows\MainWindowRes\F_Logo2.png"/>-->
