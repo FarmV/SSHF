@@ -37,7 +37,7 @@ namespace SSHF.ViewModels.NotifyIconViewModel
         }
 
 
-        public ICommand CheckOutside => new RelayCommand(_model.CheckClickOutsideExecute, _model.IsExecuteCheckClickOutside);
+       // public ICommand CheckOutside => new RelayCommand(_model.CheckClickOutsideExecute, _model.IsExecuteCheckClickOutside);
 
 
 

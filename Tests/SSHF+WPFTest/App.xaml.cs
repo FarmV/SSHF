@@ -44,7 +44,7 @@ namespace SSHF
         }
         public App()
         {
-
+            mouseHook.Install();// Почему-то инсталяция в MODEL окна крашит визуальный конструктор
         }
         protected override void OnStartup(StartupEventArgs e)
         {
