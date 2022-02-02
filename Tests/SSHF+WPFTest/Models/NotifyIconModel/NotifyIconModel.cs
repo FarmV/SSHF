@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Interop;
 using System.Windows.Media;
 
 using SSHF.Infrastructure.SharedFunctions;
@@ -53,7 +54,7 @@ namespace SSHF.Models.NotifyIconModel
 
             MouseButtons buttonMouse = e.Button;
 
-            if (NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Left)
+            if (NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
                 App._menu_icon.Hide();
                 NotificationMenuIsOpen = false;
@@ -63,14 +64,24 @@ namespace SSHF.Models.NotifyIconModel
 
                 return;
             }
-            if (!NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Left)
+            if (!NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
-                var pointMenu = GetRectCorrect(App._menu_icon as Window);
-                App._menu_icon.Left = pointMenu.X;
-                App._menu_icon.Top = pointMenu.Y;
-                App._menu_icon.Topmost = true;
-                App._menu_icon.Show();
+                System.Windows.Point pointMenu = GetRectCorrect(App._menu_icon);
 
+                WindowInteropHelper helper = new WindowInteropHelper(App._menu_icon);
+
+                // App._menu_icon.Left = pointMenu.X;
+               //  App._menu_icon.Top = pointMenu.Y;
+                //App._menu_icon.Topmost = true;
+
+                WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App._menu_icon.Width), Convert.ToInt32(App._menu_icon.Height), 0x0400);
+
+
+
+
+
+                App._menu_icon.Show();
+               // WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App._menu_icon.Width), Convert.ToInt32(App._menu_icon.Height), 0x0400);
 
                 App.mouseHook.LeftButtonUp += MouseHookHandler;
                 App.mouseHook.DoubleClick += MouseHookHandler;
@@ -90,7 +101,11 @@ namespace SSHF.Models.NotifyIconModel
             if (App._menu_icon.IsVisible)
             {
                 Rectangle iconPos = GetRectanglePosition;
-                System.Windows.Point cursorPos = CursorFunction.GetCursorXY(App._menu_icon);
+                //System.Windows.Point cursorPos = CursorFunction.GetCursorXY(App._menu_icon);
+                // System.Windows.Point cursorPos2 = CursorFunction.GetWindosPosToCursor(App._menu_icon);
+                System.Windows.Point cursorPos = CursorFunction.GetCursorPosition();
+
+
 
 
                 if (Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width))
@@ -124,16 +139,54 @@ namespace SSHF.Models.NotifyIconModel
 
             Rectangle rectIcon = GetRectanglePosition;
 
-            window.Hide();
             window.Show();
+            window.Hide();
 
-            point.Y = rectIcon.Y - window.Height + rectIcon.Size.Height / 2;
-            point.X = rectIcon.X - window.Width;
+            System.Windows.Size elementWindow = GetElementPixelSize(window);
+
+            int pixelWidth = (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, elementWindow.Width));
+            int pixelHeight = (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, elementWindow.Height));
+
+            point.Y = rectIcon.Y - pixelHeight + rectIcon.Size.Height / 2;
+            point.X = rectIcon.X - pixelWidth;
 
 
 
             return point;
         }
+
+
+        public System.Windows.Size GetElementPixelSize(UIElement element)
+        {
+            Matrix transformToDevice;
+
+            PresentationSource? source = PresentationSource.FromVisual(element);
+
+            if (source is not null)
+            {
+                transformToDevice = source.CompositionTarget.TransformToDevice;
+            }
+            else
+            {
+                using var source2 = new HwndSource(new HwndSourceParameters());
+
+                transformToDevice = source2.CompositionTarget.TransformToDevice;
+            }
+
+            if (element.DesiredSize == new System.Windows.Size())
+            {
+                element.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+            }
+
+            return (System.Windows.Size)transformToDevice.Transform((Vector)element.DesiredSize);
+           
+               
+        }
+
+
+
+
+
 
         public static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject /// невозможно перебрать элементы если окно не отображется
         {
