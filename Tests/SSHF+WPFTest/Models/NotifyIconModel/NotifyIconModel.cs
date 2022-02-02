@@ -162,6 +162,10 @@ namespace SSHF.Models.NotifyIconModel
 
             PresentationSource? source = PresentationSource.FromVisual(element);
 
+           //DpiScale aa = VisualTreeHelper.GetDpi(element);
+
+
+
             if (source is not null)
             {
                 transformToDevice = source.CompositionTarget.TransformToDevice;

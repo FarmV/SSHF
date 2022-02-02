@@ -8,6 +8,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>True</UseWindowsForms>
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
     
   <ItemGroup>
@@ -31,5 +32,7 @@
     <Resource Include="Views\Windows\MainWindow\MainWindowRes\F_Logo.png" />
     <Resource Include="Views\Windows\MainWindow\MainWindowRes\F_Logo2.png" />
   </ItemGroup>
+
+
 
 </Project>
