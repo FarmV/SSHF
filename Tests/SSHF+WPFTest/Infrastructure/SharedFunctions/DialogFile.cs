@@ -8,9 +8,9 @@ using Microsoft.Win32;
 
 namespace SSHF.Infrastructure.SharedFunctions
 {
-    internal class DialogFile
+    internal static class DialogFile
     {
-        bool OpenFile(string Title, out string? SelectedFile, string Filter = "Все файлы (*.*)|*.*")
+        internal static bool OpenFile(string Title, out string? SelectedFile, string Filter = "Все файлы (*.*)|*.*")
         {
             OpenFileDialog? fileDialog = new OpenFileDialog
             {
@@ -30,7 +30,7 @@ namespace SSHF.Infrastructure.SharedFunctions
             return true;
         }
 
-        bool OpenFiles(string Title, out IEnumerable<string> SelectedFile, string Filter = "Все файлы (*.*)|*.*")
+        internal static bool OpenFiles(string Title, out IEnumerable<string> SelectedFile, string Filter = "Все файлы (*.*)|*.*")
         {
             OpenFileDialog? fileDialog = new OpenFileDialog
             {

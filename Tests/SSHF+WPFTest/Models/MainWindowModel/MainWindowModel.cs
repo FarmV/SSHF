@@ -83,7 +83,7 @@ namespace SSHF.Models.MainWindowModel
 
         void RegisterFunctions()
         {
-            _FuncAndKeyHadler.RegisterAFunction("CanCommandExecuteRefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => {_ViewModel.RefreshOffCommand.Execute(new object()); }), true);           
+            _FuncAndKeyHadler.RegisterAFunction("RefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => {_ViewModel.RefreshOffCommand.Execute(new object()); }), true);           
         }
 
 
@@ -92,7 +92,25 @@ namespace SSHF.Models.MainWindowModel
 
         #region Выбор фала изображения
 
-        public void SelectFileExecute(object? parameter) => _ViewModel.RefreshWindow = false;
+        public void SelectFileExecute(object? parameter)
+        {
+            if (DialogFile.OpenFile("Выбор изображения", out var filePath) is false) return;
+
+            FileInfo file = new FileInfo(filePath);
+
+            BitmapImage? image = IntegratingImages.SetImageToMemoryFromDrive(new Uri(file.FullName, UriKind.Absolute));
+
+            if (image is null)
+            {
+                System.Windows.Forms.MessageBox.Show($"Не удалось обработать файл изображения.{Environment.NewLine}Проверте расширение файла.","Ошибка",MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            };
+
+            _ViewModel.Image = image;
+
+         
+
+        }
         
         public bool IsExecuteSelectFile(object? parameter)
         {
