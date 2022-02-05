@@ -44,6 +44,7 @@ namespace SSHF.Infrastructure.SharedFunctions
               Image.UriSource = path;
               Image.CacheOption = BitmapCacheOption.OnLoad;
               Image.EndInit();
+              RenderOptions.SetBitmapScalingMode(Image, BitmapScalingMode.NearestNeighbor);
               return Image;
             }
             catch (Exception)
