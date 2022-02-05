@@ -35,7 +35,7 @@
     <WrapPanel x:Name="Pnael1" VerticalAlignment="Center" HorizontalAlignment="Center">
         <Button 
             x:Name="box1"
-            Command ="{Binding RefreshON}"          
+            Command ="{Binding RefreshOnCommand}"          
             Margin="0,0,0,0" 
             MinWidth="512" 
             MaxWidth="512" 
@@ -56,7 +56,7 @@
             <behaviors:Interaction.Triggers>
                 <behaviors:EventTrigger EventName="MouseRightButtonUp">
 
-                    <behaviors:InvokeCommandAction Command="{Binding RefreshON}"/>
+                    <behaviors:InvokeCommandAction Command="{Binding SelectFileCommand}"/>
 
                 </behaviors:EventTrigger>
             </behaviors:Interaction.Triggers>

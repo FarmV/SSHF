@@ -56,7 +56,7 @@ namespace SSHF.Infrastructure.SharedFunctions
         }
 
 
-        internal static Uri GetUri(string resourcePath)
+        internal static Uri GetUriApp(string resourcePath)
         {
             var uri = string.Format(
                 "pack://application:,,,/{0};component/{1}"

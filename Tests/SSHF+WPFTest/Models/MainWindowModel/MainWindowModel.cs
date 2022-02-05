@@ -83,14 +83,25 @@ namespace SSHF.Models.MainWindowModel
 
         void RegisterFunctions()
         {
-            _FuncAndKeyHadler.RegisterAFunction("CanCommandExecuteRefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => {_ViewModel.RefreshOFF.Execute(new object()); }), true);           
+            _FuncAndKeyHadler.RegisterAFunction("CanCommandExecuteRefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => {_ViewModel.RefreshOffCommand.Execute(new object()); }), true);           
         }
 
 
         #endregion
 
 
-       // System.Windows.Media.ImageSource image = new System.Windows.Media.ImageSource().
+        #region Выбор фала изображения
+
+        public void SelectFileExecute(object? parameter) => _ViewModel.RefreshWindow = false;
+        
+        public bool IsExecuteSelectFile(object? parameter)
+        {
+            return true;
+        }
+
+
+        #endregion
+
 
     }
 }
