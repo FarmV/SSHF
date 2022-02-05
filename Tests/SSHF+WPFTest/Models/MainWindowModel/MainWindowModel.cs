@@ -87,12 +87,10 @@ namespace SSHF.Models.MainWindowModel
         }
 
 
-
-
-
-
-
         #endregion
+
+
+       // System.Windows.Media.ImageSource image = new System.Windows.Media.ImageSource().
 
     }
 }

@@ -15,7 +15,7 @@
     
     <!--#region Это грид-->
     <Grid>
-
+        <Button MaxWidth="100" VerticalAlignment="Center" MinWidth="100" MinHeight="100"></Button>
     </Grid>
     <!--#endregion-->
     

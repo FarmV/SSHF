@@ -10,6 +10,8 @@ using SSHF.Infrastructure;
 using SSHF.ViewModels.Base;
 using SSHF.Models.MainWindowModel;
 using SSHF.Models;
+using System.Windows.Media.Imaging;
+using SSHF.Infrastructure.SharedFunctions;
 
 namespace SSHF.ViewModels.MainWindowViewModel
 {
@@ -22,7 +24,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
         public MainWindowViewModel()
         {
-            _Model = new MainWindowModel(this);            
+            _Model = new MainWindowModel(this);
         }
         #region Заголовок окна
 
@@ -42,4 +44,24 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
 
         }
-    }}
+
+
+
+        private BitmapImage? _ImageForButton;
+
+        public BitmapImage Image
+        {
+            get
+            {
+                if (_ImageForButton is null) _ImageForButton = IntegratingImages.SetImageToMemoryFromDrive(IntegratingImages.GetUri("Views/Windows/MainWindow/MainWindowRes/F_Logo2.png"));
+                if (_ImageForButton is null) throw new InvalidOperationException();
+
+                return _ImageForButton;
+            }
+            set => Set(ref _ImageForButton, value);
+        }
+
+
+
+    }
+}

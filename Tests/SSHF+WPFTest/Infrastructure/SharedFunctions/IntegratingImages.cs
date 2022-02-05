@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,13 +11,13 @@ using System.Windows.Media.Imaging;
 
 namespace SSHF.Infrastructure.SharedFunctions
 {
-    internal class IntegratingImages
+    internal static class IntegratingImages
     {
         #region Интеграция изображений
 
         #region Извлечение изображения из буфера обмена
         /// <returns>Возращает изображание, помещённое в память, из буфера обмена. Или пустую ссылку.</returns>
-        BitmapSource? GetBufferImage()
+        internal static BitmapSource? GetBufferImage()
         {
 
             BitmapSource? image = Clipboard.GetImage();
@@ -33,21 +34,38 @@ namespace SSHF.Infrastructure.SharedFunctions
         ///     <br>Путь извлечения изображения <see cref="Uri"/> <paramref name="path"/></br>
         /// </summary>
         /// <returns>Возращает изображание, помещённое в память, или вызывает исключение.</returns>
-        BitmapImage SetImageToMemoryFromDrive(Uri path)
+        internal static BitmapImage? SetImageToMemoryFromDrive(Uri path)
         {
 
-            if (System.IO.File.Exists(path.AbsolutePath))
+            try
             {
-                BitmapImage Image = new BitmapImage();              // Инициализаци что бы файл был в памяти и не заянят
-                Image.BeginInit();
-                Image.UriSource = path;
-                Image.CacheOption = BitmapCacheOption.OnLoad;
-                Image.EndInit();
-
-                return Image;
+              BitmapImage Image = new BitmapImage();              // Инициализаця файл был в памяти и не заянят
+              Image.BeginInit();
+              Image.UriSource = path;
+              Image.CacheOption = BitmapCacheOption.OnLoad;
+              Image.EndInit();
+              return Image;
             }
-            else throw new ArgumentException("SetImage Fail", nameof(path));
+            catch (Exception)
+            {
+                BitmapImage? Image = null;
+                
+                return Image;
+            }                          
         }
+
+
+        internal static Uri GetUri(string resourcePath)
+        {
+            var uri = string.Format(
+                "pack://application:,,,/{0};component/{1}"
+                , Assembly.GetExecutingAssembly().GetName().Name
+                , resourcePath
+            );
+
+            return new Uri(uri);
+        }
+
         #endregion
 
         #region Сохранение изображения на диск
@@ -56,7 +74,7 @@ namespace SSHF.Infrastructure.SharedFunctions
         ///     <br> Изображение для сохранения <see cref="BitmapSource"/> <paramref name="Image"/></br>
         /// </summary>
         /// <returns>Успешность операции.</returns>
-        bool SafeImage(Uri path, BitmapSource Image)
+        internal static bool SafeImage(Uri path, BitmapSource Image)
         {
             try
             {
