@@ -16,18 +16,19 @@ using System.Windows.Forms;
 
 using static SSHF.Infrastructure.SharedFunctions.CursorFunction;
 using SSHF.ViewModels.MainWindowViewModel;
+using SSHF.Models.NotifyIconModel;
 
 namespace SSHF.Models.MainWindowModel
 {
     internal class MainWindowModel
     {
         readonly MainWindowViewModel _ViewModel;
-        readonly System.Windows.Forms.NotifyIcon? _Icon;
+       // readonly System.Windows.Forms.NotifyIcon? _Icon;
         public MainWindowModel(MainWindowViewModel ViewModel)
         {
-            _ViewModel = ViewModel;
+            using (_ViewModel = ViewModel)
             RegisterFunctions();
-
+            
         }
 
 
@@ -36,7 +37,7 @@ namespace SSHF.Models.MainWindowModel
         POINT _CursorPoint = default;
         readonly POINT _PositionShift = new POINT
         {
-            X = (1920 / 2) + 15,
+            X = (1920 / 2),
             Y = (1080 / 2)
         };
 
@@ -46,8 +47,10 @@ namespace SSHF.Models.MainWindowModel
             while (_ViewModel.RefreshWindow)
             {
                 GetCursorPos(out _CursorPoint);
-                WindowFunction.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X - _PositionShift.X, _CursorPoint.Y - _PositionShift.Y, 1920, 1080, 0x0400);
+                WindowFunction.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X - _PositionShift.X, _CursorPoint.Y - _PositionShift.Y, 1920, 1080, 0x0400); // todo Отвязать от разрешения. Узнать как комибинировать флаги.
             }
+
+          
 
         });
         public bool IsRefreshWindowOn(object? parameter) => _ViewModel.RefreshWindow is false;
@@ -105,6 +108,9 @@ namespace SSHF.Models.MainWindowModel
                 System.Windows.Forms.MessageBox.Show($"Не удалось обработать файл изображения.{Environment.NewLine}Проверте расширение файла.","Ошибка",MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             };
+
+
+            
 
             _ViewModel.Image = image;
 

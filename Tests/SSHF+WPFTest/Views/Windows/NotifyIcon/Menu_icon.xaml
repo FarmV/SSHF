@@ -31,7 +31,7 @@
         <Button FontFamily="Franklin Gothic" FontSize="32" Content="1"></Button>
         <Button FontFamily="Franklin Gothic" FontSize="32" Content="2"></Button>
         <Button FontFamily="Franklin Gothic" FontSize="32" Content="3"></Button>
-        <Button FontFamily="Franklin Gothic" FontSize="32" Content="4"></Button>
+        <Button Command="{Binding ShutdownAppCommand}" FontFamily="Franklin Gothic" FontSize="32" Content="Закрыть"></Button>
     </StackPanel>
 
 

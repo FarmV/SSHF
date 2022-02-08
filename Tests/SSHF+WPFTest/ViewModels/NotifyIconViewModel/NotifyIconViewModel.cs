@@ -23,7 +23,7 @@ namespace SSHF.ViewModels.NotifyIconViewModel
         readonly NotifyIconModel _model;
         public NotifyIconViewModel()
         {          
-            _model = new NotifyIconModel(this);
+           _model = new NotifyIconModel(this);
 
             
         }
@@ -37,10 +37,10 @@ namespace SSHF.ViewModels.NotifyIconViewModel
         }
 
 
-       // public ICommand CheckOutside => new RelayCommand(_model.CheckClickOutsideExecute, _model.IsExecuteCheckClickOutside);
+        // public ICommand CheckOutside => new RelayCommand(_model.CheckClickOutsideExecute, _model.IsExecuteCheckClickOutside);
 
 
-
+        public ICommand ShutdownAppCommand => new RelayCommand(_model.ShutdownAppExecute, _model.IsExecuteShutdownApp);
 
 
 

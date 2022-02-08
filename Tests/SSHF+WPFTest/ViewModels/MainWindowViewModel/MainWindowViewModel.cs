@@ -20,11 +20,12 @@ namespace SSHF.ViewModels.MainWindowViewModel
         public override object ProvideValue(IServiceProvider serviceProvider) => this;
 
         readonly MainWindowModel _Model;
-
+        readonly CursorFunction _Cursor;
 
         public MainWindowViewModel()
         {
             _Model = new MainWindowModel(this);
+            _Cursor = new CursorFunction();
         }
         #region Заголовок окна
 

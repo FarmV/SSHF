@@ -6,49 +6,46 @@
  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
  xmlns:l="clr-namespace:SSHF"
- MaxWidth="1920"
- MaxHeight="1080"
  xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
  Title="MainWindow" 
  xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
- AllowsTransparency="True"
-
+ xmlns:cursor="clr-namespace:SSHF.Infrastructure.SharedFunctions"
+    AllowsTransparency="True"
+ SizeToContent="WidthAndHeight"
  Background="Transparent"
  WindowStyle="None" 
+ Width="1920"
+    Height="1080"
 
- Topmost="True">
+ Topmost="True" WindowStartupLocation="CenterScreen">
 
     <Window.DataContext>
         <vm:MainWindowViewModel/>
     </Window.DataContext>
 
 
-    <!--<Grid>
-        <Grid.Background>
-            <ImageBrush ImageSource="/Views/Windows/MainWindowRes/F_Logo.png" Stretch="Uniform"></ImageBrush>
-        </Grid.Background>
-    </Grid>-->
 
-
-
-
-    <WrapPanel x:Name="Pnael1" VerticalAlignment="Center" HorizontalAlignment="Center">
-        <Button 
-            x:Name="box1"
+    <Canvas Height="1080" Width="1920" >
+        <!--<Border BorderThickness="1" BorderBrush="Coral" VerticalAlignment="Top">-->
+            <Button Canvas.Left="832" Canvas.Top="412" x:Name="But" Style="{DynamicResource ButtonImage}" 
+            
             Command ="{Binding RefreshOnCommand}"          
             Margin="0,0,0,0" 
-            MinWidth="512" 
-            MaxWidth="512" 
-            MinHeight="512"
-            MaxHeight="512"
-           
+          
+            Height="256"
+            Width="256"
+            
        >
-            <Button.Background>
+
+
+                <Button.Background>
+
                 <ImageBrush ImageSource="{Binding Image}"/>
             </Button.Background>
-            <Button.Foreground>
+           
+                <Button.Foreground>
                 <ImageBrush ImageSource="{Binding Image}"/>
-            </Button.Foreground>
+                 </Button.Foreground>
             <Button.OpacityMask>
                 <ImageBrush ImageSource="{Binding Image}"/>
             </Button.OpacityMask>
@@ -56,54 +53,22 @@
             <behaviors:Interaction.Triggers>
                 <behaviors:EventTrigger EventName="MouseRightButtonUp">
 
-                    <behaviors:InvokeCommandAction Command="{Binding SelectFileCommand}"/>
-
+                    <!--<behaviors:InvokeCommandAction Command="{Binding ElementName=Stack1, Path=Visibility}"/>-->
+                    <behaviors:ChangePropertyAction  TargetObject="{Binding ElementName=Stack1}" PropertyName="Visibility" Value="Visible"/>
                 </behaviors:EventTrigger>
             </behaviors:Interaction.Triggers>
 
-
-
-
-
-
         </Button>
+        <!--</Border>-->
+        <StackPanel Canvas.Left="1088" Canvas.Top="212" x:Name="Stack1" Visibility="Hidden">
+            <Button FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выбрать картинку" Command="{Binding Path=SelectFileCommand}"></Button>
+            <Button FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выйти" >
+
+            </Button>
+        </StackPanel>
+    </Canvas>
 
 
-        <!--<Button 
-            x:Name="box2"                      
-            Command ="{Binding Refresh}"         
-            MinWidth="512" 
-            MaxWidth="512" 
-            MinHeight="512"
-            MaxHeight="512"
-       >
-
-            <Button.Background>
-                <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo2.png"/>
-            </Button.Background>
-            <Button.Foreground>
-                <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo2.png"/>
-            </Button.Foreground>
-            <Button.OpacityMask>
-                <ImageBrush ImageSource="/Views/Windows/MainWindow/MainWindowRes/F_Logo.png"/>
-            </Button.OpacityMask>
-
-        </Button>-->
-
-
-        <!--<Image Width="512" Height="512" Source="\Views\Windows\MainWindowRes\F_Logo2.png"/>-->
-
-        <!--<Image
-              Width="1200" Height="900"
-              Source="\Views\Windows\MainWindowRes\F_Logo.png"
-              Margin="10"
-              HorizontalAlignment="Left">
-            <Image.OpacityMask>
-                <ImageBrush ImageSource="\Views\Windows\MainWindowRes\F_Logo.png">
-                </ImageBrush>
-            </Image.OpacityMask>
-        </Image>-->
-    </WrapPanel>
 
 
 

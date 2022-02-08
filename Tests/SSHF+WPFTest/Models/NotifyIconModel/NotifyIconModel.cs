@@ -23,15 +23,15 @@ namespace SSHF.Models.NotifyIconModel
 
     internal class NotifyIconModel
     {
-        public static readonly NotifyIcon _notifyIcon = new NotifyIcon();
-        public static Rectangle GetRectanglePosition => NotifyIconHelper.GetIconRect(_notifyIcon);
+        internal static readonly NotifyIcon _notifyIcon = new NotifyIcon();
+        internal static Rectangle GetRectanglePosition => NotifyIconHelper.GetIconRect(_notifyIcon);
 
-        public static volatile bool NotificationMenuIsOpen = default;
+        internal static volatile bool NotificationMenuIsOpen = default;
 
 
         readonly NotifyIconViewModel _iconViewModel;
 
-        readonly static Action DropHandelrHook = new Action(() =>
+        readonly static Action DropHandelerHook = new Action(() =>
         {
             App.mouseHook.LeftButtonUp -= MouseHookHandler;
             App.mouseHook.DoubleClick -= MouseHookHandler;
@@ -41,12 +41,12 @@ namespace SSHF.Models.NotifyIconModel
 
         public NotifyIconModel(NotifyIconViewModel ViewModel)
         {
-            _iconViewModel = ViewModel;
-            // _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon($"{AppContext.BaseDirectory}{Process.GetCurrentProcess().ProcessName}.exe");
-            _notifyIcon.Icon = Icon.ExtractAssociatedIcon(@"D:\Downloads\UnderRail GOG\setup_underrail_1.1.4.5_(49811).exe");
+            using (_iconViewModel = ViewModel)
+                // _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon($"{AppContext.BaseDirectory}{Process.GetCurrentProcess().ProcessName}.exe");
+            using( _notifyIcon.Icon = Icon.ExtractAssociatedIcon(@"D:\Downloads\UnderRail GOG\setup_underrail_1.1.4.5_(49811).exe"))
             _notifyIcon.Visible = true;
             _notifyIcon.MouseDown += NotifyIcon_MouseDown;
-            
+
         }
 
         private void NotifyIcon_MouseDown(object? sender, MouseEventArgs e)
@@ -59,19 +59,21 @@ namespace SSHF.Models.NotifyIconModel
                 App._menu_icon.Hide();
                 NotificationMenuIsOpen = false;
 
-                DropHandelrHook.Invoke();
+                DropHandelerHook.Invoke();
 
 
                 return;
             }
             if (!NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
+                App._menu_icon.Show();
+                App._menu_icon.Hide();
                 System.Windows.Point pointMenu = GetRectCorrect(App._menu_icon);
 
                 WindowInteropHelper helper = new WindowInteropHelper(App._menu_icon);
 
                 // App._menu_icon.Left = pointMenu.X;
-               //  App._menu_icon.Top = pointMenu.Y;
+                //  App._menu_icon.Top = pointMenu.Y;
                 //App._menu_icon.Topmost = true;
 
                 WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App._menu_icon.Width), Convert.ToInt32(App._menu_icon.Height), 0x0400);
@@ -81,7 +83,7 @@ namespace SSHF.Models.NotifyIconModel
 
 
                 App._menu_icon.Show();
-               // WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App._menu_icon.Width), Convert.ToInt32(App._menu_icon.Height), 0x0400);
+                // WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App._menu_icon.Width), Convert.ToInt32(App._menu_icon.Height), 0x0400);
 
                 App.mouseHook.LeftButtonUp += MouseHookHandler;
                 App.mouseHook.DoubleClick += MouseHookHandler;
@@ -116,7 +118,7 @@ namespace SSHF.Models.NotifyIconModel
                         App._menu_icon.Hide();
                         NotificationMenuIsOpen = false;
 
-                        DropHandelrHook.Invoke();
+                        DropHandelerHook.Invoke();
                         return;
 
                     }
@@ -127,20 +129,20 @@ namespace SSHF.Models.NotifyIconModel
                     App._menu_icon.Hide();
                     NotificationMenuIsOpen = false;
 
-                    DropHandelrHook.Invoke();
+                    DropHandelerHook.Invoke();
                     return;
                 }
             }
         }
 
-        private System.Windows.Point GetRectCorrect(Window window)
+        internal static System.Windows.Point GetRectCorrect(Window window)
         {
             System.Windows.Point point = new System.Windows.Point();
 
             Rectangle rectIcon = GetRectanglePosition;
 
-            window.Show();
-            window.Hide();
+            //window.Show();
+            //window.Hide();
 
             System.Windows.Size elementWindow = GetElementPixelSize(window);
 
@@ -156,13 +158,13 @@ namespace SSHF.Models.NotifyIconModel
         }
 
 
-        public System.Windows.Size GetElementPixelSize(UIElement element)
+        internal static System.Windows.Size GetElementPixelSize(UIElement element)
         {
             Matrix transformToDevice;
 
             PresentationSource? source = PresentationSource.FromVisual(element);
 
-           //DpiScale aa = VisualTreeHelper.GetDpi(element);
+            //DpiScale aa = VisualTreeHelper.GetDpi(element);
 
 
 
@@ -183,36 +185,40 @@ namespace SSHF.Models.NotifyIconModel
             }
 
             return (System.Windows.Size)transformToDevice.Transform((Vector)element.DesiredSize);
-           
-               
+            
         }
 
 
 
 
 
+        public void ShutdownAppExecute(object? parameter) {_notifyIcon.Dispose(); App.Current.Shutdown();}
 
-        public static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject /// невозможно перебрать элементы если окно не отображется
-        {
-            if (depObj != null)
-            {
-                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
-                {
-                    DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
-                    if (child != null && child is T)
-                    {
-                        yield return (T)child;
-                    }
 
-                    foreach (T childOfChild in FindVisualChildren<T>(child))
-                    {
-                        yield return childOfChild;
-                    }
-                }
-            }
-        }
+        public bool IsExecuteShutdownApp(object? parameter) => true;
 
-        private class NotifyIconHelper
+
+        //public static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject /// невозможно перебрать элементы если окно не отображется
+        //{
+        //    if (depObj != null)
+        //    {
+        //        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+        //        {
+        //            DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
+        //            if (child != null && child is T)
+        //            {
+        //                yield return (T)child;
+        //            }
+
+        //            foreach (T childOfChild in FindVisualChildren<T>(child))
+        //            {
+        //                yield return childOfChild;
+        //            }
+        //        }
+        //    }
+        //}
+
+        internal class NotifyIconHelper
         {
 
             public static Rectangle GetIconRect(NotifyIcon icon)
