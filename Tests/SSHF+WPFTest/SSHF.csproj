@@ -31,6 +31,7 @@
     <Reference Include="System.Windows.Forms">
       <HintPath>..\..\..\..\..\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\6.0.0\ref\net6.0\System.Windows.Forms.dll</HintPath>
       <SpecificVersion>True</SpecificVersion>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Resource Include="Views\Windows\MainWindow\MainWindowRes\F_Logo2.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

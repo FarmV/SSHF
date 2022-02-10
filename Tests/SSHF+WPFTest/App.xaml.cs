@@ -12,11 +12,13 @@ using SSHF.ViewModels.MainWindowViewModel;
 using SSHF.Views.Windows.NotifyIcon;
 using GlobalLowLevelHooks;
 using System.Threading;
+using Linearstar.Windows.RawInput;
+using System.Windows.Forms;
 
 namespace SSHF
 {
     
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
        // readonly static public System.Windows.Window _GlobalWindowFast = new Func<MainWindow>(() => { if (App.Current.MainWindow is not MainWindow window) throw new NullReferenceException("MainWindow is null?"); return window; }).Invoke();
 
@@ -41,6 +43,7 @@ namespace SSHF
 
             _menu_icon = window;
 
+            _WindowInput = new RawInputReceiverWindow();
 
         }
         public App()
@@ -49,26 +52,61 @@ namespace SSHF
             //threadMouse.Start();
             // mouseHook.Install();
             //mouseHook.Install();// Почему-то инсталяция в MODEL окна крашит визуальный конструктор
-            S();
+            //try
+            //{
+            //    RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse, RawInputDeviceFlags.ExInputSink | RawInputDeviceFlags.NoLegacy, _WindowInput.Handle);
+            //    // RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse, RawInputDeviceFlags.ExInputSink | RawInputDeviceFlags.NoLegacy, Visy );
+            //    System.Windows.Forms.Application.Run();
+            //}
+            //finally
+            //{
+            //    RawInputDevice.UnregisterDevice(HidUsageAndPage.Mouse);
+            //}
         }
 
-        async void S()
-        {
-          Task star = new Task(new Action(() => { mouseHook.Install(); }));
-          star.Start();
-          await star.ConfigureAwait(false);
-        }
+        internal readonly static RawInputReceiverWindow _WindowInput;
 
-        protected override void OnStartup(StartupEventArgs e)
-        {
-            base.OnStartup(e);
-            
-            // _displayRegistry.ShowPresentation(_NotifyIconViewModel as object);
-            //_displayRegistry.HidePresentation(_NotifyIconViewModel as object);
-
-            //await _displayRegistry.ShowModalPresentation(new NotifyIconViewModel() as object);
-
-
-        }
     }
+        class RawInputReceiverWindow : NativeWindow
+        {
+            public event EventHandler<RawInputEventArgs>? Input;
+
+            public RawInputReceiverWindow()
+            {
+                CreateHandle(new CreateParams
+                {
+                    X = 0,
+                    Y = 0,
+                    Width = 0,
+                    Height = 0,
+                    Style = 0x800000,
+                });
+            }
+
+            protected override void WndProc(ref Message m)
+            {
+                const int WM_INPUT = 0x00FF;
+
+                if (m.Msg == WM_INPUT)
+                {
+                    var data = RawInputData.FromHandle(m.LParam);
+
+                    Input?.Invoke(this, new RawInputEventArgs(data));
+                }
+
+                base.WndProc(ref m);
+            }
+        }
+
+        class RawInputEventArgs : EventArgs
+        {
+            public RawInputEventArgs(RawInputData data)
+            {
+                Data = data;
+            }
+
+            public RawInputData Data { get; }
+        }
+
+    
 }

@@ -12,6 +12,8 @@ using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media;
 
+using Linearstar.Windows.RawInput;
+
 using SSHF.Infrastructure.SharedFunctions;
 
 using SSHF.ViewModels.NotifyIconViewModel;
@@ -31,13 +33,13 @@ namespace SSHF.Models.NotifyIconModel
 
         readonly NotifyIconViewModel _iconViewModel;
 
-        readonly static Action DropHandelerHook = new Action(() =>
-        {
-            App.mouseHook.LeftButtonUp -= MouseHookHandler;
-            App.mouseHook.DoubleClick -= MouseHookHandler;
-            App.mouseHook.RightButtonUp -= MouseHookHandler;
-            App.mouseHook.MouseWheel -= MouseHookHandler;
-        });
+        //readonly static Action DropHandelerHook = new Action(() =>
+        //{
+        //    App.mouseHook.LeftButtonUp -= MouseHookHandler;
+        //    App.mouseHook.DoubleClick -= MouseHookHandler;
+        //    App.mouseHook.RightButtonUp -= MouseHookHandler;
+        //    App.mouseHook.MouseWheel -= MouseHookHandler;
+        //});
 
         public NotifyIconModel(NotifyIconViewModel ViewModel)
         {
@@ -59,8 +61,8 @@ namespace SSHF.Models.NotifyIconModel
                 App._menu_icon.Hide();
                 NotificationMenuIsOpen = false;
 
-                DropHandelerHook.Invoke();
 
+               // App._WindowInput.Input -= _WindowInput_Input;
 
                 return;
             }
@@ -85,10 +87,13 @@ namespace SSHF.Models.NotifyIconModel
                 App._menu_icon.Show();
                 // WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App._menu_icon.Width), Convert.ToInt32(App._menu_icon.Height), 0x0400);
 
-                App.mouseHook.LeftButtonUp += MouseHookHandler;
-                App.mouseHook.DoubleClick += MouseHookHandler;
-                App.mouseHook.RightButtonUp += MouseHookHandler;
-                App.mouseHook.MouseWheel += MouseHookHandler;
+                //App.mouseHook.LeftButtonUp += MouseHookHandler;
+                //App.mouseHook.DoubleClick += MouseHookHandler;
+                //App.mouseHook.RightButtonUp += MouseHookHandler;
+                //App.mouseHook.MouseWheel += MouseHookHandler;
+
+
+               //App._WindowInput.Input += _WindowInput_Input;
 
                 NotificationMenuIsOpen = true;
 
@@ -96,8 +101,14 @@ namespace SSHF.Models.NotifyIconModel
 
         }
 
-        private static void MouseHookHandler(GlobalLowLevelHooks.MouseHook.MSLLHOOKSTRUCT mouseStruct)
+        private void _WindowInput_Input(object? sender, RawInputEventArgs e)
         {
+            RawInputData? data = e.Data;
+            RawInputMouseData? mouseData = data as RawInputMouseData;
+
+            if (mouseData is null || mouseData.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
+
+           
             if (!App._menu_icon.IsVisible) return;
             if (App._menu_icon.IsMouseOver) return;
             if (App._menu_icon.IsVisible)
@@ -118,7 +129,8 @@ namespace SSHF.Models.NotifyIconModel
                         App._menu_icon.Hide();
                         NotificationMenuIsOpen = false;
 
-                        DropHandelerHook.Invoke();
+                        //DropHandelerHook.Invoke();
+                        App._WindowInput.Input -= _WindowInput_Input;
                         return;
 
                     }
@@ -129,11 +141,52 @@ namespace SSHF.Models.NotifyIconModel
                     App._menu_icon.Hide();
                     NotificationMenuIsOpen = false;
 
-                    DropHandelerHook.Invoke();
+                    //DropHandelerHook.Invoke();
+                    App._WindowInput.Input -= _WindowInput_Input;
                     return;
                 }
             }
+
         }
+
+        //private static void MouseHookHandler(GlobalLowLevelHooks.MouseHook.MSLLHOOKSTRUCT mouseStruct)
+        //{
+        //    if (!App._menu_icon.IsVisible) return;
+        //    if (App._menu_icon.IsMouseOver) return;
+        //    if (App._menu_icon.IsVisible)
+        //    {
+        //        Rectangle iconPos = GetRectanglePosition;
+        //        //System.Windows.Point cursorPos = CursorFunction.GetCursorXY(App._menu_icon);
+        //        // System.Windows.Point cursorPos2 = CursorFunction.GetWindosPosToCursor(App._menu_icon);
+        //        System.Windows.Point cursorPos = CursorFunction.GetCursorPosition();
+
+
+
+
+        //        if (Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width))
+        //        {
+        //            if (Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)) return;
+        //            if (!(Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)))
+        //            {
+        //                App._menu_icon.Hide();
+        //                NotificationMenuIsOpen = false;
+
+        //                DropHandelerHook.Invoke();
+        //                return;
+
+        //            }
+        //            return;
+        //        };
+        //        if (!(Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width)))
+        //        {
+        //            App._menu_icon.Hide();
+        //            NotificationMenuIsOpen = false;
+
+        //            DropHandelerHook.Invoke();
+        //            return;
+        //        }
+        //    }
+        //}
 
         internal static System.Windows.Point GetRectCorrect(Window window)
         {

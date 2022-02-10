@@ -58,7 +58,7 @@
                 <ImageBrush ImageSource="{Binding Image}"/>
             </Button.Foreground>-->
             <Button.OpacityMask              >
-                <ImageBrush ImageSource="{Binding ImageOpacity}"/>
+                <ImageBrush ImageSource="{Binding Image}"/>
             </Button.OpacityMask>
 
             <behaviors:Interaction.Triggers>
