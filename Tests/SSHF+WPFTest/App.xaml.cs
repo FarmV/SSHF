@@ -11,6 +11,7 @@ using SSHF.ViewModels.NotifyIconViewModel;
 using SSHF.ViewModels.MainWindowViewModel;
 using SSHF.Views.Windows.NotifyIcon;
 using GlobalLowLevelHooks;
+using System.Threading;
 
 namespace SSHF
 {
@@ -44,8 +45,20 @@ namespace SSHF
         }
         public App()
         {
-            mouseHook.Install();// Почему-то инсталяция в MODEL окна крашит визуальный конструктор
+            //Thread threadMouse = new Thread(new ThreadStart(() => { mouseHook.Install(); }));
+            //threadMouse.Start();
+            // mouseHook.Install();
+            //mouseHook.Install();// Почему-то инсталяция в MODEL окна крашит визуальный конструктор
+            S();
         }
+
+        async void S()
+        {
+          Task star = new Task(new Action(() => { mouseHook.Install(); }));
+          star.Start();
+          await star.ConfigureAwait(false);
+        }
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);

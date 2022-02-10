@@ -26,28 +26,39 @@
 
 
     <Canvas Height="1080" Width="1920" >
+
         <!--<Border BorderThickness="1" BorderBrush="Coral" VerticalAlignment="Top">-->
-            <Button Canvas.Left="832" Canvas.Top="412" x:Name="But" Style="{DynamicResource ButtonImage}" 
+        <Button Canvas.Left="832"
+                    Canvas.Top="412"
+                    x:Name="But"
+                    Style="{DynamicResource ButtonImage}" 
             
             Command ="{Binding RefreshOnCommand}"          
             Margin="0,0,0,0" 
           
-            Height="256"
-            Width="256"
-            
+            Height="512"
+            Width="512"
+                    
+            Background="#FFCB00"
        >
+            <!--<Image
+                Source="{Binding Image}"
+                Height="512"
+                Width="512"
+                >
+                
+            </Image>-->
 
+            <!--<Image Source="{Binding Image}"/>-->
+            <!--<Button.Background>
+                <ImageBrush ImageSource="{Binding Image}"/>
+            </Button.Background>-->
 
-                <Button.Background>
-
+            <!--<Button.Foreground>
                 <ImageBrush ImageSource="{Binding Image}"/>
-            </Button.Background>
-           
-                <Button.Foreground>
-                <ImageBrush ImageSource="{Binding Image}"/>
-                 </Button.Foreground>
-            <Button.OpacityMask>
-                <ImageBrush ImageSource="{Binding Image}"/>
+            </Button.Foreground>-->
+            <Button.OpacityMask              >
+                <ImageBrush ImageSource="{Binding ImageOpacity}"/>
             </Button.OpacityMask>
 
             <behaviors:Interaction.Triggers>

@@ -63,6 +63,21 @@ namespace SSHF.ViewModels.MainWindowViewModel
         }
 
 
+        private BitmapImage? _ImageForButtonOpacity;
+
+        public BitmapImage ImageOpacity
+        {
+            get
+            {
+                if (_ImageForButtonOpacity is null) _ImageForButtonOpacity = IntegratingImages.ImageScale(Image);
+                if (_ImageForButtonOpacity is null) throw new InvalidOperationException();
+
+                return _ImageForButtonOpacity;
+            }
+            set => Set(ref _ImageForButtonOpacity, value);
+        }
+
+
 
     }
 }

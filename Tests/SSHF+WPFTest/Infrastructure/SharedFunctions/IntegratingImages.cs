@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -54,6 +56,111 @@ namespace SSHF.Infrastructure.SharedFunctions
                 return Image;
             }                          
         }
+
+        internal static BitmapImage? ImageScale(BitmapImage ImageToScale)
+        {
+
+            try
+            {
+
+
+                ////TransformedBitmap? bitmapSr = new TransformedBitmap();
+
+
+                ////TransformedBitmap myBitmapTransformSource = new TransformedBitmap();
+
+                ////myBitmapTransformSource.BeginInit();
+
+                ////myBitmapTransformSource.Source = ImageToScale;
+
+                //myBitmapTransformSource.Transform = new TransformedBitmap(ImageToScale, new ScaleTransform(1.2, 1.2));
+
+                //myBitmapTransformSource.EndInit();
+
+
+                //FormatConvertedBitmap newFormatedBitmapSource = new FormatConvertedBitmap();
+
+                //newFormatedBitmapSource.BeginInit();
+                //newFormatedBitmapSource.Source = myBitmapTransformSource;
+                //newFormatedBitmapSource.DestinationFormat = PixelFormats.Gray32Float;
+                //newFormatedBitmapSource.EndInit();
+
+
+                //BitmapSource? res =  newFormatedBitmapSource.Source;
+
+
+                 TransformedBitmap? a = new TransformedBitmap(ImageToScale, new ScaleTransform(0.03, 0.03));
+
+              //   BitmapSource? res = a.Source;
+
+
+                RenderOptions.SetBitmapScalingMode(a, BitmapScalingMode.NearestNeighbor);
+
+                // Transform? bb  = a.Transform;
+
+                // TransformedBitmap myBitmapTransformSource = new TransformedBitmap();
+
+                // myBitmapTransformSource.BeginInit();
+
+                // myBitmapTransformSource.Source = ImageToScale;
+
+                // myBitmapTransformSource.Transform = bb;
+
+                // myBitmapTransformSource.EndInit();
+
+                // FormatConvertedBitmap newFormatedBitmapSource = new FormatConvertedBitmap();
+
+                // newFormatedBitmapSource.BeginInit();
+                // newFormatedBitmapSource.Source = myBitmapTransformSource;
+                //// newFormatedBitmapSource.DestinationFormat = PixelFormats.Gray32Float;
+                // newFormatedBitmapSource.EndInit();
+                // //newFormatedBitmapSource.Freeze();
+
+                // // ImageSource source = newFormatedBitmapSource;
+
+
+
+
+                using MemoryStream outStream = new MemoryStream();
+                BitmapEncoder enc = new BmpBitmapEncoder();
+               
+                enc.Frames.Add(BitmapFrame.Create(a));
+                enc.Save(outStream);
+                Bitmap bitmap = new Bitmap(outStream);
+
+                BitmapImage image = BitmapToBitmapImage(bitmap);
+
+                return image;
+
+
+            }
+            catch (Exception)
+            {
+                BitmapImage? ImageNull = null;
+
+                return ImageNull;
+            }
+        }
+
+        internal static BitmapImage BitmapToBitmapImage(Bitmap bitmap)
+        {
+            using (MemoryStream stream = new MemoryStream())
+            {
+                bitmap.Save(stream, ImageFormat.Png); // Pit: When the format is Bmp, no transparency
+
+                stream.Position = 0;
+                BitmapImage result = new BitmapImage();
+                result.BeginInit();
+                // According to MSDN, "The default OnDemand cache option retains access to the stream until the image is needed."
+                // Force the bitmap to load right now so we can dispose the stream.
+                result.CacheOption = BitmapCacheOption.OnLoad;
+                result.StreamSource = stream;
+                result.EndInit();
+                result.Freeze();
+                return result;
+            }
+        }
+
 
 
         internal static Uri GetUriApp(string resourcePath)
