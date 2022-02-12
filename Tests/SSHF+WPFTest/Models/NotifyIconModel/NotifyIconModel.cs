@@ -62,7 +62,7 @@ namespace SSHF.Models.NotifyIconModel
                 NotificationMenuIsOpen = false;
 
 
-               // App._WindowInput.Input -= _WindowInput_Input;
+                App.Input -= _WindowInput_Input;
 
                 return;
             }
@@ -93,7 +93,7 @@ namespace SSHF.Models.NotifyIconModel
                 //App.mouseHook.MouseWheel += MouseHookHandler;
 
 
-               //App._WindowInput.Input += _WindowInput_Input;
+                App.Input += _WindowInput_Input;
 
                 NotificationMenuIsOpen = true;
 
@@ -130,7 +130,7 @@ namespace SSHF.Models.NotifyIconModel
                         NotificationMenuIsOpen = false;
 
                         //DropHandelerHook.Invoke();
-                        App._WindowInput.Input -= _WindowInput_Input;
+                        App.Input -= _WindowInput_Input;
                         return;
 
                     }
@@ -142,7 +142,7 @@ namespace SSHF.Models.NotifyIconModel
                     NotificationMenuIsOpen = false;
 
                     //DropHandelerHook.Invoke();
-                    App._WindowInput.Input -= _WindowInput_Input;
+                    App.Input -= _WindowInput_Input;
                     return;
                 }
             }
