@@ -34,14 +34,6 @@ namespace SSHF.Models.NotifyIconModel
 
         readonly NotifyIconViewModel _iconViewModel;
 
-        //readonly static Action DropHandelerHook = new Action(() =>
-        //{
-        //    App.mouseHook.LeftButtonUp -= MouseHookHandler;
-        //    App.mouseHook.DoubleClick -= MouseHookHandler;
-        //    App.mouseHook.RightButtonUp -= MouseHookHandler;
-        //    App.mouseHook.MouseWheel -= MouseHookHandler;
-        //});
-
         public NotifyIconModel(NotifyIconViewModel ViewModel)
         {
             using (_iconViewModel = ViewModel)
@@ -73,37 +65,22 @@ namespace SSHF.Models.NotifyIconModel
             {
                 App._displayRegistry.ShowView(_iconViewModel);
                 App._displayRegistry.HideView(_iconViewModel);
-               // App._menu_icon.Show();
-               // App._menu_icon.Hide();
+              
                 System.Windows.Point pointMenu = GetRectCorrect(App._displayRegistry.GetWindow(_iconViewModel));
 
                 WindowInteropHelper helper = new WindowInteropHelper(App._displayRegistry.GetWindow(_iconViewModel));
 
-                // App._menu_icon.Left = pointMenu.X;
-                //  App._menu_icon.Top = pointMenu.Y;
-                //App._menu_icon.Topmost = true;
 
                 WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App._displayRegistry.GetWindow(_iconViewModel).Width), Convert.ToInt32(App._displayRegistry.GetWindow(_iconViewModel).Height), 0x0400);
 
 
-
-
                 App._displayRegistry.ShowView(_iconViewModel);
-                //App._menu_icon.Show();
-                // WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App._menu_icon.Width), Convert.ToInt32(App._menu_icon.Height), 0x0400);
-
-                //App.mouseHook.LeftButtonUp += MouseHookHandler;
-                //App.mouseHook.DoubleClick += MouseHookHandler;
-                //App.mouseHook.RightButtonUp += MouseHookHandler;
-                //App.mouseHook.MouseWheel += MouseHookHandler;
-
-
+                
                 App.Input += _WindowInput_Input;
 
                 NotificationMenuIsOpen = true;
 
             }
-
         }
 
         private void _WindowInput_Input(object? sender, RawInputEventArgs e)
@@ -119,11 +96,8 @@ namespace SSHF.Models.NotifyIconModel
             if (App._displayRegistry.GetWindow(_iconViewModel).IsVisible)
             {
                 Rectangle iconPos = GetRectanglePosition;
-                //System.Windows.Point cursorPos = CursorFunction.GetCursorXY(App._menu_icon);
-                // System.Windows.Point cursorPos2 = CursorFunction.GetWindosPosToCursor(App._menu_icon);
+                
                 System.Windows.Point cursorPos = CursorFunction.GetCursorPosition();
-
-
 
 
                 if (Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width))
@@ -132,10 +106,10 @@ namespace SSHF.Models.NotifyIconModel
                     if (!(Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)))
                     {
                         App._displayRegistry.HideView(_iconViewModel);
-                        //App._menu_icon.Hide();
+                        
                         NotificationMenuIsOpen = false;
 
-                        //DropHandelerHook.Invoke();
+                        
                         App.Input -= _WindowInput_Input;
                         return;
 
@@ -145,10 +119,10 @@ namespace SSHF.Models.NotifyIconModel
                 if (!(Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width)))
                 {
                     App._displayRegistry.HideView(_iconViewModel);
-                   // App._menu_icon.Hide();
+                   
                     NotificationMenuIsOpen = false;
 
-                    //DropHandelerHook.Invoke();
+                   
                     App.Input -= _WindowInput_Input;
                     return;
                 }
@@ -156,53 +130,13 @@ namespace SSHF.Models.NotifyIconModel
 
         }
 
-        //private static void MouseHookHandler(GlobalLowLevelHooks.MouseHook.MSLLHOOKSTRUCT mouseStruct)
-        //{
-        //    if (!App._menu_icon.IsVisible) return;
-        //    if (App._menu_icon.IsMouseOver) return;
-        //    if (App._menu_icon.IsVisible)
-        //    {
-        //        Rectangle iconPos = GetRectanglePosition;
-        //        //System.Windows.Point cursorPos = CursorFunction.GetCursorXY(App._menu_icon);
-        //        // System.Windows.Point cursorPos2 = CursorFunction.GetWindosPosToCursor(App._menu_icon);
-        //        System.Windows.Point cursorPos = CursorFunction.GetCursorPosition();
-
-
-
-
-        //        if (Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width))
-        //        {
-        //            if (Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)) return;
-        //            if (!(Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)))
-        //            {
-        //                App._menu_icon.Hide();
-        //                NotificationMenuIsOpen = false;
-
-        //                DropHandelerHook.Invoke();
-        //                return;
-
-        //            }
-        //            return;
-        //        };
-        //        if (!(Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width)))
-        //        {
-        //            App._menu_icon.Hide();
-        //            NotificationMenuIsOpen = false;
-
-        //            DropHandelerHook.Invoke();
-        //            return;
-        //        }
-        //    }
-        //}
+       
 
         internal static System.Windows.Point GetRectCorrect(Window window)
         {
             System.Windows.Point point = new System.Windows.Point();
 
             Rectangle rectIcon = GetRectanglePosition;
-
-            //window.Show();
-            //window.Hide();
 
             System.Windows.Size elementWindow = GetElementPixelSize(window);
 
@@ -211,8 +145,6 @@ namespace SSHF.Models.NotifyIconModel
 
             point.Y = rectIcon.Y - pixelHeight + rectIcon.Size.Height / 2;
             point.X = rectIcon.X - pixelWidth;
-
-
 
             return point;
         }
@@ -338,26 +270,6 @@ namespace SSHF.Models.NotifyIconModel
             }
 
         }
-
-
-        #region Проверка клика вне окна
-
-        public void CheckClickOutsideExecute(object? parameter)
-        {
-
-            App._menu_icon.Hide();
-        }
-        public bool IsExecuteCheckClickOutside(object? parameter)
-        {
-
-
-            return true;
-        }
-
-
-
-
-        #endregion
 
 
     }

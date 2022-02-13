@@ -11,7 +11,7 @@ namespace SSHF.Infrastructure
     {
         internal Dictionary<Type, Type> vmToWindowMapping = new Dictionary<Type, Type>();
 
-        public void RegisterWindowType<VM, Win>() where Win : Window, new() where VM : class
+        internal void RegisterWindowType<VM, Win>() where Win : Window, new() where VM : class
         {
             Type vmType = typeof(VM);
             if (vmType.IsInterface) throw new ArgumentException("Невозможно зарегистрировать интерфейс");
@@ -19,7 +19,7 @@ namespace SSHF.Infrastructure
             vmToWindowMapping[vmType] = typeof(Win);
         }
 
-        public void UnregisterWindowType<VM>()
+        internal void UnregisterWindowType<VM>()
         {
             var vmType = typeof(VM);
             if (vmType.IsInterface) throw new ArgumentException("VM не может быть интерфейсом");
@@ -27,7 +27,7 @@ namespace SSHF.Infrastructure
             vmToWindowMapping.Remove(vmType);
         }
 
-        public Window CreateWindowInstanceWithVM(object vm)
+        internal Window CreateWindowInstanceWithVM(object vm)
         {
             if (vm is null) throw new ArgumentNullException(nameof(vm),"VM была NULL");
            
@@ -45,8 +45,8 @@ namespace SSHF.Infrastructure
             return window;
         }
 
-        readonly Dictionary<object, Window> openWindows = new Dictionary<object, Window>();
-        public void ShowPresentation(object vm)
+        internal readonly Dictionary<object, Window> openWindows = new Dictionary<object, Window>();
+        internal void ShowPresentation(object vm)
         {
             if (vm is null) throw new ArgumentNullException(nameof(vm), "VM is null");
             if (openWindows.ContainsKey(vm)) throw new InvalidOperationException("Пользовательский интерфейс для этой ViewModel уже отображается");
@@ -55,20 +55,20 @@ namespace SSHF.Infrastructure
             openWindows[vm] = window;
         }
 
-        public void CloseAndRemovePresentation(object vm)
+        internal void CloseAndRemovePresentation(object vm)
         {
             if (!openWindows.TryGetValue(vm, out Window? window)) throw new InvalidOperationException("Пользовательский интерфейс для ViewModel не отображается");
             window.Close();
             openWindows.Remove(vm);
         }
 
-        public bool HideView(object vm)
+        internal bool HideView(object vm)
         {
             if (!openWindows.TryGetValue(vm, out Window? window)) return false;
             window.Hide();
             return true;
         }
-        public bool ShowView(object vm)
+        internal bool ShowView(object vm)
         {
             if (!openWindows.TryGetValue(vm, out Window? window)) return false;
             window.Show();
