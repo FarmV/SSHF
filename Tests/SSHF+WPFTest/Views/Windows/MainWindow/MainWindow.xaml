@@ -25,14 +25,21 @@
     </Window.DataContext>
 
 
+    <StackPanel Orientation="Horizontal">
 
-    <Canvas HorizontalAlignment="Center" VerticalAlignment="Center" Height="1080" Width="1920" >
+        <StackPanel Canvas.Left="1088" Canvas.Top="212" x:Name="Stack1" Visibility="Hidden">
+            <Button FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выбрать картинку" Command="{Binding Path=SelectFileCommand}"></Button>
+            <Button Command="{Binding ApplicationShutdown}" FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выйти" >
+
+            </Button>
+        </StackPanel>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
 
         <!--<Border BorderThickness="1" BorderBrush="Coral" VerticalAlignment="Top">-->
         <Button 
             SnapsToDevicePixels="True" 
-            Canvas.Left="832"
-            Canvas.Top="412"
+            
+           
             x:Name="But"
             Style="{DynamicResource ButtonImage}" 
             
@@ -40,18 +47,21 @@
             Margin="0,0,0,0" 
 
             
-           
-            Height="351"
-            Width="698"
+            VerticalContentAlignment="Stretch"
+            HorizontalContentAlignment="Stretch"
+            Height="361"
+            Width="765"
           
             Focusable="False" 
             IsEnabled="True"
+            Canvas.Left="311" 
+            Canvas.Top="214"
             >
             <Image
               
                 Source="{Binding Image}"
                 Height="{Binding Image.Height}"
-                Width="{Binding Image.Width}">
+                Width="{Binding Image.Width}" VerticalAlignment="Center" HorizontalAlignment="Center">
             </Image>
 
             <!--<Image Source="{Binding Image}"/>-->
@@ -75,16 +85,9 @@
             </behaviors:Interaction.Triggers>
 
         </Button>
-        <!--</Border>-->
-        <StackPanel Canvas.Left="1088" Canvas.Top="212" x:Name="Stack1" Visibility="Hidden">
-            <Button FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выбрать картинку" Command="{Binding Path=SelectFileCommand}"></Button>
-            <Button FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выйти" >
-
-            </Button>
-        </StackPanel>
-    </Canvas>
-
-
+        <!--</Border>-->        
+      </Grid>
+    </StackPanel>
 
 
 

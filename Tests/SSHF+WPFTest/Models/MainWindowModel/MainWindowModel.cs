@@ -113,9 +113,11 @@ namespace SSHF.Models.MainWindowModel
 
             _ViewModel.Image = image;
 
-           // BitmapImage? scaleImage = IntegratingImages.ImageScale(image);
-            //if (scaleImage is null) throw new Exception("Scale?");
-            _ViewModel.ImageOpacity = image;
+            BitmapImage scaleImage2 = image.Clone();
+
+            BitmapImage? scaleImage = IntegratingImages.ImageScale(scaleImage2);
+            if (scaleImage is null) throw new Exception("Scale?");
+            _ViewModel.ImageOpacity = scaleImage2;
 
 
         }

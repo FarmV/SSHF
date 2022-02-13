@@ -22,7 +22,8 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
 
         public ICommand SelectFileCommand => new RelayCommand(_Model.SelectFileExecute, _Model.IsExecuteSelectFile);
-
+        
+        public ICommand ApplicationShutdown => new RelayCommand((obj) => Application.Current.Shutdown(), (obj) => true);
 
 
 
