@@ -38,27 +38,27 @@ namespace SSHF
         {
             base.OnSourceInitialized(e);
 
-            if (PresentationSource.FromVisual(this) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
-            source.AddHook(WndProc);
-            RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle);
+            //if (PresentationSource.FromVisual(this) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
+            //source.AddHook(WndProc);
+            //RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle);
         }
 
         
-        IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            const int WM_INPUT = 0x00FF;
-            switch (msg)
-            {
-                case WM_INPUT:
-                    {
-                        System.Diagnostics.Debug.WriteLine("Received WndProc.WM_INPUT");
-                        RawInputData? data = RawInputData.FromHandle(lParam);
+        //IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        //{
+        //    const int WM_INPUT = 0x00FF;
+        //    switch (msg)
+        //    {
+        //        case WM_INPUT:
+        //            {
+        //                System.Diagnostics.Debug.WriteLine("Received WndProc.WM_INPUT");
+        //                RawInputData? data = RawInputData.FromHandle(lParam);
 
-                        App.SetRawData(data);                                            
-                    }
-                    break;
-            }
-            return hwnd;
-        }
+        //                App.SetRawData(data);                                            
+        //            }
+        //            break;
+        //    }
+        //    return hwnd;
+        //}
     }
 }

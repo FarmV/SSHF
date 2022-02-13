@@ -26,6 +26,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             _Model = new MainWindowModel(this);
             _Cursor = new CursorFunction();
+
         }
         #region Заголовок окна
 

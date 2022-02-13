@@ -45,7 +45,7 @@ namespace SSHF.Infrastructure
             return window;
         }
 
-        Dictionary<object, Window> openWindows = new Dictionary<object, Window>();
+        readonly Dictionary<object, Window> openWindows = new Dictionary<object, Window>();
         public void ShowPresentation(object vm)
         {
             if (vm is null) throw new ArgumentNullException(nameof(vm), "VM is null");
