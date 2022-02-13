@@ -62,11 +62,25 @@ namespace SSHF.Infrastructure
             openWindows.Remove(vm);
         }
 
-        //public void HidePresentation(object vm)
-        //{
-        //    if (!openWindows.TryGetValue(vm, out Window? window)) throw new InvalidOperationException("Пользовательский интерфейс для ViewModel не отображается");
-        //    window.Hide();          
-        //}
+        public bool HideView(object vm)
+        {
+            if (!openWindows.TryGetValue(vm, out Window? window)) return false;
+            window.Hide();
+            return true;
+        }
+        public bool ShowView(object vm)
+        {
+            if (!openWindows.TryGetValue(vm, out Window? window)) return false;
+            window.Show();
+            return true;
+        }
+
+        internal Window GetWindow(object View)
+        {
+            if (!openWindows.TryGetValue(View, out Window? window)) throw new InvalidOperationException("Неудалось получить модель");
+            return window;
+        }
+    
 
         public async Task ShowModalPresentation(object vm)
         {

@@ -47,52 +47,28 @@ namespace SSHF
             _displayRegistry.RegisterWindowType<MainWindowViewModel, MainWindow>();
             _displayRegistry.RegisterWindowType<NotifyIconViewModel, Menu_icon>();
 
-            //if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon window)
-            //    throw new ArgumentNullException(nameof(window), "Menu_icon");
+            //if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
+            //    throw new ArgumentNullException(nameof(_menu_icon), "Menu_icon");
+           
 
-            if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(MainWindowViewModel)]) is not MainWindow window)
-                throw new ArgumentNullException(nameof(window), "MainWindow");
-            window.Show();
+            NotifyIconViewModel noti = new NotifyIconViewModel();
+            _displayRegistry.ShowPresentation(noti);
+            _displayRegistry.HideView(noti);
+            if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(MainWindowViewModel)]) is not MainWindow _mainWindow)
+                throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
 
-            //_displayRegistry.ShowPresentation(new NotifyIconViewModel());
-            //_menu_icon = new Menu_icon();
-
-
-            //_displayRegistry.CreateWindowInstanceWithVM(new MainWindowViewModel());
-            //_displayRegistry.ShowPresentation(new MainWindowViewModel());
-
-            //  _displayRegistry.ShowPresentation(new NotifyIconViewModel());
-
-
-
-
-
-            //if (PresentationSource.FromVisual(this) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
-            //source.AddHook(WndProc);
-            //RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle);
+            _mainWindow.Show();
+           
+   
+            if (PresentationSource.FromVisual(_mainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
+            source.AddHook(WndProc);
+            RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle);
 
         }
 
 
 
 
-        private static void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            //if (PresentationSource.FromVisual(App.Current.MainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
-            //source.AddHook(WndProc);
-            //App.Current.MainWindow.Loaded -= MainWindow_Loaded;
-        }
-
-        protected override void OnStartup(StartupEventArgs e)
-        {
-          
-            base.OnStartup(e);
-            //if (PresentationSource.FromVisual(App.Current.MainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
-            //source.AddHook(WndProc);
-
-
-            
-        }
 
         static IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
