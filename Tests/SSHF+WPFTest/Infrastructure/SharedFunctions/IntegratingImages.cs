@@ -89,7 +89,7 @@ namespace SSHF.Infrastructure.SharedFunctions
                 //BitmapSource? res =  newFormatedBitmapSource.Source;
 
 
-                 TransformedBitmap? a = new TransformedBitmap(ImageToScale, new ScaleTransform(0.03, 0.03));
+                 TransformedBitmap? a = new TransformedBitmap(ImageToScale, new ScaleTransform(1.2, 1.2));
 
               //   BitmapSource? res = a.Source;
 

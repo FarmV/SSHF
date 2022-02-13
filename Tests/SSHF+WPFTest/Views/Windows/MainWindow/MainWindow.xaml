@@ -17,7 +17,8 @@
  Width="1920"
     Height="1080"
 
- Topmost="True" WindowStartupLocation="CenterScreen">
+ Topmost="True" WindowStartupLocation="CenterScreen"
+    UseLayoutRounding="True">
 
     <Window.DataContext>
         <vm:MainWindowViewModel/>
@@ -25,29 +26,33 @@
 
 
 
-    <Canvas Height="1080" Width="1920" >
+    <Canvas HorizontalAlignment="Center" VerticalAlignment="Center" Height="1080" Width="1920" >
 
         <!--<Border BorderThickness="1" BorderBrush="Coral" VerticalAlignment="Top">-->
-        <Button Canvas.Left="832"
-                    Canvas.Top="412"
-                    x:Name="But"
-                    Style="{DynamicResource ButtonImage}" 
+        <Button 
+            SnapsToDevicePixels="True" 
+            Canvas.Left="832"
+            Canvas.Top="412"
+            x:Name="But"
+            Style="{DynamicResource ButtonImage}" 
             
             Command ="{Binding RefreshOnCommand}"          
             Margin="0,0,0,0" 
+
+            
+           
+            Height="351"
+            Width="698"
           
-            Height="512"
-            Width="512"
-                    
-            Background="#FFCB00"
-       >
-            <!--<Image
+            Focusable="False" 
+            IsEnabled="True"
+            >
+            <Image
+              
                 Source="{Binding Image}"
-                Height="512"
-                Width="512"
-                >
-                
-            </Image>-->
+                Height="{Binding Image.Height}"
+                Width="{Binding Image.Width}">
+            </Image>
 
             <!--<Image Source="{Binding Image}"/>-->
             <!--<Button.Background>
@@ -57,8 +62,8 @@
             <!--<Button.Foreground>
                 <ImageBrush ImageSource="{Binding Image}"/>
             </Button.Foreground>-->
-            <Button.OpacityMask              >
-                <ImageBrush ImageSource="{Binding Image}"/>
+            <Button.OpacityMask>
+                <ImageBrush ImageSource="{Binding ImageOpacity}"/>
             </Button.OpacityMask>
 
             <behaviors:Interaction.Triggers>

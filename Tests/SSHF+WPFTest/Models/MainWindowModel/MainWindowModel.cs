@@ -93,12 +93,14 @@ namespace SSHF.Models.MainWindowModel
         #endregion
 
 
-        #region Выбор фала изображения
+        #region Выбор файла изображения
 
         public void SelectFileExecute(object? parameter)
         {
-            if (DialogFile.OpenFile("Выбор изображения", out var filePath) is false) return;
-
+            if (DialogFile.OpenFile("Выбор изображения", out string? filePath) is false) return;
+           
+            if(filePath is null) return;
+            
             FileInfo file = new FileInfo(filePath);
 
             BitmapImage? image = IntegratingImages.SetImageToMemoryFromDrive(new Uri(file.FullName, UriKind.Absolute));
@@ -107,14 +109,14 @@ namespace SSHF.Models.MainWindowModel
             {
                 System.Windows.Forms.MessageBox.Show($"Не удалось обработать файл изображения.{Environment.NewLine}Проверте расширение файла.","Ошибка",MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
-            };
-
-
-            
+            };         
 
             _ViewModel.Image = image;
 
-         
+           // BitmapImage? scaleImage = IntegratingImages.ImageScale(image);
+            //if (scaleImage is null) throw new Exception("Scale?");
+            _ViewModel.ImageOpacity = image;
+
 
         }
         

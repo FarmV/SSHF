@@ -24,45 +24,56 @@ namespace SSHF
     public partial class App : System.Windows.Application
     {
         internal static event EventHandler<RawInputEventArgs>? Input;
-     
+
         readonly static public GlobalLowLevelHooks.KeyboardHook _GlobaKeyboardHook = new GlobalLowLevelHooks.KeyboardHook();
 
         //  static bool _SingleCopy = default;
 
         internal static readonly DisplayRegistry RegistartorWindows = new DisplayRegistry();
 
-      
-        internal static void SetRawData(RawInputData? data)
-        {
-            if (data is null) return;
-            Input?.Invoke(App.Current.MainWindow, new RawInputEventArgs(data));
-        }
+        internal static bool IsDesignMode { get; private set; } = true;
 
+
+        //internal static void SetRawData(RawInputData? data)
+        //{
+        //    if (data is null) return;
+        //    Input?.Invoke(App.Current.MainWindow, new RawInputEventArgs(data));
+        //}
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            IsDesignMode = false;
+            base.OnStartup(e);
+        }
         static App()
         {
-            RegistartorWindows.RegisterWindowType<MainWindowViewModel, MainWindow>();
-            RegistartorWindows.RegisterWindowType<NotifyIconViewModel, Menu_icon>();
-
-            //if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
-            //    throw new ArgumentNullException(nameof(_menu_icon), "Menu_icon");
+            if (IsDesignMode is false)
+            {
 
 
+                RegistartorWindows.RegisterWindowType<MainWindowViewModel, MainWindow>();
+                RegistartorWindows.RegisterWindowType<NotifyIconViewModel, Menu_icon>();
 
-            NotifyIconViewModel noti = new NotifyIconViewModel();
-            RegistartorWindows.PresentationON(noti);
+                //if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
+                //    throw new ArgumentNullException(nameof(_menu_icon), "Menu_icon");
 
-            RegistartorWindows.HideView(noti);
 
-            if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(MainWindowViewModel)]) is not MainWindow _mainWindow)
-                throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
 
-            _mainWindow.Show();
-           
-   
-            if (PresentationSource.FromVisual(_mainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
-            source.AddHook(WndProc);
-            RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle);
+                NotifyIconViewModel noti = new NotifyIconViewModel();
+                RegistartorWindows.PresentationON(noti);
 
+                RegistartorWindows.HideView(noti);
+
+                if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(MainWindowViewModel)]) is not MainWindow _mainWindow)
+                    throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
+
+                _mainWindow.Show();
+
+
+                if (PresentationSource.FromVisual(_mainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
+                source.AddHook(WndProc);
+                RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle);
+            }
         }
 
 
@@ -79,7 +90,9 @@ namespace SSHF
                         System.Diagnostics.Debug.WriteLine("Received WndProc.WM_INPUT");
                         RawInputData? data = RawInputData.FromHandle(lParam);
 
-                        App.SetRawData(data);
+
+                        Input?.Invoke(App.Current.MainWindow, new RawInputEventArgs(data));
+
                     }
                     break;
             }
