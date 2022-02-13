@@ -51,9 +51,9 @@ namespace SSHF.Models.NotifyIconModel
 
             if (NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
-                App._displayRegistry.HideView(_iconViewModel);
+                App.RegistartorWindows.HideView(_iconViewModel);
 
-                //App._menu_icon.Hide();
+              
                 NotificationMenuIsOpen = false;
 
 
@@ -63,18 +63,18 @@ namespace SSHF.Models.NotifyIconModel
             }
             if (!NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
-                App._displayRegistry.ShowView(_iconViewModel);
-                App._displayRegistry.HideView(_iconViewModel);
+                App.RegistartorWindows.ShowView(_iconViewModel);
+                App.RegistartorWindows.HideView(_iconViewModel);
               
-                System.Windows.Point pointMenu = GetRectCorrect(App._displayRegistry.GetWindow(_iconViewModel));
+                System.Windows.Point pointMenu = GetRectCorrect(App.RegistartorWindows.GetWindow(_iconViewModel));
 
-                WindowInteropHelper helper = new WindowInteropHelper(App._displayRegistry.GetWindow(_iconViewModel));
-
-
-                WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App._displayRegistry.GetWindow(_iconViewModel).Width), Convert.ToInt32(App._displayRegistry.GetWindow(_iconViewModel).Height), 0x0400);
+                WindowInteropHelper helper = new WindowInteropHelper(App.RegistartorWindows.GetWindow(_iconViewModel));
 
 
-                App._displayRegistry.ShowView(_iconViewModel);
+                WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App.RegistartorWindows.GetWindow(_iconViewModel).Width), Convert.ToInt32(App.RegistartorWindows.GetWindow(_iconViewModel).Height), 0x0400);
+
+
+                App.RegistartorWindows.ShowView(_iconViewModel);
                 
                 App.Input += _WindowInput_Input;
 
@@ -91,9 +91,9 @@ namespace SSHF.Models.NotifyIconModel
             if (mouseData is null || mouseData.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
 
            
-            if (!App._displayRegistry.GetWindow(_iconViewModel).IsVisible) return;
-            if (App._displayRegistry.GetWindow(_iconViewModel).IsMouseOver) return;
-            if (App._displayRegistry.GetWindow(_iconViewModel).IsVisible)
+            if (!App.RegistartorWindows.GetWindow(_iconViewModel).IsVisible) return;
+            if (App.RegistartorWindows.GetWindow(_iconViewModel).IsMouseOver) return;
+            if (App.RegistartorWindows.GetWindow(_iconViewModel).IsVisible)
             {
                 Rectangle iconPos = GetRectanglePosition;
                 
@@ -105,7 +105,7 @@ namespace SSHF.Models.NotifyIconModel
                     if (Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)) return;
                     if (!(Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)))
                     {
-                        App._displayRegistry.HideView(_iconViewModel);
+                        App.RegistartorWindows.HideView(_iconViewModel);
                         
                         NotificationMenuIsOpen = false;
 
@@ -118,7 +118,7 @@ namespace SSHF.Models.NotifyIconModel
                 };
                 if (!(Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width)))
                 {
-                    App._displayRegistry.HideView(_iconViewModel);
+                    App.RegistartorWindows.HideView(_iconViewModel);
                    
                     NotificationMenuIsOpen = false;
 

@@ -46,7 +46,7 @@ namespace SSHF.Infrastructure
         }
 
         internal readonly Dictionary<object, Window> openWindows = new Dictionary<object, Window>();
-        internal void ShowPresentation(object vm)
+        internal void PresentationON(object vm)
         {
             if (vm is null) throw new ArgumentNullException(nameof(vm), "VM is null");
             if (openWindows.ContainsKey(vm)) throw new InvalidOperationException("Пользовательский интерфейс для этой ViewModel уже отображается");

@@ -24,18 +24,14 @@ namespace SSHF
     public partial class App : System.Windows.Application
     {
         internal static event EventHandler<RawInputEventArgs>? Input;
-        // readonly static public System.Windows.Window _GlobalWindowFast = new Func<MainWindow>(() => { if (App.Current.MainWindow is not MainWindow window) throw new NullReferenceException("MainWindow is null?"); return window; }).Invoke();
-
+     
         readonly static public GlobalLowLevelHooks.KeyboardHook _GlobaKeyboardHook = new GlobalLowLevelHooks.KeyboardHook();
 
         //  static bool _SingleCopy = default;
 
-        // internal static MouseHook mouseHook = new MouseHook();
-        internal static readonly DisplayRegistry _displayRegistry = new DisplayRegistry();
+        internal static readonly DisplayRegistry RegistartorWindows = new DisplayRegistry();
 
-        internal static readonly Menu_icon? _menu_icon;
-
-
+      
         internal static void SetRawData(RawInputData? data)
         {
             if (data is null) return;
@@ -44,17 +40,20 @@ namespace SSHF
 
         static App()
         {
-            _displayRegistry.RegisterWindowType<MainWindowViewModel, MainWindow>();
-            _displayRegistry.RegisterWindowType<NotifyIconViewModel, Menu_icon>();
+            RegistartorWindows.RegisterWindowType<MainWindowViewModel, MainWindow>();
+            RegistartorWindows.RegisterWindowType<NotifyIconViewModel, Menu_icon>();
 
             //if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
             //    throw new ArgumentNullException(nameof(_menu_icon), "Menu_icon");
-           
+
+
 
             NotifyIconViewModel noti = new NotifyIconViewModel();
-            _displayRegistry.ShowPresentation(noti);
-            _displayRegistry.HideView(noti);
-            if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(MainWindowViewModel)]) is not MainWindow _mainWindow)
+            RegistartorWindows.PresentationON(noti);
+
+            RegistartorWindows.HideView(noti);
+
+            if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(MainWindowViewModel)]) is not MainWindow _mainWindow)
                 throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
 
             _mainWindow.Show();
