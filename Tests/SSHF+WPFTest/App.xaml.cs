@@ -43,10 +43,7 @@ namespace SSHF
         protected override void OnStartup(StartupEventArgs e)
         {
             IsDesignMode = false;
-            base.OnStartup(e);
-        }
-        static App()
-        {
+
             if (IsDesignMode is false)
             {
 
@@ -74,6 +71,12 @@ namespace SSHF
                 source.AddHook(WndProc);
                 RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle);
             }
+
+            base.OnStartup(e);
+        }
+        static App()
+        {
+          
         }
 
 
