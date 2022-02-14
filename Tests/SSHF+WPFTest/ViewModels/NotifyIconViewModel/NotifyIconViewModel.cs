@@ -24,8 +24,7 @@ namespace SSHF.ViewModels.NotifyIconViewModel
         public NotifyIconViewModel()
         {          
            _model = new NotifyIconModel(this);
-
-            
+           
         }
 
         bool _visible = default;    
@@ -36,31 +35,8 @@ namespace SSHF.ViewModels.NotifyIconViewModel
             set { _visible = value; }
         }
 
-
-        // public ICommand CheckOutside => new RelayCommand(_model.CheckClickOutsideExecute, _model.IsExecuteCheckClickOutside);
-
-
         public ICommand ShutdownAppCommand => new RelayCommand(_model.ShutdownAppExecute, _model.IsExecuteShutdownApp);
 
-
-
-        //public static readonly RoutedEvent _eventMouse = EventManager.RegisterRoutedEvent("myOutside1", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(NotifyIconModel));
-        //public static void AddPreviewMouseDownOutsideCapturedElementHandler(DependencyObject d, RoutedEventHandler handler)
-        //{
-        //    UIElement uie = d as UIElement;
-        //    if (uie != null)
-        //    {
-        //        uie.AddHandler(_eventMouse, handler);
-        //    }
-        //}
-        //public static void RemovePreviewMouseDownOutsideCapturedElementHandler(DependencyObject d, RoutedEventHandler handler)
-        //{
-        //    UIElement uie = d as UIElement;
-        //    if (uie != null)
-        //    {
-        //        uie.RemoveHandler(_eventMouse, handler);
-        //    }
-        //}
 
 
     }

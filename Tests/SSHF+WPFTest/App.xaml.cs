@@ -33,6 +33,7 @@ namespace SSHF
 
         internal static bool IsDesignMode { get; private set; } = true;
 
+        internal static int CheckCount = default;
 
         //internal static void SetRawData(RawInputData? data)
         //{
@@ -48,21 +49,27 @@ namespace SSHF
             {
 
 
-                RegistartorWindows.RegisterWindowType<MainWindowViewModel, MainWindow>();
                 RegistartorWindows.RegisterWindowType<NotifyIconViewModel, Menu_icon>();
+                RegistartorWindows.RegisterWindowType<MainWindowViewModel, MainWindow>();
 
-                //if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
-                //    throw new ArgumentNullException(nameof(_menu_icon), "Menu_icon");
+                ////if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
+                ////    throw new ArgumentNullException(nameof(_menu_icon), "Menu_icon");
 
 
 
-                NotifyIconViewModel noti = new NotifyIconViewModel();
-                RegistartorWindows.PresentationON(noti);
+                //NotifyIconViewModel noti = new NotifyIconViewModel();
+                // RegistartorWindows.PresentationON(new NotifyIconViewModel());
 
-                RegistartorWindows.HideView(noti);
+                // RegistartorWindows.HideView(noti);
+
+                //if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
+                //    throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
+
 
                 if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(MainWindowViewModel)]) is not MainWindow _mainWindow)
                     throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
+
+
 
                 _mainWindow.Show();
 

@@ -62,76 +62,21 @@ namespace SSHF.Infrastructure.SharedFunctions
 
             try
             {
-
-
-                ////TransformedBitmap? bitmapSr = new TransformedBitmap();
-
-
-                ////TransformedBitmap myBitmapTransformSource = new TransformedBitmap();
-
-                ////myBitmapTransformSource.BeginInit();
-
-                ////myBitmapTransformSource.Source = ImageToScale;
-
-                //myBitmapTransformSource.Transform = new TransformedBitmap(ImageToScale, new ScaleTransform(1.2, 1.2));
-
-                //myBitmapTransformSource.EndInit();
-
-
-                //FormatConvertedBitmap newFormatedBitmapSource = new FormatConvertedBitmap();
-
-                //newFormatedBitmapSource.BeginInit();
-                //newFormatedBitmapSource.Source = myBitmapTransformSource;
-                //newFormatedBitmapSource.DestinationFormat = PixelFormats.Gray32Float;
-                //newFormatedBitmapSource.EndInit();
-
-
-                //BitmapSource? res =  newFormatedBitmapSource.Source;
-
-
-                 TransformedBitmap? a = new TransformedBitmap(ImageToScale, new ScaleTransform(1.02001, 1.02001));
-
-              //   BitmapSource? res = a.Source;
-
-
-                //RenderOptions.SetBitmapScalingMode(a, BitmapScalingMode.NearestNeighbor);
-
-                // Transform? bb  = a.Transform;
-
-                // TransformedBitmap myBitmapTransformSource = new TransformedBitmap();
-
-                // myBitmapTransformSource.BeginInit();
-
-                // myBitmapTransformSource.Source = ImageToScale;
-
-                // myBitmapTransformSource.Transform = bb;
-
-                // myBitmapTransformSource.EndInit();
-
-                // FormatConvertedBitmap newFormatedBitmapSource = new FormatConvertedBitmap();
-
-                // newFormatedBitmapSource.BeginInit();
-                // newFormatedBitmapSource.Source = myBitmapTransformSource;
-                //// newFormatedBitmapSource.DestinationFormat = PixelFormats.Gray32Float;
-                // newFormatedBitmapSource.EndInit();
-                // //newFormatedBitmapSource.Freeze();
-
-                // // ImageSource source = newFormatedBitmapSource;
-
-
-
-
+                TransformedBitmap? Transformed = new TransformedBitmap(ImageToScale, new ScaleTransform(1.25, 1.25)); // Ваш Sacle
+                                         
                 using MemoryStream outStream = new MemoryStream();
                 BitmapEncoder enc = new BmpBitmapEncoder();
-               
-                enc.Frames.Add(BitmapFrame.Create(a));
-                enc.Save(outStream);
+                
+                enc.Frames.Add(BitmapFrame.Create(Transformed));
+                enc.Save(outStream);                  
+
                 Bitmap bitmap = new Bitmap(outStream);
+                
+                bitmap.MakeTransparent(System.Drawing.Color.FromArgb(255));
 
                 BitmapImage image = BitmapToBitmapImage(bitmap);
 
                 return image;
-
 
             }
             catch (Exception)
@@ -154,6 +99,7 @@ namespace SSHF.Infrastructure.SharedFunctions
                 // According to MSDN, "The default OnDemand cache option retains access to the stream until the image is needed."
                 // Force the bitmap to load right now so we can dispose the stream.
                 result.CacheOption = BitmapCacheOption.OnLoad;
+                
                 result.StreamSource = stream;
                 result.EndInit();
                 result.Freeze();
@@ -182,11 +128,11 @@ namespace SSHF.Infrastructure.SharedFunctions
         ///     <br> Изображение для сохранения <see cref="BitmapSource"/> <paramref name="Image"/></br>
         /// </summary>
         /// <returns>Успешность операции.</returns>
-        internal static bool SafeImage(Uri path, BitmapSource Image)
+        internal static bool SafeImage(Uri Path, BitmapSource Image, string Name)
         {
             try
             {
-                using (FileStream createFileFromImageBuffer = new FileStream(path.AbsolutePath, FileMode.OpenOrCreate))
+                using (FileStream createFileFromImageBuffer = new FileStream(@$"{Path.AbsolutePath}{Name}.png", FileMode.Create))
                 {
                     BitmapEncoder encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(Image));

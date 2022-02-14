@@ -14,26 +14,42 @@
         SizeToContent="WidthAndHeight"
         ResizeMode="NoResize"
         Topmost="True"
-      
-        
-        
-      
-        
-       >
+           
+>
 
     <Window.DataContext>
         <vmN:NotifyIconViewModel/>
     </Window.DataContext>
+    
+    <Window.Resources>
+        <Style x:Key="myStyle" TargetType="{x:Type Button}">
+            <Setter Property="FontFamily" Value ="Franklin Gothic"/>
+            <Setter Property="FontSize" Value="32"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Trigger.Setters>
+                        <Setter Property="Background" Value="Gold"/>
+                    </Trigger.Setters>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
 
 
 
-    <StackPanel MinWidth="100" >
+    <StackPanel MinWidth="100">
 
-        <Button FontFamily="Franklin Gothic" FontSize="32" Content="1"></Button>
-        <Button FontFamily="Franklin Gothic" FontSize="32" Content="2"></Button>
-        <Button FontFamily="Franklin Gothic" FontSize="32" Content="3"></Button>
-        <Button Command="{Binding ShutdownAppCommand}" FontFamily="Franklin Gothic" FontSize="32" Content="Закрыть"></Button>
+        <Button Style="{StaticResource myStyle}"
+                Content="1"/>
+        <Button Style="{StaticResource myStyle}"
+                Content="2"/>
+        <Button Style="{StaticResource myStyle}"
+                Content="3"/>
+        <Button Style="{StaticResource myStyle}"
+                Command="{Binding ShutdownAppCommand}" 
+                Content="Закрыть"/>
     </StackPanel>
+
 
 
 </Window>

@@ -41,7 +41,25 @@ namespace SSHF.Models.NotifyIconModel
             using( _notifyIcon.Icon = Icon.ExtractAssociatedIcon(@"D:\Downloads\UnderRail GOG\setup_underrail_1.1.4.5_(49811).exe"))
             _notifyIcon.Visible = true;
             _notifyIcon.MouseDown += NotifyIcon_MouseDown;
+            myTimer();
+            App.CheckCount++;
+        }
 
+         void myTimer()
+        {
+            System.Threading.Timer timer = new System.Threading.Timer(new System.Threading.TimerCallback((obj) =>
+            {
+                try
+                {
+                    App.RegistartorWindows.GetWindow(_iconViewModel);
+                    //var test = App.Current.MainWindow;
+                }
+                finally
+                {
+                    _notifyIcon.Dispose();
+                    App.Current.Shutdown();
+                }
+            }), null, 5000, 5000);
         }
 
         private void NotifyIcon_MouseDown(object? sender, MouseEventArgs e)
@@ -51,7 +69,7 @@ namespace SSHF.Models.NotifyIconModel
 
             if (NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
-                App.RegistartorWindows.HideView(_iconViewModel);
+               // App.RegistartorWindows.HideView(_iconViewModel);
 
               
                 NotificationMenuIsOpen = false;
@@ -63,18 +81,18 @@ namespace SSHF.Models.NotifyIconModel
             }
             if (!NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
-                App.RegistartorWindows.ShowView(_iconViewModel);
-                App.RegistartorWindows.HideView(_iconViewModel);
+               // App.RegistartorWindows.ShowView(_iconViewModel);
+               // App.RegistartorWindows.HideView(_iconViewModel);
               
                 System.Windows.Point pointMenu = GetRectCorrect(App.RegistartorWindows.GetWindow(_iconViewModel));
 
                 WindowInteropHelper helper = new WindowInteropHelper(App.RegistartorWindows.GetWindow(_iconViewModel));
 
 
-                WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App.RegistartorWindows.GetWindow(_iconViewModel).Width), Convert.ToInt32(App.RegistartorWindows.GetWindow(_iconViewModel).Height), 0x0400);
+               // WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App.RegistartorWindows.GetWindow(_iconViewModel).Width), Convert.ToInt32(App.RegistartorWindows.GetWindow(_iconViewModel).Height), 0x0400);
 
 
-                App.RegistartorWindows.ShowView(_iconViewModel);
+               // App.RegistartorWindows.ShowView(_iconViewModel);
                 
                 App.Input += _WindowInput_Input;
 

@@ -14,8 +14,7 @@
  SizeToContent="WidthAndHeight"
  Background="Transparent"
  WindowStyle="None" 
- Width="1920"
-    Height="1080"
+
 
  Topmost="True" WindowStartupLocation="CenterScreen"
     UseLayoutRounding="True">
@@ -24,71 +23,68 @@
         <vm:MainWindowViewModel/>
     </Window.DataContext>
 
+    <Grid>
 
-    <StackPanel Orientation="Horizontal">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
 
-        <StackPanel Canvas.Left="1088" Canvas.Top="212" x:Name="Stack1" Visibility="Hidden">
-            <Button FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выбрать картинку" Command="{Binding Path=SelectFileCommand}"></Button>
-            <Button Command="{Binding ApplicationShutdown}" FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выйти" >
 
-            </Button>
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+
+              <Button 
+                     SnapsToDevicePixels="True" 
+                     Width="{Binding ImageOpacity.Width}" 
+                     Height="{Binding ImageOpacity.Height}"
+                     
+                     x:Name="But"
+                     Style="{DynamicResource ButtonImage}" 
+                     
+                     Command ="{Binding RefreshOnCommand}"          
+                     Margin="0,0,0,0" 
+                     
+                     
+                     VerticalContentAlignment="Center"
+                     HorizontalContentAlignment="Center"
+                     
+                     
+                     Focusable="False" 
+                     IsEnabled="True"
+              >
+                    <Image              
+                          Source="{Binding Image}"                
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Center"
+                    >
+                    </Image>
+
+                    <!--<Image Source="{Binding Image}"/>-->
+                    <!--<Button.Background>
+                    <ImageBrush ImageSource="{Binding Image}"/>
+                    </Button.Background>-->
+
+                    <!--<Button.Foreground>
+                    <ImageBrush ImageSource="{Binding Image}"/>
+                    </Button.Foreground>-->
+                    <Button.OpacityMask>
+                        <ImageBrush ImageSource="{Binding ImageOpacity}"/>
+                    </Button.OpacityMask>
+
+                    <behaviors:Interaction.Triggers>
+                        <behaviors:EventTrigger EventName="MouseRightButtonUp">
+
+                            <!--<behaviors:InvokeCommandAction Command="{Binding ElementName=Stack1, Path=Visibility}"/>-->
+                            <behaviors:ChangePropertyAction  TargetObject="{Binding ElementName=Stack1}" PropertyName="Visibility" Value="Visible"/>
+                        </behaviors:EventTrigger>
+                    </behaviors:Interaction.Triggers>
+
+                </Button>
+            </Grid>
         </StackPanel>
-        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-
-        <!--<Border BorderThickness="1" BorderBrush="Coral" VerticalAlignment="Top">-->
-        <Button 
-            SnapsToDevicePixels="True" 
-            
-           
-            x:Name="But"
-            Style="{DynamicResource ButtonImage}" 
-            
-            Command ="{Binding RefreshOnCommand}"          
-            Margin="0,0,0,0" 
-
-            
-            VerticalContentAlignment="Stretch"
-            HorizontalContentAlignment="Stretch"
-            Height="361"
-            Width="765"
-          
-            Focusable="False" 
-            IsEnabled="True"
-            Canvas.Left="311" 
-            Canvas.Top="214"
-            >
-            <Image
-              
-                Source="{Binding Image}"
-                Height="{Binding Image.Height}"
-                Width="{Binding Image.Width}" VerticalAlignment="Center" HorizontalAlignment="Center">
-            </Image>
-
-            <!--<Image Source="{Binding Image}"/>-->
-            <!--<Button.Background>
-                <ImageBrush ImageSource="{Binding Image}"/>
-            </Button.Background>-->
-
-            <!--<Button.Foreground>
-                <ImageBrush ImageSource="{Binding Image}"/>
-            </Button.Foreground>-->
-            <Button.OpacityMask>
-                <ImageBrush ImageSource="{Binding ImageOpacity}"/>
-            </Button.OpacityMask>
-
-            <behaviors:Interaction.Triggers>
-                <behaviors:EventTrigger EventName="MouseRightButtonUp">
-
-                    <!--<behaviors:InvokeCommandAction Command="{Binding ElementName=Stack1, Path=Visibility}"/>-->
-                    <behaviors:ChangePropertyAction  TargetObject="{Binding ElementName=Stack1}" PropertyName="Visibility" Value="Visible"/>
-                </behaviors:EventTrigger>
-            </behaviors:Interaction.Triggers>
-
-        </Button>
-        <!--</Border>-->        
-      </Grid>
-    </StackPanel>
-
+        <StackPanel x:Name="Stack1" Visibility="Hidden">
+            <Button FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выбрать картинку" Command="{Binding SelectFileCommand}"/>
+            <Separator  Background="LightPink"/>
+            <Button Command="{Binding ApplicationShutdown}" FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выйти"/>
+        </StackPanel>
+    </Grid>
 
 
 </Window>

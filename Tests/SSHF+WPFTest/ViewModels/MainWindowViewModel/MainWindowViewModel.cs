@@ -70,12 +70,17 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             get
             {
-                if (_ImageForButtonOpacity is null) _ImageForButtonOpacity = IntegratingImages.ImageScale(Image);
+                if (_ImageForButtonOpacity is null) return Image;
                // if (_ImageForButtonOpacity is null) throw new InvalidOperationException();
 
                 return _ImageForButtonOpacity;
             }
-            set => Set(ref _ImageForButtonOpacity, value);
+            set
+            {
+                if (value is null) return;
+                _ImageForButtonOpacity = IntegratingImages.ImageScale(value);
+                Set(ref _ImageForButtonOpacity, value); 
+            }
         }
 
 
