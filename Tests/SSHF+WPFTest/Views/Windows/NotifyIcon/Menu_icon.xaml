@@ -16,11 +16,17 @@
         Topmost="True"
            
 >
+    <mc:AlternateContent>
+        <mc:Choice Requires="d">
+            <Window.DataContext>
+                <vmN:NotifyIconViewModel/>
+            </Window.DataContext>
+        </mc:Choice>
+        <mc:Fallback/>
+    </mc:AlternateContent>
 
-    <Window.DataContext>
-        <vmN:NotifyIconViewModel/>
-    </Window.DataContext>
-    
+
+
     <Window.Resources>
         <Style x:Key="myStyle" TargetType="{x:Type Button}">
             <Setter Property="FontFamily" Value ="Franklin Gothic"/>
@@ -37,6 +43,7 @@
 
 
 
+    
     <StackPanel MinWidth="100">
 
         <Button Style="{StaticResource myStyle}"

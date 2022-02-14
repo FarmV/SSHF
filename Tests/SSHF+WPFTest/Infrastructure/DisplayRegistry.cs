@@ -75,9 +75,9 @@ namespace SSHF.Infrastructure
             return true;
         }
 
-        internal Window GetWindow(object View)
+        internal Window? GetWindow(object View)
         {
-            if (!openWindows.TryGetValue(View, out Window? window)) throw new InvalidOperationException("Неудалось получить модель");
+            if (!openWindows.TryGetValue(View, out Window? window)) return null;
             return window;
         }
     

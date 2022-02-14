@@ -26,41 +26,73 @@ namespace SSHF.Models.NotifyIconModel
 
     internal class NotifyIconModel
     {
-        internal static readonly NotifyIcon _notifyIcon = new NotifyIcon();
-        internal static Rectangle GetRectanglePosition => NotifyIconHelper.GetIconRect(_notifyIcon);
+        internal static NotifyIcon? _notifyIcon;
+        internal static Rectangle GetRectanglePosition()
+        {
+            if (_notifyIcon is null) return new Rectangle();
+            return NotifyIconHelper.GetIconRect(_notifyIcon);
+        }
 
         internal static volatile bool NotificationMenuIsOpen = default;
 
 
         readonly NotifyIconViewModel _iconViewModel;
 
+        void InitialIcon()
+        {
+            _notifyIcon = new NotifyIcon();
+            _notifyIcon.Icon = Icon.ExtractAssociatedIcon(@"D:\Downloads\UnderRail GOG\setup_underrail_1.1.4.5_(49811).exe");
+
+            _notifyIcon.Visible = true;
+            _notifyIcon.MouseDown += NotifyIcon_MouseDown;
+            // myTimer();
+        }
+
         public NotifyIconModel(NotifyIconViewModel ViewModel)
         {
             using (_iconViewModel = ViewModel)
                 // _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon($"{AppContext.BaseDirectory}{Process.GetCurrentProcess().ProcessName}.exe");
-            using( _notifyIcon.Icon = Icon.ExtractAssociatedIcon(@"D:\Downloads\UnderRail GOG\setup_underrail_1.1.4.5_(49811).exe"))
-            _notifyIcon.Visible = true;
-            _notifyIcon.MouseDown += NotifyIcon_MouseDown;
-            myTimer();
+                InitialIcon();
+            
+            // myTimer();
             App.CheckCount++;
-        }
 
-         void myTimer()
-        {
-            System.Threading.Timer timer = new System.Threading.Timer(new System.Threading.TimerCallback((obj) =>
+
+            App.DPIChange += (obj, ev) =>
             {
                 try
-                {
-                    App.RegistartorWindows.GetWindow(_iconViewModel);
-                    //var test = App.Current.MainWindow;
+                {   if(_notifyIcon is not null)
+                    _notifyIcon.MouseDown -= NotifyIcon_MouseDown;
+                    if (_notifyIcon is not null)
+                        _notifyIcon.Dispose();
                 }
                 finally
                 {
-                    _notifyIcon.Dispose();
-                    App.Current.Shutdown();
+                    InitialIcon();
                 }
-            }), null, 5000, 5000);
+            };
         }
+
+        // void myTimer()
+        //{
+        //    System.Threading.Timer timer = new System.Threading.Timer(new System.Threading.TimerCallback((obj) =>
+        //    {
+        //        try
+        //        {
+        //            App.RegistartorWindows.GetWindow(_iconViewModel);
+        //            //var test = App.Current.MainWindow;
+        //        }
+        //        finally
+        //        {
+        //            _notifyIcon.Dispose();
+        //            App.Current.Dispatcher.Invoke(new Action(() => { App.Current.Shutdown();})); 
+        //        }
+        //    }), null, 5000, 5000);
+        //}
+
+
+
+
 
         private void NotifyIcon_MouseDown(object? sender, MouseEventArgs e)
         {
@@ -69,9 +101,9 @@ namespace SSHF.Models.NotifyIconModel
 
             if (NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
-               // App.RegistartorWindows.HideView(_iconViewModel);
+                if (App.RegistartorWindows.HideView(_iconViewModel) is false) return;
 
-              
+
                 NotificationMenuIsOpen = false;
 
 
@@ -81,19 +113,20 @@ namespace SSHF.Models.NotifyIconModel
             }
             if (!NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
-               // App.RegistartorWindows.ShowView(_iconViewModel);
-               // App.RegistartorWindows.HideView(_iconViewModel);
-              
-                System.Windows.Point pointMenu = GetRectCorrect(App.RegistartorWindows.GetWindow(_iconViewModel));
+                // App.RegistartorWindows.ShowView(_iconViewModel);
+                // App.RegistartorWindows.HideView(_iconViewModel);
+                if (App.RegistartorWindows.GetWindow(_iconViewModel) is not Window window) return;
 
-                WindowInteropHelper helper = new WindowInteropHelper(App.RegistartorWindows.GetWindow(_iconViewModel));
+                System.Windows.Point pointMenu = GetRectCorrect(window);
 
-
-               // WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(App.RegistartorWindows.GetWindow(_iconViewModel).Width), Convert.ToInt32(App.RegistartorWindows.GetWindow(_iconViewModel).Height), 0x0400);
+                WindowInteropHelper helper = new WindowInteropHelper(window);
 
 
-               // App.RegistartorWindows.ShowView(_iconViewModel);
-                
+                WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(window.Width), Convert.ToInt32(window.Height), 0x0400);
+
+
+                window.Show();
+
                 App.Input += _WindowInput_Input;
 
                 NotificationMenuIsOpen = true;
@@ -106,15 +139,16 @@ namespace SSHF.Models.NotifyIconModel
             RawInputData? data = e.Data;
             RawInputMouseData? mouseData = data as RawInputMouseData;
 
+            if (App.RegistartorWindows.GetWindow(_iconViewModel) is not Window window) return;
             if (mouseData is null || mouseData.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
 
-           
-            if (!App.RegistartorWindows.GetWindow(_iconViewModel).IsVisible) return;
-            if (App.RegistartorWindows.GetWindow(_iconViewModel).IsMouseOver) return;
-            if (App.RegistartorWindows.GetWindow(_iconViewModel).IsVisible)
+
+            if (window.IsVisible is false) return;
+            if (window.IsMouseOver) return;
+            if (window.IsVisible)
             {
-                Rectangle iconPos = GetRectanglePosition;
-                
+                Rectangle iconPos = GetRectanglePosition();
+
                 System.Windows.Point cursorPos = CursorFunction.GetCursorPosition();
 
 
@@ -124,10 +158,10 @@ namespace SSHF.Models.NotifyIconModel
                     if (!(Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)))
                     {
                         App.RegistartorWindows.HideView(_iconViewModel);
-                        
+
                         NotificationMenuIsOpen = false;
 
-                        
+
                         App.Input -= _WindowInput_Input;
                         return;
 
@@ -136,11 +170,11 @@ namespace SSHF.Models.NotifyIconModel
                 };
                 if (!(Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width)))
                 {
-                    App.RegistartorWindows.HideView(_iconViewModel);
-                   
+                    window.Hide();
+
                     NotificationMenuIsOpen = false;
 
-                   
+
                     App.Input -= _WindowInput_Input;
                     return;
                 }
@@ -148,13 +182,13 @@ namespace SSHF.Models.NotifyIconModel
 
         }
 
-       
+
 
         internal static System.Windows.Point GetRectCorrect(Window window)
         {
             System.Windows.Point point = new System.Windows.Point();
 
-            Rectangle rectIcon = GetRectanglePosition;
+            Rectangle rectIcon = GetRectanglePosition();
 
             System.Windows.Size elementWindow = GetElementPixelSize(window);
 
@@ -195,14 +229,14 @@ namespace SSHF.Models.NotifyIconModel
             }
 
             return (System.Windows.Size)transformToDevice.Transform((Vector)element.DesiredSize);
-            
+
         }
 
 
 
 
 
-        public void ShutdownAppExecute(object? parameter) {_notifyIcon.Dispose(); App.Current.Shutdown();}
+        public void ShutdownAppExecute(object? parameter) { _notifyIcon.Dispose(); App.Current.Shutdown(); }
 
 
         public bool IsExecuteShutdownApp(object? parameter) => true;

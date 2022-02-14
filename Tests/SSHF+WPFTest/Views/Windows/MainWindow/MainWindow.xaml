@@ -10,7 +10,7 @@
  Title="MainWindow" 
  xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
  xmlns:cursor="clr-namespace:SSHF.Infrastructure.SharedFunctions"
-    AllowsTransparency="True"
+   AllowsTransparency="True"
  SizeToContent="WidthAndHeight"
  Background="Transparent"
  WindowStyle="None" 
@@ -19,9 +19,21 @@
  Topmost="True" WindowStartupLocation="CenterScreen"
     UseLayoutRounding="True">
 
-    <Window.DataContext>
+
+
+    <mc:AlternateContent>
+        <mc:Choice Requires="d">
+            <Window.DataContext>
+                <vm:MainWindowViewModel/>
+            </Window.DataContext>
+        </mc:Choice>
+        <mc:Fallback/>
+    </mc:AlternateContent>
+
+
+    <!--<Window.DataContext>
         <vm:MainWindowViewModel/>
-    </Window.DataContext>
+    </Window.DataContext>-->
 
     <Grid>
 
@@ -30,7 +42,7 @@
 
             <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
 
-              <Button 
+                <Button 
                      SnapsToDevicePixels="True" 
                      Width="{Binding ImageOpacity.Width}" 
                      Height="{Binding ImageOpacity.Height}"

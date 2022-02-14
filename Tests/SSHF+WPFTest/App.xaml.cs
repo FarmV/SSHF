@@ -24,6 +24,8 @@ namespace SSHF
     public partial class App : System.Windows.Application
     {
         internal static event EventHandler<RawInputEventArgs>? Input;
+       
+        internal static event EventHandler? DPIChange;
 
         readonly static public GlobalLowLevelHooks.KeyboardHook _GlobaKeyboardHook = new GlobalLowLevelHooks.KeyboardHook();
 
@@ -55,26 +57,31 @@ namespace SSHF
                 ////if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
                 ////    throw new ArgumentNullException(nameof(_menu_icon), "Menu_icon");
 
+                MainWindowViewModel main = new MainWindowViewModel();
+                RegistartorWindows.PresentationON(main);
+
+                RegistartorWindows.HideView(main);
+
+                NotifyIconViewModel noti = new NotifyIconViewModel();
+                RegistartorWindows.PresentationON(noti);
+
+                RegistartorWindows.HideView(noti);
 
 
-                //NotifyIconViewModel noti = new NotifyIconViewModel();
-                // RegistartorWindows.PresentationON(new NotifyIconViewModel());
-
-                // RegistartorWindows.HideView(noti);
 
                 //if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
                 //    throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
 
 
-                if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(MainWindowViewModel)]) is not MainWindow _mainWindow)
-                    throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
+                //if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(MainWindowViewModel)]) is not MainWindow _mainWindow)
+                //    throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
+
+                Window? mainWindow = RegistartorWindows.GetWindow(main);
+                if (mainWindow is null) throw new Exception("NULL");
+                mainWindow.Show();
 
 
-
-                _mainWindow.Show();
-
-
-                if (PresentationSource.FromVisual(_mainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
+                if (PresentationSource.FromVisual(mainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
                 source.AddHook(WndProc);
                 RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle);
             }
@@ -83,7 +90,7 @@ namespace SSHF
         }
         static App()
         {
-          
+
         }
 
 
@@ -93,6 +100,7 @@ namespace SSHF
         static IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             const int WM_INPUT = 0x00FF;
+            const int WM_DPICHANGED = 0x02E0;
             switch (msg)
             {
                 case WM_INPUT:
@@ -100,9 +108,12 @@ namespace SSHF
                         System.Diagnostics.Debug.WriteLine("Received WndProc.WM_INPUT");
                         RawInputData? data = RawInputData.FromHandle(lParam);
 
-
                         Input?.Invoke(App.Current.MainWindow, new RawInputEventArgs(data));
-
+                    }
+                    break;
+                case WM_DPICHANGED:
+                    {
+                        DPIChange?.Invoke(new object(),EventArgs.Empty);
                     }
                     break;
             }
