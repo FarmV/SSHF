@@ -31,18 +31,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
             List<NotifyIconViewModel.NotifyIconViewModel.DataModelCommands> commands = new List<NotifyIconViewModel.NotifyIconViewModel.DataModelCommands>();
             commands.Add(new NotifyIconViewModel.NotifyIconViewModel.DataModelCommands("Выбрать файл",SelectFileCommand));
 
-            var c = App.RegistartorWindows.vmToWindowMapping.Values;
 
-            Type? bv = c.First(c=> c == typeofSSHF.ViewModels.NotifyIconViewModel.NotifyIconViewModel));
-
-            var  che = System.Activator.CreateInstance(bv);
-
-            var win = App.RegistartorWindows.GetWindow(che);
-
-            NotifyIconViewModel.NotifyIconViewModel? win2 = win.DataContext as NotifyIconViewModel.NotifyIconViewModel;
-
-
-            win2.SetCommands(commands);
         }
         #region Заголовок окна
 

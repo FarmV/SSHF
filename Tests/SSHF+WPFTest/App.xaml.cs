@@ -38,17 +38,21 @@ namespace SSHF
 
         internal static int CheckCount = default;
 
-       //public static object GetVm([CallerMemberName] string? callMember = null,[CallerFilePath] string? callPath = null)
-       // {
-       //     string? name2 = callMember;
-       //     string? name3 = callPath;
+        //public static object GetVm([CallerMemberName] string? callMember = null,[CallerFilePath] string? callPath = null)
+        // {
+        //     string? name2 = callMember;
+        //     string? name3 = callPath;
 
-       //     return new object();
+        //     return new object();
 
-       //     if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
-       //         throw new ArgumentNullException(nameof(_menu_icon), "MainWindow");
+        //     if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
+        //         throw new ArgumentNullException(nameof(_menu_icon), "MainWindow");
 
-       // }
+        // }
+        internal static List<Window> WindowsIsOpen = new List<Window>();
+        
+        internal const string GetWindowNotification = "Нотификация";
+        internal const string GetMyMainWindow = "Главное окно приложения";
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -56,36 +60,25 @@ namespace SSHF
 
             if (IsDesignMode is false)
             {
-                
+                Menu_icon myNotification = new Menu_icon();
+                myNotification.Tag = GetWindowNotification;
+                myNotification.DataContext = new NotifyIconViewModel();
+
+                MainWindow mainWindow = new MainWindow();
+                mainWindow.Tag = GetMyMainWindow;
+                mainWindow.DataContext = new MainWindowViewModel();
+
+                WindowsIsOpen.Add(myNotification);
+                WindowsIsOpen.Add(mainWindow);
 
 
-                RegistartorWindows.RegisterWindowType<NotifyIconViewModel, Menu_icon>();
-                RegistartorWindows.RegisterWindowType<MainWindowViewModel, MainWindow>();
+                myNotification.Show();
+                myNotification.Hide();
+
+                mainWindow.Show();
+                mainWindow.Hide();
 
 
-                NotifyIconViewModel noti = new NotifyIconViewModel();
-                RegistartorWindows.PresentationON(noti);
-
-                RegistartorWindows.HideView(noti);
-
-                MainWindowViewModel main = new MainWindowViewModel();
-                RegistartorWindows.PresentationON(main);
-
-                
-
-
-
-
-                //if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
-                //    throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
-
-
-                Window? mainWindow = RegistartorWindows.GetWindow(main);
-                if (mainWindow is null) throw new Exception("NULL");
-                
-                
-                
-               // mainWindow.Hide(); // тут олдака
 
 
                 if (PresentationSource.FromVisual(mainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");

@@ -97,12 +97,16 @@ namespace SSHF.Models.NotifyIconModel
 
         private void NotifyIcon_MouseDown(object? sender, MouseEventArgs e)
         {
+            if(App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
 
             MouseButtons buttonMouse = e.Button;
 
             if (NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
-                if (App.RegistartorWindows.HideView(_iconViewModel) is false) return;
+               
+                NotificationMenu.Hide();
+                //if (menu_Icon.IsVisible) return;
+                //if (App.RegistartorWindows.HideView(_iconViewModel) is false) return;
 
 
                 NotificationMenuIsOpen = false;
@@ -116,17 +120,18 @@ namespace SSHF.Models.NotifyIconModel
             {
                 // App.RegistartorWindows.ShowView(_iconViewModel);
                 // App.RegistartorWindows.HideView(_iconViewModel);
-                if (App.RegistartorWindows.GetWindow(_iconViewModel) is not Window window) return;
 
-                System.Windows.Point pointMenu = GetRectCorrect(window);
+                
 
-                WindowInteropHelper helper = new WindowInteropHelper(window);
+                System.Windows.Point pointMenu = GetRectCorrect(NotificationMenu);
 
-
-                WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(window.Width), Convert.ToInt32(window.Height), 0x0400);
+                WindowInteropHelper helper = new WindowInteropHelper(NotificationMenu);
 
 
-                window.Show();
+                WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(NotificationMenu.Width), Convert.ToInt32(NotificationMenu.Height), 0x0400);
+
+
+                NotificationMenu.Show();
 
                 App.Input += _WindowInput_Input;
 
@@ -140,13 +145,15 @@ namespace SSHF.Models.NotifyIconModel
             RawInputData? data = e.Data;
             RawInputMouseData? mouseData = data as RawInputMouseData;
 
-            if (App.RegistartorWindows.GetWindow(_iconViewModel) is not Window window) return;
+            if (App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
+           
+        
             if (mouseData is null || mouseData.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
 
 
-            if (window.IsVisible is false) return;
-            if (window.IsMouseOver) return;
-            if (window.IsVisible)
+            if (NotificationMenu.IsVisible is false) return;
+            if (NotificationMenu.IsMouseOver) return;
+            if (NotificationMenu.IsVisible)
             {
                 Rectangle iconPos = GetRectanglePosition();
 
@@ -158,8 +165,7 @@ namespace SSHF.Models.NotifyIconModel
                     if (Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)) return;
                     if (!(Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)))
                     {
-                        App.RegistartorWindows.HideView(_iconViewModel);
-
+                        NotificationMenu.Hide();
                         NotificationMenuIsOpen = false;
 
 
@@ -171,7 +177,7 @@ namespace SSHF.Models.NotifyIconModel
                 };
                 if (!(Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width)))
                 {
-                    window.Hide();
+                    NotificationMenu.Hide();
 
                     NotificationMenuIsOpen = false;
 
