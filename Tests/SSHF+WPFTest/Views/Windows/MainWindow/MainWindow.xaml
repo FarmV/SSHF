@@ -7,13 +7,11 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:l="clr-namespace:SSHF"
     xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
-    xmlns:vmm="clr-namespace:SSHF.ViewModels"
     xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
     xmlns:cursor="clr-namespace:SSHF.Infrastructure.SharedFunctions"
     xmlns:cvv ="http://schemas.openxmlformats.org/markup-compatibility/2006"
 
-    xmlns:myAPP="clr-namespace:SSHF"
-    
+  
     Title="MainWindow" 
     AllowsTransparency="True"
     SizeToContent="WidthAndHeight"

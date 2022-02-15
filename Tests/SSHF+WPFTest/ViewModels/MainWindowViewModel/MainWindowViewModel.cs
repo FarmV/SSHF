@@ -12,6 +12,7 @@ using SSHF.Models.MainWindowModel;
 using SSHF.Models;
 using System.Windows.Media.Imaging;
 using SSHF.Infrastructure.SharedFunctions;
+using SSHF.Views.Windows.NotifyIcon;
 
 namespace SSHF.ViewModels.MainWindowViewModel
 {
@@ -26,7 +27,22 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             _Model = new MainWindowModel(this);
             _Cursor = new CursorFunction();
+            
+            List<NotifyIconViewModel.NotifyIconViewModel.DataModelCommands> commands = new List<NotifyIconViewModel.NotifyIconViewModel.DataModelCommands>();
+            commands.Add(new NotifyIconViewModel.NotifyIconViewModel.DataModelCommands("Выбрать файл",SelectFileCommand));
 
+            var c = App.RegistartorWindows.vmToWindowMapping.Values;
+
+            Type? bv = c.First(c=> c == typeofSSHF.ViewModels.NotifyIconViewModel.NotifyIconViewModel));
+
+            var  che = System.Activator.CreateInstance(bv);
+
+            var win = App.RegistartorWindows.GetWindow(che);
+
+            NotifyIconViewModel.NotifyIconViewModel? win2 = win.DataContext as NotifyIconViewModel.NotifyIconViewModel;
+
+
+            win2.SetCommands(commands);
         }
         #region Заголовок окна
 

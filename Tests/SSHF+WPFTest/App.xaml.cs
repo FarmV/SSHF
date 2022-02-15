@@ -63,16 +63,16 @@ namespace SSHF
                 RegistartorWindows.RegisterWindowType<MainWindowViewModel, MainWindow>();
 
 
+                NotifyIconViewModel noti = new NotifyIconViewModel();
+                RegistartorWindows.PresentationON(noti);
+
+                RegistartorWindows.HideView(noti);
 
                 MainWindowViewModel main = new MainWindowViewModel();
                 RegistartorWindows.PresentationON(main);
 
                 
 
-                NotifyIconViewModel noti = new NotifyIconViewModel();
-                RegistartorWindows.PresentationON(noti);
-
-                RegistartorWindows.HideView(noti);
 
 
 

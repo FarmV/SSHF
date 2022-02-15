@@ -28,6 +28,7 @@
 
 
 
+
     <Window.Resources>
         <Style x:Key="myStyle" TargetType="{x:Type Button}">
             <Setter Property="FontFamily" Value ="Franklin Gothic"/>
@@ -40,6 +41,13 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <ItemsControl x:Key="Items" ItemsSource="{Binding MyData}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Button Content="{Binding Content}" Command="{Binding Command}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Window.Resources>
 
 
@@ -47,15 +55,19 @@
 
     <StackPanel MinWidth="100">
 
-        <Button Style="{StaticResource myStyle}"
-                Content="1"/>
-        <Button Style="{StaticResource myStyle}"
-                Content="2"/>
-        <Button Style="{StaticResource myStyle}"
-                Content="3"/>
+        <ItemsControl ItemsSource="{Binding MyData}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Button Style="{StaticResource myStyle}" Content="{Binding Content}" Command="{Binding Command}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+
         <Button Style="{StaticResource myStyle}"
                 Command="{Binding ShutdownAppCommand}" 
-                Content="Закрыть"/>
+                Content="Закрыть">
+        </Button>
     </StackPanel>
 
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -21,21 +22,49 @@ namespace SSHF.ViewModels.NotifyIconViewModel
         
 
         readonly NotifyIconModel _model;
+
         public NotifyIconViewModel()
-        {          
-           _model = new NotifyIconModel(this);
-           
+        {
+            if (_model is null) _model = new NotifyIconModel(this);
+     
         }
 
-        bool _visible = default;    
-
-        public bool MyProperty
+        internal void SetCommands(IEnumerable<DataModelCommands> commands)
         {
-            get { return _visible; }
-            set { _visible = value; }
+            foreach (var command in commands)
+            {
+                CommandsCollecition.Add(command);
+            }
+        }
+
+        public bool? IsVisible
+        {
+            get 
+            {
+                if (App.RegistartorWindows.GetWindow(this) is not Window window1) return null;
+                return window1.IsVisible;
+            }         
         }
 
         public ICommand ShutdownAppCommand => new RelayCommand(_model.ShutdownAppExecute, _model.IsExecuteShutdownApp);
+
+
+
+
+        public ObservableCollection<DataModelCommands> CommandsCollecition { get; } = new ObservableCollection<DataModelCommands>();
+
+        public class DataModelCommands
+        {
+            public string Content { get; }
+
+            public ICommand Command { get; }
+
+            public DataModelCommands(string content, ICommand command)
+            {
+                Content = content;
+                Command = command;
+            }
+        }
 
 
 
