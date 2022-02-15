@@ -1,13 +1,19 @@
-﻿<Window x:Class="SSHF.Views.Windows.NotifyIcon.Menu_icon"
+﻿<Window 
+        x:Class="SSHF.Views.Windows.NotifyIcon.Menu_icon"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" mc:Ignorable="d"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SSHF.Views.Windows.NotifyIcon"
-        xmlns:vmN="clr-namespace:SSHF.ViewModels.NotifyIconViewModel"
+        xmlns:vm="clr-namespace:SSHF.ViewModels.NotifyIconViewModel"
         xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
         xmlns:vmD="clr-namespace:SSHF.Models.NotifyIconModel"
-        AllowDrop="True"
+        xmlns:mcc ="http://schemas.openxmlformats.org/markup-compatibility/2006"
+       
+        
+        d:DataContext="{d:DesignInstance vm:NotifyIconViewModel, IsDesignTimeCreatable=True}"
+        
+        AllowDrop="True"      
         Background="Transparent"
         WindowStyle="None"
         Title="Menu_icon"
@@ -15,15 +21,10 @@
         ResizeMode="NoResize"
         Topmost="True"
            
+        
+        
 >
-    <mc:AlternateContent>
-        <mc:Choice Requires="d">
-            <Window.DataContext>
-                <vmN:NotifyIconViewModel/>
-            </Window.DataContext>
-        </mc:Choice>
-        <mc:Fallback/>
-    </mc:AlternateContent>
+
 
 
 
@@ -43,7 +44,7 @@
 
 
 
-    
+
     <StackPanel MinWidth="100">
 
         <Button Style="{StaticResource myStyle}"

@@ -53,7 +53,7 @@ namespace SSHF.Models.NotifyIconModel
             using (_iconViewModel = ViewModel)
                 // _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon($"{AppContext.BaseDirectory}{Process.GetCurrentProcess().ProcessName}.exe");
                 InitialIcon();
-            
+
             // myTimer();
             App.CheckCount++;
 
@@ -61,8 +61,9 @@ namespace SSHF.Models.NotifyIconModel
             App.DPIChange += (obj, ev) =>
             {
                 try
-                {   if(_notifyIcon is not null)
-                    _notifyIcon.MouseDown -= NotifyIcon_MouseDown;
+                {
+                    if (_notifyIcon is not null)
+                        _notifyIcon.MouseDown -= NotifyIcon_MouseDown;
                     if (_notifyIcon is not null)
                         _notifyIcon.Dispose();
                 }

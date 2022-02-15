@@ -17,6 +17,7 @@ using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Diagnostics;
 using System.Windows.Navigation;
+using System.Runtime.CompilerServices;
 
 namespace SSHF
 {
@@ -37,11 +38,17 @@ namespace SSHF
 
         internal static int CheckCount = default;
 
-        //internal static void SetRawData(RawInputData? data)
-        //{
-        //    if (data is null) return;
-        //    Input?.Invoke(App.Current.MainWindow, new RawInputEventArgs(data));
-        //}
+       //public static object GetVm([CallerMemberName] string? callMember = null,[CallerFilePath] string? callPath = null)
+       // {
+       //     string? name2 = callMember;
+       //     string? name3 = callPath;
+
+       //     return new object();
+
+       //     if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
+       //         throw new ArgumentNullException(nameof(_menu_icon), "MainWindow");
+
+       // }
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -49,18 +56,18 @@ namespace SSHF
 
             if (IsDesignMode is false)
             {
+                
 
 
                 RegistartorWindows.RegisterWindowType<NotifyIconViewModel, Menu_icon>();
                 RegistartorWindows.RegisterWindowType<MainWindowViewModel, MainWindow>();
 
-                ////if (System.Activator.CreateInstance(_displayRegistry.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
-                ////    throw new ArgumentNullException(nameof(_menu_icon), "Menu_icon");
+
 
                 MainWindowViewModel main = new MainWindowViewModel();
                 RegistartorWindows.PresentationON(main);
 
-                RegistartorWindows.HideView(main);
+                
 
                 NotifyIconViewModel noti = new NotifyIconViewModel();
                 RegistartorWindows.PresentationON(noti);
@@ -73,12 +80,12 @@ namespace SSHF
                 //    throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
 
 
-                //if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(MainWindowViewModel)]) is not MainWindow _mainWindow)
-                //    throw new ArgumentNullException(nameof(_mainWindow), "MainWindow");
-
                 Window? mainWindow = RegistartorWindows.GetWindow(main);
                 if (mainWindow is null) throw new Exception("NULL");
-                mainWindow.Show();
+                
+                
+                
+               // mainWindow.Hide(); // тут олдака
 
 
                 if (PresentationSource.FromVisual(mainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
@@ -88,12 +95,6 @@ namespace SSHF
 
             base.OnStartup(e);
         }
-        static App()
-        {
-
-        }
-
-
 
 
 

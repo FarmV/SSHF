@@ -1,42 +1,59 @@
 ﻿<Window 
- x:Name="Fast"
- x:Class="SSHF.MainWindow"
- xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
- xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" mc:Ignorable="d"
- xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
- xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
- xmlns:l="clr-namespace:SSHF"
- xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
- Title="MainWindow" 
- xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
- xmlns:cursor="clr-namespace:SSHF.Infrastructure.SharedFunctions"
-   AllowsTransparency="True"
- SizeToContent="WidthAndHeight"
- Background="Transparent"
- WindowStyle="None" 
+    x:Name="Fast"
+    x:Class="SSHF.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" mc:Ignorable="d"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:l="clr-namespace:SSHF"
+    xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
+    xmlns:vmm="clr-namespace:SSHF.ViewModels"
+    xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
+    xmlns:cursor="clr-namespace:SSHF.Infrastructure.SharedFunctions"
+    xmlns:cvv ="http://schemas.openxmlformats.org/markup-compatibility/2006"
+
+    xmlns:myAPP="clr-namespace:SSHF"
+    
+    Title="MainWindow" 
+    AllowsTransparency="True"
+    SizeToContent="WidthAndHeight"
+    Background="Transparent"
+    WindowStyle="None"      
+    Topmost="True" 
+    WindowStartupLocation="CenterScreen"
+    UseLayoutRounding="True"
+    Height="1080"
+    Width="1920"
+    
+    d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
+    
+   
+>
 
 
- Topmost="True" WindowStartupLocation="CenterScreen"
-    UseLayoutRounding="True">
 
-
-
-    <mc:AlternateContent>
-        <mc:Choice Requires="d">
+    <!--<mc:AlternateContent>
+        <mc:Choice Requires ="d">
             <Window.DataContext>
                 <vm:MainWindowViewModel/>
             </Window.DataContext>
         </mc:Choice>
-        <mc:Fallback/>
-    </mc:AlternateContent>
+        <mc:Fallback>
+        </mc:Fallback>
+    </mc:AlternateContent>-->
 
 
-    <!--<Window.DataContext>
+    <!--<Window.DataContext >
         <vm:MainWindowViewModel/>
     </Window.DataContext>-->
 
-    <Grid>
 
+
+
+
+
+        
+    <Grid>
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
 
 
@@ -61,6 +78,7 @@
                      Focusable="False" 
                      IsEnabled="True"
               >
+    
                     <Image              
                           Source="{Binding Image}"                
                           VerticalAlignment="Center"
@@ -97,6 +115,5 @@
             <Button Command="{Binding ApplicationShutdown}" FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выйти"/>
         </StackPanel>
     </Grid>
-
-
+  
 </Window>
