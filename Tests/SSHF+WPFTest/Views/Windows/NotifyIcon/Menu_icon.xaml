@@ -55,7 +55,7 @@
 
     <StackPanel MinWidth="100">
 
-        <ItemsControl ItemsSource="{Binding MyData}">
+        <ItemsControl ItemsSource="{Binding CommandsCollecition}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Button Style="{StaticResource myStyle}" Content="{Binding Content}" Command="{Binding Command}"/>

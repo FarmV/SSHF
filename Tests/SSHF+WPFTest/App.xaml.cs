@@ -60,20 +60,26 @@ namespace SSHF
 
             if (IsDesignMode is false)
             {
-                Menu_icon myNotification = new Menu_icon();
-                myNotification.Tag = GetWindowNotification;
-                myNotification.DataContext = new NotifyIconViewModel();
-
-                MainWindow mainWindow = new MainWindow();
-                mainWindow.Tag = GetMyMainWindow;
-                mainWindow.DataContext = new MainWindowViewModel();
-
+                Menu_icon myNotification = new Menu_icon
+                {
+                    Tag = GetWindowNotification,
+                    DataContext = new NotifyIconViewModel()
+                };
                 WindowsIsOpen.Add(myNotification);
+                
+                myNotification.Show();
+                myNotification.Hide();
+
+                MainWindow mainWindow = new MainWindow
+                {
+                    Tag = GetMyMainWindow,
+                    DataContext = new MainWindowViewModel()
+                };
+
                 WindowsIsOpen.Add(mainWindow);
 
 
-                myNotification.Show();
-                myNotification.Hide();
+
 
                 mainWindow.Show();
                 mainWindow.Hide();

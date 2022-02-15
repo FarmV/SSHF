@@ -32,6 +32,11 @@ namespace SSHF.ViewModels.MainWindowViewModel
             commands.Add(new NotifyIconViewModel.NotifyIconViewModel.DataModelCommands("Выбрать файл",SelectFileCommand));
 
 
+            var widnowsSource = App.WindowsIsOpen.First(sourece => sourece.Tag.ToString() is App.GetWindowNotification) as Menu_icon;
+            var contex = widnowsSource.DataContext as NotifyIconViewModel.NotifyIconViewModel;
+
+            contex.SetCommands(commands);
+
         }
         #region Заголовок окна
 
