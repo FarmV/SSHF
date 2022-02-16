@@ -28,25 +28,6 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             _Model = new MainWindowModel(this);
             _Cursor = new CursorFunction();
-            
-            List<NotifyIconViewModel.NotifyIconViewModel.DataModelCommands> commands = new List<NotifyIconViewModel.NotifyIconViewModel.DataModelCommands>();
-            commands.Add(new NotifyIconViewModel.NotifyIconViewModel.DataModelCommands("Выбрать файл",SelectFileCommand));
-
-
-            var widnowsSource = App.WindowsIsOpen.First(sourece => sourece.Tag.ToString() is App.GetWindowNotification) as Menu_icon;
-            var contex = widnowsSource.DataContext as NotifyIconViewModel.NotifyIconViewModel;
-
-            contex.SetCommands(commands);
-
-
-
-            System.Windows.Point pointMenu = SSHF.Models.NotifyIconModel.NotifyIconModel.GetRectCorrect(widnowsSource);
-
-            WindowInteropHelper helper = new WindowInteropHelper(widnowsSource);
-            var PointCursor = CursorFunction.GetCursorPosition();
-
-            WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(PointCursor.X), Convert.ToInt32(PointCursor.Y), Convert.ToInt32(widnowsSource.Width), Convert.ToInt32(widnowsSource.Height), 0x0400);
-            widnowsSource.Show(); // todo доделать функции нотификации
         }
         #region Заголовок окна
 

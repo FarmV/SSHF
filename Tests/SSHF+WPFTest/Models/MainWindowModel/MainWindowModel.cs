@@ -17,6 +17,8 @@ using System.Windows.Forms;
 using static SSHF.Infrastructure.SharedFunctions.CursorFunction;
 using SSHF.ViewModels.MainWindowViewModel;
 using SSHF.Models.NotifyIconModel;
+using System.Collections.Generic;
+using SSHF.ViewModels.NotifyIconViewModel;
 
 namespace SSHF.Models.MainWindowModel
 {
@@ -125,6 +127,31 @@ namespace SSHF.Models.MainWindowModel
 
         #endregion
 
+        #region Взов нотификатора
 
+
+        public void NotificatorExecute(object? _)
+        {
+            List<NotifyIconViewModel.DataModelCommands> commands = new List<NotifyIconViewModel.DataModelCommands>
+            {
+                new NotifyIconViewModel.DataModelCommands("Выбрать файл", _ViewModel.SelectFileCommand)
+            };
+
+            Notificator.SetCommand(commands);
+        } 
+        public bool IsExecuteInvoceNotificator(object? _)
+        {
+            return true;
+        }
+
+
+
+
+        #endregion
     }
+
+
+
+
+
 }

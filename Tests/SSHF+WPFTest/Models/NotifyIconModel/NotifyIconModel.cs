@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 using Linearstar.Windows.RawInput;
 
@@ -33,19 +34,23 @@ namespace SSHF.Models.NotifyIconModel
             return NotifyIconHelper.GetIconRect(_notifyIcon);
         }
 
-        internal static volatile bool NotificationMenuIsOpen = default;
+
+        
+
+       //internal static volatile bool NotificationMenuIsOpen = default;
 
 
         readonly NotifyIconViewModel _iconViewModel;
 
         void InitialIcon()
         {
-            _notifyIcon = new NotifyIcon();
-            _notifyIcon.Icon = Icon.ExtractAssociatedIcon(@"D:\Downloads\UnderRail GOG\setup_underrail_1.1.4.5_(49811).exe");
-
-            _notifyIcon.Visible = true;
+            _notifyIcon = new NotifyIcon
+            {
+                Icon = Icon.ExtractAssociatedIcon(@"D:\Downloads\UnderRail GOG\setup_underrail_1.1.4.5_(49811).exe"),
+                Visible = true
+            };
             _notifyIcon.MouseDown += NotifyIcon_MouseDown;
-            // myTimer();
+            DisposeTimer();
         }
 
         public NotifyIconModel(NotifyIconViewModel ViewModel)
@@ -74,22 +79,22 @@ namespace SSHF.Models.NotifyIconModel
             };
         }
 
-        // void myTimer()
-        //{
-        //    System.Threading.Timer timer = new System.Threading.Timer(new System.Threading.TimerCallback((obj) =>
-        //    {
-        //        try
-        //        {
-        //            App.RegistartorWindows.GetWindow(_iconViewModel);
-        //            //var test = App.Current.MainWindow;
-        //        }
-        //        finally
-        //        {
-        //            _notifyIcon.Dispose();
-        //            App.Current.Dispatcher.Invoke(new Action(() => { App.Current.Shutdown();})); 
-        //        }
-        //    }), null, 5000, 5000);
-        //}
+        void DisposeTimer()
+        {
+            System.Threading.Timer timer = new System.Threading.Timer(new System.Threading.TimerCallback((obj) =>
+            {
+                try
+                {
+                    if (App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
+                }
+                finally
+                {
+                    _notifyIcon?.Dispose();
+                    Dispatcher.CurrentDispatcher.Invoke(() => { App.Current.Shutdown(); });
+                    App.Current.Dispatcher.Invoke(new Action(() => { App.Current.Shutdown(); }));
+                }
+            }), null, 5000, 5000);
+        }
 
 
 
@@ -101,7 +106,7 @@ namespace SSHF.Models.NotifyIconModel
 
             MouseButtons buttonMouse = e.Button;
 
-            if (NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
+            if (Notificator.NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
                
                 NotificationMenu.Hide();
@@ -110,14 +115,14 @@ namespace SSHF.Models.NotifyIconModel
                 //if (App.RegistartorWindows.HideView(_iconViewModel) is false) return;
 
 
-                NotificationMenuIsOpen = false;
+                Notificator.NotificationMenuIsOpen = false;
 
 
-                App.Input -= _WindowInput_Input;
+                App.InputMouse -= _WindowInput_Input;
 
                 return;
             }
-            if (!NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
+            if (!Notificator.NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
                 // App.RegistartorWindows.ShowView(_iconViewModel);
                 // App.RegistartorWindows.HideView(_iconViewModel);
@@ -134,9 +139,9 @@ namespace SSHF.Models.NotifyIconModel
 
                 NotificationMenu.Show();
 
-                App.Input += _WindowInput_Input;
+                App.InputMouse += _WindowInput_Input;
 
-                NotificationMenuIsOpen = true;
+                Notificator.NotificationMenuIsOpen = true;
 
             }
         }
@@ -168,10 +173,10 @@ namespace SSHF.Models.NotifyIconModel
                     {
                         NotificationMenu.Hide();
                         _iconViewModel.DataCommandsCollection.Clear();
-                        NotificationMenuIsOpen = false;
+                        Notificator.NotificationMenuIsOpen = false;
 
 
-                        App.Input -= _WindowInput_Input;
+                        App.InputMouse -= _WindowInput_Input;
                         return;
 
                     }
@@ -182,10 +187,10 @@ namespace SSHF.Models.NotifyIconModel
                     NotificationMenu.Hide();
                     _iconViewModel.DataCommandsCollection.Clear();
 
-                    NotificationMenuIsOpen = false;
+                    Notificator.NotificationMenuIsOpen = false;
 
 
-                    App.Input -= _WindowInput_Input;
+                    App.InputMouse -= _WindowInput_Input;
                     return;
                 }
             }
@@ -246,10 +251,10 @@ namespace SSHF.Models.NotifyIconModel
 
 
 
-        public void ShutdownAppExecute(object? parameter) { _notifyIcon.Dispose(); App.Current.Shutdown(); }
+        public void ShutdownAppExecute(object? _) { _notifyIcon?.Dispose(); App.Current.Shutdown(); }
 
 
-        public bool IsExecuteShutdownApp(object? parameter) => true;
+        public bool IsExecuteShutdownApp(object? _) => true;
 
 
         //public static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject /// невозможно перебрать элементы если окно не отображется

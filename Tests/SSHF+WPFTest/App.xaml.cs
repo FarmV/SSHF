@@ -18,13 +18,14 @@ using System.Windows.Interop;
 using System.Diagnostics;
 using System.Windows.Navigation;
 using System.Runtime.CompilerServices;
+using SSHF.Infrastructure.SharedFunctions;
 
 namespace SSHF
 {
 
     public partial class App : System.Windows.Application
     {
-        internal static event EventHandler<RawInputEventArgs>? Input;
+        internal static event EventHandler<RawInputEventArgs>? InputMouse;
        
         internal static event EventHandler? DPIChange;
 
@@ -37,6 +38,9 @@ namespace SSHF
         internal static bool IsDesignMode { get; private set; } = true;
 
         internal static int CheckCount = default;
+
+
+      
 
         //public static object GetVm([CallerMemberName] string? callMember = null,[CallerFilePath] string? callPath = null)
         // {
@@ -70,11 +74,11 @@ namespace SSHF
                 myNotification.Show();
                 myNotification.Hide();
 
-                MainWindow mainWindow = new MainWindow
-                {
-                    Tag = GetMyMainWindow,
-                    DataContext = new MainWindowViewModel()
-                };
+                MainWindow mainWindow = new MainWindow();
+                mainWindow.Tag = GetMyMainWindow;
+                mainWindow.DataContext = new MainWindowViewModel();
+             
+                
 
                 WindowsIsOpen.Add(mainWindow);
 
@@ -82,7 +86,7 @@ namespace SSHF
 
 
                 mainWindow.Show();
-                mainWindow.Hide();
+              //  mainWindow.Hide();
 
 
 
@@ -105,10 +109,10 @@ namespace SSHF
             {
                 case WM_INPUT:
                     {
-                        System.Diagnostics.Debug.WriteLine("Received WndProc.WM_INPUT");
+                       // System.Diagnostics.Debug.WriteLine("Received WndProc.WM_INPUT");
                         RawInputData? data = RawInputData.FromHandle(lParam);
 
-                        Input?.Invoke(App.Current.MainWindow, new RawInputEventArgs(data));
+                        InputMouse?.Invoke(App.Current.MainWindow, new RawInputEventArgs(data));
                     }
                     break;
                 case WM_DPICHANGED:

@@ -22,8 +22,9 @@
     UseLayoutRounding="True"
     Height="1080"
     Width="1920"
-    
+   
     d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
+   
     
    
 >
@@ -41,9 +42,7 @@
     </mc:AlternateContent>-->
 
 
-    <!--<Window.DataContext >
-        <vm:MainWindowViewModel/>
-    </Window.DataContext>-->
+
 
 
 
@@ -76,7 +75,7 @@
                      Focusable="False" 
                      IsEnabled="True"
               >
-    
+
                     <Image              
                           Source="{Binding Image}"                
                           VerticalAlignment="Center"
@@ -99,18 +98,13 @@
                     <behaviors:Interaction.Triggers>
                         <behaviors:EventTrigger EventName="MouseRightButtonUp">
 
-                            <!--<behaviors:InvokeCommandAction Command="{Binding ElementName=Stack1, Path=Visibility}"/>-->
-                            <behaviors:ChangePropertyAction  TargetObject="{Binding ElementName=Stack1}" PropertyName="Visibility" Value="Visible"/>
+                            <behaviors:InvokeCommandAction Command="{Binding Path=IvoceNotificatorView}"/>
+                            <!--<behaviors:ChangePropertyAction  TargetObject="{Binding ElementName=Stack1}" PropertyName="Visibility" Value="Visible"/>-->
                         </behaviors:EventTrigger>
                     </behaviors:Interaction.Triggers>
 
                 </Button>
             </Grid>
-        </StackPanel>
-        <StackPanel x:Name="Stack1" Visibility="Hidden">
-            <Button FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выбрать картинку" Command="{Binding SelectFileCommand}"/>
-            <Separator  Background="LightPink"/>
-            <Button Command="{Binding ApplicationShutdown}" FontFamily="Franklin Gothic" Height="100" FontSize="32" Content="Выйти"/>
         </StackPanel>
     </Grid>
   
