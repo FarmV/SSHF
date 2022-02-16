@@ -105,6 +105,7 @@ namespace SSHF.Models.NotifyIconModel
             {
                
                 NotificationMenu.Hide();
+                _iconViewModel.DataCommandsCollection.Clear();
                 //if (menu_Icon.IsVisible) return;
                 //if (App.RegistartorWindows.HideView(_iconViewModel) is false) return;
 
@@ -166,6 +167,7 @@ namespace SSHF.Models.NotifyIconModel
                     if (!(Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)))
                     {
                         NotificationMenu.Hide();
+                        _iconViewModel.DataCommandsCollection.Clear();
                         NotificationMenuIsOpen = false;
 
 
@@ -178,6 +180,7 @@ namespace SSHF.Models.NotifyIconModel
                 if (!(Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width)))
                 {
                     NotificationMenu.Hide();
+                    _iconViewModel.DataCommandsCollection.Clear();
 
                     NotificationMenuIsOpen = false;
 

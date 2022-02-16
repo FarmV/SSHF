@@ -49,9 +49,12 @@ namespace SSHF.ViewModels.NotifyIconViewModel
         public ICommand ShutdownAppCommand => new RelayCommand(_model.ShutdownAppExecute, _model.IsExecuteShutdownApp);
 
 
+        internal ObservableCollection<DataModelCommands> DataCommandsCollection = new ObservableCollection<DataModelCommands>();
 
-
-        public ObservableCollection<DataModelCommands> CommandsCollecition { get; } = new ObservableCollection<DataModelCommands>();
+        public ObservableCollection<DataModelCommands> CommandsCollecition 
+        {
+            get => DataCommandsCollection;
+        }
 
         public class DataModelCommands
         {

@@ -13,6 +13,7 @@ using SSHF.Models;
 using System.Windows.Media.Imaging;
 using SSHF.Infrastructure.SharedFunctions;
 using SSHF.Views.Windows.NotifyIcon;
+using System.Windows.Interop;
 
 namespace SSHF.ViewModels.MainWindowViewModel
 {
@@ -37,6 +38,15 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
             contex.SetCommands(commands);
 
+
+
+            System.Windows.Point pointMenu = SSHF.Models.NotifyIconModel.NotifyIconModel.GetRectCorrect(widnowsSource);
+
+            WindowInteropHelper helper = new WindowInteropHelper(widnowsSource);
+            var PointCursor = CursorFunction.GetCursorPosition();
+
+            WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(PointCursor.X), Convert.ToInt32(PointCursor.Y), Convert.ToInt32(widnowsSource.Width), Convert.ToInt32(widnowsSource.Height), 0x0400);
+            widnowsSource.Show(); // todo доделать функции нотификации
         }
         #region Заголовок окна
 
