@@ -56,7 +56,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             get
             {
-                if (_ImageForButton is null) _ImageForButton = IntegratingImages.SetImageToMemoryFromDrive(IntegratingImages.GetUriApp("Views/Windows/MainWindow/MainWindowRes/F_Logo2.png"));
+                if (_ImageForButton is null) _ImageForButton = IntegratingImages.SetImageToMemoryFromDrive(IntegratingImages.GetUriApp("Views/Windows/MainWindow/MainWindowRes/Test.png"));
                 if (_ImageForButton is null) throw new InvalidOperationException();
 
                 return _ImageForButton;

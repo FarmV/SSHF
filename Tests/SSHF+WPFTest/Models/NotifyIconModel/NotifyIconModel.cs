@@ -86,7 +86,7 @@ namespace SSHF.Models.NotifyIconModel
             {
                 try
                 {
-                    App.Current.Dispatcher.Invoke(new Action(() =>
+                    App.Current.Dispatcher.BeginInvoke(new Action(() =>
                     { 
                      if (App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
                     }));
@@ -99,7 +99,8 @@ namespace SSHF.Models.NotifyIconModel
                 {
                     _notifyIcon?.Dispose();
                    
-                    App.Current.Dispatcher.Invoke(new Action(() => { App.Current.Shutdown(); }));
+                    App.Current.Dispatcher?.Invoke(new Action(() => { App.Current?.Shutdown(); }));
+                    Environment.Exit(1359);
                 }
             }), null, 5000, 5000);
         }
