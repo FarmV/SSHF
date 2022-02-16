@@ -83,6 +83,7 @@ namespace SSHF.Infrastructure.SharedFunctions
             if (Menu_Icon.IsMouseOver) return;
 
             Menu_Icon.Hide();
+            NotificationMenuIsOpen = false;
 
             if (NotiView is null) throw new NullReferenceException("NotiView is NULL");
 

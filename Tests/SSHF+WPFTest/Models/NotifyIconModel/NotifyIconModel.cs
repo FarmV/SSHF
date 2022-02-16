@@ -50,11 +50,12 @@ namespace SSHF.Models.NotifyIconModel
                 Visible = true
             };
             _notifyIcon.MouseDown += NotifyIcon_MouseDown;
-            DisposeTimer();
+            
         }
 
         public NotifyIconModel(NotifyIconViewModel ViewModel)
         {
+            DisposeTimer();
             using (_iconViewModel = ViewModel)
                 // _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon($"{AppContext.BaseDirectory}{Process.GetCurrentProcess().ProcessName}.exe");
                 InitialIcon();
@@ -70,7 +71,7 @@ namespace SSHF.Models.NotifyIconModel
                     if (_notifyIcon is not null)
                         _notifyIcon.MouseDown -= NotifyIcon_MouseDown;
                     if (_notifyIcon is not null)
-                        _notifyIcon.Dispose();
+                        _notifyIcon?.Dispose();
                 }
                 finally
                 {
@@ -79,18 +80,25 @@ namespace SSHF.Models.NotifyIconModel
             };
         }
 
-        void DisposeTimer()
+       static void DisposeTimer()
         {
             System.Threading.Timer timer = new System.Threading.Timer(new System.Threading.TimerCallback((obj) =>
             {
                 try
                 {
-                    if (App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
+                    App.Current.Dispatcher.Invoke(new Action(() =>
+                    { 
+                     if (App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
+                    }));
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(ex);
                 }
                 finally
                 {
                     _notifyIcon?.Dispose();
-                    Dispatcher.CurrentDispatcher.Invoke(() => { App.Current.Shutdown(); });
+                   
                     App.Current.Dispatcher.Invoke(new Action(() => { App.Current.Shutdown(); }));
                 }
             }), null, 5000, 5000);
@@ -102,9 +110,12 @@ namespace SSHF.Models.NotifyIconModel
 
         private void NotifyIcon_MouseDown(object? sender, MouseEventArgs e)
         {
-            if(App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
 
-            MouseButtons buttonMouse = e.Button;
+            App.Current.Dispatcher.Invoke(new Action(() =>
+            {
+                if (App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
+
+                 MouseButtons buttonMouse = e.Button;
 
             if (Notificator.NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
             {
@@ -144,6 +155,7 @@ namespace SSHF.Models.NotifyIconModel
                 Notificator.NotificationMenuIsOpen = true;
 
             }
+            }));
         }
 
         private void _WindowInput_Input(object? sender, RawInputEventArgs e)
