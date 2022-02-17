@@ -40,7 +40,7 @@ namespace SSHF
 
         internal static int CheckCount = default;
 
-        internal static FuncKeyHandler.FkeyHandler? KeyBoarHandler;
+        internal static FuncKeyHandler.FkeyHandler? KeyBoardHandler;
 
 
 
@@ -67,7 +67,7 @@ namespace SSHF
 
             if (IsDesignMode is false)
             {
-                KeyBoarHandler = new FuncKeyHandler.FkeyHandler("+");
+                KeyBoardHandler = new FuncKeyHandler.FkeyHandler("+");
 
                 Menu_icon myNotification = new Menu_icon
                 {

@@ -71,12 +71,14 @@
                      VerticalContentAlignment="Center"
                      HorizontalContentAlignment="Center"
                      
+                    
                      
                      Focusable="False" 
                      IsEnabled="True"
               >
 
-                    <Image              
+                    <Image 
+                          Stretch="None"
                           Source="{Binding Image}"                
                           VerticalAlignment="Center"
                           HorizontalAlignment="Center"
@@ -92,7 +94,7 @@
                     <ImageBrush ImageSource="{Binding Image}"/>
                     </Button.Foreground>-->
                     <Button.OpacityMask>
-                        <ImageBrush ImageSource="{Binding ImageOpacity}"/>
+                        <ImageBrush Stretch="None" ImageSource="{Binding ImageOpacity}"/>
                     </Button.OpacityMask>
 
                     <behaviors:Interaction.Triggers>

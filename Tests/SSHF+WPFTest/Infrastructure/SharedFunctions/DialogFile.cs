@@ -50,5 +50,25 @@ namespace SSHF.Infrastructure.SharedFunctions
             return true;
 
         }
+
+        internal static bool SaveFile(string Title, out string? SelectedFile, string Filter = "Все файлы (*.*)|*.*")
+        {
+            SaveFileDialog? fileDialog = new SaveFileDialog
+            {
+                Title = Title,
+                Filter = Filter,
+            };
+           
+
+            if (fileDialog.ShowDialog() is not true)
+            {
+                SelectedFile = null;
+                return false;
+            }
+
+            SelectedFile = fileDialog.FileName;
+
+            return true;
+        }
     }
 }

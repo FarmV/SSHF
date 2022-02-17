@@ -62,7 +62,7 @@ namespace SSHF.Infrastructure.SharedFunctions
 
             try
             {
-                TransformedBitmap? Transformed = new TransformedBitmap(ImageToScale, new ScaleTransform(1.25, 1.25)); // Ваш Sacle
+                TransformedBitmap? Transformed = new TransformedBitmap(ImageToScale, new ScaleTransform(1.05, 1.05)); // Ваш Sacle
                                          
                 using MemoryStream outStream = new MemoryStream();
                 BitmapEncoder enc = new BmpBitmapEncoder();

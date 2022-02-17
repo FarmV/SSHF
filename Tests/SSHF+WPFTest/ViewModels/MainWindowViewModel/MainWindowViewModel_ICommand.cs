@@ -30,6 +30,10 @@ namespace SSHF.ViewModels.MainWindowViewModel
         public ICommand IvoceNotificatorView => new RelayCommand(_Model.NotificatorExecute, _Model.IsExecuteInvoceNotificator);
 
 
+        public ICommand InvoceSaveFileDialogCommand => new RelayCommand(_Model.SaveFileDialogExecute, _Model.IsExecuteSaveFileDialog);
+
+
+
 
 
 

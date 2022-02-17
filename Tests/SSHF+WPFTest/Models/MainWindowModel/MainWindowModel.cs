@@ -27,12 +27,17 @@ namespace SSHF.Models.MainWindowModel
     internal class MainWindowModel
     {
         readonly MainWindowViewModel _ViewModel;
-       // readonly System.Windows.Forms.NotifyIcon? _Icon;
+        // readonly System.Windows.Forms.NotifyIcon? _Icon;
         public MainWindowModel(MainWindowViewModel ViewModel)
         {
             using (_ViewModel = ViewModel)
-            RegisterFunctions();
-            
+
+                if (App.IsDesignMode is not true)
+                {
+                    RegisterFunctions();
+
+                }
+
         }
 
 
@@ -54,7 +59,7 @@ namespace SSHF.Models.MainWindowModel
                 WindowFunction.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X - _PositionShift.X, _CursorPoint.Y - _PositionShift.Y, 1920, 1080, 0x0400); // todo Отвязать от разрешения. Узнать как комибинировать флаги.
             }
 
-          
+
 
         });
         public bool IsRefreshWindowOn(object? parameter) => _ViewModel.RefreshWindow is false;
@@ -76,7 +81,7 @@ namespace SSHF.Models.MainWindowModel
         {
             return true;
 
-            
+
         }
 
         #endregion
@@ -84,15 +89,15 @@ namespace SSHF.Models.MainWindowModel
 
         #region Обработчик клавиатурного вввода
 
-       // public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(App._GlobaKeyboardHook, "+");
+        // public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(App._GlobaKeyboardHook, "+");
 
 
 
         void RegisterFunctions()
         {
-           if (App.KeyBoarHandler is null) throw new NullReferenceException("App.KeyBoarHandle is NULL");
+            if (App.KeyBoardHandler is null) throw new NullReferenceException("App.KeyBoarHandle is NULL");
 
-           App.KeyBoarHandler.RegisterAFunction("RefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => {_ViewModel.RefreshOffCommand.Execute(new object()); }), true);           
+            App.KeyBoardHandler.RegisterAFunction("RefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => { _ViewModel.RefreshOffCommand.Execute(new object()); }), true);
         }
 
 
@@ -105,25 +110,25 @@ namespace SSHF.Models.MainWindowModel
         public void SelectFileExecute(object? parameter)
         {
             if (DialogFile.OpenFile("Выбор изображения", out string? filePath) is false) return;
-           
-            if(filePath is null) return;
-            
+
+            if (filePath is null) return;
+
             FileInfo file = new FileInfo(filePath);
 
             BitmapImage? image = IntegratingImages.SetImageToMemoryFromDrive(new Uri(file.FullName, UriKind.Absolute));
 
             if (image is null)
             {
-                System.Windows.Forms.MessageBox.Show($"Не удалось обработать файл изображения.{Environment.NewLine}Проверте расширение файла.","Ошибка",MessageBoxButtons.OK, MessageBoxIcon.Error);
+                System.Windows.Forms.MessageBox.Show($"Не удалось обработать файл изображения.{Environment.NewLine}Проверте расширение файла.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
-            };         
+            };
 
             _ViewModel.Image = image;
 
             _ViewModel.ImageOpacity = image;
 
         }
-        
+
         public bool IsExecuteSelectFile(object? parameter)
         {
             return true;
@@ -132,25 +137,39 @@ namespace SSHF.Models.MainWindowModel
 
         #endregion
 
-        #region Взов нотификатора
+        #region Вызов нотификатора
 
 
         public void NotificatorExecute(object? _)
         {
             List<NotifyIconViewModel.DataModelCommands> commands = new List<NotifyIconViewModel.DataModelCommands>
             {
-                new NotifyIconViewModel.DataModelCommands("Выбрать файл", _ViewModel.SelectFileCommand)
+                new NotifyIconViewModel.DataModelCommands("Выбрать файл", _ViewModel.SelectFileCommand),
+                new NotifyIconViewModel.DataModelCommands("Сохранить файл", _ViewModel.InvoceSaveFileDialogCommand)
             };
 
             Notificator.SetCommand(commands);
-        } 
+        }
         public bool IsExecuteInvoceNotificator(object? _)
         {
             return true;
         }
+        #endregion
+        #region Вызов сохранения
+
+        public void SaveFileDialogExecute(object? _)
+        {
+            if (DialogFile.SaveFile("Выберете директори для сохранения", out string? filePath) is false) return;
+
+            if (filePath is null) return;
 
 
 
+        }
+        public bool IsExecuteSaveFileDialog(object? _)
+        {
+            return true;
+        }
 
         #endregion
     }

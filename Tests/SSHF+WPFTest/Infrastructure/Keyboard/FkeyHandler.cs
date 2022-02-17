@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using GlobalLowLevelHooks;
 
 using Linearstar.Windows.RawInput;
+using Linearstar.Windows.RawInput.Native;
 
 using SSHF;
 
@@ -237,20 +238,25 @@ namespace FuncKeyHandler
         private void App_Input(object? sender, RawInputEventArgs e)
         {
             if (e.Data is RawInputMouseData) return;
-            if(e.Data is RawInputKeyboardData InputData)
+            if (e.Data is RawInputKeyboardData InputData)
             {
 
                 int cc = InputData.Keyboard.VirutalKey;
 
-                VKeys FlagVkeys =(VKeys) Enum.Parse(typeof(VKeys), cc.ToString());
+                VKeys FlagVkeys = (VKeys)Enum.Parse(typeof(VKeys), cc.ToString());
 
-                if ((Enum.IsDefined(typeof(VKeys), FlagVkeys) is false)) throw new InvalidOperationException("Неправльный тип Vkeys");
+                if ((int)FlagVkeys is 255) return;
 
-                if(InputData.Keyboard.Flags is Linearstar.Windows.RawInput.Native.RawKeyboardFlags.None)
+                if ((Enum.IsDefined(typeof(VKeys), FlagVkeys) is false)) throw new InvalidOperationException("Неправельный тип Vkeys");
+
+              
+                RawKeyboardFlags chekUPE0 = RawKeyboardFlags.Up | RawKeyboardFlags.KeyE0;
+
+                if (InputData.Keyboard.Flags is Linearstar.Windows.RawInput.Native.RawKeyboardFlags.None | InputData.Keyboard.Flags is RawKeyboardFlags.KeyE0)
                 {
                     KeyboardHook_KeyDown(FlagVkeys);
                 }
-                if (InputData.Keyboard.Flags is Linearstar.Windows.RawInput.Native.RawKeyboardFlags.Up)
+                if (InputData.Keyboard.Flags is Linearstar.Windows.RawInput.Native.RawKeyboardFlags.Up | InputData.Keyboard.Flags == chekUPE0)
                 {
                     KeyboardHook_KeyUp(FlagVkeys);
                 }
@@ -264,7 +270,7 @@ namespace FuncKeyHandler
 
         readonly Dictionary<string, bool> KeyBools = new Dictionary<string, bool>();
 
-        readonly  List<RegisteredFunction> Functions = new List<RegisteredFunction>();
+        readonly List<RegisteredFunction> Functions = new List<RegisteredFunction>();
 
 
         private event KeyEventHandler MyEnvetKeys;
