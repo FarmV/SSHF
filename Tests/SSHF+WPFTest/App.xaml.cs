@@ -19,17 +19,18 @@ using System.Diagnostics;
 using System.Windows.Navigation;
 using System.Runtime.CompilerServices;
 using SSHF.Infrastructure.SharedFunctions;
+using System.Collections.Concurrent;
 
 namespace SSHF
 {
 
-    public partial class App : System.Windows.Application
+    public partial class App: System.Windows.Application
     {
-        internal static event EventHandler<RawInputEventArgs>? InputMouse;
-       
+        internal static event EventHandler<RawInputEventArgs>? Input;
+
         internal static event EventHandler? DPIChange;
 
-        readonly static public GlobalLowLevelHooks.KeyboardHook _GlobaKeyboardHook = new GlobalLowLevelHooks.KeyboardHook();
+        // readonly static public GlobalLowLevelHooks.KeyboardHook _GlobaKeyboardHook = new GlobalLowLevelHooks.KeyboardHook();
 
         //  static bool _SingleCopy = default;
 
@@ -39,8 +40,9 @@ namespace SSHF
 
         internal static int CheckCount = default;
 
+        internal static FuncKeyHandler.FkeyHandler? KeyBoarHandler;
 
-      
+
 
         //public static object GetVm([CallerMemberName] string? callMember = null,[CallerFilePath] string? callPath = null)
         // {
@@ -53,8 +55,9 @@ namespace SSHF
         //         throw new ArgumentNullException(nameof(_menu_icon), "MainWindow");
 
         // }
-        internal static List<Window> WindowsIsOpen = new List<Window>();
-        
+
+        internal volatile static ConcurrentBag<Window> WindowsIsOpen = new ConcurrentBag<Window>();
+
         internal const string GetWindowNotification = "Нотификация";
         internal const string GetMyMainWindow = "Главное окно приложения";
 
@@ -64,36 +67,46 @@ namespace SSHF
 
             if (IsDesignMode is false)
             {
+                KeyBoarHandler = new FuncKeyHandler.FkeyHandler("+");
+
                 Menu_icon myNotification = new Menu_icon
                 {
                     Tag = GetWindowNotification,
                     DataContext = new NotifyIconViewModel()
                 };
                 WindowsIsOpen.Add(myNotification);
-                
-                myNotification.Show();
-                myNotification.Hide();
+
+                myNotification?.Show();
+                myNotification?.Hide();
 
                 MainWindow mainWindow = new MainWindow();
                 mainWindow.Tag = GetMyMainWindow;
                 mainWindow.DataContext = new MainWindowViewModel();
-             
-                
+
+
 
                 WindowsIsOpen.Add(mainWindow);
 
 
 
 
-                mainWindow.Show();
-              //  mainWindow.Hide();
+                mainWindow?.Show();
+                //  mainWindow.Hide();
 
 
 
 
                 if (PresentationSource.FromVisual(mainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
                 source.AddHook(WndProc);
-                RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle);
+
+
+                RawInputDeviceRegistration[] devices =
+                {
+                  new RawInputDeviceRegistration(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle),
+                  new RawInputDeviceRegistration(HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, source.Handle)
+                };
+                RawInputDevice.RegisterDevice(devices);
+
             }
 
             base.OnStartup(e);
@@ -109,15 +122,15 @@ namespace SSHF
             {
                 case WM_INPUT:
                     {
-                       // System.Diagnostics.Debug.WriteLine("Received WndProc.WM_INPUT");
+                        // System.Diagnostics.Debug.WriteLine("Received WndProc.WM_INPUT"); //todo сделать сниппет на консоль
                         RawInputData? data = RawInputData.FromHandle(lParam);
 
-                        InputMouse?.Invoke(App.Current.MainWindow, new RawInputEventArgs(data));
+                        Input?.Invoke(App.Current.MainWindow, new RawInputEventArgs(data));
                     }
                     break;
                 case WM_DPICHANGED:
                     {
-                        DPIChange?.Invoke(new object(),EventArgs.Empty);
+                        DPIChange?.Invoke(new object(), EventArgs.Empty);
                     }
                     break;
             }
@@ -128,14 +141,17 @@ namespace SSHF
 
     }
 
-    internal class RawInputEventArgs : EventArgs
+    internal class RawInputEventArgs: EventArgs
     {
         public RawInputEventArgs(RawInputData data)
         {
             Data = data;
         }
 
-        public RawInputData Data { get; }
+        public RawInputData Data
+        {
+            get;
+        }
     }
 
     //class RawInputReceiverWindow : NativeWindow

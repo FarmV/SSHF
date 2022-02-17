@@ -55,7 +55,7 @@ namespace SSHF.Models.NotifyIconModel
 
         public NotifyIconModel(NotifyIconViewModel ViewModel)
         {
-            DisposeTimer();
+           // DisposeTimer();
             using (_iconViewModel = ViewModel)
                 // _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon($"{AppContext.BaseDirectory}{Process.GetCurrentProcess().ProcessName}.exe");
                 InitialIcon();
@@ -80,30 +80,30 @@ namespace SSHF.Models.NotifyIconModel
             };
         }
 
-       static void DisposeTimer()
-        {
-            System.Threading.Timer timer = new System.Threading.Timer(new System.Threading.TimerCallback((obj) =>
-            {
-                try
-                {
-                    App.Current.Dispatcher.BeginInvoke(new Action(() =>
-                    { 
-                     if (App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
-                    }));
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine(ex);
-                }
-                finally
-                {
-                    _notifyIcon?.Dispose();
+       //static void DisposeTimer()
+       // {
+       //     System.Threading.Timer timer = new System.Threading.Timer(new System.Threading.TimerCallback((obj) =>
+       //     {
+       //         try
+       //         {
+       //             App.Current.Dispatcher.Invoke(new Action(() =>
+       //             { 
+       //              if (App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
+       //             }));
+       //         }
+       //         catch (Exception ex)
+       //         {
+       //             System.Diagnostics.Debug.WriteLine(ex);
+       //         }
+       //         finally
+       //         {
+       //             _notifyIcon?.Dispose();
                    
-                    App.Current.Dispatcher?.Invoke(new Action(() => { App.Current?.Shutdown(); }));
-                    Environment.Exit(1359);
-                }
-            }), null, 5000, 5000);
-        }
+       //             App.Current.Dispatcher?.Invoke(new Action(() => { App.Current?.Shutdown(); }));
+       //             Environment.Exit(1359);
+       //         }
+       //     }), null, 5000, 5000);
+       // }
 
 
 
@@ -130,7 +130,7 @@ namespace SSHF.Models.NotifyIconModel
                 Notificator.NotificationMenuIsOpen = false;
 
 
-                App.InputMouse -= _WindowInput_Input;
+                App.Input -= _WindowInput_Input;
 
                 return;
             }
@@ -151,7 +151,7 @@ namespace SSHF.Models.NotifyIconModel
 
                 NotificationMenu.Show();
 
-                App.InputMouse += _WindowInput_Input;
+                App.Input += _WindowInput_Input;
 
                 Notificator.NotificationMenuIsOpen = true;
 
@@ -189,7 +189,7 @@ namespace SSHF.Models.NotifyIconModel
                         Notificator.NotificationMenuIsOpen = false;
 
 
-                        App.InputMouse -= _WindowInput_Input;
+                        App.Input -= _WindowInput_Input;
                         return;
 
                     }
@@ -203,7 +203,7 @@ namespace SSHF.Models.NotifyIconModel
                     Notificator.NotificationMenuIsOpen = false;
 
 
-                    App.InputMouse -= _WindowInput_Input;
+                    App.Input -= _WindowInput_Input;
                     return;
                 }
             }

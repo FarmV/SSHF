@@ -61,12 +61,12 @@ namespace SSHF.Infrastructure.SharedFunctions
 
 
 
-            window.Show();
+            window?.Show();
             WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(PointCursor.X), Convert.ToInt32(PointCursor.Y), Convert.ToInt32(window.Width), Convert.ToInt32(window.Height), 0x0400);
             
             NotificationMenuIsOpen = true;
 
-            App.InputMouse += Raw_InputMouse;
+            App.Input += Raw_InputMouse;
 
 
         }
@@ -82,14 +82,14 @@ namespace SSHF.Infrastructure.SharedFunctions
             if (Menu_Icon.IsVisible is false) return;
             if (Menu_Icon.IsMouseOver) return;
 
-            Menu_Icon.Hide();
+            Menu_Icon?.Hide();
             NotificationMenuIsOpen = false;
 
             if (NotiView is null) throw new NullReferenceException("NotiView is NULL");
 
             NotiView.DataCommandsCollection.Clear();
 
-            App.InputMouse -= Raw_InputMouse;
+            App.Input -= Raw_InputMouse;
         }
     }
 }

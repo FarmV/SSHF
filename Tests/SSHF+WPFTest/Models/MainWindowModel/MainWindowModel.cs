@@ -19,6 +19,8 @@ using SSHF.ViewModels.MainWindowViewModel;
 using SSHF.Models.NotifyIconModel;
 using System.Collections.Generic;
 using SSHF.ViewModels.NotifyIconViewModel;
+using System.Linq;
+using Linearstar.Windows.RawInput;
 
 namespace SSHF.Models.MainWindowModel
 {
@@ -82,14 +84,17 @@ namespace SSHF.Models.MainWindowModel
 
         #region Обработчик клавиатурного вввода
 
-        public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(App._GlobaKeyboardHook, "+");
+       // public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(App._GlobaKeyboardHook, "+");
 
 
 
         void RegisterFunctions()
         {
-            _FuncAndKeyHadler.RegisterAFunction("RefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => {_ViewModel.RefreshOffCommand.Execute(new object()); }), true);           
+           if (App.KeyBoarHandler is null) throw new NullReferenceException("App.KeyBoarHandle is NULL");
+
+           App.KeyBoarHandler.RegisterAFunction("RefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => {_ViewModel.RefreshOffCommand.Execute(new object()); }), true);           
         }
+
 
 
         #endregion
