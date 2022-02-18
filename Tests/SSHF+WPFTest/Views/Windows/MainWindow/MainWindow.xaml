@@ -10,7 +10,7 @@
     xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
     xmlns:cursor="clr-namespace:SSHF.Infrastructure.SharedFunctions"
     xmlns:cvv ="http://schemas.openxmlformats.org/markup-compatibility/2006"
-
+    xmlns:convert ="clr-namespace:SSHF.Infrastructure.Converters"
   
     Title="MainWindow" 
     AllowsTransparency="True"
@@ -54,7 +54,9 @@
     <Grid>
 
         <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-
+            <Grid.Resources>
+                
+            </Grid.Resources>
                 <Button 
                      SnapsToDevicePixels="True" 
                      Width="{Binding ElementName=OPA, Path=ImageSource.Width}" 
