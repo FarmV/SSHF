@@ -119,15 +119,15 @@ namespace SSHF.Infrastructure.SharedFunctions
 
 
 
-                BitmapSource? res34 = GetScaledBitmap(ImageToScale,new ScaleTransform(1.020,1.020));
+                BitmapSource? res34 = GetScaledBitmap(ImageToScale,new ScaleTransform(1.020,1.020),true);
 
 
 
                 using Bitmap bitmap32 = GetBitmap(res34);
 
-                var color32 = bitmap32.GetPixel(1, 1);
+               // var color32 = bitmap32.GetPixel(1, 1);
 
-                bitmap32.MakeTransparent(color32);
+               // bitmap32.MakeTransparent(color32);
 
 
                 var resFin = BitmapToBitmapImage(bitmap32);
@@ -285,16 +285,18 @@ namespace SSHF.Infrastructure.SharedFunctions
             return dstW;
         }
 
-        private static BitmapSource GetScaledBitmap(BitmapSource src, ScaleTransform scale)
+        private static BitmapSource GetScaledBitmap(BitmapSource src, ScaleTransform scale, bool ReturnAlfa =false)
         {
             if (src.Format == PixelFormats.Bgra32) // special case when image has an alpha channel
             {
                 // Put alpha in a gray bitmap and scale it
                 BitmapSource alpha = GetAphaAsGrayBitmap(src);
-                TransformedBitmap scaledAlpha = new TransformedBitmap(alpha, scale);
 
-                // Scale RGB without taking in account alpha
+               
+                TransformedBitmap scaledAlpha = new TransformedBitmap(alpha, scale);
+                 // Scale RGB without taking in account alpha
                 TransformedBitmap scaledSrc = new TransformedBitmap(new FormatConvertedBitmap(src, PixelFormats.Bgr32, null, 0), scale);
+                if (ReturnAlfa is true) return scaledSrc;
 
                 // Merge them back
                 return MergeAlphaAndRGB(scaledSrc, scaledAlpha);
