@@ -49,7 +49,7 @@ namespace SSHF.Models.MainWindowModel
             X = (1920 / 2),
             Y = (1080 / 2)
         };
-
+       
         public async void RefreshWindowOnExecute(object? parameter) => await Task.Run(() =>
         {
             _ViewModel.RefreshWindow = true;
@@ -58,6 +58,11 @@ namespace SSHF.Models.MainWindowModel
                 GetCursorPos(out _CursorPoint);
                 WindowFunction.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X - _PositionShift.X, _CursorPoint.Y - _PositionShift.Y, 1920, 1080, 0x0400); // todo Отвязать от разрешения. Узнать как комибинировать флаги.
             }
+
+
+
+
+
 
 
 

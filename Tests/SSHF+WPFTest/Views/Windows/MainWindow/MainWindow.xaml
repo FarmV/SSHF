@@ -20,14 +20,14 @@
     Topmost="True" 
     WindowStartupLocation="CenterScreen"
     UseLayoutRounding="True"
-    Height="1080"
-    Width="1920"
+
    
     d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
    
     
    
 >
+    
 
 
 
@@ -50,12 +50,10 @@
     <!--Width="{Binding ElementName=OPA, Path=ImageSource.Width}" 
          Height="{Binding ElementName=OPA, Path=ImageSource.Height}"-->
 
-        
+
     <Grid>
-        
 
-
-            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
 
                 <Button 
                      SnapsToDevicePixels="True" 

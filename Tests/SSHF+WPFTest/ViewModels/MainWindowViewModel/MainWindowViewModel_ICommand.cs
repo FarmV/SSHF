@@ -13,8 +13,6 @@ namespace SSHF.ViewModels.MainWindowViewModel
 {
     internal partial class MainWindowViewModel
     {
-        RelayCommand? _RCom;
-
         public ICommand RefreshOnCommand => new RelayCommand(_Model.RefreshWindowOnExecute, _Model.IsRefreshWindowOn);
 
         public ICommand RefreshOffCommand => new RelayCommand(_Model.RefreshWindowOffExecute, _Model.IsExecuteRefreshWindowOff);

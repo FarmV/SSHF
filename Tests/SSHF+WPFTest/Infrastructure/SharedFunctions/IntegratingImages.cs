@@ -119,7 +119,7 @@ namespace SSHF.Infrastructure.SharedFunctions
 
 
 
-                BitmapSource? res34 = GetScaledBitmap(ImageToScale,new ScaleTransform(1.020,1.020),true);
+                BitmapSource? res34 = GetScaledBitmap(ImageToScale,new ScaleTransform(1.010,1.010),true);
 
 
 
