@@ -58,7 +58,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
             {
                 if (_ImageForButton is null) _ImageForButton = IntegratingImages.SetImageToMemoryFromDrive(IntegratingImages.GetUriApp(@"Views\Windows\MainWindow\MainWindowRes\Test.png"));
                 if (_ImageForButton is null) throw new InvalidOperationException();
-
+               
                 return _ImageForButton;
             }
             set => Set(ref _ImageForButton, value);
@@ -71,7 +71,13 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             get
             {
-                if (_ImageForButtonOpacity is null) return IntegratingImages.ImageScale(Image);
+                if (_ImageForButtonOpacity is null) 
+                {
+                    BitmapImage? sacleImage = IntegratingImages.ImageScale(Image);
+                    _ImageForButtonOpacity = sacleImage;
+                    return sacleImage;
+                };
+
                // if (_ImageForButtonOpacity is null) throw new InvalidOperationException();
 
                 return _ImageForButtonOpacity;
@@ -79,8 +85,14 @@ namespace SSHF.ViewModels.MainWindowViewModel
             set
             {
                 if (value is null) return;
+              
+                BitmapImage? res = _ImageForButtonOpacity?.Clone();
+
+                if (res is null)throw new NullReferenceException("ImageOpacity null");
+
                 _ImageForButtonOpacity = IntegratingImages.ImageScale(value);
-                Set(ref _ImageForButtonOpacity, value); 
+
+                Set(ref res, _ImageForButtonOpacity); 
             }
         }
 

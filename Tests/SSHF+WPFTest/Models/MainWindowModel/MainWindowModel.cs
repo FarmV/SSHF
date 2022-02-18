@@ -159,9 +159,15 @@ namespace SSHF.Models.MainWindowModel
 
         public void SaveFileDialogExecute(object? _)
         {
-            if (DialogFile.SaveFile("Выберете директори для сохранения", out string? filePath) is false) return;
+            if (DialogFile.SaveFileDirectory("Выбирете директория для сохранения") is not string directory) return;
+            if (_ViewModel.ImageOpacity is null) throw new NullReferenceException("_ViewModel.ImageOpacit is NULL");
 
-            if (filePath is null) return;
+            if(IntegratingImages.SafeImage(new Uri(directory), _ViewModel.ImageOpacity) is false)
+            {
+                System.Windows.MessageBox.Show("Функци сохранения изображения выернула ошибку","Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+          
 
 
 

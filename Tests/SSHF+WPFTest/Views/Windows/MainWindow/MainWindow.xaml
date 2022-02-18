@@ -47,41 +47,43 @@
 
 
 
-
+    <!--Width="{Binding ElementName=OPA, Path=ImageSource.Width}" 
+         Height="{Binding ElementName=OPA, Path=ImageSource.Height}"-->
 
         
     <Grid>
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
+        
 
 
             <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
 
                 <Button 
                      SnapsToDevicePixels="True" 
-                     Width="{Binding ImageOpacity.Width}" 
-                     Height="{Binding ImageOpacity.Height}"
+                     Width="{Binding ElementName=OPA, Path=ImageSource.Width}" 
+                     Height="{Binding ElementName=OPA, Path=ImageSource.Height}"
                      
                      x:Name="But"
                      Style="{DynamicResource ButtonImage}" 
                      
                      Command ="{Binding RefreshOnCommand}"          
-                     Margin="0,0,0,0" 
-                     
-                     
-                     VerticalContentAlignment="Center"
-                     HorizontalContentAlignment="Center"
-                     
-                    
-                     
+                                        
                      Focusable="False" 
                      IsEnabled="True"
+                     Background="Coral"
+                     VerticalContentAlignment="Center"
+                     HorizontalContentAlignment="Center"
+                    
+                    
               >
 
                     <Image 
+                          
+                          
                           Stretch="None"
-                          Source="{Binding Image}"                
-                          VerticalAlignment="Center"
-                          HorizontalAlignment="Center"
+                          StretchDirection="Both"
+                         Source="{Binding Path=Image}"             
+                         
+                          
                     >
                     </Image>
 
@@ -94,7 +96,7 @@
                     <ImageBrush ImageSource="{Binding Image}"/>
                     </Button.Foreground>-->
                     <Button.OpacityMask>
-                        <ImageBrush Stretch="None" ImageSource="{Binding ImageOpacity}"/>
+                    <ImageBrush x:Name="OPA" Stretch="None"  ImageSource="{Binding ImageOpacity}"/>
                     </Button.OpacityMask>
 
                     <behaviors:Interaction.Triggers>
@@ -107,7 +109,7 @@
 
                 </Button>
             </Grid>
-        </StackPanel>
+
     </Grid>
   
 </Window>

@@ -51,7 +51,7 @@ namespace SSHF.Infrastructure.SharedFunctions
 
         }
 
-        internal static bool SaveFile(string Title, out string? SelectedFile, string Filter = "Все файлы (*.*)|*.*")
+        internal static string? SaveFileDirectory(string Title, string Filter = "Все файлы (*.*)|*.*", IEnumerable<string>? Extension = null)
         {
             SaveFileDialog? fileDialog = new SaveFileDialog
             {
@@ -62,13 +62,10 @@ namespace SSHF.Infrastructure.SharedFunctions
 
             if (fileDialog.ShowDialog() is not true)
             {
-                SelectedFile = null;
-                return false;
+                return null;
             }
 
-            SelectedFile = fileDialog.FileName;
-
-            return true;
+            return fileDialog.FileName;// todo Оценить необходимость фильтрации типов                      
         }
     }
 }
