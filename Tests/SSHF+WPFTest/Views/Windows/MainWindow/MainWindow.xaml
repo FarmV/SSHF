@@ -81,7 +81,7 @@
                           
                           Stretch="None"
                           StretchDirection="Both"
-                         Source="{Binding Path=Image}"             
+                          Source="{Binding Path=Image}"             
                          
                           
                     >

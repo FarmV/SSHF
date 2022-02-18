@@ -66,7 +66,7 @@ namespace SSHF.Infrastructure.SharedFunctions
             try
             {
 
-                BitmapImage? result1 = mySacle(ImageToScale,1.02);
+                BitmapImage? result1 = mySacle(ImageToScale,1.019);
 
 
                 //TransformedBitmap? Transformed = new TransformedBitmap(ImageToScale, new ScaleTransform(1.5, 1.5)); // Ваш Sacle
@@ -118,14 +118,26 @@ namespace SSHF.Infrastructure.SharedFunctions
                 // Bitmap output = res.Clone(rect, System.Drawing.Imaging.PixelFormat.Format32bppArgb)
 
 
-                var res25 = BitmapToBitmapImage(bitmap);
+
+                BitmapSource? res34 = GetScaledBitmap(ImageToScale,new ScaleTransform(1.020,1.020));
+
+
+
+                using Bitmap bitmap32 = GetBitmap(res34);
+
+                var color32 = bitmap32.GetPixel(1, 1);
+
+                bitmap32.MakeTransparent(color32);
+
+
+                var resFin = BitmapToBitmapImage(bitmap32);
 
 
 
 
 
-
-                return res25;
+                IntegratingImages.SafeImage(new Uri(@"C:\Users\Vikto\Pictures\test\TESTrecords.png"), resFin);
+                return resFin;
 
 
 
@@ -138,7 +150,24 @@ namespace SSHF.Infrastructure.SharedFunctions
             }
         }
 
-
+       static Bitmap GetBitmap(BitmapSource source)
+        {
+            Bitmap bmp = new Bitmap(
+              source.PixelWidth,
+              source.PixelHeight,
+              System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+            BitmapData data = bmp.LockBits(
+              new Rectangle(System.Drawing.Point.Empty, bmp.Size),
+              ImageLockMode.WriteOnly,
+              System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+            source.CopyPixels(
+              Int32Rect.Empty,
+              data.Scan0,
+              data.Height * data.Stride,
+              data.Stride);
+            bmp.UnlockBits(data);
+            return bmp;
+        }
 
         internal static BitmapImage mySacle(BitmapImage ImageToScale, double scale)
         {
@@ -224,7 +253,57 @@ namespace SSHF.Infrastructure.SharedFunctions
 
         }
 
+        private static BitmapSource GetAphaAsGrayBitmap(BitmapSource rgba)
+        {
+            WriteableBitmap bmp = new WriteableBitmap(rgba);
+            WriteableBitmap alpha = new WriteableBitmap(rgba.PixelWidth, rgba.PixelHeight, 96, 96, PixelFormats.Gray8, null);
 
+            unsafe
+            {
+                byte* alphaPtr = (byte*)alpha.BackBuffer.ToPointer();
+                byte* mainPtr = (byte*)bmp.BackBuffer.ToPointer();
+                for (int i = 0;i < bmp.PixelWidth * bmp.PixelHeight;i++)
+                    alphaPtr[i] = mainPtr[i * 4 + 3];
+            }
+
+            return alpha;
+        }
+
+        private static BitmapSource MergeAlphaAndRGB(BitmapSource rgb, BitmapSource alpha)
+        {
+            // Put alpha back in
+            WriteableBitmap dstW = new WriteableBitmap(new FormatConvertedBitmap(rgb, PixelFormats.Bgra32, null, 0));
+            WriteableBitmap alphaW = new WriteableBitmap(alpha);
+            unsafe
+            {
+                byte* resizedPtr = (byte*)dstW.BackBuffer.ToPointer();
+                byte* alphaPtr = (byte*)alphaW.BackBuffer.ToPointer();
+                for (int i = 0;i < dstW.PixelWidth * dstW.PixelHeight;i++)
+                    resizedPtr[i * 4 + 3] = alphaPtr[i];
+            }
+
+            return dstW;
+        }
+
+        private static BitmapSource GetScaledBitmap(BitmapSource src, ScaleTransform scale)
+        {
+            if (src.Format == PixelFormats.Bgra32) // special case when image has an alpha channel
+            {
+                // Put alpha in a gray bitmap and scale it
+                BitmapSource alpha = GetAphaAsGrayBitmap(src);
+                TransformedBitmap scaledAlpha = new TransformedBitmap(alpha, scale);
+
+                // Scale RGB without taking in account alpha
+                TransformedBitmap scaledSrc = new TransformedBitmap(new FormatConvertedBitmap(src, PixelFormats.Bgr32, null, 0), scale);
+
+                // Merge them back
+                return MergeAlphaAndRGB(scaledSrc, scaledAlpha);
+            }
+            else
+            {
+                return new TransformedBitmap(src, scale);
+            }
+        }
 
 
 
