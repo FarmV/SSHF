@@ -56,7 +56,8 @@ namespace SSHF.Models.MainWindowModel
             while (_ViewModel.RefreshWindow)
             {
                 GetCursorPos(out _CursorPoint);
-                WindowFunction.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X - _PositionShift.X, _CursorPoint.Y - _PositionShift.Y, 1920, 1080, 0x0400); // todo Отвязать от разрешения. Узнать как комибинировать флаги.
+
+                WindowFunction.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X, _CursorPoint.Y, 10, 10, 0x0400 | 0x0001); 
             }
 
 

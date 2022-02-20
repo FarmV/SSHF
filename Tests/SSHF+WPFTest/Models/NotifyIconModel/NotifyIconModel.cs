@@ -46,7 +46,7 @@ namespace SSHF.Models.NotifyIconModel
         {
             _notifyIcon = new NotifyIcon
             {
-                Icon = Icon.ExtractAssociatedIcon(@"D:\Downloads\UnderRail GOG\setup_underrail_1.1.4.5_(49811).exe"),
+                Icon = Icon.ExtractAssociatedIcon(@"C:\Program Files\nodejs\node.exe"),
                 Visible = true
             };
             _notifyIcon.MouseDown += NotifyIcon_MouseDown;

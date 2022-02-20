@@ -20,7 +20,9 @@
     Topmost="True" 
     WindowStartupLocation="CenterScreen"
     UseLayoutRounding="True"
-
+    
+    BorderBrush="AliceBlue"
+    BorderThickness="3"
    
     d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
    
@@ -55,12 +57,12 @@
 
         <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
             <Grid.Resources>
-                
+                <convert:Ratio x:Key="Ratio2" K="2"/>
             </Grid.Resources>
                 <Button 
                      SnapsToDevicePixels="True" 
-                     Width="{Binding ElementName=OPA, Path=ImageSource.Width}" 
-                     Height="{Binding ElementName=OPA, Path=ImageSource.Height}"
+                     Width="{Binding Path=ImageOpacity.Width}" 
+                     Height="{Binding Path=ImageOpacity.Height}"
                      
                      x:Name="But"
                      Style="{DynamicResource ButtonImage}" 
@@ -109,7 +111,8 @@
 
                 </Button>
             </Grid>
-
+        <TextBox  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Center"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Width}"/>
+        <TextBox  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Right"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Height}"/>
     </Grid>
   
 </Window>
