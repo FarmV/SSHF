@@ -64,7 +64,7 @@ namespace SSHF
         protected override void OnStartup(StartupEventArgs e)
         {
             IsDesignMode = false;
-
+           // SystemParameters
             if (IsDesignMode is false)
             {
                 KeyBoardHandler = new FuncKeyHandler.FkeyHandler("+");
@@ -82,7 +82,7 @@ namespace SSHF
                 MainWindow mainWindow = new MainWindow();
                 mainWindow.Tag = GetMyMainWindow;
                 mainWindow.DataContext = new MainWindowViewModel();
-
+               
 
 
                 WindowsIsOpen.Add(mainWindow);
@@ -91,6 +91,7 @@ namespace SSHF
 
 
                 mainWindow?.Show();
+                //WindowFunction.Maximize(mainWindow);
                 //  mainWindow.Hide();
 
 

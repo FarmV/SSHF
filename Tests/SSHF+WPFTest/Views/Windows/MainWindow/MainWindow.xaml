@@ -12,6 +12,9 @@
     xmlns:cvv ="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:convert ="clr-namespace:SSHF.Infrastructure.Converters"
   
+    
+    
+    
     Title="MainWindow" 
     AllowsTransparency="True"
     SizeToContent="WidthAndHeight"
@@ -25,13 +28,19 @@
     BorderThickness="3"
    
     d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
-   
-    
-   
+    WindowState="Maximized"
+
+  
 >
-    
+    <Window.Resources>
 
+    </Window.Resources>
 
+    <WindowChrome.WindowChrome>
+
+      <WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0" NonClientFrameEdges="None" ResizeBorderThickness="0" UseAeroCaptionButtons="False" />
+
+    </WindowChrome.WindowChrome>
 
     <!--<mc:AlternateContent>
         <mc:Choice Requires ="d">
@@ -43,7 +52,7 @@
         </mc:Fallback>
     </mc:AlternateContent>-->
 
-
+    
 
 
 
@@ -61,8 +70,7 @@
             </Grid.Resources>
                 <Button 
                      SnapsToDevicePixels="True" 
-                     Width="{Binding Path=ImageOpacity.Width}" 
-                     Height="{Binding Path=ImageOpacity.Height}"
+               
                      
                      x:Name="But"
                      Style="{DynamicResource ButtonImage}" 
@@ -74,8 +82,8 @@
                      Background="Coral"
                      VerticalContentAlignment="Center"
                      HorizontalContentAlignment="Center"
-                    
-                    
+                             Height="1080"
+                    Width="1920"
               >
 
                     <Image 
