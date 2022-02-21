@@ -34,7 +34,7 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <TextBox Canvas.Left="300" MinHeight="50" MinWidth="100" TextAlignment="Center" FontSize="32" Text="test" ></TextBox>
+        <TextBox Canvas.Left="350" MinHeight="50" MinWidth="100" TextAlignment="Center" FontSize="32" Text="test" ></TextBox>
 
 
     </Canvas>
