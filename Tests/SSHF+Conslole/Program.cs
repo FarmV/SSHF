@@ -30,14 +30,11 @@ public class Program
         SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(codeToCompile);
 
         string assemblyName = Path.GetRandomFileName();
-        var refPaths = new[] 
-        {
+        var refPaths = new[] {
                 typeof(System.Object).GetTypeInfo().Assembly.Location,
                 typeof(Console).GetTypeInfo().Assembly.Location,
                 Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location), "System.Runtime.dll")
-        };
-
-
+            };
         MetadataReference[] references = refPaths.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
 
         Write("Adding the following references");

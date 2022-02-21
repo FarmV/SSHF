@@ -2,9 +2,11 @@
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Loader;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +20,9 @@ using FlaUI.Core.Conditions;
 using FlaUI.UIA2;
 using FlaUI.UIA3;
 
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CSharp;
 
 using SSHF.Infrastructure.Interfaces;
@@ -28,17 +33,17 @@ namespace SSHF.Infrastructure.Algorithms
 
     internal class FunctionGetTranslate: Freezable, IActionFunction
     {
-    
+
         public FunctionGetTranslate()
         {
-            
+
         }
 
         void Registration(string NameButton)
         {
             if (App.KeyBoardHandler is null) throw new NullReferenceException("App.KeyBoarHandle is NULL");
 
-            App.KeyBoardHandler.RegisterAFunction("Translate", NameButton, new Action(() => { StartFunction(); }) , true);
+            App.KeyBoardHandler.RegisterAFunction("Translate", NameButton, new Action(() => { StartFunction(); }), true);
         }
 
 
@@ -61,9 +66,9 @@ namespace SSHF.Infrastructure.Algorithms
         /// </summary>
         /// <param name="parameter"></param>
         /// <returns></returns>
-        public Tuple<bool,string> CheckAndRegistrationFunction(object? parameter = null)
+        public Tuple<bool, string> CheckAndRegistrationFunction(object? parameter = null)
         {
-            if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false,$"Не установлена директория программы Deepl");
+            if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false, $"Не установлена директория программы Deepl");
             if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false, "Не установлена директория программы ScreenshotReader");
 
 
@@ -85,7 +90,7 @@ namespace SSHF.Infrastructure.Algorithms
                         throw new NullReferenceException("KeyBoardHandler.ReplaceRegisteredFunction вернул false");
                     }
                 }
-                if(_status is false)
+                if (_status is false)
                 {
                     Registration(nameButton);
                     _status = true;
@@ -99,7 +104,7 @@ namespace SSHF.Infrastructure.Algorithms
             return Tuple.Create(true, "Функция и клавиши успешно зарегистрированны");
         }
 
-        
+
         bool isProcessing = false;
         public bool StartFunction(object? parameter = null)
         {
@@ -126,10 +131,164 @@ namespace SSHF.Infrastructure.Algorithms
 
 
 
+        Action<string> Write = Console.WriteLine;
+
+        // static Action<string> Write = Debug.WriteLine;
+
+        public void CreateINST()
+        {
+            Write("Let's compile!");
+
+            string codeToCompile = @$"
+            using System;
+            using System.Threading;
+            using System.Windows;
+
+            using FlaUI.Core.AutomationElements;
+            using FlaUI.Core.Conditions;
+            using FlaUI.UIA2;
+
+
+            namespace RoslynCompileSample
+            {{
+               public class Writer
+               {{
+                  static string myStrBuferString = ""Строка по умолчанию"";
+
+                  public void Write(string message)
+                  {{
+                      FlaUI.Core.Application app = FlaUI.Core.Application.Launch($@""{ScreenshotReaderDirectory}"");
+                      FlaUI.Core.AutomationElements.Window mainWindow = app.GetMainWindow(new UIA2Automation(), null);
+                      ConditionFactory cf = new ConditionFactory(new UIA2PropertyLibrary());
+                      mainWindow.FindFirstDescendant(cf.ByAutomationId(""Item 40001"")).AsButton().Click();
+                  
+                      GetCheckBuffer();
+                  
+                      while (myStrBuferString == ""Строка по умолчанию"" || myStrBuferString == string.Empty)
+                       {{
+                          Thread.Sleep(4);
+                          if (myStrBuferString != ""Строка по умолчанию"" & myStrBuferString != string.Empty)
+                          {{
+                              Thread.Sleep(50);
+                              break;
+                          }}
+                      }}
+                  }}
+                  
+                  
+                  String GetText()
+                  {{
+                      string ReturnValue = string.Empty;
+                      Thread STAThread = new Thread(
+                          delegate ()
+                          {{
+                               // Use a fully qualified name for Clipboard otherwise it
+                               // will end up calling itself.
+                               ReturnValue = Clipboard.GetText();
+                              Clipboard.Clear();
+                          }});
+                      STAThread.SetApartmentState(ApartmentState.STA);
+                      STAThread.Start();
+                      STAThread.Join();
+                  
+                      return ReturnValue;
+                  }}
+                  
+                  void GetCheckBuffer()
+                  {{
+                      int count = 0;
+                  
+                      while (myStrBuferString == ""Строка по умолчанию"" || myStrBuferString == string.Empty)
+                         {{
+                          Thread.Sleep(5);
+                          count++;
+                          Console.WriteLine($""Он пуст {{count}}"");
+                          myStrBuferString = GetText();
+                         }}
+                  
+                  
+                  }}
+               }}
+            
+            }}";
+
+            Write("Parsing the code into the SyntaxTree");
+            Debug.WriteLine("Parsing the code into the SyntaxTree");
+            SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(codeToCompile);
+
+            string assemblyName = Path.GetRandomFileName();
+            var refPaths = new[]
+            {
+                typeof(System.Object).GetTypeInfo().Assembly.Location,
+                typeof(Console).GetTypeInfo().Assembly.Location,
+                typeof(UIA2Automation).GetTypeInfo().Assembly.Location,
+                typeof(AutomationElement).GetTypeInfo().Assembly.Location,
+                typeof(ConditionFactory).GetTypeInfo().Assembly.Location,
+                typeof(ProcessStartInfo).GetTypeInfo().Assembly.Location,
+                typeof(Clipboard).GetTypeInfo().Assembly.Location,
+
+
+                Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location), "System.Runtime.dll")
+            };
+
+    
+            MetadataReference[] references = refPaths.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
+
+            Write("Adding the following references");
+            Debug.WriteLine("Adding the following references");
+            foreach (var r in refPaths)
+                Write(r);
+
+            Write("Compiling ...");
+            Debug.WriteLine("Compiling ...");
+            CSharpCompilation compilation = CSharpCompilation.Create(
+                assemblyName,
+                syntaxTrees: new[] { syntaxTree },
+                references: references,
+                options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+            using (var ms = new MemoryStream())
+            {
+                EmitResult result = compilation.Emit(ms);
+
+            if (!result.Success)
+                {
+                    Write("Compilation failed!");
+                    Debug.WriteLine("Compilation failed!");
+                    IEnumerable<Diagnostic> failures = result.Diagnostics.Where(diagnostic =>
+                        diagnostic.IsWarningAsError ||
+                        diagnostic.Severity == DiagnosticSeverity.Error);
+
+                    foreach (Diagnostic diagnostic in failures)
+                    {
+                        Debug.WriteLine($"{Environment.NewLine}{diagnostic.Id}: {diagnostic.GetMessage()}");
+                        Console.Error.WriteLine("\t{0}: {1}", diagnostic.Id, diagnostic.GetMessage());
+                    }
+                }
+                else
+                {
+                    Write("Compilation successful! Now instantiating and executing the code ...");
+                    Debug.WriteLine("Compilation successful! Now instantiating and executing the code ...");
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                   
+                    
+                    
+                    Assembly assembly = AssemblyLoadContext.Default.LoadFromStream(ms);
+                    var type = assembly.GetType("RoslynCompileSample.Writer");
+                    var instance = assembly.CreateInstance("RoslynCompileSample.Writer");
+                    var meth = type.GetMember("Write").First() as MethodInfo;
+                    meth.Invoke(instance, new[] { ScreenshotReaderDirectory });
 
 
 
 
+
+                }
+            }
+
+
+        }
 
 
 
@@ -171,9 +330,9 @@ namespace SSHF.Infrastructure.Algorithms
             Thread STAThread = new Thread(
                 delegate ()
                 {
-                    // Use a fully qualified name for Clipboard otherwise it
-                    // will end up calling itself.
-                    Clipboard.SetText(p_Text);
+                        // Use a fully qualified name for Clipboard otherwise it
+                        // will end up calling itself.
+                        Clipboard.SetText(p_Text);
                 });
             STAThread.SetApartmentState(ApartmentState.STA);
             STAThread.Start();
@@ -185,10 +344,10 @@ namespace SSHF.Infrastructure.Algorithms
             Thread STAThread = new Thread(
                 delegate ()
                 {
-                    // Use a fully qualified name for Clipboard otherwise it
-                    // will end up calling itself.
-                    ReturnValue = Clipboard.GetText();
-                    Clipboard.Clear();
+                        // Use a fully qualified name for Clipboard otherwise it
+                        // will end up calling itself.
+                        ReturnValue = Clipboard.GetText();
+                        Clipboard.Clear();
                 });
             STAThread.SetApartmentState(ApartmentState.STA);
             STAThread.Start();
@@ -233,8 +392,12 @@ namespace SSHF.Infrastructure.Algorithms
                 //Console.WriteLine(stopwatch.ElapsedMilliseconds);
                 //stopwatch.Restart();
 
-                StatNewPocces();
-              //      StartABBY();
+
+                CreateINST();
+
+                //StatNewPocces();
+                // StartABBY();
+                CmdRun(CloseABBYcmdQuery);
 
 
                 Console.WriteLine(stopwatch.ElapsedMilliseconds);
@@ -278,12 +441,12 @@ namespace SSHF.Infrastructure.Algorithms
         }
         void FocusDepl()
         {
-           
 
 
-            Process? proc =  Process.Start(new ProcessStartInfo(this.DeeplDirectory));
 
-            var res =   WindowFunction.SetWindowPos(proc.Handle, 0, 50, 50, 50, 50, 0x0020 | 0x0100 | 0x0002 | 0x0400 | 0x0001 | 0x0040);
+            Process? proc = Process.Start(new ProcessStartInfo(this.DeeplDirectory));
+
+            //var res = WindowFunction.SetWindowPos(proc.Handle, 0, 50, 50, 50, 50, 0x0020 | 0x0100 | 0x0002 | 0x0400 | 0x0001 | 0x0040);
 
 
 
@@ -294,9 +457,7 @@ namespace SSHF.Infrastructure.Algorithms
         static volatile string myStrBuferString = "Строка по умолчанию";
 
         static void GetCheckBuffer()
-        {
-            ClipboardClear();
-
+        {         
             int count = 0;
 
             while (myStrBuferString == "Строка по умолчанию" || myStrBuferString == string.Empty)
@@ -307,15 +468,13 @@ namespace SSHF.Infrastructure.Algorithms
                 myStrBuferString = GetText();
 
             }
-
-
         }
 
         const string CloseABBYcmdQuery = "taskkill /F /IM ScreenshotReader.exe";
 
         static void CmdRun(string queriesLine)
         {
-            Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Normal, CreateNoWindow = false });
+            Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = false });
         }
 
         void StartABBY()
@@ -329,21 +488,16 @@ namespace SSHF.Infrastructure.Algorithms
 
             mainWindow.FindFirstDescendant(cf.ByAutomationId("Item 40001")).AsButton().Click();
 
-            //Task taskCheck = new Task(GetCheckBuffer);
-            //taskCheck.Start();
-
-            //taskCheck.Wait();
-
             GetCheckBuffer();
 
             while (myStrBuferString == "Строка по умолчанию" || myStrBuferString == string.Empty)
             {
-                Console.WriteLine("f");
+               
                 Thread.Sleep(4);
                 if (myStrBuferString != "Строка по умолчанию" & myStrBuferString != string.Empty)
                 {
                     Thread.Sleep(50);
-                    Console.WriteLine("g");
+                   
                     break;
                     //Environment.Exit(0);
                 }
@@ -351,16 +505,8 @@ namespace SSHF.Infrastructure.Algorithms
 
             CmdRun(CloseABBYcmdQuery);
 
-            //while (!app.HasExited)
-            //{
-            //    Thread.Sleep(4);
-            //}
-
-
-
-
-
         }
+
         static Process BigLifeTime(List<Process> proc)
         {
 
@@ -440,12 +586,12 @@ namespace SSHF.Infrastructure.Algorithms
 
             FlaUI.Core.Application appDepl = FlaUI.Core.Application.Attach(deplProc);
 
-            FlaUI.Core.AutomationElements.Window mainWindowDepl = appDepl.GetMainWindow(new UIA3Automation(),new TimeSpan(0,0,5));
+            FlaUI.Core.AutomationElements.Window mainWindowDepl = appDepl.GetMainWindow(new UIA3Automation(), new TimeSpan(0, 0, 5));
 
 
 
 
-                AutomationElement panel2 = mainWindowDepl.FindFirstByXPath("//Document/Edit[1]"); 
+            AutomationElement panel2 = mainWindowDepl.FindFirstByXPath("//Document/Group/Group[1]/Edit");
 
 
 
@@ -461,7 +607,7 @@ namespace SSHF.Infrastructure.Algorithms
 
 
             //}
-            
+
             ConditionFactory cf = new ConditionFactory(new UIA3PropertyLibrary());
 
             AutomationElement[]? ggg = mainWindowDepl.FindAllDescendants(cf.ByControlType(FlaUI.Core.Definitions.ControlType.Edit));
@@ -516,4 +662,5 @@ namespace SSHF.Infrastructure.Algorithms
             isProcessing = false;
         }
     }
-}
+} 
+
