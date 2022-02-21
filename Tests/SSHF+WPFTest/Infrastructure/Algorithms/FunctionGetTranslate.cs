@@ -3,6 +3,7 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -256,6 +257,10 @@ namespace SSHF.Infrastructure.Algorithms
 
         void StatNewPocces()
         {
+
+            var compilerParameters = new CompilerParameters();
+            var netstandard = Assembly.Load("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+            compilerParameters.ReferencedAssemblies.Add(netstandard.Location);
 
             CSharpCodeProvider? csc = new CSharpCodeProvider(new Dictionary<string, string>() { { "CompilerVersion", "v3.5" } });
             CompilerParameters? parameters = new CompilerParameters(new[] { "mscorlib.dll", "System.Core.dll" }, "foo.exe", true);
