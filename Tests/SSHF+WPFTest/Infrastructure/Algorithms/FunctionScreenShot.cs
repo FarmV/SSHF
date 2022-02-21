@@ -10,30 +10,17 @@ using SSHF.Infrastructure.Interfaces;
 
 namespace SSHF.Infrastructure.Algorithms
 {
-    internal class FunctionScreenShot: Freezable , IActionFunction
+    internal class FunctionScreenShot: Freezable 
     {
 
-        string IActionFunction.Name => "ScreenShot";
+       /// string IActionFunction.Name => "ScreenShot";
 
         protected override Freezable CreateInstanceCore()
         {
             return new FunctionScreenShot();
         }
 
-        bool IActionFunction.CheckFunction()
-        {
-            return true;
-        }
-
-        bool IActionFunction.StartFunction()
-        {
-            throw new NotImplementedException();
-        }
-
-        bool IActionFunction.СancelFunction()
-        {
-            return false;
-        }
+     
 
 
         private BitmapImage? _ImageScreen;

@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using SSHF.ViewModels.NotifyIconViewModel;
 using System.Linq;
 using Linearstar.Windows.RawInput;
+using SSHF.Infrastructure.Algorithms;
+using SSHF.Infrastructure.Interfaces;
 
 namespace SSHF.Models.MainWindowModel
 {
@@ -104,6 +106,21 @@ namespace SSHF.Models.MainWindowModel
             if (App.KeyBoardHandler is null) throw new NullReferenceException("App.KeyBoarHandle is NULL");
 
             App.KeyBoardHandler.RegisterAFunction("RefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => { _ViewModel.RefreshOffCommand.Execute(new object()); }), true);
+
+
+            IActionFunction translate = new FunctionGetTranslate();
+
+           
+            if (new FunctionGetTranslate() is not IActionFunction iFunction) throw new Exception("Итерфейс не найден");
+
+            Tuple<bool, string> res =  iFunction.CheckAndRegistrationFunction("LWIN + SHIFT + TAB");
+
+         
+
+            
+
+
+
         }
 
 

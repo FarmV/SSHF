@@ -6,16 +6,32 @@ using System.Threading.Tasks;
 
 namespace SSHF.Infrastructure.Interfaces
 {
-    internal interface IActionFunction
+    public interface IActionFunction
     {
-        internal abstract string Name { get; }
+        public bool Enable
+        {
+            get;
+        }
 
-        internal abstract bool CheckFunction();
+        public abstract string Name { get; }
 
-        internal abstract bool StartFunction();
+        /// <summary>
+        /// Аргумет подразумевает передачу комбинации клавиш для глобального вызова.
+        /// </summary>
+        /// <param name="parameter"></param>
+        /// <returns>Результат проверки регистрациии функции</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public abstract Tuple<bool,string> CheckAndRegistrationFunction(object? parameter = null);
 
-        internal abstract bool СancelFunction();
+        public abstract bool StartFunction(object? parameter = null);
 
+        public abstract bool СancelFunction(object? parameter = null);
+
+
+    }
+    enum TypesActionFail
+    {
+       
 
     }
 }

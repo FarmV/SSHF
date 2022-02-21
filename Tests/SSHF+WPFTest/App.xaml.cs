@@ -92,7 +92,7 @@ namespace SSHF
 
                 mainWindow?.Show();
                 //WindowFunction.Maximize(mainWindow);
-                //  mainWindow.Hide();
+                mainWindow?.Hide();
 
 
 

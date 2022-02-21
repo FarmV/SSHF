@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 using GlobalLowLevelHooks;
 
@@ -352,7 +353,7 @@ namespace FuncKeyHandler
         }
 
 
-        void MyCheckKeysToEnableFunc()
+        async void MyCheckKeysToEnableFunc()
         {
             string result = string.Empty;
             List<string> keys = new List<string>();
@@ -420,9 +421,9 @@ namespace FuncKeyHandler
                 //}
                 if (string.IsNullOrWhiteSpace(myFunc))
                 {
-                    return;
+                return;
                 }
-                if (FuncHandler is null) if (action is not null && isInvoce == true) action.Invoke();
+                if (FuncHandler is null) if (action is not null && isInvoce == true) await Task.Run(action).ConfigureAwait(false);
                 if (FuncHandler is not null) FuncHandler.Invoke(this, new MyInvoceFuntion(myFunc, keyFunc, action, isInvoce));
              
             }
