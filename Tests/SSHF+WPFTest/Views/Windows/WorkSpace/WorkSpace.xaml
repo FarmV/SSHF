@@ -1,0 +1,39 @@
+﻿<Window x:Class="SSHF.Views.Windows.WorkSpace.WorkSpace"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" mc:Ignorable="d"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SSHF.Views.Windows.WorkSpace"
+       
+        Title="WorkZone" 
+        Height="450" 
+        Width="800"
+        AllowsTransparency="True"
+        WindowState="Maximized"
+        WindowStyle="None"
+        
+        Background="#686868"
+        
+        
+        
+        
+        >
+    
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0" NonClientFrameEdges="None" ResizeBorderThickness="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+
+    <Canvas>
+        
+        <ItemsControl ItemsSource="{Binding CommandsCollecition}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Button Style="{StaticResource myStyle}" Content="{Binding Content}" Command="{Binding Command}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+
+    </Canvas>
+</Window>
