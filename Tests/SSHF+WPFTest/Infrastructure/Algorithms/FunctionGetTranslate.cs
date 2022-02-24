@@ -41,7 +41,6 @@ namespace SSHF.Infrastructure.Algorithms
 
         public FunctionGetTranslate()
         {
-
         }
 
         void Registration(string NameButton)
@@ -50,8 +49,6 @@ namespace SSHF.Infrastructure.Algorithms
 
             App.KeyBoardHandler.RegisterAFunction("Translate", NameButton, new Action(() => { StartFunction(); }), true);
         }
-
-
 
         public string Name => "Translate";
 
@@ -66,17 +63,11 @@ namespace SSHF.Infrastructure.Algorithms
         {
             return new FunctionScreenShot();
         }
-        /// <summary>
-        /// Test
-        /// </summary>
-        /// <param name="parameter"></param>
-        /// <returns></returns>
+
         public Tuple<bool, string> CheckAndRegistrationFunction(object? parameter = null)
         {
             if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false, $"Не установлена директория программы Deepl");
             if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false, "Не установлена директория программы ScreenshotReader");
-
-
 
             if (parameter is not string nameButton)
             {
@@ -109,8 +100,8 @@ namespace SSHF.Infrastructure.Algorithms
             return Tuple.Create(true, "Функция и клавиши успешно зарегистрированны");
         }
 
-
         bool isProcessing = false;
+
         public bool StartFunction(object? parameter = null)
         {
             if (_status is false) return false;
@@ -127,19 +118,7 @@ namespace SSHF.Infrastructure.Algorithms
         internal string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
 
         internal string ScreenshotReaderDirectory = @"D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe";
-
-
-
-
-
-
-
-
-
-        Action<string> Write = Console.WriteLine;
-
-        // static Action<string> Write = Debug.WriteLine;
-
+ 
         public void CreateINST()
         {
             string codeToCompile = @$"
@@ -316,8 +295,6 @@ namespace SSHF.Infrastructure.Algorithms
                 CmdRun(@$"cd C:\Users\Vikto\Desktop\g\ggg & dotnet {nameOutput}.dll");
             }
 
-
-
             //using (var ms = new MemoryStream())
             //{
             //    EmitResult result = compilation.Emit(ms);
@@ -463,7 +440,7 @@ namespace SSHF.Infrastructure.Algorithms
         }
         #endregion
 
-        async void StartAlgorithm(string[] args)
+        void StartAlgorithm(string[] args)
         {
             try
             {
@@ -502,7 +479,7 @@ namespace SSHF.Infrastructure.Algorithms
             //var res = WindowFunction.SetWindowPos(proc.Handle, 0, 50, 50, 50, 50, 0x0020 | 0x0100 | 0x0002 | 0x0400 | 0x0001 | 0x0040);
         }
 
-        static volatile string myStrBuferString = "Строка по умолчанию";
+        volatile string myStrBuferString = "Строка по умолчанию";
 
         const string CloseABBYcmdQuery = "taskkill /F /IM ScreenshotReader.exe";
 
@@ -544,6 +521,7 @@ namespace SSHF.Infrastructure.Algorithms
 
             return sss;
         }
+
         void SetDeplText()
         {
             Process[] poolproc = Process.GetProcessesByName("DeepL");
