@@ -78,7 +78,7 @@ namespace SSHF.Infrastructure.Algorithms
         public bool StartFunction(object? parameter = null)
         {
             if (_status is false) return false;
-
+            if (isProcessing is true) return false;
             isProcessing = true;
             StartAlgorithm();
 
@@ -96,9 +96,10 @@ namespace SSHF.Infrastructure.Algorithms
 
         bool StartAlgorithm()
         {
-
+            isProcessing = true;
             if (GetClipboardImage() is not BitmapSource source) return false;
 
+            Сompleted?.Invoke(source);
 
             using (FileStream createFileFromImageBuffer = new FileStream(PathOriginalScreenshot, FileMode.OpenOrCreate))
             {
@@ -108,7 +109,7 @@ namespace SSHF.Infrastructure.Algorithms
             }
 
 
-            _ImageScreen = source;
+           
 
 
             Сompleted?.Invoke(true);
