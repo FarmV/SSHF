@@ -27,9 +27,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CSharp;
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-
 using SSHF.Infrastructure.Interfaces;
 using SSHF.Infrastructure.SharedFunctions;
 
