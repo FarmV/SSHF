@@ -258,10 +258,10 @@ namespace SSHF.Infrastructure.Algorithms
 
             
             }}";
-         
-            Debug.WriteLine("Parsing the code into the SyntaxTree");
+
+
             SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(codeToCompile);
-        
+
             string assemblyName = $"{Path.GetRandomFileName()}";
             var refPaths = new[]
             {
@@ -273,124 +273,89 @@ namespace SSHF.Infrastructure.Algorithms
                 typeof(ConditionFactory).GetTypeInfo().Assembly.Location,
                 typeof(ProcessStartInfo).GetTypeInfo().Assembly.Location,
                 typeof(Clipboard).GetTypeInfo().Assembly.Location,
-                //typeof(Environment).GetTypeInfo().Assembly.Location,
                 typeof(Task<>).GetTypeInfo().Assembly.Location,
                 typeof(System.ComponentModel.Component).GetTypeInfo().Assembly.Location,
-                
-                
-                Path.Combine(Path.GetDirectoryName(typeof(Object).GetTypeInfo().Assembly.Location), "mscorlib.dll"),
 
                 Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location), "System.Runtime.dll")
             };
 
-
             MetadataReference[] references = refPaths.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
 
+            var CompilationOptions = new CSharpCompilationOptions(OutputKind.ConsoleApplication);
 
-
-            var gg = new CSharpCompilationOptions(OutputKind.ConsoleApplication).WithOverflowChecks(true).WithOptimizationLevel(OptimizationLevel.Release);
-
-
-
-            Write("Adding the following references");
-            Debug.WriteLine("Adding the following references");
-            foreach (var r in refPaths)
-                Write(r);
-
-            Write("Compiling ...");
-            Debug.WriteLine("Compiling ...");
             CSharpCompilation compilation = CSharpCompilation.Create(
                 assemblyName,
                 syntaxTrees: new[] { syntaxTree },
                 references: references,
-                options: gg);
+                options: CompilationOptions);
 
-            using (var ms = new MemoryStream())
+            string nameOutput = "my";
+
+            EmitResult result25 = compilation.Emit(@$"C:\Users\Vikto\Desktop\g\ggg\{nameOutput}" + ".dll");
+            if (!result25.Success)
             {
-                EmitResult result = compilation.Emit(ms);
+                Debug.WriteLine("Compilation failed!");
+                IEnumerable<Diagnostic> failures = result25.Diagnostics.Where(diagnostic =>
+                    diagnostic.IsWarningAsError ||
+                    diagnostic.Severity == DiagnosticSeverity.Error);
 
-                if (!result.Success)
+                foreach (Diagnostic diagnostic in failures)
                 {
-                    Write("Compilation failed!");
-                    Debug.WriteLine("Compilation failed!");
-                    IEnumerable<Diagnostic> failures = result.Diagnostics.Where(diagnostic =>
-                        diagnostic.IsWarningAsError ||
-                        diagnostic.Severity == DiagnosticSeverity.Error);
-
-                    foreach (Diagnostic diagnostic in failures)
-                    {
-                        Debug.WriteLine($"{Environment.NewLine}{diagnostic.Id}: {diagnostic.GetMessage()}");
-                        Console.Error.WriteLine("\t{0}: {1}", diagnostic.Id, diagnostic.GetMessage());
-                    }
-                }
-                else
-                {
-                    Write("Compilation successful! Now instantiating and executing the code ...");
-                    Debug.WriteLine("Compilation successful! Now instantiating and executing the code ...");
-                    ms.Seek(0, SeekOrigin.Begin);
-
-
-                    //  File.WriteAllBytes(@"C:\Users\Vikto\Desktop\g\MyTest.exe", ms.ToArray());
-
-
-                    // Process.Start(@"C:\Users\Vikto\Desktop\g\MyTest.exe");
-                    // Assembly asm = Assembly.Load(ms.ToArray());
-                    // MethodInfo mi = asm.EntryPoint;
-
-                    // asm.GetLoadedModules();
-
-                    //  asm.EntryPoint.Invoke(null, new string[1]);
-
-
-                    using (var dllStream = ms)
-                    using (var pdbStream = new MemoryStream())
-                    {
-                        var emitResult = compilation.Emit(dllStream, pdbStream);
-                        if (!emitResult.Success)
-                        {
-                            var c = emitResult.Diagnostics;
-                        }
-                    }
-
-
-
-
-
-                    //EmitResult result25 = compilation.Emit(@"C:\Users\Vikto\Desktop\g\Test249.exe");
-
-
-                    string name = "my";
-
-                    var outputFilePath = @$"C:\Users\Vikto\Desktop\g\ggg\{name}" + ".dll";
-
-                    var outputRuntimeConfigPath = Path.ChangeExtension(outputFilePath, "runtimeconfig.json");
-                    var currentRuntimeConfigPath = Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json");
-
-
-
-                    CSharpCompilation? compilation25 = CSharpCompilation.Create("my15", new SyntaxTree[] { syntaxTree }, references, gg);
-
-
-                    var result25 = compilation25.Emit(@$"C:\Users\Vikto\Desktop\g\ggg\{name}" + ".dll");
-
-                    File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
-
-
-
-                    CmdRun(@$"cd C:\Users\Vikto\Desktop\g\ggg & dotnet {name}.dll");
-
-                    //Assembly assembly = AssemblyLoadContext.Default.LoadFromStream(ms);
-                    //var type = assembly.GetType("RoslynCompileSample.Writer");
-                    //var instance = assembly.CreateInstance("RoslynCompileSample.Writer");
-                    //var meth = type.GetMember("Main").First() as MethodInfo;
-                    //meth.Invoke(instance, new string[1]);
-
-
-
-
-
+                    Debug.WriteLine($"{Environment.NewLine}{diagnostic.Id}: {diagnostic.GetMessage()}");
                 }
             }
+            else
+            {
+                var outputFilePath = @$"C:\Users\Vikto\Desktop\g\ggg\{nameOutput}" + ".dll";
+
+                var outputRuntimeConfigPath = Path.ChangeExtension(outputFilePath, "runtimeconfig.json");
+                var currentRuntimeConfigPath = Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json");
+
+                File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
+
+                CmdRun(@$"cd C:\Users\Vikto\Desktop\g\ggg & dotnet {nameOutput}.dll");
+            }
+
+
+
+            //using (var ms = new MemoryStream())
+            //{
+            //    EmitResult result = compilation.Emit(ms);
+
+
+            //    if (!result.Success)
+            //    {
+            //        Debug.WriteLine("Compilation failed!");
+            //        IEnumerable<Diagnostic> failures = result.Diagnostics.Where(diagnostic =>
+            //            diagnostic.IsWarningAsError ||
+            //            diagnostic.Severity == DiagnosticSeverity.Error);
+
+            //        foreach (Diagnostic diagnostic in failures)
+            //        {
+            //            Debug.WriteLine($"{Environment.NewLine}{diagnostic.Id}: {diagnostic.GetMessage()}");
+            //        }
+            //    }
+            //    else
+            //    {
+            //        ms.Seek(0, SeekOrigin.Begin);
+
+            //        using (var dllStream = ms)
+            //        using (var pdbStream = new MemoryStream())
+            //        {
+            //            var emitResult = compilation.Emit(dllStream, pdbStream);
+            //            if (!emitResult.Success)
+            //            {
+            //                var c = emitResult.Diagnostics;
+            //            }
+            //        }
+
+            //        Assembly assembly = AssemblyLoadContext.Default.LoadFromStream(ms);
+            //        var type = assembly.GetType("RoslynCompileSample.Writer");
+            //        var instance = assembly.CreateInstance("RoslynCompileSample.Writer");
+            //        var meth = type.GetMember("Main").First() as MethodInfo;
+            //        meth.Invoke(instance, new string[1]);
+            //    }
+            //}
 
 
         }
@@ -494,7 +459,7 @@ namespace SSHF.Infrastructure.Algorithms
             {
                 Thread STAThread = new Thread(() =>
                 {
-                    
+
                     Timer breakTimer = new Timer(new TimerCallback((arg) => { cancelTheOperation = true; }), null, TimeOut, Timeout.Infinite);
                     while (true)
                     {
@@ -540,24 +505,24 @@ namespace SSHF.Infrastructure.Algorithms
             try
             {
                 isProcessing = true;
-               // ShowWindow(HandleAssociatedСonsole, SW_HIDE);
+                // ShowWindow(HandleAssociatedСonsole, SW_HIDE);
 
                 CreateINST();
 
 
                 ClipboardClear();
                 string? check = GetTextAwait(15000).Result;
-              
+
                 if (check is not null)
                 {
                     myStrBuferString = check;
                 }
-                if (check is null || check == string.Empty) 
+                if (check is null || check == string.Empty)
                 {
                     CmdRun(CloseABBYcmdQuery);
                     throw new NullReferenceException("Вероятно сработал таймаут");
-                } 
-              
+                }
+
                 CmdRun(CloseABBYcmdQuery);
 
                 ClipboardClear();
