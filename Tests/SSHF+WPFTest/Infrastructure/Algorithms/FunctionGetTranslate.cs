@@ -35,6 +35,8 @@ namespace SSHF.Infrastructure.Algorithms
 
     internal class FunctionGetTranslate: Freezable, IActionFunction
     {
+        public event Action<object?>? Сompleted;
+
         #region Регистрация функции
         public FunctionGetTranslate()
         {
@@ -60,7 +62,12 @@ namespace SSHF.Infrastructure.Algorithms
         {
             return new FunctionScreenShot();
         }
-
+        /// <summary>
+        /// теееееееееееест
+        /// </summary>
+        /// <param name="parameter"></param>
+        /// <returns>Результат проверки регистрациии функции</returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public Tuple<bool, string> CheckAndRegistrationFunction(object? parameter = null)
         {
             if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false, $"Не установлена директория программы Deepl");
@@ -78,7 +85,7 @@ namespace SSHF.Infrastructure.Algorithms
                 {
                     if (App.KeyBoardHandler is null) throw new NullReferenceException("App.KeyBoarHandle is NULL");
 
-                    if (App.KeyBoardHandler.ReplaceRegisteredFunction("Translate", nameButton, new Action(() => { StartFunction(); })) is false)
+                    if (App.KeyBoardHandler.ReplaceRegisteredFunction(Name, nameButton, new Action(() => { StartFunction(); })) is false)
                     {
                         throw new NullReferenceException("KeyBoardHandler.ReplaceRegisteredFunction вернул false");
                     }
@@ -103,7 +110,8 @@ namespace SSHF.Infrastructure.Algorithms
         {
             if (_status is false) return false;
             if (isProcessing is true) return false;
-            StartAlgorithm(new string[1]);
+            isProcessing = true;
+            StartAlgorithm();
             return true;
         }
 
@@ -115,7 +123,7 @@ namespace SSHF.Infrastructure.Algorithms
         #endregion
 
         #region Основной алгоритм
-        void StartAlgorithm(string[] args)
+        void StartAlgorithm()
         {
             try
             {
@@ -141,10 +149,14 @@ namespace SSHF.Infrastructure.Algorithms
                 SetDeplText();
 
                 isProcessing = false;
+
+                Сompleted?.Invoke(true);
             }
             catch (Exception)
             {
-                isProcessing = false;               
+                isProcessing = false;
+
+                Сompleted?.Invoke(false);
             }
         }
 

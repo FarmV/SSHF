@@ -8,6 +8,9 @@ namespace SSHF.Infrastructure.Interfaces
 {
     public interface IActionFunction
     {
+
+        public event Action<object?> Сompleted;
+
         public bool Enable
         {
             get;
@@ -16,13 +19,18 @@ namespace SSHF.Infrastructure.Interfaces
         public abstract string Name { get; }
 
         /// <summary>
-        /// Аргумет подразумевает передачу комбинации клавиш для глобального вызова.
+        /// <br> <see cref="CheckAndRegistrationFunction"/> Ожидает получение комбинации клавиш глобального вызова в формате <see cref="FuncKeyHandler.FkeyHandler.VKeys"/>,
+        /// c разделителем "+" между клавишами. Клавиши не обязательны. Ищи дополнение в реализации непосредственного класса.
+        /// </br>
+        /// <br>
+        /// Образец клавиши регистрации клавш <see cref="string" href=" 'KEY_1 + KEY_2 + KEY_3'"/> 
+        /// </br>
         /// </summary>
-        /// <param name="parameter"></param>
-        /// <returns>Результат проверки регистрациии функции</returns>
-        /// <exception cref="InvalidOperationException"></exception>
         public abstract Tuple<bool,string> CheckAndRegistrationFunction(object? parameter = null);
 
+        /// <summary>
+        /// <br> <see cref="StartFunction"/> Ожидает получение комбинации клавиш глобального вызова в формате <see cref="FuncKeyHandler.FkeyHandler.VKeys"/>, c разделителем "+" между клавишами. Клавиши не обязательны.</br>
+        /// </summary>
         public abstract bool StartFunction(object? parameter = null);
 
         public abstract bool СancelFunction(object? parameter = null);
