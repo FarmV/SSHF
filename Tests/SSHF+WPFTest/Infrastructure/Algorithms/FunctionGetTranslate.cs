@@ -357,44 +357,7 @@ namespace SSHF.Infrastructure.Algorithms
             //    }
             //}
 
-
         }
-
-
-
-        public class NetCoreSerializationBinder: DefaultSerializationBinder
-        {
-            private static readonly Regex regex = new Regex(
-                @"System\.Private\.CoreLib(, Version=[\d\.]+)?(, Culture=[\w-]+)(, PublicKeyToken=[\w\d]+)?");
-
-            private static readonly ConcurrentDictionary<Type, (string assembly, string type)> cache =
-                new ConcurrentDictionary<Type, (string, string)>();
-
-            public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
-            {
-                base.BindToName(serializedType, out assemblyName, out typeName);
-
-                if (cache.TryGetValue(serializedType, out var name))
-                {
-                    assemblyName = name.assembly;
-                    typeName = name.type;
-                }
-                else
-                {
-                    if (assemblyName.Contains("System.Private.CoreLib", StringComparison.OrdinalIgnoreCase))
-                        assemblyName = regex.Replace(assemblyName, "mscorlib");
-
-                    if (typeName.Contains("System.Private.CoreLib", StringComparison.OrdinalIgnoreCase))
-                        typeName = regex.Replace(typeName, "mscorlib");
-
-                    cache.TryAdd(serializedType, (assemblyName, typeName));
-                }
-            }
-        }
-
-
-
-
 
         #region WinAPI initializing
 
@@ -504,12 +467,8 @@ namespace SSHF.Infrastructure.Algorithms
         {
             try
             {
-                isProcessing = true;
-                // ShowWindow(HandleAssociatedСonsole, SW_HIDE);
-
+                isProcessing = true;              
                 CreateINST();
-
-
                 ClipboardClear();
                 string? check = GetTextAwait(15000).Result;
 
@@ -525,47 +484,25 @@ namespace SSHF.Infrastructure.Algorithms
 
                 CmdRun(CloseABBYcmdQuery);
 
-                ClipboardClear();
-
                 FocusDepl();
 
                 SetDeplText();
 
                 isProcessing = false;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                isProcessing = false;
-                //throw new Exception(ex.Message);
+                isProcessing = false;               
             }
         }
 
         void FocusDepl()
         {
-
-
-
             Process? proc = Process.Start(new ProcessStartInfo(this.DeeplDirectory));
-
             //var res = WindowFunction.SetWindowPos(proc.Handle, 0, 50, 50, 50, 50, 0x0020 | 0x0100 | 0x0002 | 0x0400 | 0x0001 | 0x0040);
-
-
-
-
-
         }
 
         static volatile string myStrBuferString = "Строка по умолчанию";
-
-        static void GetCheckBuffer()
-        {
-            while (myStrBuferString == "Строка по умолчанию" || myStrBuferString == string.Empty)
-            {
-                Thread.Sleep(5);
-                myStrBuferString = GetText();
-
-            }
-        }
 
         const string CloseABBYcmdQuery = "taskkill /F /IM ScreenshotReader.exe";
 
@@ -573,37 +510,7 @@ namespace SSHF.Infrastructure.Algorithms
         {
             Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true });
         }
-
-        void StartABBY()
-        {
-
-            FlaUI.Core.Application app = FlaUI.Core.Application.Launch(ScreenshotReaderDirectory);
-
-            FlaUI.Core.AutomationElements.Window mainWindow = app.GetMainWindow(new UIA2Automation(), null);
-
-            ConditionFactory cf = new ConditionFactory(new UIA2PropertyLibrary());
-
-            mainWindow.FindFirstDescendant(cf.ByAutomationId("Item 40001")).AsButton().Click();
-
-            GetCheckBuffer();
-
-            while (myStrBuferString == "Строка по умолчанию" || myStrBuferString == string.Empty)
-            {
-
-                Thread.Sleep(4);
-                if (myStrBuferString != "Строка по умолчанию" & myStrBuferString != string.Empty)
-                {
-                    Thread.Sleep(50);
-
-                    break;
-                    //Environment.Exit(0);
-                }
-            }
-
-            CmdRun(CloseABBYcmdQuery);
-
-        }
-
+    
         static Process BigLifeTime(List<Process> proc)
         {
 
@@ -637,7 +544,7 @@ namespace SSHF.Infrastructure.Algorithms
 
             return sss;
         }
-        async void SetDeplText()
+        void SetDeplText()
         {
             Process[] poolproc = Process.GetProcessesByName("DeepL");
 
@@ -654,8 +561,6 @@ namespace SSHF.Infrastructure.Algorithms
                 }
                 catch (Exception)
                 {
-
-
                 }
             }
 
