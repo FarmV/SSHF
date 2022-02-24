@@ -23,7 +23,9 @@ namespace SSHF.Infrastructure.Interfaces
         /// c разделителем "+" между клавишами. Клавиши не обязательны. Ищи дополнение в реализации непосредственного класса.
         /// </br>
         /// <br>
-        /// Образец клавиши регистрации клавш <see cref="string" href=" 'KEY_1 + KEY_2 + KEY_3'"/> 
+        /// </br>
+        /// <br>
+        /// Образец регистрации клавиш <see cref="string" href=" 'KEY_1 + KEY_2 + KEY_3'"/> 
         /// </br>
         /// </summary>
         public abstract Tuple<bool,string> CheckAndRegistrationFunction(object? parameter = null);
