@@ -35,7 +35,7 @@ namespace SSHF.Infrastructure.Algorithms
 
     internal class FunctionGetTranslate: Freezable, IActionFunction
     {
-
+        #region Регистрация функции
         public FunctionGetTranslate()
         {
         }
@@ -112,10 +112,245 @@ namespace SSHF.Infrastructure.Algorithms
             return false;
         }
 
+        #endregion
+
+        #region Основной алгоритм
+        void StartAlgorithm(string[] args)
+        {
+            try
+            {
+                isProcessing = true;              
+                CreateINST();
+                ClipboardClear();
+                string? check = GetTextAwait(15000).Result;
+
+                if (check is not null)
+                {
+                    myStrBuferString = check;
+                }
+                if (check is null || check == string.Empty)
+                {
+                    CmdRun(CloseABBYcmdQuery);
+                    throw new NullReferenceException("Вероятно сработал таймаут");
+                }
+
+                CmdRun(CloseABBYcmdQuery);
+
+                FocusDepl();
+
+                SetDeplText();
+
+                isProcessing = false;
+            }
+            catch (Exception)
+            {
+                isProcessing = false;               
+            }
+        }
+
+        #endregion
+
+        #region Вспомогательные методы
+
         internal string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
 
         internal string ScreenshotReaderDirectory = @"D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe";
- 
+
+        #region WinAPI initializing
+
+        //[DllImport("user32.dll")]
+        //static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
+
+        //[DllImport("user32.dll")]
+        //static extern IntPtr FindWindowA(string a, string b);
+
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetConsoleWindow();
+
+        [DllImport("user32.dll")]
+        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);             //показать скырть приложение
+
+        const int SW_HIDE = 0;
+        const int SW_SHOW = 5;
+
+        static IntPtr HandleAssociatedСonsole = GetConsoleWindow();
+        //// Hide
+        ////ShowWindow(HandleAssociatedСonsole, SW_HIDE);
+
+        //// Show
+        ////ShowWindow(handle, SW_SHOW);
+
+        #endregion
+
+        #region Clipboard
+        static void SetText(string p_Text)
+        {
+            Thread STAThread = new Thread(
+                delegate ()
+                {
+                    // Use a fully qualified name for Clipboard otherwise it
+                    // will end up calling itself.
+                    Clipboard.SetText(p_Text);
+                });
+            STAThread.SetApartmentState(ApartmentState.STA);
+            STAThread.Start();
+            STAThread.Join();
+        }
+        static string GetText()
+        {
+            string ReturnValue = string.Empty;
+            Thread STAThread = new Thread(() => { ReturnValue = Clipboard.GetText(); });
+            STAThread.SetApartmentState(ApartmentState.STA);
+            STAThread.Start();
+            STAThread.Join();
+
+            return ReturnValue;
+        }
+
+
+        static async Task<string?> GetTextAwait(int TimeOut)
+        {
+
+            string? ReturnValue = null;
+
+            bool cancelTheOperation = default;
+
+            await Task.Run(() =>
+            {
+                Thread STAThread = new Thread(() =>
+                {
+
+                    Timer breakTimer = new Timer(new TimerCallback((arg) => { cancelTheOperation = true; }), null, TimeOut, Timeout.Infinite);
+                    while (true)
+                    {
+                        if (cancelTheOperation is true)
+                        {
+                            breakTimer.Dispose();
+                            break;
+                        }
+
+                        if (Clipboard.ContainsText() is false) continue;
+
+                        ReturnValue = Clipboard.GetText();
+
+                        if (string.IsNullOrWhiteSpace(ReturnValue) is true) continue;
+                        breakTimer.Dispose();
+                        break;
+                    }
+                });
+                STAThread.SetApartmentState(ApartmentState.STA);
+                STAThread.Start();
+                STAThread.Join();
+            });
+
+
+            return ReturnValue;
+        }
+
+
+
+
+        static void ClipboardClear()
+        {
+            Thread STAThread = new Thread(() => { Clipboard.Clear(); });
+
+            STAThread.SetApartmentState(ApartmentState.STA);
+            STAThread.Start();
+            STAThread.Join();
+        }
+        #endregion
+
+        void FocusDepl()
+        {
+            Process? proc = Process.Start(new ProcessStartInfo(this.DeeplDirectory));
+            //var res = WindowFunction.SetWindowPos(proc.Handle, 0, 50, 50, 50, 50, 0x0020 | 0x0100 | 0x0002 | 0x0400 | 0x0001 | 0x0040);
+        }
+
+        volatile string myStrBuferString = "Строка по умолчанию";
+
+        const string CloseABBYcmdQuery = "taskkill /F /IM ScreenshotReader.exe";
+
+        static void CmdRun(string queriesLine)
+        {
+            Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true });
+        }
+    
+        static Process BigLifeTime(List<Process> proc)
+        {
+
+            IEnumerable<Process> skip = proc.SkipWhile(ss => ss.HasExited);
+            List<Process> list2 = new List<Process>();
+            Process? sss = null;
+            foreach (var item in skip)
+            {
+                try
+                {
+                    DateTime asc = item.StartTime;
+                    list2.Add(item);
+                }
+                catch (Exception)
+                {
+
+
+                }
+
+            }
+            if (list2.Count > 1)
+            {
+
+                sss = list2.Aggregate((x, y) => x?.StartTime < y?.StartTime ? x : y);
+            }
+            else
+            {
+                var bbb = list2.ToArray();
+                sss = bbb[0];
+            }
+
+            return sss;
+        }
+
+        void SetDeplText()
+        {
+            Process[] poolproc = Process.GetProcessesByName("DeepL");
+
+            Process? deplProc = null;
+
+            List<Process> proc = new List<Process>();
+            foreach (var item in poolproc)
+            {
+                try
+                {
+                    DateTime time = item.StartTime;
+                    if (item.Responding)
+                        proc.Add(item);
+                }
+                catch (Exception)
+                {
+                }
+            }
+
+            deplProc = BigLifeTime(proc);
+
+            FlaUI.Core.Application appDepl = FlaUI.Core.Application.Attach(deplProc);
+
+            FlaUI.Core.AutomationElements.Window mainWindowDepl = appDepl.GetMainWindow(new UIA3Automation(), new TimeSpan(0, 0, 5));
+
+            AutomationElement panel2;
+            while (true)
+            {
+                panel2 = mainWindowDepl.FindFirstByXPath("//Document/Group/Group[1]/Edit");
+                if (panel2 is null) continue;
+                if (panel2 is not null) break;
+            }
+
+            if (panel2.AsTextBox() is not FlaUI.Core.AutomationElements.TextBox inputBox) throw new NullReferenceException("//Document/Group/Group[1]/Edit стало NULL");
+
+            inputBox.Text = string.Empty;
+            inputBox.Text = myStrBuferString;
+
+            isProcessing = false;
+        }
+
         public void CreateINST()
         {
             string codeToCompile = @$"
@@ -257,7 +492,7 @@ namespace SSHF.Infrastructure.Algorithms
 
             MetadataReference[] references = refPaths.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
 
-            var CompilationOptions = new CSharpCompilationOptions(OutputKind.ConsoleApplication);
+            CSharpCompilationOptions CompilationOptions = new CSharpCompilationOptions(OutputKind.ConsoleApplication);
 
             CSharpCompilation compilation = CSharpCompilation.Create(
                 assemblyName,
@@ -332,234 +567,7 @@ namespace SSHF.Infrastructure.Algorithms
             //}
 
         }
-
-        #region WinAPI initializing
-
-        //[DllImport("user32.dll")]
-        //static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
-
-        //[DllImport("user32.dll")]
-        //static extern IntPtr FindWindowA(string a, string b);
-
-        [DllImport("kernel32.dll")]
-        static extern IntPtr GetConsoleWindow();
-
-        [DllImport("user32.dll")]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);             //показать скырть приложение
-
-        const int SW_HIDE = 0;
-        const int SW_SHOW = 5;
-
-        static IntPtr HandleAssociatedСonsole = GetConsoleWindow();
-        //// Hide
-        ////ShowWindow(HandleAssociatedСonsole, SW_HIDE);
-
-        //// Show
-        ////ShowWindow(handle, SW_SHOW);
-
         #endregion
-
-        #region Clipboard
-        static void SetText(string p_Text)
-        {
-            Thread STAThread = new Thread(
-                delegate ()
-                {
-                    // Use a fully qualified name for Clipboard otherwise it
-                    // will end up calling itself.
-                    Clipboard.SetText(p_Text);
-                });
-            STAThread.SetApartmentState(ApartmentState.STA);
-            STAThread.Start();
-            STAThread.Join();
-        }
-        static string GetText()
-        {
-            string ReturnValue = string.Empty;
-            Thread STAThread = new Thread(() => { ReturnValue = Clipboard.GetText(); });
-            STAThread.SetApartmentState(ApartmentState.STA);
-            STAThread.Start();
-            STAThread.Join();
-
-            return ReturnValue;
-        }
-
-
-        static async Task<string?> GetTextAwait(int TimeOut)
-        {
-
-            string? ReturnValue = null;
-
-            bool cancelTheOperation = default;
-
-            await Task.Run(() =>
-            {
-                Thread STAThread = new Thread(() =>
-                {
-
-                    Timer breakTimer = new Timer(new TimerCallback((arg) => { cancelTheOperation = true; }), null, TimeOut, Timeout.Infinite);
-                    while (true)
-                    {
-                        if (cancelTheOperation is true)
-                        {
-                            breakTimer.Dispose();
-                            break;
-                        }
-
-                        if (Clipboard.ContainsText() is false) continue;
-
-                        ReturnValue = Clipboard.GetText();
-
-                        if (string.IsNullOrWhiteSpace(ReturnValue) is true) continue;
-                        breakTimer.Dispose();
-                        break;
-                    }
-                });
-                STAThread.SetApartmentState(ApartmentState.STA);
-                STAThread.Start();
-                STAThread.Join();
-            });
-
-
-            return ReturnValue;
-        }
-
-
-
-
-        static void ClipboardClear()
-        {
-            Thread STAThread = new Thread(() => { Clipboard.Clear(); });
-
-            STAThread.SetApartmentState(ApartmentState.STA);
-            STAThread.Start();
-            STAThread.Join();
-        }
-        #endregion
-
-        void StartAlgorithm(string[] args)
-        {
-            try
-            {
-                isProcessing = true;              
-                CreateINST();
-                ClipboardClear();
-                string? check = GetTextAwait(15000).Result;
-
-                if (check is not null)
-                {
-                    myStrBuferString = check;
-                }
-                if (check is null || check == string.Empty)
-                {
-                    CmdRun(CloseABBYcmdQuery);
-                    throw new NullReferenceException("Вероятно сработал таймаут");
-                }
-
-                CmdRun(CloseABBYcmdQuery);
-
-                FocusDepl();
-
-                SetDeplText();
-
-                isProcessing = false;
-            }
-            catch (Exception)
-            {
-                isProcessing = false;               
-            }
-        }
-
-        void FocusDepl()
-        {
-            Process? proc = Process.Start(new ProcessStartInfo(this.DeeplDirectory));
-            //var res = WindowFunction.SetWindowPos(proc.Handle, 0, 50, 50, 50, 50, 0x0020 | 0x0100 | 0x0002 | 0x0400 | 0x0001 | 0x0040);
-        }
-
-        volatile string myStrBuferString = "Строка по умолчанию";
-
-        const string CloseABBYcmdQuery = "taskkill /F /IM ScreenshotReader.exe";
-
-        static void CmdRun(string queriesLine)
-        {
-            Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true });
-        }
-    
-        static Process BigLifeTime(List<Process> proc)
-        {
-
-            IEnumerable<Process> skip = proc.SkipWhile(ss => ss.HasExited);
-            List<Process> list2 = new List<Process>();
-            Process? sss = null;
-            foreach (var item in skip)
-            {
-                try
-                {
-                    DateTime asc = item.StartTime;
-                    list2.Add(item);
-                }
-                catch (Exception)
-                {
-
-
-                }
-
-            }
-            if (list2.Count > 1)
-            {
-
-                sss = list2.Aggregate((x, y) => x?.StartTime < y?.StartTime ? x : y);
-            }
-            else
-            {
-                var bbb = list2.ToArray();
-                sss = bbb[0];
-            }
-
-            return sss;
-        }
-
-        void SetDeplText()
-        {
-            Process[] poolproc = Process.GetProcessesByName("DeepL");
-
-            Process? deplProc = null;
-
-            List<Process> proc = new List<Process>();
-            foreach (var item in poolproc)
-            {
-                try
-                {
-                    DateTime time = item.StartTime;
-                    if (item.Responding)
-                        proc.Add(item);
-                }
-                catch (Exception)
-                {
-                }
-            }
-
-            deplProc = BigLifeTime(proc);
-
-            FlaUI.Core.Application appDepl = FlaUI.Core.Application.Attach(deplProc);
-
-            FlaUI.Core.AutomationElements.Window mainWindowDepl = appDepl.GetMainWindow(new UIA3Automation(), new TimeSpan(0, 0, 5));
-
-            AutomationElement panel2;
-            while (true)
-            {
-                panel2 = mainWindowDepl.FindFirstByXPath("//Document/Group/Group[1]/Edit");
-                if (panel2 is null) continue;
-                if (panel2 is not null) break;
-            }
-
-            if (panel2.AsTextBox() is not FlaUI.Core.AutomationElements.TextBox inputBox) throw new NullReferenceException("//Document/Group/Group[1]/Edit стало NULL");
-
-            inputBox.Text = string.Empty;
-            inputBox.Text = myStrBuferString;
-
-            isProcessing = false;
-        }
     }
 }
 
