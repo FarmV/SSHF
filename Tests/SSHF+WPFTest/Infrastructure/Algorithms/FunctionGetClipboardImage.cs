@@ -20,14 +20,14 @@ namespace SSHF.Infrastructure.Algorithms
     /// <summary>
     /// <br> <see cref="CheckAndRegistrationFunction"/> Ожидает получение комбинации клавиш глобального вызова в формате <see cref="FuncKeyHandler.FkeyHandler.VKeys"/>, c разделителем "+" между клавишами. Клавиши не обязательны.</br>
     /// </summary>
-    internal class FunctionScreenShot: Freezable, IActionFunction
+    internal class FunctionGetClipboardImage: Freezable, IActionFunction
     {
         protected override Freezable CreateInstanceCore()
         {
-            return new FunctionScreenShot();
+            return new FunctionGetClipboardImage();
         }
 
-        public string Name => "ScreenShot";
+        public string Name => "GetClipboardImage";
 
         public event Action<object?>? Сompleted;
 
@@ -37,13 +37,13 @@ namespace SSHF.Infrastructure.Algorithms
             get => _status;
         }
 
-        public Tuple<bool, string> CheckAndRegistrationFunction(object? parameter = null)
+        public Task<Tuple<bool, string>> CheckAndRegistrationFunction(object? parameter = null)
         {
 
             if (parameter is not string nameButton)
             {
                 _status = true;
-                return Tuple.Create(true, "Функция может быть выполнена, но клавиши глобального вызова небыли зарегистрированы");
+                return Task.FromResult(Tuple.Create(true, "Функция может быть выполнена, но клавиши глобального вызова небыли зарегистрированы"));
             }
             try
             {
@@ -60,7 +60,7 @@ namespace SSHF.Infrastructure.Algorithms
                 {
                     if (App.KeyBoardHandler is null) throw new NullReferenceException("App.KeyBoarHandle is NULL");
 
-                    App.KeyBoardHandler.RegisterAFunction("Name", nameButton, new Action(() => { StartFunction(); }), true);
+                    App.KeyBoardHandler.RegisterAFunction(Name, nameButton, new Action(() => { StartFunction(); }), true);
 
                     _status = true;
                 }
@@ -68,21 +68,35 @@ namespace SSHF.Infrastructure.Algorithms
             catch (Exception)
             {
                 _status = false;
-                Tuple.Create(false, "Произошла ошибка в класе регистрации регистрации клавиш");
+                Task.FromResult(Tuple.Create(false, "Произошла ошибка в класе регистрации регистрации клавиш"));
             }
 
-            return Tuple.Create(true, "Функция и клавиши успешно зарегистрированны");
+            return Task.FromResult(Tuple.Create(true, "Функция и клавиши успешно зарегистрированны"));
         }
 
-        bool isProcessing = false;
-        public bool StartFunction(object? parameter = null)
-        {
-            if (_status is false) return false;
-            if (isProcessing is true) return false;
-            isProcessing = true;
-            StartAlgorithm();
 
-            return true;
+        bool isProcessing = false;
+        public async Task<Tuple<bool, object?, string>> StartFunction(object? parameter = null)
+        {
+
+            if (_status is false)
+            {   
+                var resFailRegistration = Tuple.Create<bool, object?, string>(false, null, $"Опрерация не зарегистрирована. Вызовите мотод {nameof(CheckAndRegistrationFunction)}");
+
+
+                return resFailRegistration;
+            }
+            if (isProcessing is true) return Tuple.Create<bool, object?, string>(false, null, $"Не завершилась прошлая операция");
+
+            isProcessing = true;
+
+            Tuple<bool, object?, string> result = await StartAlgorithm();
+
+            if (result.Item1 is false) return Tuple.Create<bool, object?, string>(false, result.Item2, result.Item3);
+
+            isProcessing = false;
+
+            return Tuple.Create<bool, object?, string>(true, result.Item2, result.Item3);
         }
 
         public bool СancelFunction(object? parameter = null)
@@ -91,33 +105,24 @@ namespace SSHF.Infrastructure.Algorithms
         }
 
 
-
-
-
-        bool StartAlgorithm()
+        static async Task<Tuple<bool, object?, string>> StartAlgorithm()
         {
-            isProcessing = true;
-            if (GetClipboardImage() is not BitmapSource source) return false;
 
-            Сompleted?.Invoke(source);
+            if (GetClipboardImage() is not BitmapSource source) return Tuple.Create<bool, object?, string>(false, null, "Буфер обмена пустой");
 
-            using (FileStream createFileFromImageBuffer = new FileStream(PathOriginalScreenshot, FileMode.OpenOrCreate))
-            {
-                BitmapEncoder encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(source));
-                encoder.Save(createFileFromImageBuffer);
-            }
+            IImageOperations imageOperations = new SSHF.Infrastructure.ImplementingInterfaces.ImageOperations.ImageOperations();
 
+            Tuple<bool, object?, string> TaskConvert = await imageOperations.ConvetImage(
+            IImageOperations.ImageType.SystemWindowsMediaImagingBitmapSource,
+            IImageOperations.ImageType.SystemWindowsMediaImagingBitmapImage,
+            source);
 
-           
+            if (TaskConvert.Item1 is false) return Tuple.Create<bool, object?, string>(false, TaskConvert.Item2, TaskConvert.Item3);
 
-
-            Сompleted?.Invoke(true);
-            isProcessing = false;
-            return true;
-
+            return Tuple.Create<bool, object?, string>(true, TaskConvert.Item2, TaskConvert.Item3);
         }
 
+        #region Вспомогательные методы.
         static BitmapSource? GetClipboardImage()
         {
             BitmapSource? ReturnValue = null;
@@ -140,30 +145,6 @@ namespace SSHF.Infrastructure.Algorithms
             return ReturnValue;
         }
 
-
-        private BitmapImage? _ImageScreen;
-
-
-        public BitmapImage? Image
-        {
-            get
-            {
-                if (_status is false) throw new InvalidOperationException("Зарегистрируйте функцию");
-                return _ImageScreen;
-            }
-            set
-            {
-                _ImageScreen = value;
-            }
-        }
-
-
-
-
-
-
-
-
-
+        #endregion
     }
 }

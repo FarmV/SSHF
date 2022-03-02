@@ -60,7 +60,7 @@ namespace SSHF.Infrastructure.Algorithms
 
         protected override Freezable CreateInstanceCore()
         {
-            return new FunctionScreenShot();
+            return new FunctionGetClipboardImage();
         }
         /// <summary>
         /// теееееееееееест

@@ -10,26 +10,42 @@ namespace SSHF.Infrastructure.Interfaces
         /// </summary>
     public interface IActionFunction
     {
+        public abstract string Name
+        {
+            get;
+        }
+
+        public bool Enable
+        {
+            get;
+        }
+
         /// <summary>
         /// Проискходит по завершеню операции.Удачной или нет.
         /// </summary>
         /// <returns>
-        /// Подразумевается <see cref="bool"/> как результат операции.
-        /// Или возможно иные выходные данные.
+        /// Подразумевается <see cref="Tuple{bool, T2}"/> как результат операции.
         /// <br>
-        /// Ищи дополнение в реализации непосредственного класса.
+        /// </br>
+        /// <br>
+        ///  Где <see href="T1"/> <see cref="bool"/> успшность операции.
+        /// </br>
+        /// <br>
+        ///  Где <see href="T2"/> выходные данные непосрдственного класса.
+        /// </br>
+        /// <br>
+        /// </br>
+        /// <br>
+        /// </br>
+        /// <br>
+        /// Ищи информацию в реализации непосредственного класса.
         /// </br>
         /// </returns>
         public event Action<object?> Сompleted;
         /// <summary>
         /// Статус регистрации функции (Можно ли её выполнить)
         /// </summary>
-        public bool Enable
-        {
-            get;
-        }
 
-        public abstract string Name { get; }
 
         /// <summary>
         /// <br>Ожидает получение комбинации клавиш глобального вызова в формате <see cref="FuncKeyHandler.FkeyHandler.VKeys"/>,
@@ -54,13 +70,13 @@ namespace SSHF.Infrastructure.Interfaces
         /// Вторй аргумент типа <see cref="string"/> указывает причину по кторой не удалсь зарегистрировать функцию.
         /// </br>
         /// </returns>
-        public abstract Tuple<bool,string> CheckAndRegistrationFunction(object? parameter = null);
+        public abstract Task<Tuple<bool, string>> CheckAndRegistrationFunction(object? parameter = null);
 
         /// <summary>
         /// Старутет функцию.
         /// </summary>
         /// <returns>Результат операции. Так же возращает <see cref="bool" href=" = false"/> в случаии, если предыдущий вызов операция еще не завершился.</returns>
-        public abstract bool StartFunction(object? parameter = null);
+        public abstract Task<Tuple<bool, object?, string>> StartFunction(object? parameter = null);
 
         /// <summary>   
         /// Команда отмены.
@@ -72,7 +88,7 @@ namespace SSHF.Infrastructure.Interfaces
     }
     enum TypesActionFail
     {
-       
+
 
     }
 }

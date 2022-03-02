@@ -12,12 +12,38 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
+using SSHF.Infrastructure.Interfaces;
+
 using Color = System.Drawing.Color;
 
 namespace SSHF.Infrastructure.SharedFunctions
 {
-    internal static class IntegratingImages
+    internal static class IntegratingImages 
     {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         #region Интеграция изображений
 
         #region Извлечение изображения из буфера обмена

@@ -8,18 +8,28 @@ namespace SSHF.Infrastructure.Interfaces
 {
     internal interface IImageOperations
     {
-        public event Action<object?> Сompleted;
+        public event Action<object?>? Сompleted;
+
 
         enum ImageType
         {
             SystemDrawingBitmap,
-            SystemWindowsMediaImagingImageSourece,
-            SystemWindowsMediaImagingImageSoureceBitmapSource
+            SystemWindowsMediaImageSource,
+            SystemWindowsMediaImagingBitmapSource,
+            SystemWindowsMediaImagingBitmapImage,
+        }
+        virtual void test()
+        {
+            System.Drawing.Bitmap a;
+            System.Windows.Media.ImageSource d;
+            System.Windows.Media.Imaging.BitmapSource c;
+            System.Windows.Media.Imaging.BitmapImage b;
+
         }
 
-        abstract void ConvetImage(ImageType imageInput, ImageType imageOutput, object image);
+        abstract Task<Tuple<bool, object?, string>> ConvetImage(ImageType imageInput, ImageType imageOutput, object image);
 
-        abstract void ScaleImage(double sacle);
+        abstract bool ScaleImage(ImageType imageInput, ImageType imageOutput, double sacle);
 
     }
 }
