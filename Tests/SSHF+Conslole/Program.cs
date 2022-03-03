@@ -19,21 +19,38 @@ public class Program
         Internet = 8,
         Other = 16
     }
+
+
+    static Task task()
+    {
+        Thread.Sleep(4000);
+        return Task.CompletedTask;
+
+    }
     public static void Main(string[] args)
     {
-        var household1 = PhoneService.LandLine | PhoneService.Cell | PhoneService.Internet;
-        var household2 = PhoneService.None;
-        var household3 = PhoneService.Cell | PhoneService.Internet;
 
-        PhoneService[] households = { household1, household2, household3 };
+        Task? cc = task().WaitAsync(new TimeSpan(0,0,0,0,2));
+        TaskStatus bb = cc.Status;
+        
+
+        Console.WriteLine("hello");
 
 
-        // Which households have cell phone service?
-        for (int ctr = 0;ctr < households.Length;ctr++)
-            Console.WriteLine("Household {0} has cell phone service: {1}",
-                              ctr + 1,
-                              (households[ctr] & PhoneService.Cell) == PhoneService.Cell ?
-                                 "Yes" : "No");
+
+        //var household1 = PhoneService.LandLine | PhoneService.Cell | PhoneService.Internet;
+        //var household2 = PhoneService.None;
+        //var household3 = PhoneService.Cell | PhoneService.Internet;
+
+        //PhoneService[] households = { household1, household2, household3 };
+
+
+        //// Which households have cell phone service?
+        //for (int ctr = 0;ctr < households.Length;ctr++)
+        //    Console.WriteLine("Household {0} has cell phone service: {1}",
+        //                      ctr + 1,
+        //                      (households[ctr] & PhoneService.Cell) == PhoneService.Cell ?
+        //                         "Yes" : "No");
 
 
 

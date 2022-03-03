@@ -576,7 +576,6 @@ namespace FuncKeyHandler
             if (inFun._Action is null) return inFun._Function == this._Function && inFun._KeyCombination == this._KeyCombination && inFun._Invoce == this._Invoce;
             else return inFun._Function == this._Function && inFun._KeyCombination == this._KeyCombination && inFun._Action == this._Action && inFun._Invoce == this._Invoce;
 
-
         }
 
     }
