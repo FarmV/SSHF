@@ -9,7 +9,7 @@ public class Program
 {
     static Action<string> Write = Console.WriteLine;
 
-
+    [Flags]
     public enum PhoneService
     {
         None = 0,
@@ -21,23 +21,29 @@ public class Program
     }
 
 
-    static Task task()
+    static Task<(string StatusMethod, bool ResultMethod, string MessageMethod)> task()
     {
         Thread.Sleep(4000);
-        return Task.CompletedTask;
+        return Task.FromResult(("OK",true,"I am Fine"));
 
     }
     public static void Main(string[] args)
     {
 
-        Task? cc = task().WaitAsync(new TimeSpan(0,0,0,0,2));
-        TaskStatus bb = cc.Status;
-        
+        var res = task().Result;
 
         Console.WriteLine("hello");
+        Console.WriteLine("hello");
+        Console.WriteLine("hello");
+        Console.WriteLine($"{res.StatusMethod}, bool ={res.ResultMethod} и {res.MessageMethod}");
 
+       
+        
+        PhoneService aa = PhoneService.Fax | PhoneService.Cell | PhoneService.Internet;
 
+        PhoneService bb = PhoneService.None;
 
+        Console.WriteLine($"bb имеет больше однного флага? {bb.HasFlag(bb)}. aa имеет больше однного флага? {aa.HasFlag(aa)}.");
         //var household1 = PhoneService.LandLine | PhoneService.Cell | PhoneService.Internet;
         //var household2 = PhoneService.None;
         //var household3 = PhoneService.Cell | PhoneService.Internet;

@@ -31,36 +31,44 @@ namespace SSHF.Infrastructure.ImplementingInterfaces
 
         public event Action<object?>? Сompleted;
 
-        public Task<Tuple<bool, string>> CheckAndRegistrationFunction(object? parameter = null)
+        public Task<(bool MethodResult, string MethodMessage)> CheckAndRegistrationFunction(object? parameter = null)
         {
             _status = true;
-            return Task.FromResult(Tuple.Create<bool, string>(true, "Функция успешно зарегистрирована"));
+            return Task.FromResult((true, "Функция успешно зарегистрирована"));
         }
 
-        public async Task<(bool Result, object? Output, string Message)> StartFunction(object? parameter = null)
+        public async Task<(bool MethodResult, object? MethodOutputs, string MethodMessage)> StartFunction(object? parameter = null)
         {
-            if (_status is false) return Tuple.Create<bool, object?, string>(false, null, $"Опрерация не зарегистрирована. Вызовите мотод {nameof(CheckAndRegistrationFunction)}"));
+
+            if (_status is false) return (false, null, $"Опрерация не зарегистрирована. Вызовите мотод {nameof(CheckAndRegistrationFunction)}");
 
             isProcessing = true;
 
             if (parameter is not Tuple<TypeAction, RegisteredFunction?> source)
             {
                 isProcessing = false;
-                return Tuple.Create<bool, object?, string>(false, null, "Неверный формат входных данных");
+                return (false, null, $"Неверный формат входных данных. Верный формат {typeof(Tuple<TypeAction, RegisteredFunction?>)}");
             }
-            if (Enum.IsDefined(typeof(TypeAction), source.Item1) is not true)
+
+            (
+              TypeAction typeActionactionArgument,
+              RegisteredFunction? functionArgument
+            ) = (source.Item1, source.Item2);
+
+            if (Enum.IsDefined(typeof(TypeAction), typeActionactionArgument) is not true)
             {
-                return Tuple.Create<bool, object?, string>(false, null, $"Неверный тип входных данных {nameof(source)}");
+                return (false, null, $"Неверный тип входных данных {nameof(typeActionactionArgument)}");
             }
-            if(source.Item1 is TypeAction.NotRegistered)
+
+            if (typeActionactionArgument is TypeAction.NotRegistered)
             {
                 if (isProcessing is not true)
-                { 
+                {
                     App.Input += App_Input;
                     isProcessing = true;
                 }
 
-                return Tuple.Create<bool, object?, string>(true, null, $"Инициирован вызов события комибанации нажатия клавиш в {nameof(Сompleted)}"); ;
+                return (true, null, $"Инициирован вызов события комибанации нажатия клавиш в {nameof(Сompleted)}");
             }
             if (isProcessing is not true)
             {
@@ -68,15 +76,13 @@ namespace SSHF.Infrastructure.ImplementingInterfaces
                 isProcessing = true;
             }
 
-            if (source.Item1 is TypeAction.RegistrationFunction)
+            if (typeActionactionArgument is TypeAction.RegistrationFunction)
             {
-                if(source.Item2 is not RegisteredFunction function) return Tuple.Create<bool, object?, string>(false, null, $"{nameof(source.Item2)} is NULL");
-            
-                if (source.Item2 is not RegisteredFunction function1) return (true, null, $"{nameof(source.Item2)} is NULL");
+                if (functionArgument is not RegisteredFunction function) return (false, null, $"{nameof(functionArgument)} is NULL");
 
 
 
-                return Tuple.Create<bool, object?, string>(true, null, "Функция успешно выполнена. Выходные данные не подразумеваются");
+
             }
 
 
@@ -93,20 +99,35 @@ namespace SSHF.Infrastructure.ImplementingInterfaces
             return true;
         }
 
-        Task<Tuple<bool, object?, string>> Registration(KeyboardInterfaces.VKeys keyCombinateon, Action<object?> actionMethod, AsyncCallback? callbackMethod, string ConcatenationString = "", bool? keyisOne = false)
+        Task<(bool MethodResult, object? MethodOutputs, string MethodMessage)> Registration(RegisteredFunction function)
+        {
+            if (function is null) return Task.FromResult(((bool, object?, string))(false, null, $"{nameof(function)} is NULL"));
+            if (string.IsNullOrEmpty(function.Name)) return Task.FromResult(((bool, object?, string))(false, null, $"{nameof(function.Name)} пустая строка или NULL"));
+
+            if (Enum.IsDefined(typeof(TypeAction), function.KeyKombination) is not true) return Task.FromResult(((bool, object?, string))(false, null, $"{function.KeyKombination} значение находится вне диапазона"));
+
+
+
+            if (function.KeyKombination.HasFlag(function.KeyKombination))
+            return Task.FromResult(((bool, object?, string))(true, new object(), $"Функция {function.Name} успешно зарегистрирована"));
+        }
+        (bool MethodResult, object? MethodOutputs, string MethodMessage) Registration2(RegisteredFunction function)
         {
 
 
-            return Task.FromResult(Tuple.Create<bool, object?, string>(true, new object(), "Функция успешно зарегистрирована"));
+
+
+
+            return (true, new object(), "Функция успешно зарегистрирована");
         }
-        Task<Tuple<bool, object?, string>> ReplaceRegisteredFunction(KeyboardInterfaces.VKeys keyCombinateon, Action<object?> actionMethod, AsyncCallback? callbackMethod, string ConcatenationString = "", bool? keyisOne = false)
+        Task<Tuple<bool, object?, string>> ReplaceRegisteredFunction(RegisteredFunction function)
         {
 
 
             return Task.FromResult(Tuple.Create<bool, object?, string>(true, new object(), "Функция успешно заменена"));
         }
 
-        Task<Tuple<bool, object?, string>> ContainsFunctionName(KeyboardInterfaces.VKeys keyCombinateon, Action<object?> actionMethod, AsyncCallback? callbackMethod, string ConcatenationString = "", bool? keyisOne = false)
+        Task<Tuple<bool, object?, string>> ContainsFunctionName(RegisteredFunction function)
         {
 
 
@@ -114,7 +135,7 @@ namespace SSHF.Infrastructure.ImplementingInterfaces
         }
 
 
-     
+
 
         ConcurrentDictionary<KeyboardInterfaces.VKeys, bool> KeyBools = new ConcurrentDictionary<KeyboardInterfaces.VKeys, bool>();
 
@@ -124,7 +145,7 @@ namespace SSHF.Infrastructure.ImplementingInterfaces
         {
             if (RegFunc.Count is 0) return Task.CompletedTask;
 
-            KeyboardInterfaces.VKeys? keyKombine = null; 
+            KeyboardInterfaces.VKeys? keyKombine = null;
             foreach (KeyValuePair<KeyboardInterfaces.VKeys, bool> pair in KeyBools)
             {
                 if (pair.Value is true)
@@ -183,7 +204,7 @@ namespace SSHF.Infrastructure.ImplementingInterfaces
 
 
 
-   
+
 
 
 

@@ -70,13 +70,13 @@ namespace SSHF.Infrastructure.Interfaces
         /// Вторй аргумент типа <see cref="string"/> указывает причину по кторой не удалсь зарегистрировать функцию.
         /// </br>
         /// </returns>
-        public abstract Task<Tuple<bool, string>> CheckAndRegistrationFunction(object? parameter = null);
+        public abstract Task<(bool MethodResult, string MethodMessage)> CheckAndRegistrationFunction(object? parameter = null);
 
         /// <summary>
         /// Старутет функцию.
         /// </summary>
         /// <returns>Результат операции. Так же возращает <see cref="bool" href=" = false"/> в случаии, если предыдущий вызов операция еще не завершился.</returns>
-        public abstract Task<Tuple<bool, object?, string>> StartFunction(object? parameter = null);
+        public abstract Task<(bool MethodResult, object? MethodOutputs, string MethodMessage)> StartFunction(object? parameter = null);
 
         /// <summary>   
         /// Команда отмены.
