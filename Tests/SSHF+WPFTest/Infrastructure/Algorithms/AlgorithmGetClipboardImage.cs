@@ -16,24 +16,14 @@ using SSHF.Infrastructure.Interfaces;
 
 namespace SSHF.Infrastructure.Algorithms
 {
-
-    //<see href = "http://stackoverflow.com" > HERE </ see >
-
-    /// <summary>
-    /// <br> <see cref="CheckAndRegistrationFunction"/> Ожидает получение комбинации клавиш глобального вызова в формате <see cref="FuncKeyHandler.FkeyHandler.VKeys"/>, c разделителем "+" между клавишами. Клавиши не обязательны.</br>
-    /// </summary>
-    internal class AlgorithmGetClipboardImage: BaseAlgorithm
+    internal sealed class AlgorithmGetClipboardImage: BaseAlgorithm
     {
-           
-        internal new string Name => "GetClipboardImage";
-
-        public event Action<object?>? Сompleted;
-
+        
         private bool _status = default;
-        public bool Enable
-        {
-            get => _status;
-        }
+
+        protected internal override bool IsCheceked => _status;
+
+        protected internal override string? Name => "GetClipboardImage";
 
         #region Провекрка уловий функции
         internal enum PreChecStartFail

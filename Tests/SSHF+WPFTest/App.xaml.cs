@@ -144,15 +144,9 @@ namespace SSHF
 
     internal class RawInputEventArgs: EventArgs
     {
-        public RawInputEventArgs(RawInputData data)
-        {
-            Data = data;
-        }
+        public RawInputEventArgs(RawInputData data){ Data = data;}
 
-        public RawInputData Data
-        {
-            get;
-        }
+        public RawInputData Data{ get;}
     }
 
     //class RawInputReceiverWindow : NativeWindow

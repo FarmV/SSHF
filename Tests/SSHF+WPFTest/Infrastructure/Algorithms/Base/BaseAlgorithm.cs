@@ -13,12 +13,12 @@ namespace SSHF.Infrastructure.Algorithms.Base
           
         protected internal virtual event EventHandler<EventArgs>? Complite;
 
-        protected internal bool IsCheceked 
+        protected internal virtual bool IsCheceked 
         {
             get; 
             private set;
         }
-        protected internal string? Name { get;}
+        protected internal virtual string? Name { get;}
 
         /// <summary>
         /// Это базовый метод
