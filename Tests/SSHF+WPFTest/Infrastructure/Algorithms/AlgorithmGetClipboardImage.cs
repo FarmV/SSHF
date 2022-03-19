@@ -24,11 +24,7 @@ namespace SSHF.Infrastructure.Algorithms
     /// </summary>
     internal class AlgorithmGetClipboardImage: BaseAlgorithm
     {
-        public AlgorithmGetClipboardImage()
-        {
-
-        }
-      
+           
         internal new string Name => "GetClipboardImage";
 
         public event Action<object?>? Сompleted;
@@ -39,12 +35,7 @@ namespace SSHF.Infrastructure.Algorithms
             get => _status;
         }
 
-
-
-        /// <summary>
-        /// Определённые варианты отказа функции <see cref="PreChecStart"/>
-        /// </summary>
-
+        #region Провекрка уловий функции
         internal enum PreChecStartFail
         {
             None,
@@ -110,9 +101,10 @@ namespace SSHF.Infrastructure.Algorithms
             }
             return Task.FromResult(true);
         }
+        #endregion
 
+        #region Основное тело фукции
         bool isProcessing = false;
-
         enum StartFail
         {
             None,
@@ -136,24 +128,24 @@ namespace SSHF.Infrastructure.Algorithms
         /// <returns>Возращает изображение из буффера обменна в формате  <see cref="BitmapSource"/>.</returns>
         protected internal override Task<T> Start<T, T2>(T2 parameter)
         {
-            DictionaryEntry[] StartFunctionFails = new DictionaryEntry[]
-            {
-                     new DictionaryEntry(StartFail.The_Function_Is_Not_Registered, $"Опрерация не зарегистрирована. Вызовите мотод {nameof(PreChecStart)} перед первым использованием"),           //0
-                     new DictionaryEntry(StartFail.It_Is_Not_Possible_To_Perform_a_Startup_Before_The_Current_Operation_is_Complete,"Невозможно выполнить запуск до завершения текущей операции"), //1
-                     new DictionaryEntry(StartFail.Clipboard_Empty,"В буффере обмена остувует изображение"),                                                                                       //2
-                     new DictionaryEntry(StartFail.The_Output_Type_Is_Not_BitmapSource,$"Тип {nameof(T)} долженя вляется {typeof(BitmapSource)}"),                                                 //3
-                     new DictionaryEntry(StartFail.OperationCanceled,$"Операция операция получила запрос отмены через ... и была отмененна")                                                  //4
-            };
+            var StartFunctionFails = GetLazzyDictionaryFails
+            (
+              new DictionaryEntry(StartFail.The_Function_Is_Not_Registered, $"Опрерация не зарегистрирована. Вызовите мотод {nameof(PreChecStart)} перед первым использованием"),           //0
+              new DictionaryEntry(StartFail.It_Is_Not_Possible_To_Perform_a_Startup_Before_The_Current_Operation_is_Complete, "Невозможно выполнить запуск до завершения текущей операции"),//1
+              new DictionaryEntry(StartFail.Clipboard_Empty, "В буффере обмена остувует изображение"),                                                                                      //2
+              new DictionaryEntry(StartFail.The_Output_Type_Is_Not_BitmapSource, $"Тип {nameof(T)} долженя вляется {typeof(BitmapSource)}"),                                                //3
+              new DictionaryEntry(StartFail.OperationCanceled, $"Операция операция получила запрос отмены через ... и была отмененна")
+            );         
             try
             {
-                if (Equals(typeof(T), typeof(BitmapSource)) is not true) throw new InvalidOperationException().Report(StartFunctionFails[3]);
-                if (_status is false) throw new InvalidOperationException().Report(StartFunctionFails[0]);
-                if (isProcessing is true) throw new InvalidOperationException().Report(StartFunctionFails[1]);
+                if (Equals(typeof(T), typeof(BitmapSource)) is not true) throw new InvalidOperationException().Report(StartFunctionFails.Value[3]);
+                if (_status is false) throw new InvalidOperationException().Report(StartFunctionFails.Value[0]);
+                if (isProcessing is true) throw new InvalidOperationException().Report(StartFunctionFails.Value[1]);
 
                 isProcessing = true;
                 try
                 {
-                    if (GetClipboardImage() is not T source) throw new NullReferenceException().Report(StartFunctionFails[2]);
+                    if (GetClipboardImage() is not T source) throw new NullReferenceException().Report(StartFunctionFails.Value[2]);
                     return Task.FromResult(source);
                 }
                 catch (Exception)
@@ -170,8 +162,9 @@ namespace SSHF.Infrastructure.Algorithms
                 isProcessing = false;
             }
         }
+        #endregion
 
-        #region Вспомогательные методы.
+        #region Вспомогательные методы
         internal enum GetClipboardImageFail
         {
             None,
@@ -179,14 +172,14 @@ namespace SSHF.Infrastructure.Algorithms
         }
         private BitmapSource? GetClipboardImage(CancellationToken? token = null)
         {
-            Lazy<DictionaryEntry[]> GetClipboardImageFails2 = new Lazy<DictionaryEntry[]>(new Func<DictionaryEntry[]>(() => new DictionaryEntry[]
-            {
-              new DictionaryEntry(GetClipboardImageFail.OperationCanceled, $"Операция была отменена через {nameof(token)}"), //0                                                          
-            })); 
-                    
+            var GetClipboardImageFails = GetLazzyDictionaryFails
+            (
+              new DictionaryEntry(GetClipboardImageFail.OperationCanceled, $"Операция была отменена через {nameof(token)}") //0           
+            );
+
             CancellationToken Cancel = token ??= default;
 
-            if (Cancel.IsCancellationRequested is true) throw new OperationCanceledException(Cancel).Report(GetClipboardImageFails2.Value[0]);
+            if (Cancel.IsCancellationRequested is true) throw new OperationCanceledException(Cancel).Report(GetClipboardImageFails.Value[0]);
 
             BitmapSource? ReturnValue = null;
             Thread STAThread = new Thread(() =>
@@ -194,16 +187,17 @@ namespace SSHF.Infrastructure.Algorithms
                 if (Clipboard.ContainsImage() is true) ReturnValue = Clipboard.GetImage();              
                 else ReturnValue = null;              
             });
-            STAThread.SetApartmentState(ApartmentState.STA);
-          
-            if (Cancel.IsCancellationRequested is true) throw new OperationCanceledException(Cancel).Report(GetClipboardImageFails2.Value[0]);
 
+            if (Cancel.IsCancellationRequested is true) throw new OperationCanceledException(Cancel).Report(GetClipboardImageFails.Value[0]);
+
+            STAThread.SetApartmentState(ApartmentState.STA);          
             STAThread.Start();
             STAThread.Join();
 
             RenderOptions.SetBitmapScalingMode(ReturnValue, BitmapScalingMode.NearestNeighbor);
             return ReturnValue;
         }
-        #endregion
+        #endregion                   
+
     }
 }

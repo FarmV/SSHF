@@ -37,7 +37,8 @@ namespace SSHF.Infrastructure.Algorithms.Base
         {
             throw new NotImplementedException().Report(new DictionaryEntry(CacnelFail.FuctionNotImplementation,"Реализация по умолчанию для функции не предусмотренна"));
         }
-       
+
+        internal static Lazy<DictionaryEntry[]> GetLazzyDictionaryFails(params DictionaryEntry[] dictionary) => new Lazy<DictionaryEntry[]>(new Func<DictionaryEntry[]>(() => dictionary));
     }
     internal static class ExHelp
     {
@@ -53,7 +54,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
                 if (Equals((Enum)Dictionary.Key, (Enum)res)) return Task.FromResult(true);
             }
             return Task.FromResult(false);
-        }
+        }      
     }
 }
 
