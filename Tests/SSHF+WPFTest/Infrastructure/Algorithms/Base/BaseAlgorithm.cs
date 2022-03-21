@@ -21,7 +21,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
         /// Это базовый метод
         /// </summary>
         /// <returns></returns>
-        protected internal virtual Task<bool> IsCheck<T>(T parameter) => new Task<bool>(new Func<bool>(() => true));
+        protected internal virtual Task<bool> IsCheck<T>(T parameter) => Task.FromResult(true);
 
         /// <summary>
         /// Это базовый метод
@@ -63,7 +63,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
             ex.Data[report.Key] = report.Value;
             return ex;
         }
-        
+
         internal enum HelpOperation
         {
             None,
