@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using SSHF.Infrastructure.Algorithms.Input.Keybord.Base;
 namespace SSHF.Infrastructure.Algorithms.Base
 {
     internal abstract class BaseAlgorithm
@@ -13,16 +14,33 @@ namespace SSHF.Infrastructure.Algorithms.Base
           
         protected internal virtual event EventHandler<EventArgs>? Complite;
 
-        protected internal abstract bool IsCheceked { get; }
+        protected internal virtual bool IsCheceked { get => true; }
         protected internal abstract string Name { get; }
 
         /// <summary>
         /// Это базовый метод
         /// </summary>
         /// <returns></returns>
-        protected internal abstract Task<bool> PreCheckStart<T>(T parameter); 
+        protected internal virtual Task<bool> PreCheckStart<T>(T parameter) => new Task<bool>(new Func<bool>(() => true));
 
-        protected internal abstract Task<T> Start<T,T2>(T2 parameter);
+        /// <summary>
+        /// Это базовый метод
+        /// </summary>
+        /// <returns></returns>
+        protected internal abstract Task<T> Start<T, T2>(T2 parameter, CancellationToken? token = null);
+
+        internal static Task RegisredKeys(VKeys[] keyCombo, Task task)
+        {
+            try
+            {                
+                KeyboardKeyCallbackFunction.AddCallBackTask(keyCombo, task);
+                return Task.CompletedTask;
+            }
+            catch (Exception)
+            {
+              throw;
+            }
+        }
 
         enum CacnelFail
         {
@@ -36,7 +54,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
             => new Lazy<KeyValuePair<T1, T2>[]>(new Func<KeyValuePair<T1, T2>[]>(() => dictionary ));
     }
     internal static class ExHelp
-    {
+    {   
         internal static Exception Report<T,T2>(this Exception ex, KeyValuePair<T, T2> report) where T: Enum
         {
             ex.Data[report.Key] = report.Value;

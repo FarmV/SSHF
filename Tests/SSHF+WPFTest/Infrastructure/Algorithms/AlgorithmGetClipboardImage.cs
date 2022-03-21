@@ -16,23 +16,15 @@ using SSHF.Infrastructure.Interfaces;
 
 namespace SSHF.Infrastructure.Algorithms
 {
-    internal sealed class AlgorithmGetClipboardImage: BaseAlgorithm
+    internal class AlgorithmGetClipboardImage: BaseAlgorithm
     {
-        
+      
         private bool _status = default;
 
         protected internal override bool IsCheceked => _status;
 
-        protected internal override string? Name => "GetClipboardImage";
+        protected internal override string Name => "GetClipboardImage";
 
-        #region Провекрка уловий функции
-        internal enum PreChecStartFail
-        {
-            None,
-            Parmeter_Not_StringButTheFunctionCanbeExecuted,
-            AppKeyBoardHandler_Is_Null,
-            KeyBoardHandler_ReplaceRegisteredFunction_Back_Null
-        }
         /// <summary>
         /// Обязательная проверка условий перед первоначальным использованием функции.
         /// <br>
@@ -42,56 +34,7 @@ namespace SSHF.Infrastructure.Algorithms
         /// </br>
         /// </summary>  
         /// <returns>Резултатат указывает может ли быть выполнена функция <see cref="Start"/></returns>
-        protected internal override Task<bool> PreCheckStart<T>(T parameter)
-        {
-            DictionaryEntry[] PreChecStartFails = new DictionaryEntry[]
-            {
-                    new DictionaryEntry(PreChecStartFail.Parmeter_Not_StringButTheFunctionCanbeExecuted,"Функция может быть выполнена, но клавиши глобального вызова небыли зарегистрированы"), //0
-                    new DictionaryEntry(PreChecStartFail.AppKeyBoardHandler_Is_Null,"Ссылка на класc - обработчик клавиатурного ввода была NULL"),                                                //1
-                    new DictionaryEntry(PreChecStartFail.KeyBoardHandler_ReplaceRegisteredFunction_Back_Null,$"{nameof(FuncKeyHandler.FkeyHandler.RegisteredFunction)} вернул {false}"),           //2                                                                                                                //4
-            };
-
-            if (parameter is not string nameButton)
-            {
-                _status = true;
-                throw new NullReferenceException().Report(PreChecStartFails[0]);
-            }
-            try
-            {
-                if (_status is true)
-                {
-                    if (App.KeyBoardHandler is null) throw new NullReferenceException().Report(PreChecStartFails[1]);
-
-                    if (App.KeyBoardHandler.ReplaceRegisteredFunction(Name, nameButton, new Action(() => { Start<BitmapSource, object>(new object()); })) is false)
-                    {
-                        throw new NullReferenceException().Report(PreChecStartFails[2]);
-                    }
-                }
-                if (_status is false)
-                {
-                    if (App.KeyBoardHandler is null) throw new NullReferenceException().Report(PreChecStartFails[1]);
-
-                    App.KeyBoardHandler.RegisterAFunction(Name, nameButton, new Action(() => { Start<BitmapSource, object>(new object()); }), true);
-
-                    _status = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                if (ex.Data.Contains(PreChecStartFail.Parmeter_Not_StringButTheFunctionCanbeExecuted) is true)
-                {
-                    _status = true;
-                    throw;
-                }
-                else
-                {
-                    _status = false;
-                    throw;
-                }
-            }
-            return Task.FromResult(true);
-        }
-        #endregion
+        protected internal override Task<bool> PreCheckStart<T>(T parameter) => Task.FromResult(true);
 
         #region Основное тело фукции
         bool isProcessing = false;
@@ -111,20 +54,22 @@ namespace SSHF.Infrastructure.Algorithms
         /// <br>
         /// Где <see href="T"/> - <see cref="BitmapSource"/> обозначает выходной результат.
         ///  <br>
-        /// Где <see href="T2"/> - <see cref="Nullable{T}"/> - <see href="T"/> <see cref="CancellationToken"/>
         /// </br>
         /// </br>
         /// </summary>  
         /// <returns>Возращает изображение из буффера обменна в формате  <see cref="BitmapSource"/>.</returns>
-        protected internal override Task<T> Start<T, T2>(T2 parameter)
+        protected internal override Task<T> Start<T, T2>(T2 parameter, CancellationToken? token = null)
         {
+            CancellationToken Cancel = token ??= default;
+
+
             var StartFunctionFails = GetLazzyDictionaryFails
             (
-              new KeyValuePair<StartFail, string>(StartFail.The_Function_Is_Not_Registered, $"Опрерация не зарегистрирована. Вызовите мотод {nameof(PreCheckStart)} перед первым использованием"),           //0
+              new KeyValuePair<StartFail, string>(StartFail.The_Function_Is_Not_Registered, $"Опрерация не зарегистрирована. Вызовите мотод {nameof(PreCheckStart)} перед первым использованием"),          //0
               new KeyValuePair<StartFail, string>(StartFail.It_Is_Not_Possible_To_Perform_a_Startup_Before_The_Current_Operation_is_Complete, "Невозможно выполнить запуск до завершения текущей операции"),//1
               new KeyValuePair<StartFail, string>(StartFail.Clipboard_Empty, "В буффере обмена остувует изображение"),                                                                                      //2
               new KeyValuePair<StartFail, string>(StartFail.The_Output_Type_Is_Not_BitmapSource, $"Тип {nameof(T)} долженя вляется {typeof(BitmapSource)}"),                                                //3
-              new KeyValuePair<StartFail, string>(StartFail.OperationCanceled, $"Операция операция получила запрос отмены через ... и была отмененна")
+              new KeyValuePair<StartFail, string>(StartFail.OperationCanceled, $"Операция операция получила запрос отмены через ... и была отмененна")                                                      //4
             );         
             try
             {
@@ -132,10 +77,12 @@ namespace SSHF.Infrastructure.Algorithms
                 if (_status is false) throw new InvalidOperationException().Report(StartFunctionFails.Value[0]);
                 if (isProcessing is true) throw new InvalidOperationException().Report(StartFunctionFails.Value[1]);
 
+                if (Cancel.IsCancellationRequested is true) throw new OperationCanceledException(Cancel).Report(StartFunctionFails.Value[4]);
+
                 isProcessing = true;
                 try
                 {
-                    if (GetClipboardImage() is not T source) throw new NullReferenceException().Report(StartFunctionFails.Value[2]);
+                    if (GetClipboardImage(Cancel) is not T source) throw new NullReferenceException().Report(StartFunctionFails.Value[2]);
                     return Task.FromResult(source);
                 }
                 catch (Exception)

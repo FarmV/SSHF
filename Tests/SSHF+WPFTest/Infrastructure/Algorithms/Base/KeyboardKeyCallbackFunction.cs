@@ -15,9 +15,9 @@ namespace SSHF.Infrastructure.Algorithms.Base
 {
     internal class KeyboardKeyCallbackFunction
     {
-        private static class Tasks<T> where T : Task
+        private static class Tasks
         {
-            internal static Dictionary<VKeys[], T> FunctionsCallback = new Dictionary<VKeys[], T>();
+            internal static Dictionary<VKeys[], Task> FunctionsCallback = new Dictionary<VKeys[], Task>();
         }
         public KeyboardKeyCallbackFunction()
         {
@@ -30,18 +30,18 @@ namespace SSHF.Infrastructure.Algorithms.Base
             CollectionIsNull,
             NewItemsIsNotVKeys
         }
-        private void CheckingForAMatchAndCallingAFunction(object? sender, NotifyCollectionChangedEventArgs e)
+        private static void CheckingForAMatchAndCallingAFunction(object? sender, NotifyCollectionChangedEventArgs e)
         {
             var CheckingForAMatchAndCallingAFunctionFails = BaseAlgorithm.GetLazzyDictionaryFails
                 (new KeyValuePair<CheckingForAMatchAndCallingAFunctionFail, string>
                   (CheckingForAMatchAndCallingAFunctionFail.CollectionIsNull, $"{nameof(e.NewItems)} is Null"), //0
-                  new KeyValuePair<CheckingForAMatchAndCallingAFunctionFail,string>
-                  (CheckingForAMatchAndCallingAFunctionFail.NewItemsIsNotVKeys,$"{nameof(e.NewItems)} не являются {nameof(ObservableCollection<VKeys>)}") //1
+                  new KeyValuePair<CheckingForAMatchAndCallingAFunctionFail, string>
+                  (CheckingForAMatchAndCallingAFunctionFail.NewItemsIsNotVKeys, $"{nameof(e.NewItems)} не являются {nameof(ObservableCollection<VKeys>)}") //1
                 );
 
-            if(e.NewItems is null) throw new NullReferenceException().Report(CheckingForAMatchAndCallingAFunctionFails.Value[0]);
-            if (e.NewItems.Count is 0 ) return;
-            if(e.NewItems is not ObservableCollection<VKeys> items) throw new  InvalidOperationException().Report(CheckingForAMatchAndCallingAFunctionFails.Value[1]);
+            if (e.NewItems is null) throw new NullReferenceException().Report(CheckingForAMatchAndCallingAFunctionFails.Value[0]);
+            if (e.NewItems.Count is 0) return;
+            if (e.NewItems is not ObservableCollection<VKeys> items) throw new InvalidOperationException().Report(CheckingForAMatchAndCallingAFunctionFails.Value[1]);
 
             VKeys[] keys = new VKeys[items.Count];
 
@@ -51,17 +51,49 @@ namespace SSHF.Infrastructure.Algorithms.Base
             }
             try
             {
-               Tasks<Task>.FunctionsCallback[keys].Start();
+                Tasks.FunctionsCallback[keys].Start();
             }
             catch (Exception)
             {
                 throw;
             }
         }
-       internal void AddCallBackTask<T>(VKeys[] keyCombo, T callback) where T : Task
-       {
-            Tasks<T>.FunctionsCallback.Add(keyCombo, callback);
-       }
+
+        enum AddCallBackTaskFail
+        {
+            None,
+            KeysAreAlreadyRegistered,
+            IsOneKey,
+            KeyCombinationEmpty
+        }
+        internal static Task AddCallBackTask(VKeys[] keyCombo, Task callbackTask, bool isOneKey = default)
+        {
+            var AddCallBackTaskFails = BaseAlgorithm.GetLazzyDictionaryFails
+                (
+                 new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.KeysAreAlreadyRegistered, "Комибинация клавиш(клавиши) уже зарегистрированна"), //0
+                 new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.IsOneKey, $"Была передана одна клавиша для регистрации с ключем {nameof(isOneKey)} false"), //1
+                 new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.KeyCombinationEmpty, $"Невозможно зарегистрировать пустую комбинацию клавиш") //2
+
+                ); ;
+
+            if (keyCombo.Length is 0) throw new InvalidOperationException().Report(AddCallBackTaskFails.Value[2]);
+
+            if (Tasks.FunctionsCallback.ContainsKey(keyCombo) is true) throw new InvalidOperationException().Report(AddCallBackTaskFails.Value[0]);
+
+            if (keyCombo.Length is 1 & isOneKey is false) throw new InvalidOperationException().Report(AddCallBackTaskFails.Value[1]);
+
+
+            Tasks.FunctionsCallback.Add(keyCombo, callbackTask);
+
+            return Task.CompletedTask;
+        }
+
+        internal static Task<IEnumerable<KeyValuePair<VKeys[], Task>>> ReturnCollectionRegistrationFunction() => new Task<IEnumerable<KeyValuePair<VKeys[], Task>>>(() => Tasks.FunctionsCallback);
+        internal static Task<bool> ContainsKeyComibantion(VKeys[] keyCombo) => new Task<bool>(()
+            => {if (Tasks.FunctionsCallback.ContainsKey(keyCombo) is true) return true; else return false; });
+
+
+
     }
-    
+
 }
