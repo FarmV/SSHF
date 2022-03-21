@@ -42,7 +42,7 @@ namespace SSHF.Infrastructure.Algorithms
         /// </br>
         /// </summary>  
         /// <returns>Резултатат указывает может ли быть выполнена функция <see cref="Start"/></returns>
-        protected internal override Task<bool> PreChecStart<T>(T parameter)
+        protected internal override Task<bool> PreCheckStart<T>(T parameter)
         {
             DictionaryEntry[] PreChecStartFails = new DictionaryEntry[]
             {
@@ -120,11 +120,11 @@ namespace SSHF.Infrastructure.Algorithms
         {
             var StartFunctionFails = GetLazzyDictionaryFails
             (
-              new DictionaryEntry(StartFail.The_Function_Is_Not_Registered, $"Опрерация не зарегистрирована. Вызовите мотод {nameof(PreChecStart)} перед первым использованием"),           //0
-              new DictionaryEntry(StartFail.It_Is_Not_Possible_To_Perform_a_Startup_Before_The_Current_Operation_is_Complete, "Невозможно выполнить запуск до завершения текущей операции"),//1
-              new DictionaryEntry(StartFail.Clipboard_Empty, "В буффере обмена остувует изображение"),                                                                                      //2
-              new DictionaryEntry(StartFail.The_Output_Type_Is_Not_BitmapSource, $"Тип {nameof(T)} долженя вляется {typeof(BitmapSource)}"),                                                //3
-              new DictionaryEntry(StartFail.OperationCanceled, $"Операция операция получила запрос отмены через ... и была отмененна")
+              new KeyValuePair<StartFail, string>(StartFail.The_Function_Is_Not_Registered, $"Опрерация не зарегистрирована. Вызовите мотод {nameof(PreCheckStart)} перед первым использованием"),           //0
+              new KeyValuePair<StartFail, string>(StartFail.It_Is_Not_Possible_To_Perform_a_Startup_Before_The_Current_Operation_is_Complete, "Невозможно выполнить запуск до завершения текущей операции"),//1
+              new KeyValuePair<StartFail, string>(StartFail.Clipboard_Empty, "В буффере обмена остувует изображение"),                                                                                      //2
+              new KeyValuePair<StartFail, string>(StartFail.The_Output_Type_Is_Not_BitmapSource, $"Тип {nameof(T)} долженя вляется {typeof(BitmapSource)}"),                                                //3
+              new KeyValuePair<StartFail, string>(StartFail.OperationCanceled, $"Операция операция получила запрос отмены через ... и была отмененна")
             );         
             try
             {
@@ -164,7 +164,7 @@ namespace SSHF.Infrastructure.Algorithms
         {
             var GetClipboardImageFails = GetLazzyDictionaryFails
             (
-              new DictionaryEntry(GetClipboardImageFail.OperationCanceled, $"Операция была отменена через {nameof(token)}") //0           
+             new KeyValuePair<GetClipboardImageFail, string>(GetClipboardImageFail.OperationCanceled, $"Операция была отменена через {nameof(token)}") //0           
             );
 
             CancellationToken Cancel = token ??= default;
