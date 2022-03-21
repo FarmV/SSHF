@@ -27,98 +27,87 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CSharp;
 
+using SSHF.Infrastructure.Algorithms.Base;
 using SSHF.Infrastructure.Interfaces;
 using SSHF.Infrastructure.SharedFunctions;
+
+
+using Help = SSHF.Infrastructure.Algorithms.Base.ExHelp.HelpOperation;
 
 namespace SSHF.Infrastructure.Algorithms
 {
 
-    internal class FunctionGetTranslate: Freezable, IActionFunction
+    internal class AlgorithmGetTranslateAbToDepl : BaseAlgorithm
     {
-        public event Action<object?>? Сompleted;
+
+        internal string DeeplDirectory1;
+
+        internal string ScreenshotReaderDirectory2;
 
         #region Регистрация функции
-        public FunctionGetTranslate()
+        public AlgorithmGetTranslateAbToDepl(string deeplDirectory, string ScreenshotReaderDirectory)
         {
+            DeeplDirectory1 = deeplDirectory;
+            ScreenshotReaderDirectory2 = ScreenshotReaderDirectory;
         }
+            
+        //private static readonly bool _status = default;
 
-        void Registration(string NameButton)
+        protected internal override bool IsCheceked => isProcessing;
+        protected internal override string Name => "FunctionGetTranslateAbtoDepl";
+
+
+        enum GetTranslateAbtoDeplStartFail
         {
-            if (App.KeyBoardHandler is null) throw new NullReferenceException("App.KeyBoarHandle is NULL");
-
-            App.KeyBoardHandler.RegisterAFunction("Translate", NameButton, new Action(() => { StartFunction(); }), true);
-        }
-
-        public string Name => "Translate";
-
-        private bool _status = default;
-        public bool Enable
-        {
-            get => _status;
-            private set => _status = value;
-        }
-
-        protected override Freezable CreateInstanceCore()
-        {
-            return new AlgorithmGetClipboardImage();
+            None,
+            OperationCanceled,
+            InvalidDirectoryDepl,
+            InvalidDirectoryReader,
         }
         /// <summary>
-        /// теееееееееееест
+        /// T bool
+        /// T2 (string DeeplDirectory, string ScreenshotReaderDirectory) Пути пррограмм
         /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="T2"></typeparam>
         /// <param name="parameter"></param>
-        /// <returns>Результат проверки регистрациии функции</returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        public Tuple<bool, string> CheckAndRegistrationFunction(object? parameter = null)
+        /// <param name="token"></param>
+        /// <returns> Успешность операции</returns>
+        /// <exception cref="NotImplementedException"></exception>
+        protected internal override Task<T> Start<T, T2>(T2 parameter, CancellationToken? token = null)
         {
-            if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false, $"Не установлена директория программы Deepl");
-            if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false, "Не установлена директория программы ScreenshotReader");
+            // if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false, $"Не установлена директория программы Deepl");
+            // if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false, "Не установлена директория программы ScreenshotReader");
 
-            if (parameter is not string nameButton)
-            {
-                _status = true;
-                return Tuple.Create(true, "Функция может быть выполнена, но клавиши глобального вызова небыли зарегистрированы");
-            }
 
+            CancellationToken Cancel = token ??= default;
+
+            var reasonFailsList = ExHelp.GetLazzyDictionaryFails
+                (
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.OperationCanceled, ExHelp.HelerReasonFail(Help.Canecled)),             //0
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.InvalidDirectoryDepl, ExHelp.HelerReasonFail(Help.InvalidDirectory)),  //1
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.InvalidDirectoryReader, ExHelp.HelerReasonFail(Help.InvalidDirectory)) //2
+                );
+
+            if (string.IsNullOrEmpty(DeeplDirectory) is true) throw new NullReferenceException().Report(reasonFailsList.Value[1]);
+            if (string.IsNullOrEmpty(ScreenshotReaderDirectory) is true) throw new NullReferenceException().Report(reasonFailsList.Value[2]);
             try
             {
-                if (_status is true)
-                {
-                    if (App.KeyBoardHandler is null) throw new NullReferenceException("App.KeyBoarHandle is NULL");
-
-                    if (App.KeyBoardHandler.ReplaceRegisteredFunction(Name, nameButton, new Action(() => { StartFunction(); })) is false)
-                    {
-                        throw new NullReferenceException("KeyBoardHandler.ReplaceRegisteredFunction вернул false");
-                    }
-                }
-                if (_status is false)
-                {
-                    Registration(nameButton);
-                    _status = true;
-                }
+                isProcessing = true;
             }
             catch (Exception)
             {
-                _status = false;
-                Tuple.Create(false, "Произошла ошибка в класе регистрации регистрации клавиш");
+                
             }
-            return Tuple.Create(true, "Функция и клавиши успешно зарегистрированны");
-        }
+            finally
+            {
 
+            }
+            throw new NotImplementedException();
+        }
+      
         bool isProcessing = false;
 
-        public bool StartFunction(object? parameter = null)
-        {
-            if (_status is false) return false;
-            if (isProcessing is true) return false;
-            isProcessing = true;
-            StartAlgorithm();
-            return true;
-        }
-
-        public bool СancelFunction(object? parameter = null)
-        {
-            return false;
-        }
 
         #endregion
 
@@ -154,9 +143,12 @@ namespace SSHF.Infrastructure.Algorithms
             }
             catch (Exception)
             {
-                isProcessing = false;
-
+               
                 Сompleted?.Invoke(false);
+            }
+            finally
+            {
+                isProcessing = false;
             }
         }
 
@@ -486,7 +478,7 @@ namespace SSHF.Infrastructure.Algorithms
             SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(codeToCompile);
 
             string assemblyName = $"{Path.GetRandomFileName()}";
-            var refPaths = new[]
+            string[] refPaths = new[]
             {
                 typeof(object).GetTypeInfo().Assembly.Location,
                 typeof(Console).GetTypeInfo().Assembly.Location,
@@ -578,7 +570,7 @@ namespace SSHF.Infrastructure.Algorithms
             //    }
             //}
 
-        }
+        }     
         #endregion
     }
 }

@@ -34,11 +34,11 @@ namespace SSHF.Infrastructure.Algorithms
         /// </br>
         /// </summary>  
         /// <returns>Резултатат указывает может ли быть выполнена функция <see cref="Start"/></returns>
-        protected internal override Task<bool> PreCheckStart<T>(T parameter) => Task.FromResult(true);
+        protected internal override Task<bool> IsCheck<T>(T parameter) => Task.FromResult(true);
 
         #region Основное тело фукции
         bool isProcessing = false;
-        enum StartFail
+        enum GetClipboardImageStartFail
         {
             None,
             The_Function_Is_Not_Registered,
@@ -63,13 +63,13 @@ namespace SSHF.Infrastructure.Algorithms
             CancellationToken Cancel = token ??= default;
 
 
-            var StartFunctionFails = GetLazzyDictionaryFails
+            var StartFunctionFails = ExHelp.GetLazzyDictionaryFails
             (
-              new KeyValuePair<StartFail, string>(StartFail.The_Function_Is_Not_Registered, $"Опрерация не зарегистрирована. Вызовите мотод {nameof(PreCheckStart)} перед первым использованием"),          //0
-              new KeyValuePair<StartFail, string>(StartFail.It_Is_Not_Possible_To_Perform_a_Startup_Before_The_Current_Operation_is_Complete, "Невозможно выполнить запуск до завершения текущей операции"),//1
-              new KeyValuePair<StartFail, string>(StartFail.Clipboard_Empty, "В буффере обмена остувует изображение"),                                                                                      //2
-              new KeyValuePair<StartFail, string>(StartFail.The_Output_Type_Is_Not_BitmapSource, $"Тип {nameof(T)} долженя вляется {typeof(BitmapSource)}"),                                                //3
-              new KeyValuePair<StartFail, string>(StartFail.OperationCanceled, $"Операция операция получила запрос отмены через ... и была отмененна")                                                      //4
+              new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.The_Function_Is_Not_Registered, $"Опрерация не зарегистрирована. Вызовите мотод {nameof(IsCheck)} перед первым использованием"),                //0
+              new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.It_Is_Not_Possible_To_Perform_a_Startup_Before_The_Current_Operation_is_Complete, "Невозможно выполнить запуск до завершения текущей операции"),//1
+              new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.Clipboard_Empty, "В буффере обмена остувует изображение"),                                                                                      //2
+              new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.The_Output_Type_Is_Not_BitmapSource, $"Тип {nameof(T)} долженя вляется {typeof(BitmapSource)}"),                                                //3
+              new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.OperationCanceled, $"Операция операция получила запрос отмены через ... и была отмененна")                                                      //4
             );         
             try
             {
