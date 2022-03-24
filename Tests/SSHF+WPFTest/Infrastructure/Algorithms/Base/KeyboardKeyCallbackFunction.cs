@@ -32,7 +32,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
         }
         private static void CheckingForAMatchAndCallingAFunction(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            var CheckingForAMatchAndCallingAFunctionFails = BaseAlgorithm.GetLazzyDictionaryFails
+            var CheckingForAMatchAndCallingAFunctionFails = ExHelp.GetLazzyDictionaryFails
                 (new KeyValuePair<CheckingForAMatchAndCallingAFunctionFail, string>
                   (CheckingForAMatchAndCallingAFunctionFail.CollectionIsNull, $"{nameof(e.NewItems)} is Null"), //0
                   new KeyValuePair<CheckingForAMatchAndCallingAFunctionFail, string>
@@ -68,13 +68,12 @@ namespace SSHF.Infrastructure.Algorithms.Base
         }
         internal static Task AddCallBackTask(VKeys[] keyCombo, Task callbackTask, bool isOneKey = default)
         {
-            var AddCallBackTaskFails = BaseAlgorithm.GetLazzyDictionaryFails
+            var AddCallBackTaskFails = ExHelp.GetLazzyDictionaryFails
                 (
                  new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.KeysAreAlreadyRegistered, "Комибинация клавиш(клавиши) уже зарегистрированна"), //0
                  new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.IsOneKey, $"Была передана одна клавиша для регистрации с ключем {nameof(isOneKey)} false"), //1
                  new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.KeyCombinationEmpty, $"Невозможно зарегистрировать пустую комбинацию клавиш") //2
-
-                ); ;
+                ); 
 
             if (keyCombo.Length is 0) throw new InvalidOperationException().Report(AddCallBackTaskFails.Value[2]);
 
@@ -88,7 +87,17 @@ namespace SSHF.Infrastructure.Algorithms.Base
             return Task.CompletedTask;
         }
 
-        internal static Task<IEnumerable<KeyValuePair<VKeys[], Task>>> ReturnCollectionRegistrationFunction() => new Task<IEnumerable<KeyValuePair<VKeys[], Task>>>(() => Tasks.FunctionsCallback);
+        internal static Task<IEnumerable<KeyValuePair<VKeys[], Task>>> ReturnCollectionRegistrationFunction() => new Task<IEnumerable<KeyValuePair<VKeys[], Task>>>(()=>
+        {
+            static IEnumerable<KeyValuePair<VKeys[], Task>> GetFunction()
+            {
+                foreach(var item in Tasks.FunctionsCallback)
+                {
+                    yield return item;
+                }
+            } return GetFunction();
+        });
+
         internal static Task<bool> ContainsKeyComibantion(VKeys[] keyCombo) => new Task<bool>(()
             => {if (Tasks.FunctionsCallback.ContainsKey(keyCombo) is true) return true; else return false; });
 

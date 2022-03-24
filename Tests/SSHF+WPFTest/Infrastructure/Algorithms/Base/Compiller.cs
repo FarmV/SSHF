@@ -19,13 +19,10 @@ namespace SSHF.Infrastructure.Algorithms.Base
 {
     internal static class Compiller
     {
-
         internal static Task<CSharpCompilation> GetCompiller(string codeToCompile, string assemblyName,string [] assemblyDependencies)
         {
            
-
             SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(codeToCompile);
-
 
             MetadataReference[] references = assemblyDependencies.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
 
@@ -33,8 +30,11 @@ namespace SSHF.Infrastructure.Algorithms.Base
 
             CSharpCompilation compilation = CSharpCompilation.Create(assemblyName, new[] { syntaxTree }, references, CompilationOptions);
 
-            Task.FromResult(compilation);
+            return Task.FromResult(compilation);
         }
+
+        
+
         internal static Task<EmitResult> SafeDllToPath(CSharpCompilation compilation, string path) => Task.FromResult(compilation.Emit(path));
 
         internal static Task<IEnumerable<Diagnostic>> HelperReasonFail(EmitResult result)
@@ -49,40 +49,35 @@ namespace SSHF.Infrastructure.Algorithms.Base
         internal static async Task<Assembly> AssemlyToMemory(CSharpCompilation compilation)
         {
 
-            using (MemoryStream ms = new MemoryStream())
+            using MemoryStream ms = new MemoryStream();
+            EmitResult result = compilation.Emit(ms);
+
+
+            if (result.Success is not true)
             {
-                EmitResult result = compilation.Emit(ms);
+                var failsList = await HelperReasonFail(result);
 
-
-                if (result.Success is not true)
+                foreach (Diagnostic diagnostic in failsList)
                 {
-                    var failsList = await HelperReasonFail(result);
-                 
-                    foreach (Diagnostic diagnostic in failsList)
-                    {
-                        Debug.WriteLine($"{Environment.NewLine}{diagnostic.Id}: {diagnostic.GetMessage()}");
-                    }
-
-                    throw new InvalidOperationException();
+                    Debug.WriteLine($"{Environment.NewLine}{diagnostic.Id}: {diagnostic.GetMessage()}");
                 }
-                else
+
+                throw new InvalidOperationException();
+            }
+            else
+            {
+                ms.Seek(0, SeekOrigin.Begin);
+
+                using (MemoryStream dllStream = ms)
+                using (MemoryStream pdbStream = new MemoryStream())
                 {
-                    ms.Seek(0, SeekOrigin.Begin);
-
-                    using (MemoryStream dllStream = ms)
-                    using (MemoryStream pdbStream = new MemoryStream())
+                    var emitResult = compilation.Emit(dllStream, pdbStream);
+                    if (!emitResult.Success)
                     {
-                        var emitResult = compilation.Emit(dllStream, pdbStream);
-                        if (!emitResult.Success)
-                        {
-                            var c = emitResult.Diagnostics;
-                        }
+                        var c = emitResult.Diagnostics;
                     }
-
-                    return AssemblyLoadContext.Default.LoadFromStream(ms);
-
-                   
                 }
+                return AssemblyLoadContext.Default.LoadFromStream(ms);
             }
         }
 
@@ -101,8 +96,9 @@ namespace SSHF.Infrastructure.Algorithms.Base
             meth.Invoke(instance, new string[1]);
           
         }
-        
 
+
+      
 
 
     }

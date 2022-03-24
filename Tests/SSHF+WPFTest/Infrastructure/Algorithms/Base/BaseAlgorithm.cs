@@ -64,26 +64,29 @@ namespace SSHF.Infrastructure.Algorithms.Base
             return ex;
         }
 
-        internal enum HelpOperation
+        internal enum HelpOperationForNotification
         {
             None,
             Canecled,
-            InvalidDirectory
+            InvalidDirectory,
+            ThePreviousOperationWasNotCompleted
         }
 
 
         enum HelerReasonFailFail
         {
             None,
-            InconsistencyEnum
+            InconsistencyEnum,
+            
         }
-        internal static string HelerReasonFail(HelpOperation operation, Type? type = null)
+        internal static string HelerReasonFail(HelpOperationForNotification operation, Type? type = null)
         {
-            if (Enum.IsDefined(typeof(HelpOperation), operation)) throw new InvalidCastException().
+            if (Enum.IsDefined(typeof(HelpOperationForNotification), operation)) throw new InvalidCastException().
                     Report(new KeyValuePair<HelerReasonFailFail,string>(HelerReasonFailFail.InconsistencyEnum,$"В {nameof(HelerReasonFailFail)} не присутвует ключ"));
 
-            if(operation is HelpOperation.Canecled) return $"Операция полчуила {typeof(CancellationToken)} и была оменена";
-            if (operation is HelpOperation.InvalidDirectory) return $"Неверная директория {nameof(type)}";
+            if(operation is HelpOperationForNotification.Canecled) return $"Операция полчуила {typeof(CancellationToken)} и была оменена";
+            if (operation is HelpOperationForNotification.InvalidDirectory) return $"Неверная директория {nameof(type)}";
+            if (operation is HelpOperationForNotification.ThePreviousOperationWasNotCompleted) return $"Предыдущий вызов операции не был завершён";
 
 
             throw new Exception($"Непредвиденная ошибка {nameof(HelerReasonFail)}");

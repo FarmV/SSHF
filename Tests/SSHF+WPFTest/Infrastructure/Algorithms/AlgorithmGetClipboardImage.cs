@@ -69,7 +69,7 @@ namespace SSHF.Infrastructure.Algorithms
               new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.It_Is_Not_Possible_To_Perform_a_Startup_Before_The_Current_Operation_is_Complete, "Невозможно выполнить запуск до завершения текущей операции"),//1
               new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.Clipboard_Empty, "В буффере обмена остувует изображение"),                                                                                      //2
               new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.The_Output_Type_Is_Not_BitmapSource, $"Тип {nameof(T)} долженя вляется {typeof(BitmapSource)}"),                                                //3
-              new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.OperationCanceled, $"Операция операция получила запрос отмены через ... и была отмененна")                                                      //4
+              new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.OperationCanceled, $"Операция операция получила запрос отмены через {nameof(CancellationToken)} и была отмененна")                                                      //4
             );         
             try
             {
@@ -109,9 +109,9 @@ namespace SSHF.Infrastructure.Algorithms
         }
         private BitmapSource? GetClipboardImage(CancellationToken? token = null)
         {
-            var GetClipboardImageFails = GetLazzyDictionaryFails
+            var GetClipboardImageFails = ExHelp.GetLazzyDictionaryFails
             (
-             new KeyValuePair<GetClipboardImageFail, string>(GetClipboardImageFail.OperationCanceled, $"Операция была отменена через {nameof(token)}") //0           
+              new KeyValuePair<GetClipboardImageFail, string>(GetClipboardImageFail.OperationCanceled, $"Операция была отменена через {nameof(token)}") //0           
             );
 
             CancellationToken Cancel = token ??= default;
