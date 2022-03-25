@@ -46,6 +46,8 @@ namespace SSHF.Infrastructure.Algorithms
 
         internal static string? ScreenshotReaderDirectory1;
 
+        const string CloseABBYcmdQuery1 = "taskkill /F /IM ScreenshotReader.exe";
+
         #region Регистрация функции
         private AlgorithmGetTranslateAbToDepl()
         {
@@ -88,12 +90,18 @@ namespace SSHF.Infrastructure.Algorithms
             InvalidDirectoryDepl,
             InvalidDirectoryReader,
             TheOperationWasNotCompleted,
-            CompilationFail
+            CompilationFail,
+            FailGetTransleteOrTimeout,
+            DeplProccesReturnNull,
+            MainWindowDeplIsNull,
+            TimeOutPanelInpuText,
+            PanelInpuTextIsNotTextBox,
+            TypeTisNotString
 
         }
         /// <summary>
-        /// T bool
-        /// T2 (string DeeplDirectory, string ScreenshotReaderDirectory) Пути пррограмм
+        /// T string
+        /// T2 (NoDeplAwaitGetTextAbby? bool = null)
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="T2"></typeparam>
@@ -103,21 +111,40 @@ namespace SSHF.Infrastructure.Algorithms
         /// <exception cref="NotImplementedException"></exception>
         protected internal override async Task<T> Start<T, T2>(T2 parameter, CancellationToken? token = null)
         {
-            // if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false, $"Не установлена директория программы Deepl");
-            // if (string.IsNullOrEmpty(DeeplDirectory) is true) return Tuple.Create(false, "Не установлена директория программы ScreenshotReader");
+            throw new NotImplementedException();
+
+            bool getText = default;
+
+            bool? NoDeplAwaitGetTextAbby = parameter as bool?;
+            
+            if(NoDeplAwaitGetTextAbby is null || NoDeplAwaitGetTextAbby.HasValue is false){}
+            else
+            {
+                getText = NoDeplAwaitGetTextAbby.Value;
+            }
 
 
-            CancellationToken сancel = token ??= default;
+            CancellationToken сancelToken = token ??= default;
+
+          
 
             var reasonFailsList = ExHelp.GetLazzyDictionaryFails
                 (
-                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.OperationCanceled, ExHelp.HelerReasonFail(Help.Canecled)),                                     //0
-                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.InvalidDirectoryDepl, ExHelp.HelerReasonFail(Help.InvalidDirectory)),                          //1
-                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.InvalidDirectoryReader, ExHelp.HelerReasonFail(Help.InvalidDirectory)),                        //2
-                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.TheOperationWasNotCompleted, ExHelp.HelerReasonFail(Help.ThePreviousOperationWasNotCompleted)),//3
-                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.CompilationFail, ExHelp.HelerReasonFail(Help.CompilationFail))                                 //4
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.OperationCanceled, ExHelp.HelerReasonFail(Help.Canecled)),                                                             //0
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.InvalidDirectoryDepl, ExHelp.HelerReasonFail(Help.InvalidDirectory)),                                                  //1
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.InvalidDirectoryReader, ExHelp.HelerReasonFail(Help.InvalidDirectory)),                                                //2
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.TheOperationWasNotCompleted, ExHelp.HelerReasonFail(Help.ThePreviousOperationWasNotCompleted)),                        //3
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.CompilationFail, ExHelp.HelerReasonFail(Help.CompilationFail)),                                                        //4
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.FailGetTransleteOrTimeout, "Не удалось получить перевод от Depl, либо сработал dispose таймаут"),                      //5
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.DeplProccesReturnNull, $"Метод {nameof(GetDeplWindow)} вернул NULL"),                                                  //6
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.MainWindowDeplIsNull, $"Метод {nameof(FlaUI.Core.Application.GetMainWindow)} вернул Null, возможно сработал таймаут"), //7
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.TimeOutPanelInpuText, $"Не была найдена панель ввода в программе deppl, и сработал таймаут"),                          //8
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.PanelInpuTextIsNotTextBox, $"Попытка приведения PanelInpuText к TexBox вурнула Null"),                                 //9
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.TypeTisNotString, $"Входной {nameof(Type)} не является {nameof(String)}")                                              //10
                 );
 
+            if (Equals(typeof(T), typeof(string)) is not true) throw new InvalidOperationException().Report(reasonFailsList.Value[10]);
+            if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
             if (isProcessing is true) throw new InvalidOperationException().Report(reasonFailsList.Value[3]);
             if (string.IsNullOrWhiteSpace(DeeplDirectory1) is true) throw new NullReferenceException().Report(reasonFailsList.Value[1]);
             if (string.IsNullOrWhiteSpace(ScreenshotReaderDirectory1) is true) throw new NullReferenceException().Report(reasonFailsList.Value[2]);
@@ -128,7 +155,7 @@ namespace SSHF.Infrastructure.Algorithms
 
 
                 // string assemblyName = $"{Path.GetRandomFileName()}";
-
+                if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
                 string[] assemblyDependencies = new[]
                 {
                   typeof(object).GetTypeInfo().Assembly.Location,
@@ -147,7 +174,7 @@ namespace SSHF.Infrastructure.Algorithms
 
 
 
-                CSharpCompilation comiplation = await Compiller.GetCompiller(parsingTextInstance, "AlgorithmGetTranslate", assemblyDependencies);
+                CSharpCompilation comiplation = await Compiller.GetCompiller(parsingTextInstance, "AlgorithmGetTranslate", assemblyDependencies, сancelToken);
                 string savePath = Path.Join(Environment.CurrentDirectory, "Extension", "AlgorithmGetTranslateAbToDepl");
                 EmitResult compilationrResultToHardDrive = await Compiller.SafeDllToPath(comiplation, savePath);
 
@@ -162,6 +189,8 @@ namespace SSHF.Infrastructure.Algorithms
                     }
                     throw new InvalidOperationException().Report(reasonFailsList.Value[4]);
                 }
+
+                if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
 
                 if (File.Exists(Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json")))
                 {
@@ -186,7 +215,7 @@ namespace SSHF.Infrastructure.Algorithms
                      }
                     }
                     ";
-
+                    if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
                     using FileStream stream = File.Create(Path.Join(Environment.CurrentDirectory, "Extension"));  // проверить
                     using StreamWriter writer = new StreamWriter(stream);
                     writer.AutoFlush = true;
@@ -194,26 +223,69 @@ namespace SSHF.Infrastructure.Algorithms
                 }
 
 
-                var outputFilePath = @$"C:\Users\Vikto\Desktop\g\ggg\{nameOutput}" + ".dll";
+                //  var outputFilePath = @$"C:\Users\Vikto\Desktop\g\ggg\{nameOutput}" + ".dll";
 
-                var outputRuntimeConfigPath = Path.ChangeExtension(outputFilePath, "runtimeconfig.json");
-                var currentRuntimeConfigPath = Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json");
+                // var outputRuntimeConfigPath = Path.ChangeExtension(outputFilePath, "runtimeconfig.json");
+                // var currentRuntimeConfigPath = Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json");
 
-                File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
+                //  File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
 
-                CmdRun1(@$"cd C:\Users\Vikto\Desktop\g\ggg & dotnet {nameOutput}.dll");
+                await CmdRun1(@$"cd {savePath} & dotnet AlgorithmGetTranslate.dll");
+
+                await ClipboardClear1();
+
+                if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
+
+                string textToDepl = await GetTextAwait1(15000);
+
+                if (textToDepl == string.Empty)
+                {
+                    CmdRun1(CloseABBYcmdQuery).Start();
+                    throw new NullReferenceException().Report(reasonFailsList.Value[5]);
+                }
+
+                if (textToDepl is not T returnSourceText) throw new InvalidOperationException().Report(reasonFailsList.Value[10]);
+                if (getText is true) return returnSourceText;
 
 
+                await StartDeplWinow();
+
+                if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
+
+                if (await GetDeplWindow() is not Process deplProc) throw new NullReferenceException().Report(reasonFailsList.Value[6]);
+
+                FlaUI.Core.Application applicationDepl = FlaUI.Core.Application.Attach(deplProc);
+                FlaUI.Core.AutomationElements.Window mainWindowDepl = applicationDepl.GetMainWindow(new UIA3Automation(), new TimeSpan(0, 0, 5));
+
+                if (mainWindowDepl is not FlaUI.Core.AutomationElements.Window Depl) throw new NullReferenceException().Report(reasonFailsList.Value[7]);
+
+
+                if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
+
+                bool TimeOut = default;
+                using Timer breakTimer = new Timer(new TimerCallback((arg) => TimeOut = true), null, 10000, Timeout.Infinite);
+
+                AutomationElement panelInpuText;
+                while (true)
+                {
+
+                    if (TimeOut is true) throw new NullReferenceException().Report(reasonFailsList.Value[8]);
+                    panelInpuText = Depl.FindFirstByXPath("//Document/Group/Group[1]/Edit");
+                    if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
+                    if (panelInpuText is null) continue;
+                    if (panelInpuText is not null) break;
+                }
+
+                if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
+
+                if (panelInpuText.AsTextBox() is not FlaUI.Core.AutomationElements.TextBox inputBox) throw new NullReferenceException().Report(reasonFailsList.Value[9]);
+
+                inputBox.Text = string.Empty;
+                inputBox.Text = textToDepl;
             }
-            catch (Exception)
-            {
-                throw;
-            }
-            finally
-            {
-                isProcessing = false;
-            }
-            throw new NotImplementedException();
+            catch (Exception) { throw; }
+            finally { isProcessing = false; }
+
         }
 
         static bool isProcessing = false;
@@ -409,13 +481,12 @@ namespace SSHF.Infrastructure.Algorithms
         }
 
 
-        private static Task<Process?> GetDeplWinow() => Task.FromResult(Process.Start(new ProcessStartInfo(DeeplDirectory1)));
+        private static Task<Process?> StartDeplWinow() => Task.FromResult(Process.Start(new ProcessStartInfo(DeeplDirectory1)));
 
         private static Task CmdRun1(string queriesLine) => Task.FromResult(Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true }));
 
         private static Task<Process> GetBigLifeTimeDeplProcess(List<Process> proc)
         {
-
             IEnumerable<Process> skip = proc.SkipWhile(ss => ss.HasExited);
             List<Process> list2 = new List<Process>();
             Process? sss = null;
@@ -428,10 +499,7 @@ namespace SSHF.Infrastructure.Algorithms
                 }
                 catch (Exception)
                 {
-
-
                 }
-
             }
             if (list2.Count > 1)
             {
@@ -446,57 +514,23 @@ namespace SSHF.Infrastructure.Algorithms
             return Task.FromResult(sss);
         }
 
-        private static Task SetDeplText1()
+        private static async Task<Process?> GetDeplWindow()
         {
-            try
+            Process[] poolproc = Process.GetProcessesByName("DeepL");
+
+            List<Process> proc = new List<Process>();
+            foreach (var item in poolproc)
             {
-                Process[] poolproc = Process.GetProcessesByName("DeepL");
-
-                Process? deplProc = null;
-
-                List<Process> proc = new List<Process>();
-                foreach (var item in poolproc)
+                try
                 {
-                    try
-                    {
-                        DateTime time = item.StartTime;
-                        if (item.Responding)
-                            proc.Add(item);
-                    }
-                    catch (Exception)
-                    {
-                    }
+                    DateTime time = item.StartTime;
+                    if (item.Responding) proc.Add(item);
                 }
-
-                deplProc = BigLifeTime(proc);
-
-                FlaUI.Core.Application appDepl = FlaUI.Core.Application.Attach(deplProc);
-
-                FlaUI.Core.AutomationElements.Window mainWindowDepl = appDepl.GetMainWindow(new UIA3Automation(), new TimeSpan(0, 0, 5));
-
-                AutomationElement panel2;
-                while (true)
+                catch (Exception)
                 {
-                    panel2 = mainWindowDepl.FindFirstByXPath("//Document/Group/Group[1]/Edit");
-                    if (panel2 is null) continue;
-                    if (panel2 is not null) break;
                 }
-
-                if (panel2.AsTextBox() is not FlaUI.Core.AutomationElements.TextBox inputBox) throw new NullReferenceException("//Document/Group/Group[1]/Edit стало NULL");
-
-                inputBox.Text = string.Empty;
-                inputBox.Text = myStrBuferString;
-
-                return Task.CompletedTask;
             }
-            catch
-            {
-                return Task.CompletedTask;
-            }
-            finally
-            {
-                isProcessing = false;
-            }
+            return await GetBigLifeTimeDeplProcess(proc);
         }
 
 

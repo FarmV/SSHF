@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 
@@ -15,14 +16,32 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CSharp;
 
+using Help = SSHF.Infrastructure.Algorithms.Base.ExHelp.HelpOperationForNotification;
+
 namespace SSHF.Infrastructure.Algorithms.Base
 {
     internal static class Compiller
     {
-        internal static Task<CSharpCompilation> GetCompiller(string codeToCompile, string assemblyName,string [] assemblyDependencies)
+        enum GetCompillerFail
         {
-           
+            None,
+            OperationCanceled,
+        }
+
+        internal static Task<CSharpCompilation> GetCompiller(string codeToCompile, string assemblyName,string [] assemblyDependencies, CancellationToken? token = null)
+        {
+            var GetCompillerFails = ExHelp.GetLazzyDictionaryFails
+                (
+                 new KeyValuePair<GetCompillerFail, string>(GetCompillerFail.OperationCanceled, ExHelp.HelerReasonFail(Help.Canecled)) //0
+                );
+
+            CancellationToken сancelToken = token ??= default;
+
+            if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(GetCompillerFails.Value[0]);
+
             SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(codeToCompile);
+
+            if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(GetCompillerFails.Value[0]);
 
             MetadataReference[] references = assemblyDependencies.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
 
@@ -30,6 +49,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
 
             CSharpCompilation compilation = CSharpCompilation.Create(assemblyName, new[] { syntaxTree }, references, CompilationOptions);
 
+            if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(GetCompillerFails.Value[0]);
             return Task.FromResult(compilation);
         }
 
