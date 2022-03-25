@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
 {
 
-    internal enum VKeys
+    internal enum VKeys 
     {
         // Losely based on http://www.pinvoke.net/default.aspx/Enums/VK.html
 

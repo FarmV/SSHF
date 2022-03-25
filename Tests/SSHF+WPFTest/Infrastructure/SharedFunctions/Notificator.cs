@@ -8,6 +8,7 @@ using System.Windows.Interop;
 
 using Linearstar.Windows.RawInput;
 
+using SSHF.Infrastructure.Algorithms.Input;
 using SSHF.ViewModels.NotifyIconViewModel;
 using SSHF.Views.Windows.NotifyIcon;
 
@@ -71,7 +72,7 @@ namespace SSHF.Infrastructure.SharedFunctions
 
         }
 
-        private static void Raw_InputMouse(object? sender, RawInputEventArgs e)
+        private static void Raw_InputMouse(object? sender, RawInputEvent e)
         {
             RawInputData? data = e.Data;
 

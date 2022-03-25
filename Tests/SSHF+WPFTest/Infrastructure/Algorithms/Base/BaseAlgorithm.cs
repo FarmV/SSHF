@@ -32,8 +32,10 @@ namespace SSHF.Infrastructure.Algorithms.Base
         internal static Task RegisredKeys(VKeys[] keyCombo, Task task)
         {
             try
-            {                
-                KeyboardKeyCallbackFunction.AddCallBackTask(keyCombo, task);
+            {
+                KeyboardKeyCallbackFunction callback = KeyboardKeyCallbackFunction.GetInstance();
+
+                callback.AddCallBackTask(keyCombo, task);
                 return Task.CompletedTask;
             }
             catch (Exception)

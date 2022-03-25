@@ -23,6 +23,7 @@ using System.Linq;
 using Linearstar.Windows.RawInput;
 using SSHF.Infrastructure.Algorithms;
 using SSHF.Infrastructure.Interfaces;
+using SSHF.Infrastructure.Algorithms.Base;
 
 namespace SSHF.Models.MainWindowModel
 {
@@ -51,7 +52,7 @@ namespace SSHF.Models.MainWindowModel
             X = (1920 / 2),
             Y = (1080 / 2)
         };
-       
+
         public async void RefreshWindowOnExecute(object? parameter) => await Task.Run(() =>
         {
             _ViewModel.RefreshWindow = true;
@@ -59,7 +60,7 @@ namespace SSHF.Models.MainWindowModel
             {
                 GetCursorPos(out _CursorPoint);
 
-                WindowFunction.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X, _CursorPoint.Y, 10, 10, 0x0400 | 0x0001); 
+                WindowFunction.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X, _CursorPoint.Y, 10, 10, 0x0400 | 0x0001);
             }
 
 
@@ -103,10 +104,27 @@ namespace SSHF.Models.MainWindowModel
 
         void RegisterFunctions()
         {
-            if (App.KeyBoardHandler is null) throw new NullReferenceException("App.KeyBoarHandle is NULL");
+             string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
 
-           
-                   
+             string ScreenshotReaderDirectory = @"D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe";
+
+            var keyCombianteion = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
+            {  
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_1,
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_2,
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_3
+            };
+
+            KeyboardKeyCallbackFunction callback = KeyboardKeyCallbackFunction.GetInstance();
+
+            callback.AddCallBackTask(keyCombianteion, new Task(async () =>
+            {
+                AlgorithmGetTranslateAbToDepl instance = await  AlgorithmGetTranslateAbToDepl.GetInstance(DeeplDirectory, ScreenshotReaderDirectory);
+                instance.Start<string,bool>(true).Start();
+            }));
+
+
+
         }
 
 
@@ -171,12 +189,12 @@ namespace SSHF.Models.MainWindowModel
             if (DialogFile.SaveFileDirectory("Выбирете директория для сохранения") is not string directory) return;
             if (_ViewModel.ImageOpacity is null) throw new NullReferenceException("_ViewModel.ImageOpacit is NULL");
 
-            if(IntegratingImages.SafeImage(new Uri(directory), _ViewModel.ImageOpacity) is false)
+            if (IntegratingImages.SafeImage(new Uri(directory), _ViewModel.ImageOpacity) is false)
             {
-                System.Windows.MessageBox.Show("Функци сохранения изображения выернула ошибку","Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show("Функци сохранения изображения выернула ошибку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
-          
+
 
 
 

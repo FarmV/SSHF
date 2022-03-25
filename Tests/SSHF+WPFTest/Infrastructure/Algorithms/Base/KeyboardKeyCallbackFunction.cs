@@ -15,14 +15,22 @@ namespace SSHF.Infrastructure.Algorithms.Base
 {
     internal class KeyboardKeyCallbackFunction
     {
+
+        private readonly static KeyboardKeyCallbackFunction Instance = new KeyboardKeyCallbackFunction();
+        private KeyboardKeyCallbackFunction()
+        {
+
+            KeyBordBaseRawInput input = KeyBordBaseRawInput.GetInstance();
+            KeyBordBaseRawInput.ChangeTheKeyPressure += CheckingForAMatchAndCallingAFunction;
+        }
+
+        internal static KeyboardKeyCallbackFunction GetInstance() => Instance;
+
         private static class Tasks
         {
             internal static Dictionary<VKeys[], Task> FunctionsCallback = new Dictionary<VKeys[], Task>();
         }
-        public KeyboardKeyCallbackFunction()
-        {
-            KeyBordBaseRawInput.ChangeTheKeyPressure += CheckingForAMatchAndCallingAFunction;
-        }
+       
 
         enum CheckingForAMatchAndCallingAFunctionFail
         {
@@ -34,7 +42,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
         {
             var CheckingForAMatchAndCallingAFunctionFails = ExHelp.GetLazzyDictionaryFails
                 (new KeyValuePair<CheckingForAMatchAndCallingAFunctionFail, string>
-                  (CheckingForAMatchAndCallingAFunctionFail.CollectionIsNull, $"{nameof(e.NewItems)} is Null"), //0
+                  (CheckingForAMatchAndCallingAFunctionFail.CollectionIsNull, $"{nameof(e.NewItems)} is Null"),                                            //0
                   new KeyValuePair<CheckingForAMatchAndCallingAFunctionFail, string>
                   (CheckingForAMatchAndCallingAFunctionFail.NewItemsIsNotVKeys, $"{nameof(e.NewItems)} не являются {nameof(ObservableCollection<VKeys>)}") //1
                 );
@@ -66,7 +74,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
             IsOneKey,
             KeyCombinationEmpty
         }
-        internal static Task AddCallBackTask(VKeys[] keyCombo, Task callbackTask, bool isOneKey = default)
+        internal Task AddCallBackTask(VKeys[] keyCombo, Task callbackTask, bool isOneKey = default)
         {
             var AddCallBackTaskFails = ExHelp.GetLazzyDictionaryFails
                 (

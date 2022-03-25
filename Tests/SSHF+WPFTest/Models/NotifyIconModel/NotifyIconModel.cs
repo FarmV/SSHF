@@ -16,6 +16,7 @@ using System.Windows.Threading;
 using Linearstar.Windows.RawInput;
 
 using SSHF.Infrastructure;
+using SSHF.Infrastructure.Algorithms.Input;
 using SSHF.Infrastructure.SharedFunctions;
 
 using SSHF.ViewModels.NotifyIconViewModel;
@@ -159,7 +160,7 @@ namespace SSHF.Models.NotifyIconModel
             }));
         }
 
-        private void _WindowInput_Input(object? sender, RawInputEventArgs e)
+        private void _WindowInput_Input(object? sender, RawInputEvent e)
         {
             RawInputData? data = e.Data;
             RawInputMouseData? mouseData = data as RawInputMouseData;

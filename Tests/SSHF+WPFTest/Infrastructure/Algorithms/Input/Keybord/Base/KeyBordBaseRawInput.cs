@@ -11,23 +11,30 @@ using SSHF.Infrastructure.Algorithms.Input.Keybord.Base;
 
 namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base
 {
-   
+
     internal class KeyBordBaseRawInput
     {
 
-        private readonly EventHandler<RawInputEvent>? RawInput;
+        private readonly static KeyBordBaseRawInput Instance = new KeyBordBaseRawInput();
 
-        internal static EventHandler<NotifyCollectionChangedEventArgs>? ChangeTheKeyPressure;
+        internal static event EventHandler<NotifyCollectionChangedEventArgs>? ChangeTheKeyPressure;
 
         private static readonly ObservableCollection<VKeys> IsPressedKeys = new ObservableCollection<VKeys>();
 
-        public KeyBordBaseRawInput(EventHandler<RawInputEvent> KeyHandlerRawInput)
+        private KeyBordBaseRawInput()
         {
-            RawInput = KeyHandlerRawInput;
-
-            RawInput += RawInputHandler;
-            IsPressedKeys.CollectionChanged += (obj, data) => { ChangeTheKeyPressure?.DynamicInvoke(this, data); };
+            App.Input += RawInputHandler;
+            //IsPressedKeys.CollectionChanged += (obj, data) => { ChangeTheKeyPressure?.Invoke(this, data); };
+            IsPressedKeys.CollectionChanged += IsPressedKeys_CollectionChanged; 
         }
+
+        private void IsPressedKeys_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+             ChangeTheKeyPressure?.Invoke(this, e);
+        }
+
+        internal static KeyBordBaseRawInput GetInstance() => Instance;
+
 
         internal enum RawInputHandlerFail
         {
@@ -52,7 +59,7 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base
             if (keyboardData.Keyboard.Flags is RawKeyboardFlags.None | keyboardData.Keyboard.Flags is RawKeyboardFlags.KeyE0) // клавиша KeyDown
             {
                 IsPressedKeys.Add(FlagVkeys);
-               
+
             }
             if (keyboardData.Keyboard.Flags is RawKeyboardFlags.Up | keyboardData.Keyboard.Flags == chekUPE0)  // клавиша KeyUp
             {

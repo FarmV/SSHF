@@ -26,11 +26,9 @@ namespace SSHF
 
     public partial class App: System.Windows.Application
     {
-        internal static event EventHandler<RawInputEventArgs>? Input;
+        internal static event EventHandler<SSHF.Infrastructure.Algorithms.Input.RawInputEvent>? Input;
 
         internal static event EventHandler? DPIChange;
-
-        // readonly static public GlobalLowLevelHooks.KeyboardHook _GlobaKeyboardHook = new GlobalLowLevelHooks.KeyboardHook();
 
         //  static bool _SingleCopy = default;
 
@@ -40,7 +38,7 @@ namespace SSHF
 
         internal static int CheckCount = default;
 
-        internal static FuncKeyHandler.FkeyHandler? KeyBoardHandler;
+      //  internal static FuncKeyHandler.FkeyHandler? KeyBoardHandler;
 
 
 
@@ -67,7 +65,7 @@ namespace SSHF
            // SystemParameters
             if (IsDesignMode is false)
             {
-                KeyBoardHandler = new FuncKeyHandler.FkeyHandler("+");
+                //KeyBoardHandler = new FuncKeyHandler.FkeyHandler("+");
 
                 Menu_icon myNotification = new Menu_icon
                 {
@@ -122,11 +120,9 @@ namespace SSHF
             switch (msg)
             {
                 case WM_INPUT:
-                    {
-                        // System.Diagnostics.Debug.WriteLine("Received WndProc.WM_INPUT"); //todo сделать сниппет на консоль
-                        RawInputData? data = RawInputData.FromHandle(lParam);
-
-                        Input?.Invoke(App.Current.MainWindow, new RawInputEventArgs(data));
+                    {                       
+                       RawInputData? data = RawInputData.FromHandle(lParam);
+                       Input?.Invoke(App.Current.MainWindow, new SSHF.Infrastructure.Algorithms.Input.RawInputEvent(data));
                     }
                     break;
                 case WM_DPICHANGED:
@@ -141,45 +137,4 @@ namespace SSHF
 
 
     }
-
-    internal class RawInputEventArgs: EventArgs
-    {
-        public RawInputEventArgs(RawInputData data){ Data = data;}
-
-        public RawInputData Data{ get;}
-    }
-
-    //class RawInputReceiverWindow : NativeWindow
-    //{
-    //    public event EventHandler<RawInputEventArgs>? Input;
-
-    //    public RawInputReceiverWindow()
-    //    {
-    //        CreateHandle(new CreateParams
-    //        {
-    //            X = 0,
-    //            Y = 0,
-    //            Width = 0,
-    //            Height = 0,
-    //            Style = 0x800000,
-    //        });
-    //    }
-
-    //    protected override void WndProc(ref Message m)
-    //    {
-    //        const int WM_INPUT = 0x00FF;
-
-    //        if (m.Msg == WM_INPUT)
-    //        {
-    //            var data = RawInputData.FromHandle(m.LParam);
-
-    //            Input?.Invoke(this, new RawInputEventArgs(data));
-    //        }
-
-    //        base.WndProc(ref m);
-    //    }
-    //}
-
-
-
 }
