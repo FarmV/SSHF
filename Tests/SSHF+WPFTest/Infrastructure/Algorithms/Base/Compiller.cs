@@ -43,6 +43,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
                     diagnostic.IsWarningAsError ||
                     diagnostic.Severity == DiagnosticSeverity.Error);
 
+
             return Task.FromResult(failures);
         }
 

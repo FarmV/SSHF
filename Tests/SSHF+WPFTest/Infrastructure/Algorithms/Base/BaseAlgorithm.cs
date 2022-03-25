@@ -69,7 +69,9 @@ namespace SSHF.Infrastructure.Algorithms.Base
             None,
             Canecled,
             InvalidDirectory,
-            ThePreviousOperationWasNotCompleted
+            ThePreviousOperationWasNotCompleted,
+            CompilationFail
+
         }
 
 
@@ -84,12 +86,21 @@ namespace SSHF.Infrastructure.Algorithms.Base
             if (Enum.IsDefined(typeof(HelpOperationForNotification), operation)) throw new InvalidCastException().
                     Report(new KeyValuePair<HelerReasonFailFail,string>(HelerReasonFailFail.InconsistencyEnum,$"В {nameof(HelerReasonFailFail)} не присутвует ключ"));
 
-            if(operation is HelpOperationForNotification.Canecled) return $"Операция полчуила {typeof(CancellationToken)} и была оменена";
-            if (operation is HelpOperationForNotification.InvalidDirectory) return $"Неверная директория {nameof(type)}";
-            if (operation is HelpOperationForNotification.ThePreviousOperationWasNotCompleted) return $"Предыдущий вызов операции не был завершён";
+
+            if(operation is HelpOperationForNotification.Canecled & type is null) return $"Операция получила {typeof(CancellationToken)} и была оменена";
+            if (operation is HelpOperationForNotification.Canecled & type is not null) return $"Операция полчуила {type?.Name} и была оменена";
+
+            if (operation is HelpOperationForNotification.InvalidDirectory & type is null) return $"Неверная директория";
+            if (operation is HelpOperationForNotification.InvalidDirectory & type is not null) return $"Неверная директория {nameof(type)}";
+
+            if (operation is HelpOperationForNotification.ThePreviousOperationWasNotCompleted & type is null) return $"Предыдущий вызов операции не был завершён";
+            if (operation is HelpOperationForNotification.ThePreviousOperationWasNotCompleted & type is not null) return $"Предыдущий вызов операции {type?.Name} не был завершён";
+
+            if (operation is HelpOperationForNotification.CompilationFail & type is null) return $"Неудачяная компиляция";
+            if (operation is HelpOperationForNotification.CompilationFail & type is not null) return $"Неудачяная компиляция {type?.Name}";
 
 
-            throw new Exception($"Непредвиденная ошибка {nameof(HelerReasonFail)}");
+            throw new Exception($"Нельзя отправлять {nameof(HelpOperationForNotification.None)}");
         }
     }
 }

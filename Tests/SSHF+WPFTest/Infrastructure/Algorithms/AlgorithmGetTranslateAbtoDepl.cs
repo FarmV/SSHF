@@ -37,7 +37,7 @@ using Help = SSHF.Infrastructure.Algorithms.Base.ExHelp.HelpOperationForNotifica
 namespace SSHF.Infrastructure.Algorithms
 {
 
-    internal class AlgorithmGetTranslateAbToDepl : BaseAlgorithm
+    internal class AlgorithmGetTranslateAbToDepl: BaseAlgorithm
     {
 
         private static readonly AlgorithmGetTranslateAbToDepl Instance = new AlgorithmGetTranslateAbToDepl();
@@ -47,13 +47,15 @@ namespace SSHF.Infrastructure.Algorithms
         internal static string? ScreenshotReaderDirectory1;
 
         #region Регистрация функции
-        private AlgorithmGetTranslateAbToDepl() {}
+        private AlgorithmGetTranslateAbToDepl()
+        {
+        }
 
 
 
 
         enum GetInstanceFail
-        {   
+        {
             None,
             ArgumentIsNullOrWhiteSpace
         }
@@ -62,7 +64,7 @@ namespace SSHF.Infrastructure.Algorithms
         {
             var getInstanceFails = ExHelp.GetLazzyDictionaryFails<GetInstanceFail, string>
                 (
-                  new KeyValuePair<GetInstanceFail, string>(GetInstanceFail.ArgumentIsNullOrWhiteSpace,"Некорректная директория") //0
+                  new KeyValuePair<GetInstanceFail, string>(GetInstanceFail.ArgumentIsNullOrWhiteSpace, "Некорректная директория") //0
                 );
 
 
@@ -85,7 +87,9 @@ namespace SSHF.Infrastructure.Algorithms
             OperationCanceled,
             InvalidDirectoryDepl,
             InvalidDirectoryReader,
-            TheOperationWasNotCompleted
+            TheOperationWasNotCompleted,
+            CompilationFail
+
         }
         /// <summary>
         /// T bool
@@ -110,7 +114,8 @@ namespace SSHF.Infrastructure.Algorithms
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.OperationCanceled, ExHelp.HelerReasonFail(Help.Canecled)),                                     //0
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.InvalidDirectoryDepl, ExHelp.HelerReasonFail(Help.InvalidDirectory)),                          //1
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.InvalidDirectoryReader, ExHelp.HelerReasonFail(Help.InvalidDirectory)),                        //2
-                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.TheOperationWasNotCompleted, ExHelp.HelerReasonFail(Help.ThePreviousOperationWasNotCompleted)) //3
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.TheOperationWasNotCompleted, ExHelp.HelerReasonFail(Help.ThePreviousOperationWasNotCompleted)),//3
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.CompilationFail, ExHelp.HelerReasonFail(Help.CompilationFail))                                 //4
                 );
 
             if (isProcessing is true) throw new InvalidOperationException().Report(reasonFailsList.Value[3]);
@@ -136,18 +141,73 @@ namespace SSHF.Infrastructure.Algorithms
                   typeof(Clipboard).GetTypeInfo().Assembly.Location,
                   typeof(Task<>).GetTypeInfo().Assembly.Location,
                   typeof(System.ComponentModel.Component).GetTypeInfo().Assembly.Location,
-                  
+
                   Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location), "System.Runtime.dll")
                 };
 
 
-                CSharpCompilation comiplation = await Compiller.GetCompiller(parsingTextInstance, "AlgorithmGetTranslate", assemblyDependencies);
 
-                Task<EmitResult> compilationrResultToHardDrive = Compiller.SafeDllToPath(comiplation, Path.Join(Environment.CurrentDirectory, "Extension", "AlgorithmGetTranslateAbToDepl"));
+                CSharpCompilation comiplation = await Compiller.GetCompiller(parsingTextInstance, "AlgorithmGetTranslate", assemblyDependencies);
+                string savePath = Path.Join(Environment.CurrentDirectory, "Extension", "AlgorithmGetTranslateAbToDepl");
+                EmitResult compilationrResultToHardDrive = await Compiller.SafeDllToPath(comiplation, savePath);
+
+                if (compilationrResultToHardDrive.Success is not true)
+                {
+                    IEnumerable<Diagnostic> resultCompilation = await Compiller.HelperReasonFail(compilationrResultToHardDrive);
+                    Debug.WriteLine("Compilation failed!");
+
+                    foreach (Diagnostic diagnostic in resultCompilation)
+                    {
+                        Debug.WriteLine($"{Environment.NewLine}{diagnostic.Id}: {diagnostic.GetMessage()}");
+                    }
+                    throw new InvalidOperationException().Report(reasonFailsList.Value[4]);
+                }
+
+                if (File.Exists(Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json")))
+                {
+                    File.Copy(Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json"), savePath);
+                }
+                else
+                {
+                    string saveJson = @"
+                    {
+                       ""runtimeOptions"": {
+                       ""tfm"": ""net6.0"",
+                       ""frameworks"": [
+                       {
+                         ""name"": ""Microsoft.NETCore.App"",
+                         ""version"": ""6.0.0""
+                       },
+                       {
+                         ""name"": ""Microsoft.WindowsDesktop.App"",
+                         ""version"": ""6.0.0""
+                       }
+                      ]
+                     }
+                    }
+                    ";
+
+                    using FileStream stream = File.Create(Path.Join(Environment.CurrentDirectory, "Extension"));  // проверить
+                    using StreamWriter writer = new StreamWriter(stream);
+                    writer.AutoFlush = true;
+                    await writer.WriteAsync(saveJson);
+                }
+
+
+                var outputFilePath = @$"C:\Users\Vikto\Desktop\g\ggg\{nameOutput}" + ".dll";
+
+                var outputRuntimeConfigPath = Path.ChangeExtension(outputFilePath, "runtimeconfig.json");
+                var currentRuntimeConfigPath = Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json");
+
+                File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
+
+                CmdRun1(@$"cd C:\Users\Vikto\Desktop\g\ggg & dotnet {nameOutput}.dll");
+
+
             }
             catch (Exception)
             {
-                
+                throw;
             }
             finally
             {
@@ -155,8 +215,8 @@ namespace SSHF.Infrastructure.Algorithms
             }
             throw new NotImplementedException();
         }
-      
-        static  bool isProcessing = false;
+
+        static bool isProcessing = false;
 
 
         #endregion
@@ -451,7 +511,7 @@ namespace SSHF.Infrastructure.Algorithms
 
             try
             {
-                isProcessing = true;              
+                isProcessing = true;
                 CreateINST();
                 ClipboardClear();
                 string? check = GetTextAwait(15000).Result;
@@ -478,7 +538,7 @@ namespace SSHF.Infrastructure.Algorithms
             }
             catch (Exception)
             {
-               
+
                 Сompleted?.Invoke(false);
             }
             finally
@@ -491,7 +551,7 @@ namespace SSHF.Infrastructure.Algorithms
 
 
 
-     
+
 
 
 
@@ -638,7 +698,7 @@ namespace SSHF.Infrastructure.Algorithms
         {
             Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true });
         }
-    
+
         static Process BigLifeTime(List<Process> proc)
         {
 
@@ -890,7 +950,7 @@ namespace SSHF.Infrastructure.Algorithms
 
                 CmdRun(@$"cd C:\Users\Vikto\Desktop\g\ggg & dotnet {nameOutput}.dll");
             } //todo доделать  функцию         
-        }     
+        }
         #endregion
     }
 }
