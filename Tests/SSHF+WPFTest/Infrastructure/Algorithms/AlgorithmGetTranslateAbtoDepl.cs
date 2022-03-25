@@ -47,14 +47,15 @@ namespace SSHF.Infrastructure.Algorithms
         internal static string? ScreenshotReaderDirectory1;
 
         const string CloseABBYcmdQuery1 = "taskkill /F /IM ScreenshotReader.exe";
+        protected internal override bool IsCheceked => isProcessing;
+        protected internal override string Name => "FunctionGetTranslateAbtoDepl";
 
+        private static bool isProcessing1 = default;
+            
         #region Регистрация функции
         private AlgorithmGetTranslateAbToDepl()
         {
         }
-
-
-
 
         enum GetInstanceFail
         {
@@ -79,8 +80,6 @@ namespace SSHF.Infrastructure.Algorithms
         }
 
 
-        protected internal override bool IsCheceked => isProcessing;
-        protected internal override string Name => "FunctionGetTranslateAbtoDepl";
 
 
         enum GetTranslateAbtoDeplStartFail
@@ -111,7 +110,9 @@ namespace SSHF.Infrastructure.Algorithms
         /// <exception cref="NotImplementedException"></exception>
         protected internal override async Task<T> Start<T, T2>(T2 parameter, CancellationToken? token = null)
         {
-            throw new NotImplementedException();
+            
+
+            isProcessing1 = true;
 
             bool getText = default;
 
@@ -123,11 +124,8 @@ namespace SSHF.Infrastructure.Algorithms
                 getText = NoDeplAwaitGetTextAbby.Value;
             }
 
-
             CancellationToken сancelToken = token ??= default;
-
-          
-
+         
             var reasonFailsList = ExHelp.GetLazzyDictionaryFails
                 (
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.OperationCanceled, ExHelp.HelerReasonFail(Help.Canecled)),                                                             //0
@@ -150,7 +148,7 @@ namespace SSHF.Infrastructure.Algorithms
             if (string.IsNullOrWhiteSpace(ScreenshotReaderDirectory1) is true) throw new NullReferenceException().Report(reasonFailsList.Value[2]);
             try
             {
-                isProcessing = true;
+                
                 string parsingTextInstance = await GetStringInstance();
 
 
@@ -171,8 +169,6 @@ namespace SSHF.Infrastructure.Algorithms
 
                   Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location), "System.Runtime.dll")
                 };
-
-
 
                 CSharpCompilation comiplation = await Compiller.GetCompiller(parsingTextInstance, "AlgorithmGetTranslate", assemblyDependencies, сancelToken);
                 string savePath = Path.Join(Environment.CurrentDirectory, "Extension", "AlgorithmGetTranslateAbToDepl");
@@ -240,7 +236,7 @@ namespace SSHF.Infrastructure.Algorithms
 
                 if (textToDepl == string.Empty)
                 {
-                    CmdRun1(CloseABBYcmdQuery).Start();
+                    CmdRun1(CloseABBYcmdQuery1).Start();
                     throw new NullReferenceException().Report(reasonFailsList.Value[5]);
                 }
 
@@ -282,10 +278,11 @@ namespace SSHF.Infrastructure.Algorithms
 
                 inputBox.Text = string.Empty;
                 inputBox.Text = textToDepl;
+
+                return returnSourceText;
             }
             catch (Exception) { throw; }
-            finally { isProcessing = false; }
-
+            finally { isProcessing = false; CmdRun1(CloseABBYcmdQuery1).Start(); }
         }
 
         static bool isProcessing = false;
@@ -318,7 +315,7 @@ namespace SSHF.Infrastructure.Algorithms
              
                     public static void Main(string[] args)
                     {{
-                       CmdRun(""{CloseABBYcmdQuery}"");
+                       CmdRun(""{CloseABBYcmdQuery1}"");
              
                        FlaUI.Core.Application app = FlaUI.Core.Application.Launch($@""D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe"");
              
@@ -343,7 +340,7 @@ namespace SSHF.Infrastructure.Algorithms
                            result = result2.Result;
                            if (result is null || result == string.Empty )
                            {{
-                               CmdRun(""{CloseABBYcmdQuery}"");
+                               CmdRun(""{CloseABBYcmdQuery1}"");
                                Environment.Exit(1352);
                            }}
                         }}
@@ -539,453 +536,429 @@ namespace SSHF.Infrastructure.Algorithms
 
 
 
-        #region Основной алгоритм
-        async void StartAlgorithm()
-        {
+        //#region Основной алгоритм
+        //async void StartAlgorithm()
+        //{
 
-            try
-            {
-                isProcessing = true;
-                CreateINST();
-                ClipboardClear();
-                string? check = GetTextAwait(15000).Result;
+        //    try
+        //    {
+        //        isProcessing = true;
+        //        CreateINST();
+        //        ClipboardClear();
+        //        string? check = GetTextAwait(15000).Result;
 
-                if (check is not null)
-                {
-                    myStrBuferString = check;
-                }
-                if (check is null || check == string.Empty)
-                {
-                    CmdRun(CloseABBYcmdQuery);
-                    throw new NullReferenceException("Вероятно сработал таймаут");
-                }
+        //        if (check is not null)
+        //        {
+        //            myStrBuferString = check;
+        //        }
+        //        if (check is null || check == string.Empty)
+        //        {
+        //            CmdRun(CloseABBYcmdQuery);
+        //            throw new NullReferenceException("Вероятно сработал таймаут");
+        //        }
 
-                CmdRun(CloseABBYcmdQuery);
+        //        CmdRun(CloseABBYcmdQuery);
 
-                FocusDepl();
+        //        FocusDepl();
 
-                SetDeplText();
+        //        SetDeplText();
 
-                isProcessing = false;
+        //        isProcessing = false;
 
-                Сompleted?.Invoke(true);
-            }
-            catch (Exception)
-            {
+        //        Сompleted?.Invoke(true);
+        //    }
+        //    catch (Exception)
+        //    {
 
-                Сompleted?.Invoke(false);
-            }
-            finally
-            {
-                isProcessing = false;
-            }
-        }
+        //        Сompleted?.Invoke(false);
+        //    }
+        //    finally
+        //    {
+        //        isProcessing = false;
+        //    }
+        //}
 
-        #endregion
+        //#endregion
 
+        //#region Вспомогательные методы
 
+        //internal string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
 
+        //internal string ScreenshotReaderDirectory = @"D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe";
 
+        //#region WinAPI initializing
 
+        ////[DllImport("user32.dll")]
+        ////static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
 
+        ////[DllImport("user32.dll")]
+        ////static extern IntPtr FindWindowA(string a, string b);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        #region Вспомогательные методы
-
-        internal string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
-
-        internal string ScreenshotReaderDirectory = @"D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe";
-
-        #region WinAPI initializing
+        //[DllImport("kernel32.dll")]
+        //static extern IntPtr GetConsoleWindow();
 
         //[DllImport("user32.dll")]
-        //static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
+        //static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);             //показать скырть приложение
 
-        //[DllImport("user32.dll")]
-        //static extern IntPtr FindWindowA(string a, string b);
+        //const int SW_HIDE = 0;
+        //const int SW_SHOW = 5;
 
-        [DllImport("kernel32.dll")]
-        static extern IntPtr GetConsoleWindow();
+        //static IntPtr HandleAssociatedСonsole = GetConsoleWindow();
+        ////// Hide
+        //////ShowWindow(HandleAssociatedСonsole, SW_HIDE);
 
-        [DllImport("user32.dll")]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);             //показать скырть приложение
+        ////// Show
+        //////ShowWindow(handle, SW_SHOW);
 
-        const int SW_HIDE = 0;
-        const int SW_SHOW = 5;
+        //#endregion
 
-        static IntPtr HandleAssociatedСonsole = GetConsoleWindow();
-        //// Hide
-        ////ShowWindow(HandleAssociatedСonsole, SW_HIDE);
+        //#region Clipboard
+        //static void SetText(string p_Text)
+        //{
+        //    Thread STAThread = new Thread(
+        //        delegate ()
+        //        {
+        //            // Use a fully qualified name for Clipboard otherwise it
+        //            // will end up calling itself.
+        //            Clipboard.SetText(p_Text);
+        //        });
+        //    STAThread.SetApartmentState(ApartmentState.STA);
+        //    STAThread.Start();
+        //    STAThread.Join();
+        //}
+        //static string GetText()
+        //{
+        //    string ReturnValue = string.Empty;
+        //    Thread STAThread = new Thread(() => { ReturnValue = Clipboard.GetText(); });
+        //    STAThread.SetApartmentState(ApartmentState.STA);
+        //    STAThread.Start();
+        //    STAThread.Join();
 
-        //// Show
-        ////ShowWindow(handle, SW_SHOW);
-
-        #endregion
-
-        #region Clipboard
-        static void SetText(string p_Text)
-        {
-            Thread STAThread = new Thread(
-                delegate ()
-                {
-                    // Use a fully qualified name for Clipboard otherwise it
-                    // will end up calling itself.
-                    Clipboard.SetText(p_Text);
-                });
-            STAThread.SetApartmentState(ApartmentState.STA);
-            STAThread.Start();
-            STAThread.Join();
-        }
-        static string GetText()
-        {
-            string ReturnValue = string.Empty;
-            Thread STAThread = new Thread(() => { ReturnValue = Clipboard.GetText(); });
-            STAThread.SetApartmentState(ApartmentState.STA);
-            STAThread.Start();
-            STAThread.Join();
-
-            return ReturnValue;
-        }
+        //    return ReturnValue;
+        //}
 
 
-        static async Task<string?> GetTextAwait(int TimeOut)
-        {
+        //static async Task<string?> GetTextAwait(int TimeOut)
+        //{
 
-            string? ReturnValue = null;
+        //    string? ReturnValue = null;
 
-            bool cancelTheOperation = default;
+        //    bool cancelTheOperation = default;
 
-            await Task.Run(() =>
-            {
-                Thread STAThread = new Thread(() =>
-                {
+        //    await Task.Run(() =>
+        //    {
+        //        Thread STAThread = new Thread(() =>
+        //        {
 
-                    Timer breakTimer = new Timer(new TimerCallback((arg) => { cancelTheOperation = true; }), null, TimeOut, Timeout.Infinite);
-                    while (true)
-                    {
-                        if (cancelTheOperation is true)
-                        {
-                            breakTimer.Dispose();
-                            break;
-                        }
+        //            Timer breakTimer = new Timer(new TimerCallback((arg) => { cancelTheOperation = true; }), null, TimeOut, Timeout.Infinite);
+        //            while (true)
+        //            {
+        //                if (cancelTheOperation is true)
+        //                {
+        //                    breakTimer.Dispose();
+        //                    break;
+        //                }
 
-                        if (Clipboard.ContainsText() is false) continue;
+        //                if (Clipboard.ContainsText() is false) continue;
 
-                        ReturnValue = Clipboard.GetText();
+        //                ReturnValue = Clipboard.GetText();
 
-                        if (string.IsNullOrWhiteSpace(ReturnValue) is true) continue;
-                        breakTimer.Dispose();
-                        break;
-                    }
-                });
-                STAThread.SetApartmentState(ApartmentState.STA);
-                STAThread.Start();
-                STAThread.Join();
-            });
+        //                if (string.IsNullOrWhiteSpace(ReturnValue) is true) continue;
+        //                breakTimer.Dispose();
+        //                break;
+        //            }
+        //        });
+        //        STAThread.SetApartmentState(ApartmentState.STA);
+        //        STAThread.Start();
+        //        STAThread.Join();
+        //    });
 
 
-            return ReturnValue;
-        }
+        //    return ReturnValue;
+        //}
 
 
 
 
-        static void ClipboardClear()
-        {
-            Thread STAThread = new Thread(() => { Clipboard.Clear(); });
+        //static void ClipboardClear()
+        //{
+        //    Thread STAThread = new Thread(() => { Clipboard.Clear(); });
 
-            STAThread.SetApartmentState(ApartmentState.STA);
-            STAThread.Start();
-            STAThread.Join();
-        }
-        #endregion
+        //    STAThread.SetApartmentState(ApartmentState.STA);
+        //    STAThread.Start();
+        //    STAThread.Join();
+        //}
+        //#endregion
 
-        void FocusDepl()
-        {
-            Process? proc = Process.Start(new ProcessStartInfo(this.DeeplDirectory));
-            //var res = WindowFunction.SetWindowPos(proc.Handle, 0, 50, 50, 50, 50, 0x0020 | 0x0100 | 0x0002 | 0x0400 | 0x0001 | 0x0040);
-        }
+        //void FocusDepl()
+        //{
+        //    Process? proc = Process.Start(new ProcessStartInfo(this.DeeplDirectory));
+        //    //var res = WindowFunction.SetWindowPos(proc.Handle, 0, 50, 50, 50, 50, 0x0020 | 0x0100 | 0x0002 | 0x0400 | 0x0001 | 0x0040);
+        //}
 
-        volatile static string myStrBuferString = "Строка по умолчанию";
+        //volatile static string myStrBuferString = "Строка по умолчанию";
 
-        const string CloseABBYcmdQuery = "taskkill /F /IM ScreenshotReader.exe";
+        //const string CloseABBYcmdQuery = "taskkill /F /IM ScreenshotReader.exe";
 
-        static void CmdRun(string queriesLine)
-        {
-            Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true });
-        }
+        //static void CmdRun(string queriesLine)
+        //{
+        //    Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true });
+        //}
 
-        static Process BigLifeTime(List<Process> proc)
-        {
+        //static Process BigLifeTime(List<Process> proc)
+        //{
 
-            IEnumerable<Process> skip = proc.SkipWhile(ss => ss.HasExited);
-            List<Process> list2 = new List<Process>();
-            Process? sss = null;
-            foreach (var item in skip)
-            {
-                try
-                {
-                    DateTime asc = item.StartTime;
-                    list2.Add(item);
-                }
-                catch (Exception)
-                {
-
-
-                }
-
-            }
-            if (list2.Count > 1)
-            {
-
-                sss = list2.Aggregate((x, y) => x?.StartTime < y?.StartTime ? x : y);
-            }
-            else
-            {
-                var bbb = list2.ToArray();
-                sss = bbb[0];
-            }
-
-            return sss;
-        }
-
-        void SetDeplText()
-        {
-            Process[] poolproc = Process.GetProcessesByName("DeepL");
-
-            Process? deplProc = null;
-
-            List<Process> proc = new List<Process>();
-            foreach (var item in poolproc)
-            {
-                try
-                {
-                    DateTime time = item.StartTime;
-                    if (item.Responding)
-                        proc.Add(item);
-                }
-                catch (Exception)
-                {
-                }
-            }
-
-            deplProc = BigLifeTime(proc);
-
-            FlaUI.Core.Application appDepl = FlaUI.Core.Application.Attach(deplProc);
-
-            FlaUI.Core.AutomationElements.Window mainWindowDepl = appDepl.GetMainWindow(new UIA3Automation(), new TimeSpan(0, 0, 5));
-
-            AutomationElement panel2;
-            while (true)
-            {
-                panel2 = mainWindowDepl.FindFirstByXPath("//Document/Group/Group[1]/Edit");
-                if (panel2 is null) continue;
-                if (panel2 is not null) break;
-            }
-
-            if (panel2.AsTextBox() is not FlaUI.Core.AutomationElements.TextBox inputBox) throw new NullReferenceException("//Document/Group/Group[1]/Edit стало NULL");
-
-            inputBox.Text = string.Empty;
-            inputBox.Text = myStrBuferString;
-
-            isProcessing = false;
-        }
-
-        public void CreateINST()
-        {
-            string codeToCompile = @$"
-            using System;
-            using System.Threading;
-            using System.Windows;
-            using System.Diagnostics;
-
-            using FlaUI.Core.AutomationElements;
-            using FlaUI.Core.Conditions;
-            using FlaUI.UIA2;
+        //    IEnumerable<Process> skip = proc.SkipWhile(ss => ss.HasExited);
+        //    List<Process> list2 = new List<Process>();
+        //    Process? sss = null;
+        //    foreach (var item in skip)
+        //    {
+        //        try
+        //        {
+        //            DateTime asc = item.StartTime;
+        //            list2.Add(item);
+        //        }
+        //        catch (Exception)
+        //        {
 
 
-            namespace RoslynCompileSample
-            {{
-               public class Writer
-               {{
+        //        }
+
+        //    }
+        //    if (list2.Count > 1)
+        //    {
+
+        //        sss = list2.Aggregate((x, y) => x?.StartTime < y?.StartTime ? x : y);
+        //    }
+        //    else
+        //    {
+        //        var bbb = list2.ToArray();
+        //        sss = bbb[0];
+        //    }
+
+        //    return sss;
+        //}
+
+        //void SetDeplText()
+        //{
+        //    Process[] poolproc = Process.GetProcessesByName("DeepL");
+
+        //    Process? deplProc = null;
+
+        //    List<Process> proc = new List<Process>();
+        //    foreach (var item in poolproc)
+        //    {
+        //        try
+        //        {
+        //            DateTime time = item.StartTime;
+        //            if (item.Responding)
+        //                proc.Add(item);
+        //        }
+        //        catch (Exception)
+        //        {
+        //        }
+        //    }
+
+        //    deplProc = BigLifeTime(proc);
+
+        //    FlaUI.Core.Application appDepl = FlaUI.Core.Application.Attach(deplProc);
+
+        //    FlaUI.Core.AutomationElements.Window mainWindowDepl = appDepl.GetMainWindow(new UIA3Automation(), new TimeSpan(0, 0, 5));
+
+        //    AutomationElement panel2;
+        //    while (true)
+        //    {
+        //        panel2 = mainWindowDepl.FindFirstByXPath("//Document/Group/Group[1]/Edit");
+        //        if (panel2 is null) continue;
+        //        if (panel2 is not null) break;
+        //    }
+
+        //    if (panel2.AsTextBox() is not FlaUI.Core.AutomationElements.TextBox inputBox) throw new NullReferenceException("//Document/Group/Group[1]/Edit стало NULL");
+
+        //    inputBox.Text = string.Empty;
+        //    inputBox.Text = myStrBuferString;
+
+        //    isProcessing = false;
+        //}
+
+        //public void CreateINST()
+        //{
+        //    string codeToCompile = @$"
+        //    using System;
+        //    using System.Threading;
+        //    using System.Windows;
+        //    using System.Diagnostics;
+
+        //    using FlaUI.Core.AutomationElements;
+        //    using FlaUI.Core.Conditions;
+        //    using FlaUI.UIA2;
+
+
+        //    namespace RoslynCompileSample
+        //    {{
+        //       public class Writer
+        //       {{
                   
 
-                  public static void Main(string[] args)
-                  {{
-                     CmdRun(""{CloseABBYcmdQuery}"");
+        //          public static void Main(string[] args)
+        //          {{
+        //             CmdRun(""{CloseABBYcmdQuery}"");
 
-                     FlaUI.Core.Application app = FlaUI.Core.Application.Launch($@""D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe"");
+        //             FlaUI.Core.Application app = FlaUI.Core.Application.Launch($@""D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe"");
 
-                     FlaUI.Core.AutomationElements.Window? mainWindow = null;
+        //             FlaUI.Core.AutomationElements.Window? mainWindow = null;
 
-                      try
-                      {{
-                         ConditionFactory cf = new ConditionFactory(new UIA2PropertyLibrary());
-                         mainWindow = app.GetMainWindow(new UIA2Automation(), null);
-                         var myButton = mainWindow.FindFirstDescendant(cf.ByAutomationId(""Item 40001""));
-                         if (myButton.Name is not ""Снимок"")
-                         {{
-                             Environment.Exit(1352);
-                         }}
+        //              try
+        //              {{
+        //                 ConditionFactory cf = new ConditionFactory(new UIA2PropertyLibrary());
+        //                 mainWindow = app.GetMainWindow(new UIA2Automation(), null);
+        //                 var myButton = mainWindow.FindFirstDescendant(cf.ByAutomationId(""Item 40001""));
+        //                 if (myButton.Name is not ""Снимок"")
+        //                 {{
+        //                     Environment.Exit(1352);
+        //                 }}
                   
-                         myButton.Click();
+        //                 myButton.Click();
                   
-                         string? result = null;
+        //                 string? result = null;
                   
-                       System.Threading.Tasks.Task<string?> result2 = GetTextAwait(15000);
-                         result2.Wait();
-                         result = result2.Result;
-                         if (result is null || result == string.Empty )
-                         {{
-                             CmdRun(""{CloseABBYcmdQuery}"");
-                             Environment.Exit(1352);
-                         }}
-                      }}
-                      catch (Exception)
-                      {{
+        //               System.Threading.Tasks.Task<string?> result2 = GetTextAwait(15000);
+        //                 result2.Wait();
+        //                 result = result2.Result;
+        //                 if (result is null || result == string.Empty )
+        //                 {{
+        //                     CmdRun(""{CloseABBYcmdQuery}"");
+        //                     Environment.Exit(1352);
+        //                 }}
+        //              }}
+        //              catch (Exception)
+        //              {{
                   
-                         Environment.Exit(1352);
-                      }}
-                  }} 
+        //                 Environment.Exit(1352);
+        //              }}
+        //          }} 
 
-                  static async System.Threading.Tasks.Task<string?> GetTextAwait(int TimeOut)
-                  {{
-                      string myStrBuferString = ""Строка по умолчанию"";
+        //          static async System.Threading.Tasks.Task<string?> GetTextAwait(int TimeOut)
+        //          {{
+        //              string myStrBuferString = ""Строка по умолчанию"";
 
-                      string ? ReturnValue = null;
+        //              string ? ReturnValue = null;
                   
-                      bool cancelTheOperation = default;
+        //              bool cancelTheOperation = default;
                   
-                      await System.Threading.Tasks.Task.Run(() =>
-                      {{
-                          Thread STAThread = new Thread(() =>
-                          {{
-                              Timer breakTimer = new Timer(new TimerCallback((arg) => {{ cancelTheOperation = true; }}), null, TimeOut, Timeout.Infinite);
-                              Clipboard.Clear();
-                              while (true)
-                              {{
-                                  if (cancelTheOperation is true)
-                                  {{
-                                      breakTimer.Dispose();
-                                      ReturnValue = null;
-                                      break;
-                                  }}
+        //              await System.Threading.Tasks.Task.Run(() =>
+        //              {{
+        //                  Thread STAThread = new Thread(() =>
+        //                  {{
+        //                      Timer breakTimer = new Timer(new TimerCallback((arg) => {{ cancelTheOperation = true; }}), null, TimeOut, Timeout.Infinite);
+        //                      Clipboard.Clear();
+        //                      while (true)
+        //                      {{
+        //                          if (cancelTheOperation is true)
+        //                          {{
+        //                              breakTimer.Dispose();
+        //                              ReturnValue = null;
+        //                              break;
+        //                          }}
                   
-                                   if (Clipboard.ContainsText() is false) continue;
+        //                           if (Clipboard.ContainsText() is false) continue;
 
-                                   ReturnValue = Clipboard.GetText();
+        //                           ReturnValue = Clipboard.GetText();
                                   
-                                   Clipboard.SetText(ReturnValue);
-                                   Clipboard.Flush();
+        //                           Clipboard.SetText(ReturnValue);
+        //                           Clipboard.Flush();
                                   
-                                   if (string.IsNullOrWhiteSpace(ReturnValue) is true) continue;
-                                   breakTimer.Dispose();
-                                   break;
-                              }}
-                         }});
-                          STAThread.SetApartmentState(ApartmentState.STA);
-                          STAThread.Start();
-                          STAThread.Join();
-                      }});
+        //                           if (string.IsNullOrWhiteSpace(ReturnValue) is true) continue;
+        //                           breakTimer.Dispose();
+        //                           break;
+        //                      }}
+        //                 }});
+        //                  STAThread.SetApartmentState(ApartmentState.STA);
+        //                  STAThread.Start();
+        //                  STAThread.Join();
+        //              }});
                   
-                      return ReturnValue;
-                 }}
+        //              return ReturnValue;
+        //         }}
 
 
 
-                 static void CmdRun(string queriesLine)
-                 {{
-                     Process.Start(new ProcessStartInfo {{ FileName = ""cmd"", Arguments = $""/c {{ queriesLine }}"", WindowStyle = ProcessWindowStyle.Maximized, CreateNoWindow = false }}).WaitForExit();
+        //         static void CmdRun(string queriesLine)
+        //         {{
+        //             Process.Start(new ProcessStartInfo {{ FileName = ""cmd"", Arguments = $""/c {{ queriesLine }}"", WindowStyle = ProcessWindowStyle.Maximized, CreateNoWindow = false }}).WaitForExit();
                  
                  
-                 }}
+        //         }}
 
 
 
 
 
-               }}
+        //       }}
 
 
             
-            }}";
+        //    }}";
 
 
-            SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(codeToCompile);
+        //    SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(codeToCompile);
 
-            string assemblyName = $"{Path.GetRandomFileName()}";
-            string[] refPaths = new[]
-            {
-                typeof(object).GetTypeInfo().Assembly.Location,
-                typeof(Console).GetTypeInfo().Assembly.Location,
-                typeof(FlaUI.Core.Application).Assembly.Location,
-                typeof(UIA2Automation).GetTypeInfo().Assembly.Location,
-                typeof(AutomationElement).GetTypeInfo().Assembly.Location,
-                typeof(ConditionFactory).GetTypeInfo().Assembly.Location,
-                typeof(ProcessStartInfo).GetTypeInfo().Assembly.Location,
-                typeof(Clipboard).GetTypeInfo().Assembly.Location,
-                typeof(Task<>).GetTypeInfo().Assembly.Location,
-                typeof(System.ComponentModel.Component).GetTypeInfo().Assembly.Location,
+        //    string assemblyName = $"{Path.GetRandomFileName()}";
+        //    string[] refPaths = new[]
+        //    {
+        //        typeof(object).GetTypeInfo().Assembly.Location,
+        //        typeof(Console).GetTypeInfo().Assembly.Location,
+        //        typeof(FlaUI.Core.Application).Assembly.Location,
+        //        typeof(UIA2Automation).GetTypeInfo().Assembly.Location,
+        //        typeof(AutomationElement).GetTypeInfo().Assembly.Location,
+        //        typeof(ConditionFactory).GetTypeInfo().Assembly.Location,
+        //        typeof(ProcessStartInfo).GetTypeInfo().Assembly.Location,
+        //        typeof(Clipboard).GetTypeInfo().Assembly.Location,
+        //        typeof(Task<>).GetTypeInfo().Assembly.Location,
+        //        typeof(System.ComponentModel.Component).GetTypeInfo().Assembly.Location,
 
-                Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location), "System.Runtime.dll")
-            };
+        //        Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location), "System.Runtime.dll")
+        //    };
 
-            MetadataReference[] references = refPaths.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
+        //    MetadataReference[] references = refPaths.Select(r => MetadataReference.CreateFromFile(r)).ToArray();
 
-            CSharpCompilationOptions CompilationOptions = new CSharpCompilationOptions(OutputKind.ConsoleApplication);
+        //    CSharpCompilationOptions CompilationOptions = new CSharpCompilationOptions(OutputKind.ConsoleApplication);
 
-            CSharpCompilation compilation = CSharpCompilation.Create(
-                assemblyName,
-                syntaxTrees: new[] { syntaxTree },
-                references: references,
-                options: CompilationOptions);
+        //    CSharpCompilation compilation = CSharpCompilation.Create(
+        //        assemblyName,
+        //        syntaxTrees: new[] { syntaxTree },
+        //        references: references,
+        //        options: CompilationOptions);
 
-            string nameOutput = "my";
+        //    string nameOutput = "my";
 
-            EmitResult result25 = compilation.Emit(@$"C:\Users\Vikto\Desktop\g\ggg\{nameOutput}" + ".dll");
-            if (!result25.Success)
-            {
-                Debug.WriteLine("Compilation failed!");
-                IEnumerable<Diagnostic> failures = result25.Diagnostics.Where(diagnostic =>
-                    diagnostic.IsWarningAsError ||
-                    diagnostic.Severity == DiagnosticSeverity.Error);
+        //    EmitResult result25 = compilation.Emit(@$"C:\Users\Vikto\Desktop\g\ggg\{nameOutput}" + ".dll");
+        //    if (!result25.Success)
+        //    {
+        //        Debug.WriteLine("Compilation failed!");
+        //        IEnumerable<Diagnostic> failures = result25.Diagnostics.Where(diagnostic =>
+        //            diagnostic.IsWarningAsError ||
+        //            diagnostic.Severity == DiagnosticSeverity.Error);
 
-                foreach (Diagnostic diagnostic in failures)
-                {
-                    Debug.WriteLine($"{Environment.NewLine}{diagnostic.Id}: {diagnostic.GetMessage()}");
-                }
-            }
-            else
-            {
-                var outputFilePath = @$"C:\Users\Vikto\Desktop\g\ggg\{nameOutput}" + ".dll";
+        //        foreach (Diagnostic diagnostic in failures)
+        //        {
+        //            Debug.WriteLine($"{Environment.NewLine}{diagnostic.Id}: {diagnostic.GetMessage()}");
+        //        }
+        //    }
+        //    else
+        //    {
+        //        var outputFilePath = @$"C:\Users\Vikto\Desktop\g\ggg\{nameOutput}" + ".dll";
 
-                var outputRuntimeConfigPath = Path.ChangeExtension(outputFilePath, "runtimeconfig.json");
-                var currentRuntimeConfigPath = Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json");
+        //        var outputRuntimeConfigPath = Path.ChangeExtension(outputFilePath, "runtimeconfig.json");
+        //        var currentRuntimeConfigPath = Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json");
 
-                File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
+        //        File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
 
-                CmdRun(@$"cd C:\Users\Vikto\Desktop\g\ggg & dotnet {nameOutput}.dll");
-            } //todo доделать  функцию         
-        }
-        #endregion
+        //        CmdRun(@$"cd C:\Users\Vikto\Desktop\g\ggg & dotnet {nameOutput}.dll");
+        //    } //todo доделать  функцию         
+        //}
+        //#endregion
+
     }
 }
 

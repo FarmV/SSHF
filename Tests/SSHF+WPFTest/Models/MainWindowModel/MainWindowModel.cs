@@ -105,13 +105,7 @@ namespace SSHF.Models.MainWindowModel
         {
             if (App.KeyBoardHandler is null) throw new NullReferenceException("App.KeyBoarHandle is NULL");
 
-            App.KeyBoardHandler.RegisterAFunction("RefreshWindowOFF", "KEY_1 + KEY_2 + KEY_3", new Action(() => { _ViewModel.RefreshOffCommand.Execute(new object()); }), true);
-          
-            if (new AlgorithmGetTranslateAbtoDepl() is not IActionFunction GetTranslate) throw new Exception("Итерфейс не найден");
-
-            Tuple<bool, string> res =  GetTranslate.CheckAndRegistrationFunction("LWIN + SHIFT + TAB");
-          
-            if (res.Item1 is false) throw new InvalidOperationException($"Не удалось зарегистрировать функцию {GetTranslate.Name}");
+           
                    
         }
 

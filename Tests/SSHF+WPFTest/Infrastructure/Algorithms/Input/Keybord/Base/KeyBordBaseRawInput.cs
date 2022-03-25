@@ -38,7 +38,7 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base
         {
             if (e.Data is not RawInputKeyboardData keyboardData) return;
 
-            var RawInputHandlerFails = BaseAlgorithm.GetLazzyDictionaryFails
+            var RawInputHandlerFails = ExHelp.GetLazzyDictionaryFails
             (
                new System.Collections.Generic.KeyValuePair<RawInputHandlerFail, string>(RawInputHandlerFail.VirutalKeyNonVKeys, $"Виртуальный ключ не явлется объектом {nameof(VKeys)}.") //0
             );
