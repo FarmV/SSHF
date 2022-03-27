@@ -46,9 +46,9 @@ namespace SSHF.Infrastructure.Algorithms
 
         internal static string? ScreenshotReaderDirectory1;
 
-        const string CloseABBYcmdQuery1 = "taskkill /F /IM ScreenshotReader.exe";
+        private const string CloseABBYcmdQuery1 = "taskkill /F /IM ScreenshotReader.exe";
         protected internal override bool IsCheceked => isProcessing;
-        protected internal override string Name => "FunctionGetTranslateAbtoDepl";
+        protected internal override string Name => "AlgorithmGetTranslateAbToDepl";
 
         private static bool isProcessing1 = default;
             
@@ -125,8 +125,8 @@ namespace SSHF.Infrastructure.Algorithms
             }
 
             CancellationToken сancelToken = token ??= default;
-         
-            var reasonFailsList = ExHelp.GetLazzyDictionaryFails
+
+            Lazy<KeyValuePair<GetTranslateAbtoDeplStartFail, string>[]> reasonFailsList = ExHelp.GetLazzyDictionaryFails
                 (
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.OperationCanceled, ExHelp.HelerReasonFail(Help.Canecled)),                                                             //0
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.InvalidDirectoryDepl, ExHelp.HelerReasonFail(Help.InvalidDirectory)),                                                  //1
@@ -148,6 +148,12 @@ namespace SSHF.Infrastructure.Algorithms
             if (string.IsNullOrWhiteSpace(ScreenshotReaderDirectory1) is true) throw new NullReferenceException().Report(reasonFailsList.Value[2]);
             try
             {
+                if (Directory.Exists(Path.Join(Environment.CurrentDirectory, DirectoryAlgorithms, Name)) is not true) Directory.CreateDirectory(Path.Join(Environment.CurrentDirectory, DirectoryAlgorithms, Name));
+
+
+
+
+
                 
                 string parsingTextInstance = await GetStringInstance();
 
@@ -171,9 +177,10 @@ namespace SSHF.Infrastructure.Algorithms
                 };
 
                 CSharpCompilation comiplation = await Compiller.GetCompiller(parsingTextInstance, "AlgorithmGetTranslate", assemblyDependencies, сancelToken);
-                string savePath = Path.Join(Environment.CurrentDirectory, "Extension", "AlgorithmGetTranslateAbToDepl");
-                EmitResult compilationrResultToHardDrive = await Compiller.SafeDllToPath(comiplation, savePath);
+                string savePath = Path.Join(Environment.CurrentDirectory, "Extension", "AlgorithmGetTranslateAbToDepl", comiplation.AssemblyName + ".dll");
+                EmitResult compilationrResultToHardDrive = await Compiller.SafeDllToPath(comiplation, savePath); // todo запомнить ставить слеш в конце котолога. Иначе ошибка аторизации
 
+          
                 if (compilationrResultToHardDrive.Success is not true)
                 {
                     IEnumerable<Diagnostic> resultCompilation = await Compiller.HelperReasonFail(compilationrResultToHardDrive);
@@ -282,7 +289,7 @@ namespace SSHF.Infrastructure.Algorithms
                 return returnSourceText;
             }
             catch (Exception) { throw; }
-            finally { isProcessing = false; CmdRun1(CloseABBYcmdQuery1).Start(); }
+            finally { isProcessing1 = false; CmdRun1(CloseABBYcmdQuery1).Start(); }
         }
 
         static bool isProcessing = false;

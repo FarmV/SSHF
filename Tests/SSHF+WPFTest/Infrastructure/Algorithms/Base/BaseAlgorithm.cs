@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -11,7 +12,8 @@ namespace SSHF.Infrastructure.Algorithms.Base
 {
     internal abstract class BaseAlgorithm
     {
-          
+        internal readonly string DirectoryAlgorithms = "Extension"; 
+
         protected internal virtual event EventHandler<EventArgs>? Complite;
 
         protected internal virtual bool IsCheceked { get => true; }
@@ -85,7 +87,9 @@ namespace SSHF.Infrastructure.Algorithms.Base
         }
         internal static string HelerReasonFail(HelpOperationForNotification operation, Type? type = null)
         {
-            if (Enum.IsDefined(typeof(HelpOperationForNotification), operation)) throw new InvalidCastException().
+
+           
+            if (Enum.IsDefined(typeof(HelpOperationForNotification), operation) is not true) throw new InvalidCastException().
                     Report(new KeyValuePair<HelerReasonFailFail,string>(HelerReasonFailFail.InconsistencyEnum,$"В {nameof(HelerReasonFailFail)} не присутвует ключ"));
 
 

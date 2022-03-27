@@ -104,12 +104,12 @@ namespace SSHF.Models.MainWindowModel
 
         void RegisterFunctions()
         {
-             string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
+            string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
 
-             string ScreenshotReaderDirectory = @"D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe";
+            string ScreenshotReaderDirectory = @"D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe";
 
             var keyCombianteion = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
-            {  
+            {
                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_1,
                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_2,
                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_3
@@ -119,8 +119,12 @@ namespace SSHF.Models.MainWindowModel
 
             callback.AddCallBackTask(keyCombianteion, new Task(async () =>
             {
-                AlgorithmGetTranslateAbToDepl instance = await  AlgorithmGetTranslateAbToDepl.GetInstance(DeeplDirectory, ScreenshotReaderDirectory);
-                instance.Start<string,bool>(true).Start();
+                AlgorithmGetTranslateAbToDepl instance = await AlgorithmGetTranslateAbToDepl.GetInstance(DeeplDirectory, ScreenshotReaderDirectory);
+                try
+                {
+                    await instance.Start<string, bool>(true);
+                }
+                catch (Exception) { }
             }));
 
 
