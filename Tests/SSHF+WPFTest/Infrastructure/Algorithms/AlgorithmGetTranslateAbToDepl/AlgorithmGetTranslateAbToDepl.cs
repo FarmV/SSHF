@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -51,7 +52,7 @@ namespace SSHF.Infrastructure.Algorithms
         protected internal override string Name => "AlgorithmGetTranslateAbToDepl";
 
         private static bool isProcessing1 = default;
-            
+
         #region Регистрация функции
         private AlgorithmGetTranslateAbToDepl()
         {
@@ -110,15 +111,15 @@ namespace SSHF.Infrastructure.Algorithms
         /// <exception cref="NotImplementedException"></exception>
         protected internal override async Task<T> Start<T, T2>(T2 parameter, CancellationToken? token = null)
         {
-            
+
 
             isProcessing1 = true;
 
             bool getText = default;
 
             bool? NoDeplAwaitGetTextAbby = parameter as bool?;
-            
-            if(NoDeplAwaitGetTextAbby is null || NoDeplAwaitGetTextAbby.HasValue is false){}
+
+            if (NoDeplAwaitGetTextAbby is null || NoDeplAwaitGetTextAbby.HasValue is false) { }
             else
             {
                 getText = NoDeplAwaitGetTextAbby.Value;
@@ -150,11 +151,24 @@ namespace SSHF.Infrastructure.Algorithms
             {
                 if (Directory.Exists(Path.Join(Environment.CurrentDirectory, DirectoryAlgorithms, Name)) is not true) Directory.CreateDirectory(Path.Join(Environment.CurrentDirectory, DirectoryAlgorithms, Name));
 
+                Uri[] resouceItem = new Uri[]{
+                    UriHelper.GetUriApp(@"Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.Core.dll"),
+                    UriHelper.GetUriApp(@"Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA2.dll")
+                };
+               
 
-
-
-
-                
+                resouceItem.AsParallel().ForAll(async uri =>
+                {
+                    if (File.Exists(Path.Join(Environment.CurrentDirectory, DirectoryAlgorithms, Name, Path.GetFileName(uri.AbsolutePath))) is not true)
+                    {
+                        System.Windows.Resources.StreamResourceInfo res = Application.GetResourceStream(uri);
+                        using Stream stream = res.Stream;
+                        using FileStream stream2 = new System.IO.FileStream(Path.Join(Environment.CurrentDirectory, DirectoryAlgorithms, Name, Path.GetFileName(uri.AbsolutePath)), FileMode.Create);
+                        await stream.CopyToAsync(stream2);
+                        await stream.FlushAsync();
+                    }
+                });
+              
                 string parsingTextInstance = await GetStringInstance();
 
 
@@ -180,7 +194,7 @@ namespace SSHF.Infrastructure.Algorithms
                 string savePath = Path.Join(Environment.CurrentDirectory, "Extension", "AlgorithmGetTranslateAbToDepl", comiplation.AssemblyName + ".dll");
                 EmitResult compilationrResultToHardDrive = await Compiller.SafeDllToPath(comiplation, savePath); // todo запомнить ставить слеш в конце котолога. Иначе ошибка аторизации
 
-          
+
                 if (compilationrResultToHardDrive.Success is not true)
                 {
                     IEnumerable<Diagnostic> resultCompilation = await Compiller.HelperReasonFail(compilationrResultToHardDrive);
@@ -805,7 +819,7 @@ namespace SSHF.Infrastructure.Algorithms
         //    {{
         //       public class Writer
         //       {{
-                  
+
 
         //          public static void Main(string[] args)
         //          {{
@@ -824,11 +838,11 @@ namespace SSHF.Infrastructure.Algorithms
         //                 {{
         //                     Environment.Exit(1352);
         //                 }}
-                  
+
         //                 myButton.Click();
-                  
+
         //                 string? result = null;
-                  
+
         //               System.Threading.Tasks.Task<string?> result2 = GetTextAwait(15000);
         //                 result2.Wait();
         //                 result = result2.Result;
@@ -840,7 +854,7 @@ namespace SSHF.Infrastructure.Algorithms
         //              }}
         //              catch (Exception)
         //              {{
-                  
+
         //                 Environment.Exit(1352);
         //              }}
         //          }} 
@@ -850,9 +864,9 @@ namespace SSHF.Infrastructure.Algorithms
         //              string myStrBuferString = ""Строка по умолчанию"";
 
         //              string ? ReturnValue = null;
-                  
+
         //              bool cancelTheOperation = default;
-                  
+
         //              await System.Threading.Tasks.Task.Run(() =>
         //              {{
         //                  Thread STAThread = new Thread(() =>
@@ -867,14 +881,14 @@ namespace SSHF.Infrastructure.Algorithms
         //                              ReturnValue = null;
         //                              break;
         //                          }}
-                  
+
         //                           if (Clipboard.ContainsText() is false) continue;
 
         //                           ReturnValue = Clipboard.GetText();
-                                  
+
         //                           Clipboard.SetText(ReturnValue);
         //                           Clipboard.Flush();
-                                  
+
         //                           if (string.IsNullOrWhiteSpace(ReturnValue) is true) continue;
         //                           breakTimer.Dispose();
         //                           break;
@@ -884,7 +898,7 @@ namespace SSHF.Infrastructure.Algorithms
         //                  STAThread.Start();
         //                  STAThread.Join();
         //              }});
-                  
+
         //              return ReturnValue;
         //         }}
 
@@ -893,8 +907,8 @@ namespace SSHF.Infrastructure.Algorithms
         //         static void CmdRun(string queriesLine)
         //         {{
         //             Process.Start(new ProcessStartInfo {{ FileName = ""cmd"", Arguments = $""/c {{ queriesLine }}"", WindowStyle = ProcessWindowStyle.Maximized, CreateNoWindow = false }}).WaitForExit();
-                 
-                 
+
+
         //         }}
 
 
@@ -904,7 +918,7 @@ namespace SSHF.Infrastructure.Algorithms
         //       }}
 
 
-            
+
         //    }}";
 
 

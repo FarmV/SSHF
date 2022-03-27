@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -108,6 +109,10 @@ namespace SSHF.Infrastructure.Algorithms.Base
 
             throw new Exception($"Нельзя отправлять {nameof(HelpOperationForNotification.None)}");
         }
+    }
+    internal static class UriHelper
+    {
+        internal static Uri GetUriApp(string resourcePath) => new Uri(string.Format("pack://application:,,,/{0};component/{1}", Assembly.GetExecutingAssembly().GetName().Name, resourcePath));
     }
 }
 
