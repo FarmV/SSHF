@@ -11,10 +11,15 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.Core.dll" />
+    <None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA2.dll" />
+    <None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA3.dll" />
+  </ItemGroup>
   
   <ItemGroup>
     <Folder Include="Data\" />
-    <Folder Include="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\" />
     <Folder Include="Models\Новая папка\" />
     <Folder Include="Services\" />
   </ItemGroup>
@@ -58,6 +63,15 @@
 	
 	
 	<ItemGroup>
+		<Resource Include="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.Core.dll">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA2.dll">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA3.dll">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Resource>
 		<Resource Include="Views\Windows\MainWindow\MainWindowRes\Test.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Resource>
