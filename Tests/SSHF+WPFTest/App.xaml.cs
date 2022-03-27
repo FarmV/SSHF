@@ -26,6 +26,21 @@ namespace SSHF
 
     public partial class App: System.Windows.Application
     {
+       internal static Task<Process?> CmdRun(string queriesLine)
+        {
+          return Task.FromResult(Process.Start(
+               new ProcessStartInfo 
+               {
+                   FileName = "cmd", 
+                   Arguments = $"chcp 65001 & " +$"{queriesLine}",
+                   UseShellExecute = false,
+                   CreateNoWindow = true,                  
+                   RedirectStandardOutput = true
+               }
+               ));
+        }
+
+
         internal static event EventHandler<SSHF.Infrastructure.Algorithms.Input.RawInputEvent>? Input;
 
         internal static event EventHandler? DPIChange;

@@ -122,7 +122,7 @@ namespace SSHF.Models.MainWindowModel
                 AlgorithmGetTranslateAbToDepl instance = await AlgorithmGetTranslateAbToDepl.GetInstance(DeeplDirectory, ScreenshotReaderDirectory);
                 try
                 {
-                    await instance.Start<string, bool>(true);
+                    await instance.Start<string, bool>(false);
                 }
                 catch (Exception) { }
             }));

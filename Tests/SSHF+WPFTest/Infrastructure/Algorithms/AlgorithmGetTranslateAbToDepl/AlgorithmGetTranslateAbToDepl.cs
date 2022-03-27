@@ -1,22 +1,12 @@
 ﻿using System;
-using System.CodeDom.Compiler;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Runtime.Loader;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Media;
 
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Conditions;
@@ -26,11 +16,9 @@ using FlaUI.UIA3;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
-using Microsoft.CSharp;
 
 using SSHF.Infrastructure.Algorithms.Base;
-using SSHF.Infrastructure.Interfaces;
-using SSHF.Infrastructure.SharedFunctions;
+
 
 
 using Help = SSHF.Infrastructure.Algorithms.Base.ExHelp.HelpOperationForNotification;
@@ -170,9 +158,7 @@ namespace SSHF.Infrastructure.Algorithms
                 });
               
                 string parsingTextInstance = await GetStringInstance();
-
-
-                // string assemblyName = $"{Path.GetRandomFileName()}";
+             
                 if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
                 string[] assemblyDependencies = new[]
                 {
@@ -190,9 +176,9 @@ namespace SSHF.Infrastructure.Algorithms
                   Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location), "System.Runtime.dll")
                 };
 
-                CSharpCompilation comiplation = await Compiller.GetCompiller(parsingTextInstance, "AlgorithmGetTranslate", assemblyDependencies, сancelToken);
-                string savePath = Path.Join(Environment.CurrentDirectory, "Extension", "AlgorithmGetTranslateAbToDepl", comiplation.AssemblyName + ".dll");
-                EmitResult compilationrResultToHardDrive = await Compiller.SafeDllToPath(comiplation, savePath); // todo запомнить ставить слеш в конце котолога. Иначе ошибка аторизации
+                CSharpCompilation comiplation = await Compiller.GetCompiller(parsingTextInstance, Name, assemblyDependencies, сancelToken);
+                string savePathDll = Path.Join(Environment.CurrentDirectory, base.DirectoryAlgorithms, Name, comiplation.AssemblyName + ".dll");
+                EmitResult compilationrResultToHardDrive = await Compiller.SafeDllToPath(comiplation, savePathDll); // todo запомнить ставить слеш в конце котолога. Иначе ошибка аторизации
 
 
                 if (compilationrResultToHardDrive.Success is not true)
@@ -210,44 +196,67 @@ namespace SSHF.Infrastructure.Algorithms
                 if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
 
                 if (File.Exists(Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json")))
-                {
-                    File.Copy(Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json"), savePath);
-                }
-                else
-                {
-                    string saveJson = @"
-                    {
-                       ""runtimeOptions"": {
-                       ""tfm"": ""net6.0"",
-                       ""frameworks"": [
-                       {
-                         ""name"": ""Microsoft.NETCore.App"",
-                         ""version"": ""6.0.0""
-                       },
-                       {
-                         ""name"": ""Microsoft.WindowsDesktop.App"",
-                         ""version"": ""6.0.0""
-                       }
-                      ]
-                     }
+                {                     
+                    if(File.Exists(Path.ChangeExtension(savePathDll, "runtimeconfig.json")) is not true) 
+                    { 
+                     File.Copy(Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json"), Path.ChangeExtension(savePathDll, "runtimeconfig.json"));
                     }
-                    ";
-                    if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
-                    using FileStream stream = File.Create(Path.Join(Environment.CurrentDirectory, "Extension"));  // проверить
-                    using StreamWriter writer = new StreamWriter(stream);
-                    writer.AutoFlush = true;
-                    await writer.WriteAsync(saveJson);
+                }
+                else 
+                {
+                    if (File.Exists(Path.ChangeExtension(savePathDll, "runtimeconfig.json")) is not true)
+                    {                  
+                           string saveJson = @"
+                       {
+                          ""runtimeOptions"": {
+                          ""tfm"": ""net6.0"",
+                          ""frameworks"": [
+                          {
+                            ""name"": ""Microsoft.NETCore.App"",
+                            ""version"": ""6.0.0""
+                          },
+                          {
+                            ""name"": ""Microsoft.WindowsDesktop.App"",
+                            ""version"": ""6.0.0""
+                          }
+                         ]
+                        }
+                       }
+                       ";
+                       if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
+                       using FileStream stream = File.Create(Path.ChangeExtension(savePathDll, "runtimeconfig.json"));  // проверить
+                       using StreamWriter writer = new StreamWriter(stream);
+                       writer.AutoFlush = true;
+                       await writer.WriteAsync(saveJson);
+                    }
+                }
+
+                void CmdRun123(string queriesLine)
+                {
+                   Process.Start(
+                         new ProcessStartInfo
+                         {
+                             FileName = "cmd",
+                             Arguments = $"/c {queriesLine}",
+                             //UseShellExecute = false,
+                             CreateNoWindow = true,
+                             WindowStyle = ProcessWindowStyle.Hidden,
+                            // RedirectStandardOutput = true
+                         }
+                         );
                 }
 
 
-                //  var outputFilePath = @$"C:\Users\Vikto\Desktop\g\ggg\{nameOutput}" + ".dll";
+                CmdRun123($"cd \"{Path.GetDirectoryName(savePathDll)}\" & dotnet {Path.ChangeExtension(Name, ".dll")}");
 
-                // var outputRuntimeConfigPath = Path.ChangeExtension(outputFilePath, "runtimeconfig.json");
-                // var currentRuntimeConfigPath = Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json");
+                //cmdProc.BeginOutputReadLine();
+                //List<string> args = new List<string>();
+                // cmdProc.OutputDataReceived += (s, e) => args.Add(e.Data);      
+                
+                //  string cmdProcOtput = cmdProc.StandardOutput.ReadToEnd();
 
-                //  File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
+                
 
-                await CmdRun1(@$"cd {savePath} & dotnet AlgorithmGetTranslate.dll");
 
                 await ClipboardClear1();
 
@@ -260,7 +269,7 @@ namespace SSHF.Infrastructure.Algorithms
                     CmdRun1(CloseABBYcmdQuery1).Start();
                     throw new NullReferenceException().Report(reasonFailsList.Value[5]);
                 }
-
+                CmdRun123(CloseABBYcmdQuery1);
                 if (textToDepl is not T returnSourceText) throw new InvalidOperationException().Report(reasonFailsList.Value[10]);
                 if (getText is true) return returnSourceText;
 
@@ -501,7 +510,7 @@ namespace SSHF.Infrastructure.Algorithms
 
         private static Task<Process?> StartDeplWinow() => Task.FromResult(Process.Start(new ProcessStartInfo(DeeplDirectory1)));
 
-        private static Task CmdRun1(string queriesLine) => Task.FromResult(Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true }));
+        private static Task CmdRun1(string queriesLine) => Task.FromResult(Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Normal, CreateNoWindow = false }));
 
         private static Task<Process> GetBigLifeTimeDeplProcess(List<Process> proc)
         {
