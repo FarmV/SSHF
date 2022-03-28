@@ -32,7 +32,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
         /// <returns></returns>
         protected internal abstract Task<T> Start<T, T2>(T2 parameter, CancellationToken? token = null);
 
-        internal static Task RegisredKeys(VKeys[] keyCombo, Task task)
+        internal static Task RegisredKeys(VKeys[] keyCombo, Func<Task> task)
         {
             try
             {
