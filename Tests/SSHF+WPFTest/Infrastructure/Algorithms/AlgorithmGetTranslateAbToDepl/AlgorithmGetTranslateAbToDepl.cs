@@ -191,8 +191,6 @@ namespace SSHF.Infrastructure.Algorithms
                 }
                 if (File.Exists(savePathDll) is not true)
                 {
-
-
                     string parsingTextInstance = await GetStringInstance();
 
                     if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
@@ -502,52 +500,20 @@ namespace SSHF.Infrastructure.Algorithms
 
         private static Task CmdRun1(string queriesLine) => Task.FromResult(Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Normal, CreateNoWindow = false }));
 
-        private static Task<Process> GetBigLifeTimeDeplProcess(List<Process> proc)
+        private static Task<Process?> GetDeplWindow()
         {
-            IEnumerable<Process> skip = proc.SkipWhile(ss => ss.HasExited);
-            List<Process> list2 = new List<Process>();
-            Process? sss = null;
-            foreach (var item in skip)
-            {
-                try
-                {
-                    DateTime asc = item.StartTime;
-                    list2.Add(item);
-                }
-                catch (Exception)
-                {
-                }
-            }
-            if (list2.Count > 1)
-            {
-
-                sss = list2.Aggregate((x, y) => x?.StartTime < y?.StartTime ? x : y);
-            }
-            else
-            {
-                var bbb = list2.ToArray();
-                sss = bbb[0];
-            }
-            return Task.FromResult(sss);
-        }
-
-        private static async Task<Process?> GetDeplWindow()
-        {
-            Process[] poolproc = Process.GetProcessesByName("DeepL");
-
             List<Process> proc = new List<Process>();
-            foreach (var item in poolproc)
+            Process[] poolProc = Process.GetProcessesByName("DeepL");
+            poolProc.AsParallel().ForAll(oneItem => 
             {
                 try
                 {
-                    DateTime time = item.StartTime;
-                    if (item.Responding) proc.Add(item);
+                    DateTime time = oneItem.StartTime;
+                    if (oneItem.Responding) proc.Add(oneItem);
                 }
-                catch (Exception)
-                {
-                }
-            }
-            return await GetBigLifeTimeDeplProcess(proc);
+                catch (Exception){}
+            });                                                 
+            return Task.FromResult(proc.MinBy<Process, DateTime>(x => x.StartTime));      
         }
 
 
