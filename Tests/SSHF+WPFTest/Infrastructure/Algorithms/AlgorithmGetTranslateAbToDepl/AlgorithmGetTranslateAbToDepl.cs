@@ -29,21 +29,23 @@ namespace SSHF.Infrastructure.Algorithms
     internal class AlgorithmGetTranslateAbToDepl: BaseAlgorithm
     {
 
-        private static readonly AlgorithmGetTranslateAbToDepl Instance = new AlgorithmGetTranslateAbToDepl();
+        private static AlgorithmGetTranslateAbToDepl? Instance;
 
-        internal static string? DeeplDirectory1;
+        private string DeeplDirectory;
 
-        internal static string? ScreenshotReaderDirectory1;
+        private string ScreenshotReaderDirectory;
 
-        private const string CloseABBYcmdQuery1 = "taskkill /F /IM ScreenshotReader.exe";
+        private const string CloseABBYcmdQuery = "taskkill /F /IM ScreenshotReader.exe";
         protected internal override bool IsCheceked => isProcessing;
         protected internal override string Name => "AlgorithmGetTranslateAbToDepl";
 
-        private static bool isProcessing1 = default;
+        private static bool isProcessing = default;
 
         #region Регистрация функции
-        private AlgorithmGetTranslateAbToDepl()
+        private AlgorithmGetTranslateAbToDepl(string deeplDirectory, string ScreenshotReaderDirectory)
         {
+            DeeplDirectory = deeplDirectory;
+            this.ScreenshotReaderDirectory = ScreenshotReaderDirectory;
         }
 
         enum GetInstanceFail
@@ -59,11 +61,9 @@ namespace SSHF.Infrastructure.Algorithms
                   new KeyValuePair<GetInstanceFail, string>(GetInstanceFail.ArgumentIsNullOrWhiteSpace, "Некорректная директория") //0
                 );
 
-
             if (string.IsNullOrWhiteSpace(deeplDirectory) || string.IsNullOrWhiteSpace(deeplDirectory)) throw new InvalidOperationException().Report(getInstanceFails.Value[0]);
 
-            DeeplDirectory1 = deeplDirectory;
-            ScreenshotReaderDirectory1 = ScreenshotReaderDirectory;
+            if (Instance is null) Instance = new AlgorithmGetTranslateAbToDepl(deeplDirectory, ScreenshotReaderDirectory);
 
             return Task.FromResult(Instance);
         }
@@ -99,10 +99,6 @@ namespace SSHF.Infrastructure.Algorithms
         /// <exception cref="NotImplementedException"></exception>
         protected internal override async Task<T> Start<T, T2>(T2 parameter, CancellationToken? token = null)
         {
-
-
-            isProcessing1 = true;
-
             bool getText = default;
 
             bool? NoDeplAwaitGetTextAbby = parameter as bool?;
@@ -133,8 +129,9 @@ namespace SSHF.Infrastructure.Algorithms
             if (Equals(typeof(T), typeof(string)) is not true) throw new InvalidOperationException().Report(reasonFailsList.Value[10]);
             if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
             if (isProcessing is true) throw new InvalidOperationException().Report(reasonFailsList.Value[3]);
-            if (string.IsNullOrWhiteSpace(DeeplDirectory1) is true) throw new NullReferenceException().Report(reasonFailsList.Value[1]);
-            if (string.IsNullOrWhiteSpace(ScreenshotReaderDirectory1) is true) throw new NullReferenceException().Report(reasonFailsList.Value[2]);
+            if (string.IsNullOrWhiteSpace(DeeplDirectory) is true) throw new NullReferenceException().Report(reasonFailsList.Value[1]);
+            if (string.IsNullOrWhiteSpace(ScreenshotReaderDirectory) is true) throw new NullReferenceException().Report(reasonFailsList.Value[2]);
+            isProcessing = true;
             try
             {
                 if (Directory.Exists(Path.Join(Environment.CurrentDirectory, DirectoryAlgorithms, Name)) is not true) Directory.CreateDirectory(Path.Join(Environment.CurrentDirectory, DirectoryAlgorithms, Name));
@@ -143,7 +140,7 @@ namespace SSHF.Infrastructure.Algorithms
                     UriHelper.GetUriApp(@"Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.Core.dll"),
                     UriHelper.GetUriApp(@"Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA2.dll")
                 };
-               
+
 
                 resouceItem.AsParallel().ForAll(async uri =>
                 {
@@ -156,57 +153,19 @@ namespace SSHF.Infrastructure.Algorithms
                         await stream.FlushAsync();
                     }
                 });
-              
-                string parsingTextInstance = await GetStringInstance();
-             
-                if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
-                string[] assemblyDependencies = new[]
-                {
-                  typeof(object).GetTypeInfo().Assembly.Location,
-                  typeof(Console).GetTypeInfo().Assembly.Location,
-                  typeof(FlaUI.Core.Application).Assembly.Location,
-                  typeof(UIA2Automation).GetTypeInfo().Assembly.Location,
-                  typeof(AutomationElement).GetTypeInfo().Assembly.Location,
-                  typeof(ConditionFactory).GetTypeInfo().Assembly.Location,
-                  typeof(ProcessStartInfo).GetTypeInfo().Assembly.Location,
-                  typeof(Clipboard).GetTypeInfo().Assembly.Location,
-                  typeof(Task<>).GetTypeInfo().Assembly.Location,
-                  typeof(System.ComponentModel.Component).GetTypeInfo().Assembly.Location,
-
-                  Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location), "System.Runtime.dll")
-                };
-
-                CSharpCompilation comiplation = await Compiller.GetCompiller(parsingTextInstance, Name, assemblyDependencies, сancelToken);
-                string savePathDll = Path.Join(Environment.CurrentDirectory, base.DirectoryAlgorithms, Name, comiplation.AssemblyName + ".dll");
-                EmitResult compilationrResultToHardDrive = await Compiller.SafeDllToPath(comiplation, savePathDll); // todo запомнить ставить слеш в конце котолога. Иначе ошибка аторизации
-
-
-                if (compilationrResultToHardDrive.Success is not true)
-                {
-                    IEnumerable<Diagnostic> resultCompilation = await Compiller.HelperReasonFail(compilationrResultToHardDrive);
-                    Debug.WriteLine("Compilation failed!");
-
-                    foreach (Diagnostic diagnostic in resultCompilation)
-                    {
-                        Debug.WriteLine($"{Environment.NewLine}{diagnostic.Id}: {diagnostic.GetMessage()}");
-                    }
-                    throw new InvalidOperationException().Report(reasonFailsList.Value[4]);
-                }
-
-                if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
-
+                string savePathDll = Path.Join(Environment.CurrentDirectory, base.DirectoryAlgorithms, Name, Name + ".dll");
                 if (File.Exists(Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json")))
-                {                     
-                    if(File.Exists(Path.ChangeExtension(savePathDll, "runtimeconfig.json")) is not true) 
-                    { 
-                     File.Copy(Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json"), Path.ChangeExtension(savePathDll, "runtimeconfig.json"));
-                    }
-                }
-                else 
                 {
                     if (File.Exists(Path.ChangeExtension(savePathDll, "runtimeconfig.json")) is not true)
-                    {                  
-                           string saveJson = @"
+                    {
+                        File.Copy(Path.ChangeExtension(typeof(SSHF.App).Assembly.Location, "runtimeconfig.json"), Path.ChangeExtension(savePathDll, "runtimeconfig.json"));
+                    }
+                }
+                else
+                {
+                    if (File.Exists(Path.ChangeExtension(savePathDll, "runtimeconfig.json")) is not true)
+                    {
+                        string saveJson = @"
                        {
                           ""runtimeOptions"": {
                           ""tfm"": ""net6.0"",
@@ -223,58 +182,75 @@ namespace SSHF.Infrastructure.Algorithms
                         }
                        }
                        ";
-                       if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
-                       using FileStream stream = File.Create(Path.ChangeExtension(savePathDll, "runtimeconfig.json"));  // проверить
-                       using StreamWriter writer = new StreamWriter(stream);
-                       writer.AutoFlush = true;
-                       await writer.WriteAsync(saveJson);
+                        if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
+                        using FileStream stream = File.Create(Path.ChangeExtension(savePathDll, "runtimeconfig.json"));  // проверить
+                        using StreamWriter writer = new StreamWriter(stream);
+                        writer.AutoFlush = true;
+                        await writer.WriteAsync(saveJson);
                     }
                 }
-
-                void CmdRun123(string queriesLine)
+                if (File.Exists(savePathDll) is not true)
                 {
-                   Process.Start(
-                         new ProcessStartInfo
-                         {
-                             FileName = "cmd",
-                             Arguments = $"/c {queriesLine}",
-                             //UseShellExecute = false,
-                             CreateNoWindow = true,
-                             WindowStyle = ProcessWindowStyle.Hidden,
-                            // RedirectStandardOutput = true
-                         }
-                         );
+
+
+                    string parsingTextInstance = await GetStringInstance();
+
+                    if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
+                    string[] assemblyDependencies = new[]
+                    {
+                      typeof(object).GetTypeInfo().Assembly.Location,
+                      typeof(Console).GetTypeInfo().Assembly.Location,
+                      typeof(FlaUI.Core.Application).Assembly.Location,
+                      typeof(UIA2Automation).GetTypeInfo().Assembly.Location,
+                      typeof(AutomationElement).GetTypeInfo().Assembly.Location,
+                      typeof(ConditionFactory).GetTypeInfo().Assembly.Location,
+                      typeof(ProcessStartInfo).GetTypeInfo().Assembly.Location,
+                      typeof(Clipboard).GetTypeInfo().Assembly.Location,
+                      typeof(Task<>).GetTypeInfo().Assembly.Location,
+                      typeof(System.ComponentModel.Component).GetTypeInfo().Assembly.Location,
+
+                      Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location), "System.Runtime.dll")
+                    };
+
+                    CSharpCompilation comiplation = await Compiller.GetCompiller(parsingTextInstance, Name, assemblyDependencies, сancelToken);
+
+                    EmitResult compilationrResultToHardDrive = await Compiller.SafeDllToPath(comiplation, savePathDll); // todo запомнить ставить слеш в конце котолога. Иначе ошибка аторизации
+
+                    if (compilationrResultToHardDrive.Success is not true)
+                    {
+                        IEnumerable<Diagnostic> resultCompilation = await Compiller.HelperReasonFail(compilationrResultToHardDrive);
+                        Debug.WriteLine("Compilation failed!");
+
+                        foreach (Diagnostic diagnostic in resultCompilation)
+                        {
+                            Debug.WriteLine($"{Environment.NewLine}{diagnostic.Id}: {diagnostic.GetMessage()}");
+                        }
+                        throw new InvalidOperationException().Report(reasonFailsList.Value[4]);
+                    }
+
+                    if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
+
                 }
 
+                CmdInvoke($"cd \"{Path.GetDirectoryName(savePathDll)}\" & dotnet {Path.ChangeExtension(Name, ".dll")}");
 
-                CmdRun123($"cd \"{Path.GetDirectoryName(savePathDll)}\" & dotnet {Path.ChangeExtension(Name, ".dll")}");
-
-                //cmdProc.BeginOutputReadLine();
-                //List<string> args = new List<string>();
-                // cmdProc.OutputDataReceived += (s, e) => args.Add(e.Data);      
-                
-                //  string cmdProcOtput = cmdProc.StandardOutput.ReadToEnd();
-
-                
-
-
-                await ClipboardClear1();
+                await ClipboardClear();
 
                 if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
 
-                string textToDepl = await GetTextAwait1(15000);
+                string textToDepl = await GetTextAwait(15000);
 
                 if (textToDepl == string.Empty)
                 {
-                    CmdRun1(CloseABBYcmdQuery1).Start();
+                    CmdInvoke(CloseABBYcmdQuery);
                     throw new NullReferenceException().Report(reasonFailsList.Value[5]);
                 }
-                CmdRun123(CloseABBYcmdQuery1);
+                CmdInvoke(CloseABBYcmdQuery);
                 if (textToDepl is not T returnSourceText) throw new InvalidOperationException().Report(reasonFailsList.Value[10]);
                 if (getText is true) return returnSourceText;
 
 
-                await StartDeplWinow();
+                await StartDeplWinow(DeeplDirectory);
 
                 if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
 
@@ -312,13 +288,27 @@ namespace SSHF.Infrastructure.Algorithms
                 return returnSourceText;
             }
             catch (Exception) { throw; }
-            finally { isProcessing1 = false; CmdRun1(CloseABBYcmdQuery1).Start(); }
+            finally { isProcessing = false; CmdInvoke(CloseABBYcmdQuery); }
         }
 
-        static bool isProcessing = false;
 
+        private static void CmdInvoke(string queriesLine)
+        {
+            Task.Factory.StartNew(new Action(() =>
+            {
+                Process.Start(
+                new ProcessStartInfo
+                {
+                    FileName = "cmd",
+                    Arguments = $"/c {queriesLine}",
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                });
+            }));
+        }
 
         #endregion
+
         #region Методы 1
         /// <summary>
         /// Получить сроку строику для парсинга - компиляции
@@ -345,7 +335,7 @@ namespace SSHF.Infrastructure.Algorithms
              
                     public static void Main(string[] args)
                     {{
-                       CmdRun(""{CloseABBYcmdQuery1}"");
+                       CmdRun(""{CloseABBYcmdQuery}"");
              
                        FlaUI.Core.Application app = FlaUI.Core.Application.Launch($@""D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe"");
              
@@ -370,7 +360,7 @@ namespace SSHF.Infrastructure.Algorithms
                            result = result2.Result;
                            if (result is null || result == string.Empty )
                            {{
-                               CmdRun(""{CloseABBYcmdQuery1}"");
+                               CmdRun(""{CloseABBYcmdQuery}"");
                                Environment.Exit(1352);
                            }}
                         }}
@@ -444,7 +434,7 @@ namespace SSHF.Infrastructure.Algorithms
               }}"
             );
 
-        private static Task ClipboardClear1()
+        private static Task ClipboardClear()
         {
             Thread STAThread = new Thread(() => Clipboard.Clear());
             STAThread.SetApartmentState(ApartmentState.STA);
@@ -453,7 +443,7 @@ namespace SSHF.Infrastructure.Algorithms
 
             return Task.CompletedTask;
         }
-        private static Task SetText1(string text)
+        private static Task SetText(string text)
         {
             Thread STAThread = new Thread(() => Clipboard.SetText(text));
             STAThread.SetApartmentState(ApartmentState.STA);
@@ -462,7 +452,7 @@ namespace SSHF.Infrastructure.Algorithms
 
             return Task.CompletedTask;
         }
-        private static Task<string> GgetText1(string text)
+        private static Task<string> GgetText(string text)
         {
             string ReturnValue = string.Empty;
             Thread STAThread = new Thread(() => ReturnValue = Clipboard.GetText());
@@ -472,7 +462,7 @@ namespace SSHF.Infrastructure.Algorithms
 
             return Task.FromResult(ReturnValue);
         }
-        private static async Task<string> GetTextAwait1(int TimeOut)
+        private static async Task<string> GetTextAwait(int TimeOut)
         {
             string ReturnValue = string.Empty;
 
@@ -508,7 +498,7 @@ namespace SSHF.Infrastructure.Algorithms
         }
 
 
-        private static Task<Process?> StartDeplWinow() => Task.FromResult(Process.Start(new ProcessStartInfo(DeeplDirectory1)));
+        private static Task<Process?> StartDeplWinow(string DeeplDirectory) => Task.FromResult(Process.Start(new ProcessStartInfo(DeeplDirectory)));
 
         private static Task CmdRun1(string queriesLine) => Task.FromResult(Process.Start(new ProcessStartInfo { FileName = "cmd", Arguments = $"/c {queriesLine}", WindowStyle = ProcessWindowStyle.Normal, CreateNoWindow = false }));
 
