@@ -117,38 +117,20 @@ namespace SSHF.Models.MainWindowModel
 
             KeyboardKeyCallbackFunction callback = KeyboardKeyCallbackFunction.GetInstance();
 
-            //callback.AddCallBackTask(keyCombianteion, new Task(async () =>
-            //{
-            //    AlgorithmGetTranslateAbToDepl instance = await AlgorithmGetTranslateAbToDepl.GetInstance(DeeplDirectory, ScreenshotReaderDirectory);
-            //    try
-            //    {
-            //        await instance.Start<string, bool>(false);
-            //    }
-            //    catch (Exception) { }
-            //}));
-
-            Task InvokeGetTranslate()
+            callback.AddCallBackTask(keyCombianteion, () => new Task(async() => 
             {
-                return new Task( async() =>
+                AlgorithmGetTranslateAbToDepl instance = await AlgorithmGetTranslateAbToDepl.GetInstance(DeeplDirectory, ScreenshotReaderDirectory);
+                try
                 {
-
-                    AlgorithmGetTranslateAbToDepl instance = await AlgorithmGetTranslateAbToDepl.GetInstance(DeeplDirectory, ScreenshotReaderDirectory);
-                    try
-                    {
-                        await instance.Start<string, bool>(false);
-                    }
-                    catch (Exception) { }
-                });
-            }
-            callback.AddCallBackTask(keyCombianteion, ()=> InvokeGetTranslate());
+                    await instance.Start<string, bool>(false);
+                }
+                catch (Exception) { }
+            }));
 
 
 
 
         }
-
-
-
         #endregion
 
 

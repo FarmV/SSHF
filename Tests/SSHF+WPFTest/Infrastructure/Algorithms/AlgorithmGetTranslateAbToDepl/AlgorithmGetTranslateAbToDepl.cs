@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -112,7 +113,7 @@ namespace SSHF.Infrastructure.Algorithms
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.InvalidDirectoryReader, ExHelp.HelerReasonFail(Help.InvalidDirectory)),                                                //2
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.TheOperationWasNotCompleted, ExHelp.HelerReasonFail(Help.ThePreviousOperationWasNotCompleted)),                        //3
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.CompilationFail, ExHelp.HelerReasonFail(Help.CompilationFail)),                                                        //4
-                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.FailGetTransleteOrTimeout, "Не удалось получить перевод от Depl, либо сработал dispose таймаут"),                      //5
+                  new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.FailGetTransleteOrTimeout, "Не удалось получить перевод от Reader, либо сработал dispose таймаут"),                      //5
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.DeplProccesReturnNull, $"Метод {nameof(GetDeplWindow)} вернул NULL"),                                                  //6
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.MainWindowDeplIsNull, $"Метод {nameof(FlaUI.Core.Application.GetMainWindow)} вернул Null, возможно сработал таймаут"), //7
                   new KeyValuePair<GetTranslateAbtoDeplStartFail, string>(GetTranslateAbtoDeplStartFail.TimeOutPanelInpuText, $"Не была найдена панель ввода в программе deppl, и сработал таймаут"),                          //8
@@ -185,7 +186,7 @@ namespace SSHF.Infrastructure.Algorithms
                 }
                 if (File.Exists(savePathDll) is not true)
                 {
-                    string parsingTextInstance = await GetStringInstance();
+                    string parsingTextInstance = await GetStringInstance(ScreenshotReaderDirectory);
 
                     if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
                     string[] assemblyDependencies = new[]
@@ -224,8 +225,13 @@ namespace SSHF.Infrastructure.Algorithms
 
                 }
 
-                CmdInvoke($"cd \"{Path.GetDirectoryName(savePathDll)}\" & dotnet {Path.ChangeExtension(Name, ".dll")}");
+                var ccc = Path.GetDirectoryName(savePathDll);
+                var bbb = Path.ChangeExtension(Name, ".dll");
 
+
+                BlockInput(true);
+                CmdInvoke($"cd \"{Path.GetDirectoryName(savePathDll)}\" & dotnet {Path.ChangeExtension(Name, ".dll")}");
+                BlockInput(false);
                 await ClipboardClear();
 
                 if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
@@ -301,12 +307,16 @@ namespace SSHF.Infrastructure.Algorithms
         }
 
         #endregion
+        [DllImport("user32.dll", EntryPoint = "BlockInput")]
+        private static extern bool BlockInput(bool fBlockIt);
 
         #region Вспомогательные методы
-   
-        private static Task<string> GetStringInstance() => Task.FromResult
-            (
-              @$"
+
+        private static Task<string> GetStringInstance(string ReaderDirectory)
+        {
+            return Task.FromResult
+(
+@$"
               using System;
               using System.Threading;
               using System.Windows;
@@ -327,7 +337,7 @@ namespace SSHF.Infrastructure.Algorithms
                     {{
                        CmdRun(""{CloseABBYcmdQuery}"");
              
-                       FlaUI.Core.Application app = FlaUI.Core.Application.Launch($@""D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe"");
+                       FlaUI.Core.Application app = FlaUI.Core.Application.Launch($@""{ReaderDirectory}"");
              
                        FlaUI.Core.AutomationElements.Window? mainWindow = null;
              
@@ -422,7 +432,9 @@ namespace SSHF.Infrastructure.Algorithms
              
               
               }}"
-            );
+);
+        }
+
         private static Task ClipboardClear()
         {
             Thread STAThread = new Thread(() => Clipboard.Clear());

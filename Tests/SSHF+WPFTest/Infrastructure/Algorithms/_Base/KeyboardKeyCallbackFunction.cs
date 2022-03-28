@@ -44,7 +44,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
             KeyBordBaseRawInput.ChangeTheKeyPressure += KeyBordBaseRawInput_ChangeTheKeyPressure;
         }
 
-        private static async void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)
+        private static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)
        {
        
             VKeys[] pressedKeys = e.Keys.ToArray();
@@ -54,7 +54,6 @@ namespace SSHF.Infrastructure.Algorithms.Base
             {
                 for (int i = 0; i < pressedKeys.Length;i++)
                 {
-
                  Debug.WriteLine(pressedKeys[i]);
                 }
                 Tasks.FunctionsCallback[pressedKeys].Invoke().Start();            
