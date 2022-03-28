@@ -45,6 +45,11 @@ namespace SSHF.Infrastructure.Algorithms
             DeeplDirectory = deeplDirectory;
             this.ScreenshotReaderDirectory = ScreenshotReaderDirectory;
         }
+        enum GetInstanceFail
+        {
+            None,
+            ArgumentIsNullOrWhiteSpace
+        }
         internal static Task<AlgorithmGetTranslateAbToDepl> GetInstance(string deeplDirectory, string ScreenshotReaderDirectory)
         {
             var getInstanceFails = ExHelp.GetLazzyDictionaryFails<GetInstanceFail, string>
@@ -60,17 +65,6 @@ namespace SSHF.Infrastructure.Algorithms
         }
 
         #region Основной алгоритм
-
-        enum GetInstanceFail
-        {
-            None,
-            ArgumentIsNullOrWhiteSpace
-        }
-
-
-
-
-
         enum GetTranslateAbtoDeplStartFail
         {
             None,
@@ -244,6 +238,7 @@ namespace SSHF.Infrastructure.Algorithms
                     throw new NullReferenceException().Report(reasonFailsList.Value[5]);
                 }
                 CmdInvoke(CloseABBYcmdQuery);
+
                 if (textToDepl is not T returnSourceText) throw new InvalidOperationException().Report(reasonFailsList.Value[10]);
                 if (getText is true) return returnSourceText;
 
