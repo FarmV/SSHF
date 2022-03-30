@@ -17,9 +17,9 @@ namespace SSHF.Views.Windows.NotifyIcon
     /// <summary>
     /// Логика взаимодействия для Menu_icon.xaml
     /// </summary>
-    public partial class Menu_icon : Window
+    public partial class Notificator : Window
     {
-        public Menu_icon()
+        public Notificator()
         {
             InitializeComponent();
         }

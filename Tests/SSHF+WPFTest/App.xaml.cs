@@ -68,7 +68,7 @@ namespace SSHF
                  new Thread(() =>
                  {
                      Thread.CurrentThread.Name = GetWindowNotification;
-                     Menu_icon myNotification = new Menu_icon
+                     Views.Windows.NotifyIcon.Notificator myNotification = new Views.Windows.NotifyIcon.Notificator
                      {
                          Tag = GetWindowNotification,
                          DataContext = new NotifyIconViewModel()

@@ -18,14 +18,14 @@ namespace SSHF.Infrastructure.SharedFunctions
 {
     internal static class Notificator
     {
-        static readonly Menu_icon? Menu_Icon;
+        static readonly Views.Windows.NotifyIcon.Notificator? Menu_Icon;
         static readonly NotifyIconViewModel? NotiView;
 
         internal static volatile bool NotificationMenuIsOpen = default;
 
         static Notificator()
         {
-            if (App.WindowsIsOpen.First(sourece => sourece.Tag.ToString() is App.GetWindowNotification) is not Menu_icon menu_icon) throw new NullReferenceException("Не удалось найти окно нотификации");
+            if (App.WindowsIsOpen.First(sourece => sourece.Tag.ToString() is App.GetWindowNotification) is not Views.Windows.NotifyIcon.Notificator menu_icon) throw new NullReferenceException("Не удалось найти окно нотификации");
 
             if (menu_icon.DataContext is not NotifyIconViewModel WidnowNoti) throw new InvalidOperationException("View model не соответсвуе тожидаймой");
 
