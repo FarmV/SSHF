@@ -24,13 +24,13 @@ using Linearstar.Windows.RawInput;
 using SSHF.Infrastructure.Algorithms;
 using SSHF.Infrastructure.Interfaces;
 using SSHF.Infrastructure.Algorithms.Base;
+using System.Threading;
 
 namespace SSHF.Models.MainWindowModel
 {
     internal class MainWindowModel
     {
-        readonly MainWindowViewModel _ViewModel;
-        // readonly System.Windows.Forms.NotifyIcon? _Icon;
+        readonly MainWindowViewModel _ViewModel;  
         public MainWindowModel(MainWindowViewModel ViewModel)
         {
             using (_ViewModel = ViewModel)
@@ -38,7 +38,6 @@ namespace SSHF.Models.MainWindowModel
                 if (App.IsDesignMode is not true)
                 {
                     RegisterFunctions();
-
                 }
 
         }
@@ -101,28 +100,58 @@ namespace SSHF.Models.MainWindowModel
         // public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(App._GlobaKeyboardHook, "+");
 
 
-
+        
         void RegisterFunctions()
         {
+            KeyboardKeyCallbackFunction callback = KeyboardKeyCallbackFunction.GetInstance();
             string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
-
             string ScreenshotReaderDirectory = @"D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe";
-
-            var keyCombianteion = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
+            var keyCombianteionGetTranslate = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
             {
                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_1,
                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_2,
                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_3
             };
-
-            KeyboardKeyCallbackFunction callback = KeyboardKeyCallbackFunction.GetInstance();
-
-            callback.AddCallBackTask(keyCombianteion, () => new Task(async() => 
+            callback.AddCallBackTask(keyCombianteionGetTranslate, () => new Task(async() => 
             {
                 AlgorithmGetTranslateAbToDepl instance = await AlgorithmGetTranslateAbToDepl.GetInstance(DeeplDirectory, ScreenshotReaderDirectory);
                 try
                 {
                     await instance.Start<string, bool>(false);
+                }
+                catch (Exception) { }
+            }));
+
+            var keyCombianteionGetClipboardImageAndRefresh = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
+            {
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.LWIN,
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.SHIFT,
+                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_A
+            };
+            callback.AddCallBackTask(keyCombianteionGetClipboardImageAndRefresh, () => new Task(async () =>
+            {
+                AlgorithmGetClipboardImage instance = new AlgorithmGetClipboardImage();
+                try
+                {
+                    BitmapSource bitSor = await instance.Start<BitmapSource, object>(new object());
+
+                    using MemoryStream createFileFromImageBuffer = new MemoryStream();
+
+                    BitmapEncoder encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(bitSor));
+                    encoder.Save(createFileFromImageBuffer);
+
+                    BitmapImage image = new BitmapImage();
+                    image.BeginInit();
+                    image.StreamSource = createFileFromImageBuffer;
+                    image.EndInit();
+                    image.Freeze();
+
+                    _ViewModel.Image = image;
+                    _ViewModel.ImageOpacity = image;
+
+
+
                 }
                 catch (Exception) { }
             }));

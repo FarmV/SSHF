@@ -8,9 +8,6 @@ namespace SSHF.Infrastructure.Interfaces
 {
     internal interface IImageOperations
     {
-        public event Action<object?>? Сompleted;
-
-
         enum ImageType
         {
             SystemDrawingBitmap,

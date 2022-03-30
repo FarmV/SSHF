@@ -54,7 +54,7 @@ namespace SSHF.Infrastructure.ImplementingInterfaces.ImageOperations
             throw new NotImplementedException();
         }
 
-        System.Drawing.Bitmap ConvertBitmapSourceToBitmapSource(System.Windows.Media.Imaging.BitmapSource source)
+        System.Drawing.Bitmap ConvertBitmapSourceToBitmap(System.Windows.Media.Imaging.BitmapSource source)
         {
             Bitmap bmp = new Bitmap(source.PixelWidth,source.PixelHeight,PixelFormat.Format32bppPArgb);
 

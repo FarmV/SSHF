@@ -229,9 +229,8 @@ namespace SSHF.Infrastructure.Algorithms
                 var bbb = Path.ChangeExtension(Name, ".dll");
 
 
-                BlockInput(true);
                 CmdInvoke($"cd \"{Path.GetDirectoryName(savePathDll)}\" & dotnet {Path.ChangeExtension(Name, ".dll")}");
-                BlockInput(false);
+    
                 await ClipboardClear();
 
                 if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
@@ -256,7 +255,7 @@ namespace SSHF.Infrastructure.Algorithms
                 if (await GetDeplWindow() is not Process deplProc) throw new NullReferenceException().Report(reasonFailsList.Value[6]);
 
                 FlaUI.Core.Application applicationDepl = FlaUI.Core.Application.Attach(deplProc);
-                FlaUI.Core.AutomationElements.Window mainWindowDepl = applicationDepl.GetMainWindow(new UIA3Automation(), new TimeSpan(0, 0, 5));
+                FlaUI.Core.AutomationElements.Window mainWindowDepl = applicationDepl.GetMainWindow(new UIA3Automation(), new TimeSpan(0, 0, 15));
 
                 if (mainWindowDepl is not FlaUI.Core.AutomationElements.Window Depl) throw new NullReferenceException().Report(reasonFailsList.Value[7]);
 
@@ -307,8 +306,6 @@ namespace SSHF.Infrastructure.Algorithms
         }
 
         #endregion
-        [DllImport("user32.dll", EntryPoint = "BlockInput")]
-        private static extern bool BlockInput(bool fBlockIt);
 
         #region Вспомогательные методы
 

@@ -39,7 +39,7 @@ namespace SSHF
 
         internal static int CheckCount = default;
 
-      //  internal static FuncKeyHandler.FkeyHandler? KeyBoardHandler;
+        //  internal static FuncKeyHandler.FkeyHandler? KeyBoardHandler;
 
 
 
@@ -60,53 +60,65 @@ namespace SSHF
         internal const string GetWindowNotification = "Нотификация";
         internal const string GetMyMainWindow = "Главное окно приложения";
 
+
+        async Task StartConfigurations() => await Task.Run(() =>
+        {
+            Thread[] startInit = new Thread[]
+            {
+                 new Thread(() =>
+                 {
+                     Thread.CurrentThread.Name = GetWindowNotification;
+                     Menu_icon myNotification = new Menu_icon
+                     {
+                         Tag = GetWindowNotification,
+                         DataContext = new NotifyIconViewModel()
+                     };
+                     WindowsIsOpen.Add(myNotification);
+                     myNotification?.Show();
+                     myNotification?.Hide();
+                 }),
+
+                 new Thread(() =>
+                 {
+                      Thread.CurrentThread.Name = GetMyMainWindow;
+                      MainWindow mainWindow = new MainWindow
+                      {
+                          Tag = GetMyMainWindow,
+                          DataContext = new MainWindowViewModel()
+                      };
+                      WindowsIsOpen.Add(mainWindow);
+                      mainWindow.Show();
+                      mainWindow.Hide();
+                      WindowsIsOpen.Add(mainWindow);
+
+                      if (PresentationSource.FromVisual(mainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
+                      source.AddHook(WndProc);
+                     
+                     
+                      RawInputDeviceRegistration[] devices =
+                      {
+                            new RawInputDeviceRegistration(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle),
+                            new RawInputDeviceRegistration(HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, source.Handle)
+                          };
+                      RawInputDevice.RegisterDevice(devices);
+                 })
+            };
+            startInit.AsParallel().ForAll(x =>
+            {
+                x.SetApartmentState(ApartmentState.STA);
+                x.Start();
+            });
+        });
+
+
         protected override void OnStartup(StartupEventArgs e)
         {
+            Thread.CurrentThread.Name = "General stream!";
             IsDesignMode = false;
-           // SystemParameters
+            // SystemParameters
             if (IsDesignMode is false)
             {
-                //KeyBoardHandler = new FuncKeyHandler.FkeyHandler("+");
-
-                Menu_icon myNotification = new Menu_icon
-                {
-                    Tag = GetWindowNotification,
-                    DataContext = new NotifyIconViewModel()
-                };
-                WindowsIsOpen.Add(myNotification);
-
-                myNotification?.Show();
-                myNotification?.Hide();
-
-                MainWindow mainWindow = new MainWindow();
-                mainWindow.Tag = GetMyMainWindow;
-                mainWindow.DataContext = new MainWindowViewModel();
-               
-
-
-                WindowsIsOpen.Add(mainWindow);
-
-
-
-
-                mainWindow?.Show();
-                //WindowFunction.Maximize(mainWindow);
-                mainWindow?.Hide();
-
-
-
-
-                if (PresentationSource.FromVisual(mainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
-                source.AddHook(WndProc);
-
-
-                RawInputDeviceRegistration[] devices =
-                {
-                  new RawInputDeviceRegistration(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle),
-                  new RawInputDeviceRegistration(HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, source.Handle)
-                };
-                RawInputDevice.RegisterDevice(devices);
-
+                Task initializing = StartConfigurations();
             }
 
             base.OnStartup(e);
@@ -121,14 +133,17 @@ namespace SSHF
             switch (msg)
             {
                 case WM_INPUT:
-                    {                       
-                       RawInputData? data = RawInputData.FromHandle(lParam);
-                       Input?.Invoke(App.Current.MainWindow, new SSHF.Infrastructure.Algorithms.Input.RawInputEvent(data));
+                    {
+                        Task.Factory.StartNew(() =>
+                        {
+                            RawInputData? data = RawInputData.FromHandle(lParam);
+                            Input?.Invoke(App.Current.MainWindow, new SSHF.Infrastructure.Algorithms.Input.RawInputEvent(data));
+                        }).Start();
                     }
                     break;
                 case WM_DPICHANGED:
                     {
-                        DPIChange?.Invoke(new object(), EventArgs.Empty);
+                        Task.Factory.StartNew(() => { DPIChange?.Invoke(new object(), EventArgs.Empty); }).Start();
                     }
                     break;
             }
