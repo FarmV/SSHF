@@ -9,7 +9,7 @@ using System.Windows;
 using SSHF.Infrastructure;
 using SSHF.ViewModels.NotifyIconViewModel;
 using SSHF.ViewModels.MainWindowViewModel;
-using SSHF.Views.Windows.NotifyIcon;
+using SSHF.Views.Windows.Notify;
 using GlobalLowLevelHooks;
 using System.Threading;
 using Linearstar.Windows.RawInput;
@@ -68,10 +68,10 @@ namespace SSHF
                  new Thread(() =>
                  {
                      Thread.CurrentThread.Name = GetWindowNotification;
-                     Views.Windows.NotifyIcon.Notificator myNotification = new Views.Windows.NotifyIcon.Notificator
+                     Views.Windows.Notify.Notificator myNotification = new Views.Windows.Notify.Notificator
                      {
                          Tag = GetWindowNotification,
-                         DataContext = new NotifyIconViewModel()
+                         DataContext = new NotificatorViewModel()
                      };
                      WindowsIsOpen.Add(myNotification);
                      myNotification?.Show();

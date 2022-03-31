@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace SSHF.Views.Windows.NotifyIcon
+namespace SSHF.Views.Windows.Notify
 {
     /// <summary>
     /// Логика взаимодействия для Menu_icon.xaml

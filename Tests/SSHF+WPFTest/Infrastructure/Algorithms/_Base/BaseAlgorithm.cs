@@ -114,6 +114,18 @@ namespace SSHF.Infrastructure.Algorithms.Base
     {
         internal static Uri GetUriApp(string resourcePath) => new Uri(string.Format("pack://application:,,,/{0};component/{1}", Assembly.GetExecutingAssembly().GetName().Name, resourcePath));
     }
+
+    internal class EventHelper<T>
+    {
+        internal event EventHandler<T>? CallbackEvent;
+        internal void StartEvent(T ? Callback)
+        {
+            _ = Task.Run(() =>
+            {
+                CallbackEvent?.Invoke(this, Callback);
+            }).ConfigureAwait(false);
+        }
+    }
 }
 
 

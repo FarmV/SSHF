@@ -12,7 +12,7 @@ using SSHF.Models.MainWindowModel;
 using SSHF.Models;
 using System.Windows.Media.Imaging;
 using SSHF.Infrastructure.SharedFunctions;
-using SSHF.Views.Windows.NotifyIcon;
+using SSHF.Views.Windows.Notify;
 using System.Windows.Interop;
 
 namespace SSHF.ViewModels.MainWindowViewModel

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 
-using SSHF.Views.Windows.NotifyIcon;
+using SSHF.Views.Windows.Notify;
 
 namespace SSHF.Infrastructure.SharedFunctions
 {

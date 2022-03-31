@@ -14,6 +14,9 @@ using System.Windows.Media;
 using Linearstar.Windows.RawInput;
 
 using SSHF.Infrastructure.Algorithms.Input;
+using SSHF.Infrastructure.SharedFunctions;
+using SSHF.ViewModels.NotifyIconViewModel;
+using SSHF.Views.Windows.Notify;
 
 namespace SSHF.ViewModels
 {
@@ -106,18 +109,19 @@ namespace SSHF.ViewModels
 
         private void _WindowInput_Input(object? sender, RawInputEvent e)
         {
-            RawInputData? data = e.Data;
-            RawInputMouseData? mouseData = data as RawInputMouseData;
+            if (e.Data is not RawInputMouseData mouseData || mouseData.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
+ 
+            Window[]? Window = App.WindowsIsOpen.Where(result => result.Tag.ToString() is App.GetWindowNotification).ToArray();
 
-            if (App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
+            Notificator? notificatorXamlWindow = Window.Length > 1 || Window.Length == 0 ?
+                throw new NullReferenceException("Окно нотификации не найдено") : Window[0] as Notificator ?? throw new Exception($"{typeof(Notificator)}");
+
+            if (notificatorXamlWindow.DataContext is not NotificatorViewModel notificator) throw new NullReferenceException("Не найден ожидаемый контекст данных для окна");
 
 
-            if (mouseData is null || mouseData.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
-
-
-            if (NotificationMenu.IsVisible is false) return;
-            if (NotificationMenu.IsMouseOver) return;
-            if (NotificationMenu.IsVisible)
+            if (notificatorXamlWindow.IsVisible is false) return;
+            if (notificatorXamlWindow.IsMouseOver) return;
+            if (notificatorXamlWindow.IsVisible)
             {
                 Rectangle iconPos = GetRectanglePosition();
 
@@ -129,9 +133,8 @@ namespace SSHF.ViewModels
                     if (Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)) return;
                     if (!(Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)))
                     {
-                        NotificationMenu.Hide();
-                        _iconViewModel.DataCommandsCollection.Clear();
-                        Notificator.NotificationMenuIsOpen = false;
+                        notificatorXamlWindow.Hide();
+                        notificator.NotificatorIsOpen = false;
 
 
                         App.Input -= _WindowInput_Input;
@@ -142,10 +145,10 @@ namespace SSHF.ViewModels
                 };
                 if (!(Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width)))
                 {
-                    NotificationMenu.Hide();
+                    notificatorXamlWindow.Hide();
                     _iconViewModel.DataCommandsCollection.Clear();
 
-                    Notificator.NotificationMenuIsOpen = false;
+                    notificatorXamlWindow.NotificationMenuIsOpen = false;
 
 
                     App.Input -= _WindowInput_Input;

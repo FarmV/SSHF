@@ -1,17 +1,17 @@
 ﻿<Window 
-        x:Class="SSHF.Views.Windows.NotifyIcon.Notificator"
+        x:Class="SSHF.Views.Windows.Notify.Notificator"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" mc:Ignorable="d"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:SSHF.Views.Windows.NotifyIcon"
+        xmlns:local="clr-namespace:SSHF.Views.Windows.Notify"
         xmlns:vm="clr-namespace:SSHF.ViewModels.NotifyIconViewModel"
         xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
         xmlns:vmD="clr-namespace:SSHF.Models.NotifyIconModel"
         xmlns:mcc ="http://schemas.openxmlformats.org/markup-compatibility/2006"
        
         
-        d:DataContext="{d:DesignInstance vm:NotifyIconViewModel, IsDesignTimeCreatable=True}"
+        d:DataContext="{d:DesignInstance vm:NotificatorViewModel, IsDesignTimeCreatable=True}"
         
         AllowDrop="True"      
         Background="Transparent"

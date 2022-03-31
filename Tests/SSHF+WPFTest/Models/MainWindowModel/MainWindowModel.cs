@@ -163,6 +163,40 @@ namespace SSHF.Models.MainWindowModel
         #endregion
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // todo перенести в нужную модель
+        #region Перенести в нужную модель
+
+
         #region Выбор файла изображения
 
         public void SelectFileExecute(object? parameter)
@@ -200,13 +234,13 @@ namespace SSHF.Models.MainWindowModel
 
         public void NotificatorExecute(object? _)
         {
-            List<NotifyIconViewModel.DataModelCommands> commands = new List<NotifyIconViewModel.DataModelCommands>
+            List<NotificatorViewModel.DataModelCommands> commands = new List<NotificatorViewModel.DataModelCommands>
             {
-                new NotifyIconViewModel.DataModelCommands("Выбрать файл", _ViewModel.SelectFileCommand),
-                new NotifyIconViewModel.DataModelCommands("Сохранить файл", _ViewModel.InvoceSaveFileDialogCommand)
+                new NotificatorViewModel.DataModelCommands("Выбрать файл", _ViewModel.SelectFileCommand),
+                new NotificatorViewModel.DataModelCommands("Сохранить файл", _ViewModel.InvoceSaveFileDialogCommand)
             };
 
-            Notificator.SetCommand(commands);
+            //Notificator.SetCommand(commands);
         }
         public bool IsExecuteInvoceNotificator(object? _)
         {
@@ -235,6 +269,7 @@ namespace SSHF.Models.MainWindowModel
             return true;
         }
 
+        #endregion
         #endregion
     }
 
