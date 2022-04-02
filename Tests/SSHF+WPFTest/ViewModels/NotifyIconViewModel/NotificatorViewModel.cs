@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Threading;
 
 using Linearstar.Windows.RawInput;
 
@@ -25,14 +26,13 @@ namespace SSHF.ViewModels.NotifyIconViewModel
 {
     internal class NotificatorViewModel: ViewModel
     {
-        private readonly Window GeneralNotificatorWindow;
+        private Window GeneralNotificatorWindow => App.WindowsIsOpen[App.GetWindowNotification].Key;
         private readonly NotificatorModel _model;
         public bool NotificatorIsOpen => GeneralNotificatorWindow.IsVisible;
         public override object ProvideValue(IServiceProvider serviceProvider) => this;
-        public NotificatorViewModel(Window generalNotificator)
+        public NotificatorViewModel()
         {
             _model = _model is not null ? _model : new NotificatorModel(this);
-            GeneralNotificatorWindow = generalNotificator;
         }
 
         private ObservableCollection<DataModelCommands> DataCommandsCollection = new ObservableCollection<DataModelCommands>();
@@ -54,23 +54,35 @@ namespace SSHF.ViewModels.NotifyIconViewModel
                 Content = content; Command = command;
             }
         }
-        private void AddCommandsToIvoceLIst(IEnumerable<DataModelCommands> commands) => Array.ForEach(commands.ToArray(), (x) => { CommandsCollecition.Add(x); });
+        private void AddCommandsToIvoceLIst(IEnumerable<DataModelCommands> commands) =>
+            App.WindowsIsOpen[App.GetWindowNotification].Value.Invoke((IEnumerable<DataModelCommands> comm) =>
+            {
+                Array.ForEach(comm.ToArray(), command => CommandsCollecition.Add(command));
+            }, DispatcherPriority.Render, commands);
 
-
-        private EventWaitHandle WaitHandleClearCollection = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private readonly EventWaitHandle WaitHandleClearCollection = new EventWaitHandle(false, EventResetMode.AutoReset);
         public void SetPositionInvoke(IEnumerable<DataModelCommands> commands, System.Windows.Point showPostionWindow, Rectangle ignoreAreaClick = default)
         {
+            if (NotificatorIsOpen is true)
+            {
+                GeneralNotificatorWindow.Dispatcher.Invoke(() =>
+                {
+                    GeneralNotificatorWindow.Hide();
+                    DataCommandsCollection.Clear();
+                    CommandsCollecition.Clear();
+                });
+            }
             AddCommandsToIvoceLIst(commands);
 
 
-            System.Windows.Point cursorPos = showPostionWindow == default ? CursorFunction.GetCursorPosition() : showPostionWindow;
+            System.Windows.Point cursorShowPosition = showPostionWindow == default ? CursorFunction.GetCursorPosition() : showPostionWindow;
             Rectangle iconPos = ignoreAreaClick == default ? default : ignoreAreaClick;
 
 
             WindowInteropHelper helper = new WindowInteropHelper(GeneralNotificatorWindow);
-            
-            WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(showPostionWindow.X), Convert.ToInt32(showPostionWindow.Y),
-                Convert.ToInt32(GeneralNotificatorWindow.Width), Convert.ToInt32(GeneralNotificatorWindow.Height), 0x0400| 0x0040);
+
+            bool res = WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(cursorShowPosition.X), Convert.ToInt32(cursorShowPosition.Y),
+            Convert.ToInt32(GeneralNotificatorWindow.Width), Convert.ToInt32(GeneralNotificatorWindow.Height), 0x0400 | 0x0040);
 
             _ = Task.Run(() =>
             {
@@ -84,7 +96,7 @@ namespace SSHF.ViewModels.NotifyIconViewModel
             });
 
 
-            void App_Input(object? sender, RawInputEvent e)
+            void AppInputMouse(object? sender, RawInputEvent e)
             {
                 if (e.Data is not RawInputMouseData mouseData || mouseData.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
 
@@ -94,20 +106,45 @@ namespace SSHF.ViewModels.NotifyIconViewModel
                 if (ignoreAreaClick == default)
                 {
                     WaitHandleClearCollection.Set();
-                    App.Input -= App_Input;
+                    App.Input -= AppInputMouse;
                 }
                 else
                 {
-                    System.Windows.Point cursorЗosition = CursorFunction.GetCursorPosition();
+                    System.Windows.Point cursorPos = CursorFunction.GetCursorPosition();
+                    if (Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width))
+                    {
+                        if (Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)) return;
+                        if (!(Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)))
+                        {
+                            WaitHandleClearCollection.Set();
+                            App.Input -= AppInputMouse;
+                            return;
+                        }
+                        return;
+                    };
+                    if (!(Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width)))
+                    {
+                        WaitHandleClearCollection.Set();
+                        App.Input -= AppInputMouse;
+                        return;
+                    }
                 }
-
-
-
             }
 
-            App.Input += App_Input;
+            App.Input += AppInputMouse;
         }
-
+        internal void CloseNotificator() => _ = Task.Run(() =>
+        {
+            App.WindowsIsOpen[App.GetWindowNotification].Value.InvokeAsync(() =>
+            {
+                GeneralNotificatorWindow.Dispatcher.Invoke(() =>
+                {
+                    GeneralNotificatorWindow.Hide();
+                    DataCommandsCollection.Clear();
+                    CommandsCollecition.Clear();
+                });
+            });
+        }).ConfigureAwait(false);
     }
 
 }

@@ -5,29 +5,60 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 using Linearstar.Windows.RawInput;
 
+using SSHF.Infrastructure;
 using SSHF.Infrastructure.Algorithms.Input;
 using SSHF.Infrastructure.SharedFunctions;
 using SSHF.ViewModels.NotifyIconViewModel;
 using SSHF.Views.Windows.Notify;
 
+using static SSHF.ViewModels.NotifyIconViewModel.NotificatorViewModel;
+
 namespace SSHF.ViewModels
 {
-    internal class NotifyIconMyProgram
+    internal class TrayIcon
     {
-        private static NotifyIconMyProgram? Instance;
+        //private static TrayIcon? Instance;
         private static NotifyIcon? _notifyIcon;
+        private NotificatorViewModel Notificator = App.GetNotificator();
 
-        internal static NotifyIconMyProgram GetInstance() => Instance is not null ? Instance : new NotifyIconMyProgram();
+        //internal static TrayIcon GetInstance() => Instance is not null ? Instance : Instance = new TrayIcon();
 
-        private NotifyIconMyProgram()
+        //private TrayIcon()
+        //{
+           
+        //    App.DPIChange += (obj, ev) =>
+        //    {
+        //        try
+        //        {
+        //            if (_notifyIcon is not null) _notifyIcon.MouseDown -= NotifyIcon_MouseDown;
+        //            if (_notifyIcon is not null) _notifyIcon?.Dispose();
+        //        }
+        //        finally { Init(); }
+        //    };
+
+        //    void Init()
+        //    {
+        //        _notifyIcon = new NotifyIcon
+        //        {
+        //            Icon = Icon.ExtractAssociatedIcon(@"C:\Program Files\nodejs\node.exe"),
+        //            Visible = true
+        //        };
+        //        _notifyIcon.MouseDown += NotifyIcon_MouseDown;
+        //    }
+        //    Init();
+        //}
+
+        public TrayIcon()
         {
             App.DPIChange += (obj, ev) =>
             {
@@ -47,7 +78,8 @@ namespace SSHF.ViewModels
                     Visible = true
                 };
                 _notifyIcon.MouseDown += NotifyIcon_MouseDown;
-            }Init();
+            }
+            Init();
         }
 
 
@@ -58,107 +90,15 @@ namespace SSHF.ViewModels
         }
 
         private void NotifyIcon_MouseDown(object? sender, MouseEventArgs e)
-        {
+        {            
+            if (Notificator.NotificatorIsOpen && e.Button is MouseButtons.Right) {Notificator.CloseNotificator(); return;}
 
-            App.Current.Dispatcher.Invoke(new Action(() =>
+            if (!Notificator.NotificatorIsOpen && e.Button is MouseButtons.Right)
             {
-                if (App.WindowsIsOpen.First(result => result.Tag.ToString() is App.GetWindowNotification) is not Menu_icon NotificationMenu) throw new NullReferenceException("Окно нотификации не найдено");
-
-                MouseButtons buttonMouse = e.Button;
-
-                if (Notificator.NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
-                {
-
-                    NotificationMenu.Hide();
-                    _iconViewModel.DataCommandsCollection.Clear();
-                    //if (menu_Icon.IsVisible) return;
-                    //if (App.RegistartorWindows.HideView(_iconViewModel) is false) return;
-
-
-                    Notificator.NotificationMenuIsOpen = false;
-
-
-                    App.Input -= _WindowInput_Input;
-
-                    return;
-                }
-                if (!Notificator.NotificationMenuIsOpen && buttonMouse is System.Windows.Forms.MouseButtons.Right)
-                {
-                    // App.RegistartorWindows.ShowView(_iconViewModel);
-                    // App.RegistartorWindows.HideView(_iconViewModel);
-
-
-
-                    System.Windows.Point pointMenu = GetRectCorrect(NotificationMenu);
-
-                    WindowInteropHelper helper = new WindowInteropHelper(NotificationMenu);
-
-
-                    WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(pointMenu.X), Convert.ToInt32(pointMenu.Y), Convert.ToInt32(NotificationMenu.Width), Convert.ToInt32(NotificationMenu.Height), 0x0400);
-
-
-                    NotificationMenu.Show();
-
-                    App.Input += _WindowInput_Input;
-
-                    Notificator.NotificationMenuIsOpen = true;
-
-                }
-            }));
-        }
-
-        private void _WindowInput_Input(object? sender, RawInputEvent e)
-        {
-            if (e.Data is not RawInputMouseData mouseData || mouseData.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
- 
-            Window[]? Window = App.WindowsIsOpen.Where(result => result.Tag.ToString() is App.GetWindowNotification).ToArray();
-
-            Notificator? notificatorXamlWindow = Window.Length > 1 || Window.Length == 0 ?
-                throw new NullReferenceException("Окно нотификации не найдено") : Window[0] as Notificator ?? throw new Exception($"{typeof(Notificator)}");
-
-            if (notificatorXamlWindow.DataContext is not NotificatorViewModel notificator) throw new NullReferenceException("Не найден ожидаемый контекст данных для окна");
-
-
-            if (notificatorXamlWindow.IsVisible is false) return;
-            if (notificatorXamlWindow.IsMouseOver) return;
-            if (notificatorXamlWindow.IsVisible)
-            {
-                Rectangle iconPos = GetRectanglePosition();
-
-                System.Windows.Point cursorPos = CursorFunction.GetCursorPosition();
-
-
-                if (Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width))
-                {
-                    if (Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)) return;
-                    if (!(Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)))
-                    {
-                        notificatorXamlWindow.Hide();
-                        notificator.NotificatorIsOpen = false;
-
-
-                        App.Input -= _WindowInput_Input;
-                        return;
-
-                    }
-                    return;
-                };
-                if (!(Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width)))
-                {
-                    notificatorXamlWindow.Hide();
-                    _iconViewModel.DataCommandsCollection.Clear();
-
-                    notificatorXamlWindow.NotificationMenuIsOpen = false;
-
-
-                    App.Input -= _WindowInput_Input;
-                    return;
-                }
+                
+                Notificator.SetPositionInvoke(new DataModelCommands[1] { new DataModelCommands("Закрыть приложение", new RelayCommand((obj) => { App.Current.Shutdown(); }))}, CursorFunction.GetCursorPosition());
             }
-
         }
-
-
 
         internal static System.Windows.Point GetRectCorrect(Window window)
         {

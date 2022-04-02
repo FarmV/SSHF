@@ -20,6 +20,8 @@ using System.Windows.Navigation;
 using System.Runtime.CompilerServices;
 using SSHF.Infrastructure.SharedFunctions;
 using System.Collections.Concurrent;
+using System.Windows.Threading;
+using SSHF.ViewModels;
 
 namespace SSHF
 {
@@ -39,76 +41,161 @@ namespace SSHF
 
         internal static int CheckCount = default;
 
-        //  internal static FuncKeyHandler.FkeyHandler? KeyBoardHandler;
+        internal volatile static ConcurrentDictionary<string, KeyValuePair<Window, Dispatcher>> WindowsIsOpen = new ConcurrentDictionary<string, KeyValuePair<Window, Dispatcher>>();
+
+        internal const string GetWindowNotification = "Нотификация окно - поток";
+        internal const string GetMyMainWindow = "Главное окно приложения - поток";
+
+        private static NotificatorViewModel? Notificator;
 
 
 
-        //public static object GetVm([CallerMemberName] string? callMember = null,[CallerFilePath] string? callPath = null)
-        // {
-        //     string? name2 = callMember;
-        //     string? name3 = callPath;
-
-        //     return new object();
-
-        //     if (System.Activator.CreateInstance(RegistartorWindows.vmToWindowMapping[typeof(NotifyIconViewModel)]) is not Menu_icon _menu_icon)
-        //         throw new ArgumentNullException(nameof(_menu_icon), "MainWindow");
-
-        // }
-
-        internal volatile static ConcurrentBag<Window> WindowsIsOpen = new ConcurrentBag<Window>();
-
-        internal const string GetWindowNotification = "Нотификация";
-        internal const string GetMyMainWindow = "Главное окно приложения";
-
-
-        async Task StartConfigurations() => await Task.Run(() =>
+        internal static NotificatorViewModel GetNotificator()
         {
-            Thread[] startInit = new Thread[]
-            {
-                 new Thread(() =>
-                 {
-                     Thread.CurrentThread.Name = GetWindowNotification;
-                     Views.Windows.Notify.Notificator myNotification = new Views.Windows.Notify.Notificator
-                     {
-                         Tag = GetWindowNotification,
-                         DataContext = new NotificatorViewModel()
-                     };
-                     WindowsIsOpen.Add(myNotification);
-                     myNotification?.Show();
-                     myNotification?.Hide();
-                 }),
+            if (Notificator is null) throw new NullReferenceException("Нотификатор не инициализирован");
+            return Notificator;
+        }
 
+        // private static EventWaitHandle WaitTestThread = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+        static private Task StartConfigurations() => _ = Task.Run(() =>
+         {
+             Thread[] startInit = new Thread[]
+             {
                  new Thread(() =>
                  {
+                      Dispatcher dispThreadMainWindow = Dispatcher.CurrentDispatcher;
                       Thread.CurrentThread.Name = GetMyMainWindow;
                       MainWindow mainWindow = new MainWindow
                       {
                           Tag = GetMyMainWindow,
                           DataContext = new MainWindowViewModel()
                       };
-                      WindowsIsOpen.Add(mainWindow);
                       mainWindow.Show();
-                      mainWindow.Hide();
-                      WindowsIsOpen.Add(mainWindow);
+                      if(WindowsIsOpen.TryAdd(GetMyMainWindow, new KeyValuePair<Window,Dispatcher>(mainWindow, dispThreadMainWindow)) is not true) throw new InvalidOperationException();
+                      System.Windows.Threading.Dispatcher.Run();
+                 }),
+                 new Thread(() =>
+                 {
+                     Dispatcher dispThreadNotification = Dispatcher.CurrentDispatcher;
 
-                      if (PresentationSource.FromVisual(mainWindow) is not HwndSource source) throw new Exception("Не удалось получить HwndSource окна");
-                      source.AddHook(WndProc);
-                     
-                     
-                      RawInputDeviceRegistration[] devices =
-                      {
-                            new RawInputDeviceRegistration(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle),
-                            new RawInputDeviceRegistration(HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, source.Handle)
-                          };
-                      RawInputDevice.RegisterDevice(devices);
+                     Thread.CurrentThread.Name = GetWindowNotification;
+                     Notificator myNotification = new Notificator
+                     {
+                         Tag = GetWindowNotification,
+                     };
+                     NotificatorViewModel noti = new NotificatorViewModel();
+                     Notificator = noti;
+                     myNotification.DataContext = noti;
+
+                     myNotification.Show();
+                     myNotification.Hide();
+
+                     TrayIcon icon = new TrayIcon();
+
+                     if(WindowsIsOpen.TryAdd(GetWindowNotification, new KeyValuePair<Window,Dispatcher>(myNotification, dispThreadNotification)) is not true) throw new InvalidOperationException();
+
+                     System.Windows.Threading.Dispatcher.Run();
+                     //WaitTestThread.WaitOne();
                  })
-            };
-            startInit.AsParallel().ForAll(x =>
-            {
-                x.SetApartmentState(ApartmentState.STA);
-                x.Start();
-            });
-        });
+             };
+             //Array.ForEach(startInit, (x) =>
+             //{ 
+             //    x.SetApartmentState(ApartmentState.STA);
+             //    x.Start();
+             //});
+
+             _ = Task.Run(() =>
+             {
+                 startInit.AsParallel().ForAll(x =>
+                 {
+                     x.SetApartmentState(ApartmentState.STA);
+                     x.Start();
+                 });
+
+                 //Array.ForEach(startInit, (x) =>
+                 //{
+                 //    x.SetApartmentState(ApartmentState.STA);
+                 //    x.Start();                     
+                 //});
+                 while (WindowsIsOpen.Count is not 2)
+                 {
+
+                 }
+
+             }).ContinueWith(async t =>
+             {
+                 Dispatcher dispThreadMainWindow = WindowsIsOpen[GetMyMainWindow].Key.Dispatcher;
+                 await dispThreadMainWindow.InvokeAsync(() =>
+                 {
+                     Thread dispMain = dispThreadMainWindow.Thread;
+                     dispMain.Name = GetMyMainWindow;
+                     Dispatcher disMainWindow = WindowsIsOpen[GetMyMainWindow].Key.Dispatcher;
+
+                     Window mainWindow = WindowsIsOpen[GetMyMainWindow].Key;
+
+                     if (WindowsIsOpen.TryUpdate(GetMyMainWindow, new KeyValuePair<Window, Dispatcher>(mainWindow, disMainWindow), WindowsIsOpen[GetMyMainWindow]) is not true) throw new InvalidOperationException();
+                 }, DispatcherPriority.Render);
+
+                 await Task.Run(() =>
+                 {
+                     WindowsIsOpen[GetMyMainWindow].Value.InvokeAsync(() =>
+                     {
+                         if (PresentationSource.FromVisual(WindowsIsOpen[GetMyMainWindow].Key) is not HwndSource source) throw new NullReferenceException("Не удалось получить HwndSource окна");
+
+                         RawInputDeviceRegistration[] devices =
+                         {
+                             new RawInputDeviceRegistration(HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, source.Handle),
+                             new RawInputDeviceRegistration(HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, source.Handle)
+                         };
+
+                         RawInputDevice.RegisterDevice(devices);
+                         source.AddHook(WndProc);
+
+
+
+                         static IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+                         {
+                             const int WM_INPUT = 0x00FF;
+                             const int WM_DPICHANGED = 0x02E0;
+                             switch (msg)
+                             {
+                                 case WM_INPUT:
+                                     {
+
+                                         RawInputData? data = RawInputData.FromHandle(lParam);
+                                         Input?.Invoke(WindowsIsOpen[GetMyMainWindow].Key, new Infrastructure.Algorithms.Input.RawInputEvent(data));
+                                     }
+                                     break;
+                                 case WM_DPICHANGED:
+                                     {
+                                         _ = Task.Run(() => { DPIChange?.Invoke(new object(), EventArgs.Empty); }).ConfigureAwait(false);
+                                     }
+                                     break;
+                             }
+                             return hwnd;
+                         }
+                     }, DispatcherPriority.Render);
+                 });
+             }).ContinueWith((taskInTask) =>
+             {
+                 Dispatcher dispThreadMainWindow = WindowsIsOpen[GetWindowNotification].Key.Dispatcher;
+
+                 _ = dispThreadMainWindow.InvokeAsync(() =>
+                 {
+                     Thread dispMain = dispThreadMainWindow.Thread;
+                     dispMain.Name = GetMyMainWindow;
+                     Dispatcher disMainWindow = WindowsIsOpen[GetWindowNotification].Key.Dispatcher;
+
+                     Window mainWindow = WindowsIsOpen[GetWindowNotification].Key;
+
+                     if (WindowsIsOpen.TryUpdate(GetWindowNotification, new KeyValuePair<Window, Dispatcher>(mainWindow, disMainWindow), WindowsIsOpen[GetWindowNotification]) is not true) throw new InvalidOperationException();
+                 }, DispatcherPriority.Render);
+             });
+
+
+             //if (WindowsIsOpen[GetMyMainWindow].Key is null) throw new Exception();
+         });
 
 
         protected override void OnStartup(StartupEventArgs e)
@@ -118,37 +205,13 @@ namespace SSHF
             // SystemParameters
             if (IsDesignMode is false)
             {
-                Task initializing = StartConfigurations();
+                _ = StartConfigurations();
             }
-
             base.OnStartup(e);
+
         }
 
 
-
-        static IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            const int WM_INPUT = 0x00FF;
-            const int WM_DPICHANGED = 0x02E0;
-            switch (msg)
-            {
-                case WM_INPUT:
-                    {
-                        Task.Factory.StartNew(() =>
-                        {
-                            RawInputData? data = RawInputData.FromHandle(lParam);
-                            Input?.Invoke(App.Current.MainWindow, new SSHF.Infrastructure.Algorithms.Input.RawInputEvent(data));
-                        }).Start();
-                    }
-                    break;
-                case WM_DPICHANGED:
-                    {
-                        Task.Factory.StartNew(() => { DPIChange?.Invoke(new object(), EventArgs.Empty); }).Start();
-                    }
-                    break;
-            }
-            return hwnd;
-        }
 
 
 

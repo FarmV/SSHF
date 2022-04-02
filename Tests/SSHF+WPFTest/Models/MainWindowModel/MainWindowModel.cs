@@ -135,7 +135,7 @@ namespace SSHF.Models.MainWindowModel
                 {
                     BitmapSource bitSor = await instance.Start<BitmapSource, object>(new object());
 
-                    using MemoryStream createFileFromImageBuffer = new MemoryStream();
+                    using MemoryStream createFileFromImageBuffer = new MemoryStream();         //todo переехать в интерфейс конвертации изображений
 
                     BitmapEncoder encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(bitSor));

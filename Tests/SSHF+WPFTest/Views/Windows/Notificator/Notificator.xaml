@@ -62,12 +62,6 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
-
-
-        <Button Style="{StaticResource myStyle}"
-                Command="{Binding ShutdownAppCommand}" 
-                Content="Закрыть">
-        </Button>
     </StackPanel>
 
 
