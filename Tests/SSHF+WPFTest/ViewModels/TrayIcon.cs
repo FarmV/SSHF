@@ -35,7 +35,7 @@ namespace SSHF.ViewModels
 
         //private TrayIcon()
         //{
-           
+
         //    App.DPIChange += (obj, ev) =>
         //    {
         //        try
@@ -85,18 +85,47 @@ namespace SSHF.ViewModels
 
         private static Rectangle GetRectanglePosition()
         {
-            if (_notifyIcon is null) return new Rectangle();
             return NotifyIconHelper.GetIconRect(_notifyIcon);
         }
 
-        private void NotifyIcon_MouseDown(object? sender, MouseEventArgs e)
-        {            
-            if (Notificator.NotificatorIsOpen && e.Button is MouseButtons.Right) {Notificator.CloseNotificator(); return;}
+        private enum RectPos
+        {
+            Centre = 0,
+            Left = 1,
+            Top = 2,
+            Right = 3,
+            Bottom = 4,
+        }
+        private System.Windows.Point GetPositinRectangle(Rectangle rectangleIcon, RectPos posOutput)
+        {
+            int xCentre = rectangleIcon.Location.X + rectangleIcon.Size.Width / 2;
+            int yCentre = rectangleIcon.Location.Y + rectangleIcon.Size.Height / 2;
+            if (posOutput is RectPos.Centre) return new System.Windows.Point(xCentre, yCentre);
+            if (posOutput is RectPos.Left) return new System.Windows.Point(xCentre - rectangleIcon.Size.Width / 2, yCentre);
+            if (posOutput is RectPos.Right) return new System.Windows.Point(xCentre + rectangleIcon.Size.Width / 2, yCentre);
+            if (posOutput is RectPos.Top) return new System.Windows.Point(rectangleIcon.Location.X + rectangleIcon.Size.Width / 2, rectangleIcon.Location.Y);
+            if (posOutput is RectPos.Bottom) return new System.Windows.Point(rectangleIcon.Location.X + rectangleIcon.Size.Width / 2, rectangleIcon.Location.Y + rectangleIcon.Size.Height);
+            throw new InvalidOperationException();
+        }
+
+        private async void NotifyIcon_MouseDown(object? sender, MouseEventArgs e)
+        {
+            if (Notificator.NotificatorIsOpen && e.Button is MouseButtons.Right)
+            {
+                Notificator.CloseNotificator(); return;
+            }
 
             if (!Notificator.NotificatorIsOpen && e.Button is MouseButtons.Right)
-            {
-                
-                Notificator.SetPositionInvoke(new DataModelCommands[1] { new DataModelCommands("Закрыть приложение", new RelayCommand((obj) => { App.Current.Shutdown(); }))}, CursorFunction.GetCursorPosition());
+            {                           
+                await Notificator.SetPositionInvoke(new DataModelCommands[1] { new DataModelCommands("Закрыть",
+                   new RelayCommand((obj) => 
+                   {
+                       App.WindowsIsOpen[App.GetMyMainWindow].Value.BeginInvokeShutdown(DispatcherPriority.Normal);
+                       App.WindowsIsOpen[App.GetWindowNotification].Value.BeginInvokeShutdown(DispatcherPriority.Normal);
+                       App.Current.Dispatcher.Invoke(() => {App.Current.Shutdown();});
+                   }))}, GetPositinRectangle(NotifyIconHelper.GetIconRect(_notifyIcon), RectPos.Bottom),
+                   NotifyIconHelper.GetIconRect(_notifyIcon));
+                return;
             }
         }
 

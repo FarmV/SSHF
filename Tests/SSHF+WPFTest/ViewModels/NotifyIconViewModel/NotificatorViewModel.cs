@@ -54,14 +54,10 @@ namespace SSHF.ViewModels.NotifyIconViewModel
                 Content = content; Command = command;
             }
         }
-        private void AddCommandsToIvoceLIst(IEnumerable<DataModelCommands> commands) =>
-            App.WindowsIsOpen[App.GetWindowNotification].Value.Invoke((IEnumerable<DataModelCommands> comm) =>
-            {
-                Array.ForEach(comm.ToArray(), command => CommandsCollecition.Add(command));
-            }, DispatcherPriority.Render, commands);
+
 
         private readonly EventWaitHandle WaitHandleClearCollection = new EventWaitHandle(false, EventResetMode.AutoReset);
-        public void SetPositionInvoke(IEnumerable<DataModelCommands> commands, System.Windows.Point showPostionWindow, Rectangle ignoreAreaClick = default)
+        public async Task SetPositionInvoke(IEnumerable<DataModelCommands> commands, System.Windows.Point showPostionWindow, Rectangle ignoreAreaClick = default)
         {
             if (NotificatorIsOpen is true)
             {
@@ -72,8 +68,16 @@ namespace SSHF.ViewModels.NotifyIconViewModel
                     CommandsCollecition.Clear();
                 });
             }
-            AddCommandsToIvoceLIst(commands);
 
+            await GeneralNotificatorWindow.Dispatcher.BeginInvoke(() =>
+            {
+                App.WindowsIsOpen[App.GetWindowNotification].Value.Invoke((IEnumerable<DataModelCommands> comm) =>
+                {
+                    Array.ForEach(comm.ToArray(), command => CommandsCollecition.Add(command));
+                }, DispatcherPriority.Render, commands);
+            });
+
+            GeneralNotificatorWindow.Show();
 
             System.Windows.Point cursorShowPosition = showPostionWindow == default ? CursorFunction.GetCursorPosition() : showPostionWindow;
             Rectangle iconPos = ignoreAreaClick == default ? default : ignoreAreaClick;
@@ -133,9 +137,9 @@ namespace SSHF.ViewModels.NotifyIconViewModel
 
             App.Input += AppInputMouse;
         }
-        internal void CloseNotificator() => _ = Task.Run(() =>
+        internal Task CloseNotificatorAsync() => Task.Run(() =>
         {
-            App.WindowsIsOpen[App.GetWindowNotification].Value.InvokeAsync(() =>
+            _ = App.WindowsIsOpen[App.GetWindowNotification].Value.InvokeAsync(() =>
             {
                 GeneralNotificatorWindow.Dispatcher.Invoke(() =>
                 {
@@ -144,7 +148,19 @@ namespace SSHF.ViewModels.NotifyIconViewModel
                     CommandsCollecition.Clear();
                 });
             });
-        }).ConfigureAwait(false);
+        });
+        internal async void CloseNotificator()
+        {
+            await App.WindowsIsOpen[App.GetWindowNotification].Value.InvokeAsync(() =>
+            {
+                GeneralNotificatorWindow.Dispatcher.Invoke(() =>
+                {
+                    GeneralNotificatorWindow.Hide();
+                    DataCommandsCollection.Clear();
+                    CommandsCollecition.Clear();
+                });
+            });
+        }
     }
 
 }
