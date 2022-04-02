@@ -28,38 +28,33 @@ namespace SSHF
 
     public partial class App: System.Windows.Application
     {
+        internal static bool IsDesignMode { get; private set; } = true;
 
         internal static event EventHandler<SSHF.Infrastructure.Algorithms.Input.RawInputEvent>? Input;
 
         internal static event EventHandler? DPIChange;
 
-        //  static bool _SingleCopy = default;
-
-        internal static readonly DisplayRegistry RegistartorWindows = new DisplayRegistry();
-
-        internal static bool IsDesignMode { get; private set; } = true;
-
-        internal static int CheckCount = default;
-
-        internal volatile static ConcurrentDictionary<string, KeyValuePair<Window, Dispatcher>> WindowsIsOpen = new ConcurrentDictionary<string, KeyValuePair<Window, Dispatcher>>();
-
-        internal const string GetWindowNotification = "Нотификация окно - поток";
         internal const string GetMyMainWindow = "Главное окно приложения - поток";
-
+        internal const string GetWindowNotification = "Нотификация окно - поток";
+        internal volatile static ConcurrentDictionary<string, KeyValuePair<Window, Dispatcher>> WindowsIsOpen = new ConcurrentDictionary<string, KeyValuePair<Window, Dispatcher>>();
+       
         private static NotificatorViewModel? Notificator;
+        internal static NotificatorViewModel GetNotificator() => Notificator is null ? throw new NullReferenceException("Нотификатор не инициализирован") : Notificator;
 
-
-
-        internal static NotificatorViewModel GetNotificator()
+        protected override void OnStartup(StartupEventArgs e)
         {
-            if (Notificator is null) throw new NullReferenceException("Нотификатор не инициализирован");
-            return Notificator;
+            Thread.CurrentThread.Name = "General stream!";
+            IsDesignMode = false;
+            // SystemParameters
+            if (IsDesignMode is false)
+            {
+                _ = StartConfigurations();
+            }
+            base.OnStartup(e);
         }
-
-        // private static EventWaitHandle WaitTestThread = new EventWaitHandle(false, EventResetMode.ManualReset);
-
+    
         static private Task StartConfigurations() => _ = Task.Run(() =>
-         {
+        {
              Thread[] startInit = new Thread[]
              {
                  new Thread(() =>
@@ -72,6 +67,7 @@ namespace SSHF
                           DataContext = new MainWindowViewModel()
                       };
                       mainWindow.Show();
+                      mainWindow.Hide();
                       if(WindowsIsOpen.TryAdd(GetMyMainWindow, new KeyValuePair<Window,Dispatcher>(mainWindow, dispThreadMainWindow)) is not true) throw new InvalidOperationException();
                       System.Windows.Threading.Dispatcher.Run();
                  }),
@@ -95,15 +91,9 @@ namespace SSHF
 
                      if(WindowsIsOpen.TryAdd(GetWindowNotification, new KeyValuePair<Window,Dispatcher>(myNotification, dispThreadNotification)) is not true) throw new InvalidOperationException();
 
-                     System.Windows.Threading.Dispatcher.Run();
-                     //WaitTestThread.WaitOne();
+                     System.Windows.Threading.Dispatcher.Run();                 
                  })
              };
-             //Array.ForEach(startInit, (x) =>
-             //{ 
-             //    x.SetApartmentState(ApartmentState.STA);
-             //    x.Start();
-             //});
 
              _ = Task.Run(() =>
              {
@@ -113,16 +103,7 @@ namespace SSHF
                      x.Start();
                  });
 
-                 //Array.ForEach(startInit, (x) =>
-                 //{
-                 //    x.SetApartmentState(ApartmentState.STA);
-                 //    x.Start();                     
-                 //});
-                 while (WindowsIsOpen.Count is not 2)
-                 {
-
-                 }
-
+                 while (WindowsIsOpen.Count is not 2){}
              }).ContinueWith(async t =>
              {
                  Dispatcher dispThreadMainWindow = WindowsIsOpen[GetMyMainWindow].Key.Dispatcher;
@@ -137,8 +118,6 @@ namespace SSHF
                      if (WindowsIsOpen.TryUpdate(GetMyMainWindow, new KeyValuePair<Window, Dispatcher>(mainWindow, disMainWindow), WindowsIsOpen[GetMyMainWindow]) is not true) throw new InvalidOperationException();
                  }, DispatcherPriority.Render);
 
-
-
                  _ = WindowsIsOpen[GetMyMainWindow].Value.InvokeAsync(() =>
                  {
                      if (PresentationSource.FromVisual(WindowsIsOpen[GetMyMainWindow].Key) is not HwndSource source) throw new NullReferenceException("Не удалось получить HwndSource окна");
@@ -152,7 +131,6 @@ namespace SSHF
                      RawInputDevice.RegisterDevice(devices);
                      source.AddHook(WndProc);
 
-
                      static IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
                      {
                          const int WM_INPUT = 0x00FF;
@@ -160,8 +138,8 @@ namespace SSHF
                          switch (msg)
                          {
                              case WM_INPUT:
-                                 {                                   
-                                     RawInputData ? data = RawInputData.FromHandle(lParam); // нельзя асинхронно
+                                 {
+                                     RawInputData? data = RawInputData.FromHandle(lParam); // нельзя асинхронно
                                      _ = Task.Run(() => { Input?.Invoke(WindowsIsOpen[GetMyMainWindow].Key, new Infrastructure.Algorithms.Input.RawInputEvent(data)); });
                                  }
                                  break;
@@ -190,23 +168,7 @@ namespace SSHF
                      if (WindowsIsOpen.TryUpdate(GetWindowNotification, new KeyValuePair<Window, Dispatcher>(mainWindow, disMainWindow), WindowsIsOpen[GetWindowNotification]) is not true) throw new InvalidOperationException();
                  }, DispatcherPriority.Render);
              });
-         });
-
-
-        protected override void OnStartup(StartupEventArgs e)
-        {
-            Thread.CurrentThread.Name = "General stream!";
-            IsDesignMode = false;
-            // SystemParameters
-            if (IsDesignMode is false)
-            {
-                _ = StartConfigurations();
-            }
-            base.OnStartup(e);
-
-        }
-
-
+        });
 
 
 
