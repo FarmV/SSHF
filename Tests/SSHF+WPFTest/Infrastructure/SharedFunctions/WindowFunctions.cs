@@ -19,20 +19,19 @@ namespace SSHF.Infrastructure.SharedFunctions
 
         internal class RefreshWindowPositin
         {
-            internal static Task RefreshWindowPosCursor(Window window, CancellationToken token)
+            internal static async Task RefreshWindowPosCursor(Window window, CancellationToken token)
             {
                 WindowInteropHelper helper = new WindowInteropHelper(window);
                 while (token.IsCancellationRequested is not true)
                 {
                     CursorFunctions.POINT point;
                     CursorFunctions.GetCursorPos(out point);
-                    window.Dispatcher.Invoke(() =>
+                    await window.Dispatcher.BeginInvoke(() =>
                     {
-                        SetWindowPos(helper.Handle, -1, Convert.ToInt32(point.X), Convert.ToInt32(point.Y),
-                        Convert.ToInt32(window.Width), Convert.ToInt32(window.Height), 0x0400 | 0x0040);
-                    });
+                         SetWindowPos(helper.Handle, -1, Convert.ToInt32(point.X - 30), Convert.ToInt32(point.Y - 30),
+                         Convert.ToInt32(window.Width), Convert.ToInt32(window.Height), 0x0400 | 0x0040);
+                    }, System.Windows.Threading.DispatcherPriority.Send);
                 }
-                return Task.CompletedTask;
             }
 
 

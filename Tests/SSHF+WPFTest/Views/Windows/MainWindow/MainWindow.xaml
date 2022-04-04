@@ -38,10 +38,7 @@
 
     </WindowChrome.WindowChrome>
 
-    <Grid>
-        <TextBox IsEnabled="False"  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Center"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Width}"/>
-        <TextBox  IsEnabled="False"  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Right"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Height}"/>
-    </Grid>
+    
 
    
 
