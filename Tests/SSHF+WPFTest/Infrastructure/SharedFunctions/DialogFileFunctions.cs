@@ -8,7 +8,7 @@ using Microsoft.Win32;
 
 namespace SSHF.Infrastructure.SharedFunctions
 {
-    internal static class DialogFile
+    internal static class DialogFileFunctions
     {
         internal static bool OpenFile(string Title, out string? SelectedFile, string Filter = "Все файлы (*.*)|*.*")
         {

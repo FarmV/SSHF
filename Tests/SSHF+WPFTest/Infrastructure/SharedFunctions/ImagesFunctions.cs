@@ -18,30 +18,12 @@ using Color = System.Drawing.Color;
 
 namespace SSHF.Infrastructure.SharedFunctions
 {
-    internal static class IntegratingImages 
+    internal static class ImagesFunctions 
     {
+        internal static class BufferImage
+        {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        }
 
 
         #region Интеграция изображений
@@ -162,7 +144,7 @@ namespace SSHF.Infrastructure.SharedFunctions
 
 
 
-                IntegratingImages.SafeImage(new Uri(@"C:\Users\Vikto\Pictures\test\TESTrecords.png"), resFin);
+                ImagesFunctions.SafeImage(new Uri(@"C:\Users\Vikto\Pictures\test\TESTrecords.png"), resFin);
                 return resFin;
 
 

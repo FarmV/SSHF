@@ -91,7 +91,7 @@ namespace SSHF.Infrastructure.Algorithms
             None,
             OperationCanceled
         }
-        private async Task<BitmapSource?> GetClipboardImage(CancellationToken? token = null)
+        private Task<BitmapSource?> GetClipboardImage(CancellationToken? token = null)
         {
             var GetClipboardImageFails = ExHelp.GetLazzyDictionaryFails
             (
@@ -120,7 +120,7 @@ namespace SSHF.Infrastructure.Algorithms
             STAThread.Start();
             STAThread.Join();
 
-            return ReturnValue;
+            return Task.FromResult(ReturnValue);
         }
         #endregion                   
 

@@ -12,35 +12,38 @@
     xmlns:cvv ="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:convert ="clr-namespace:SSHF.Infrastructure.Converters"
   
-    
-    
-    
+         
     Title="MainWindow" 
     AllowsTransparency="True"
-    SizeToContent="WidthAndHeight"
-    Background="Transparent"
+ 
     WindowStyle="None"      
     Topmost="True" 
     WindowStartupLocation="CenterScreen"
-    UseLayoutRounding="True"
-    
-    BorderBrush="AliceBlue"
-    BorderThickness="3"
-   
-    d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
-    WindowState="Maximized"
 
   
+    d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
+ 
+ 
+  
+  
+    Background="{DynamicResource BackG}"
 >
     <Window.Resources>
-
+        <ImageBrush x:Key="BackG"  ImageSource="{Binding Image}"/>
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
 
-      <WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0" NonClientFrameEdges="None" ResizeBorderThickness="0" UseAeroCaptionButtons="False" />
+        <WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0" NonClientFrameEdges="None" ResizeBorderThickness="0" UseAeroCaptionButtons="False" />
 
     </WindowChrome.WindowChrome>
+
+    <Grid>
+        <TextBox IsEnabled="False"  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Center"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Width}"/>
+        <TextBox  IsEnabled="False"  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Right"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Height}"/>
+    </Grid>
+
+   
 
     <!--<mc:AlternateContent>
         <mc:Choice Requires ="d">
@@ -62,7 +65,7 @@
          Height="{Binding ElementName=OPA, Path=ImageSource.Height}"-->
 
 
-    <Grid>
+    <!--<Grid>
 
         <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
             <Grid.Resources>
@@ -97,14 +100,14 @@
                     >
                     </Image>
 
-                    <!--<Image Source="{Binding Image}"/>-->
+                    --><!--<Image Source="{Binding Image}"/>-->
                     <!--<Button.Background>
                     <ImageBrush ImageSource="{Binding Image}"/>
                     </Button.Background>-->
 
                     <!--<Button.Foreground>
                     <ImageBrush ImageSource="{Binding Image}"/>
-                    </Button.Foreground>-->
+                    </Button.Foreground>--><!--
                     <Button.OpacityMask>
                     <ImageBrush x:Name="OPA" Stretch="None"  ImageSource="{Binding ImageOpacity}"/>
                     </Button.OpacityMask>
@@ -113,7 +116,7 @@
                         <behaviors:EventTrigger EventName="MouseRightButtonUp">
 
                             <behaviors:InvokeCommandAction Command="{Binding Path=IvoceNotificatorView}"/>
-                            <!--<behaviors:ChangePropertyAction  TargetObject="{Binding ElementName=Stack1}" PropertyName="Visibility" Value="Visible"/>-->
+                            --><!--<behaviors:ChangePropertyAction  TargetObject="{Binding ElementName=Stack1}" PropertyName="Visibility" Value="Visible"/>--><!--
                         </behaviors:EventTrigger>
                     </behaviors:Interaction.Triggers>
 
@@ -121,6 +124,6 @@
             </Grid>
         <TextBox  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Center"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Width}"/>
         <TextBox  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Right"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Height}"/>
-    </Grid>
+    </Grid>-->
   
 </Window>

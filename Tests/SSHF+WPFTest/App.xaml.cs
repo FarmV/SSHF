@@ -10,7 +10,6 @@ using SSHF.Infrastructure;
 using SSHF.ViewModels.NotifyIconViewModel;
 using SSHF.ViewModels.MainWindowViewModel;
 using SSHF.Views.Windows.Notify;
-using GlobalLowLevelHooks;
 using System.Threading;
 using Linearstar.Windows.RawInput;
 using System.Windows.Forms;

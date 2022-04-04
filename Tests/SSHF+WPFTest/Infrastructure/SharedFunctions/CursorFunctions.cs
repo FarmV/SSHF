@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace SSHF.Infrastructure.SharedFunctions
 {
-    internal class CursorFunction
+    internal class CursorFunctions
     {
        
 
@@ -39,7 +39,7 @@ namespace SSHF.Infrastructure.SharedFunctions
         {
 
             var transform = PresentationSource.FromVisual(element).CompositionTarget.TransformFromDevice;
-            Point mouse = transform.Transform(CursorFunction.GetCursorPosition());
+            Point mouse = transform.Transform(CursorFunctions.GetCursorPosition());
             return mouse;
 
         }
@@ -47,7 +47,7 @@ namespace SSHF.Infrastructure.SharedFunctions
 
         public static Point GetWindosPosToCursor(UIElement element)
         {
-            return App.Current.MainWindow.TranslatePoint(CursorFunction.GetCursorXY(App.Current.MainWindow), element);
+            return App.Current.MainWindow.TranslatePoint(CursorFunctions.GetCursorXY(App.Current.MainWindow), element);
         }
 
 

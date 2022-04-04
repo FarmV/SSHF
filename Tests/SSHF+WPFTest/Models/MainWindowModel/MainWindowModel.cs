@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-using FuncKeyHandler;
 
 using SSHF.Infrastructure.SharedFunctions;
 using SSHF.ViewModels;
@@ -14,7 +13,7 @@ using SSHF.Infrastructure;
 
 using System.Windows.Forms;
 
-using static SSHF.Infrastructure.SharedFunctions.CursorFunction;
+using static SSHF.Infrastructure.SharedFunctions.CursorFunctions;
 using SSHF.ViewModels.MainWindowViewModel;
 using SSHF.Models.NotifyIconModel;
 using System.Collections.Generic;
@@ -59,7 +58,7 @@ namespace SSHF.Models.MainWindowModel
             {
                 GetCursorPos(out _CursorPoint);
 
-                WindowFunction.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X, _CursorPoint.Y, 10, 10, 0x0400 | 0x0001);
+                WindowFunctions.RefreshWindowPositin.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X, _CursorPoint.Y, 10, 10, 0x0400 | 0x0001);
             }
         }).ConfigureAwait(false);
         public bool IsRefreshWindowOn(object? parameter) => _ViewModel.RefreshWindow is false;
@@ -138,7 +137,10 @@ namespace SSHF.Models.MainWindowModel
                     await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(() =>
                     {
                         _ViewModel.Image = image;
-                        _ViewModel.ImageOpacity = image;
+                        App.WindowsIsOpen[App.GetMyMainWindow].Key.Height = image.Height;
+                        App.WindowsIsOpen[App.GetMyMainWindow].Key.Width = image.Width;
+
+                     
                     });
 
                 }
@@ -159,13 +161,13 @@ namespace SSHF.Models.MainWindowModel
 
         public void SelectFileExecute(object? parameter)
         {
-            if (DialogFile.OpenFile("Выбор изображения", out string? filePath) is false) return;
+            if (DialogFileFunctions.OpenFile("Выбор изображения", out string? filePath) is false) return;
 
             if (filePath is null) return;
 
             FileInfo file = new FileInfo(filePath);
 
-            BitmapImage? image = IntegratingImages.SetImageToMemoryFromDrive(new Uri(file.FullName, UriKind.Absolute));
+            BitmapImage? image = ImagesFunctions.SetImageToMemoryFromDrive(new Uri(file.FullName, UriKind.Absolute));
 
             if (image is null)
             {
@@ -203,10 +205,10 @@ namespace SSHF.Models.MainWindowModel
 
         public void SaveFileDialogExecute(object? _)
         {
-            if (DialogFile.SaveFileDirectory("Выбирете директория для сохранения") is not string directory) return;
+            if (DialogFileFunctions.SaveFileDirectory("Выбирете директория для сохранения") is not string directory) return;
             if (_ViewModel.ImageOpacity is null) throw new NullReferenceException("_ViewModel.ImageOpacit is NULL");
 
-            if (IntegratingImages.SafeImage(new Uri(directory), _ViewModel.ImageOpacity) is false)
+            if (ImagesFunctions.SafeImage(new Uri(directory), _ViewModel.ImageOpacity) is false)
             {
                 System.Windows.MessageBox.Show("Функци сохранения изображения выернула ошибку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }

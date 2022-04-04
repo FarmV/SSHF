@@ -79,13 +79,13 @@ namespace SSHF.ViewModels.NotifyIconViewModel
 
             GeneralNotificatorWindow.Show();
 
-            System.Windows.Point cursorShowPosition = showPostionWindow == default ? CursorFunction.GetCursorPosition() : showPostionWindow;
+            System.Windows.Point cursorShowPosition = showPostionWindow == default ? CursorFunctions.GetCursorPosition() : showPostionWindow;
             Rectangle iconPos = ignoreAreaClick == default ? default : ignoreAreaClick;
 
 
             WindowInteropHelper helper = new WindowInteropHelper(GeneralNotificatorWindow);
 
-            bool res = WindowFunction.SetWindowPos(helper.Handle, -1, Convert.ToInt32(cursorShowPosition.X), Convert.ToInt32(cursorShowPosition.Y),
+            bool res = WindowFunctions.RefreshWindowPositin.SetWindowPos(helper.Handle, -1, Convert.ToInt32(cursorShowPosition.X), Convert.ToInt32(cursorShowPosition.Y),
             Convert.ToInt32(GeneralNotificatorWindow.Width), Convert.ToInt32(GeneralNotificatorWindow.Height), 0x0400 | 0x0040);
 
             _ = Task.Run(() =>
@@ -114,7 +114,7 @@ namespace SSHF.ViewModels.NotifyIconViewModel
                 }
                 else
                 {
-                    System.Windows.Point cursorPos = CursorFunction.GetCursorPosition();
+                    System.Windows.Point cursorPos = CursorFunctions.GetCursorPosition();
                     if (Convert.ToInt32(cursorPos.X) > iconPos.X & Convert.ToInt32(cursorPos.X) < (iconPos.X + iconPos.Size.Width))
                     {
                         if (Convert.ToInt32(cursorPos.Y) > iconPos.Y & Convert.ToInt32(cursorPos.Y) < (iconPos.Y + iconPos.Size.Height)) return;
