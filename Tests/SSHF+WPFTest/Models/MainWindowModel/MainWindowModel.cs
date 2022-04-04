@@ -139,15 +139,34 @@ namespace SSHF.Models.MainWindowModel
                         _ViewModel.Image = image;
                         App.WindowsIsOpen[App.GetMyMainWindow].Key.Height = image.Height;
                         App.WindowsIsOpen[App.GetMyMainWindow].Key.Width = image.Width;
-
-                     
+                        App.WindowsIsOpen[App.GetMyMainWindow].Key.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                        App.WindowsIsOpen[App.GetMyMainWindow].Key.Show();
                     });
+                    CancellationTokenSource tokenSource = new CancellationTokenSource();           
 
+                    void MouseInput(object? sender, Infrastructure.Algorithms.Input.RawInputEvent e)
+                    {
+                        if (e.Data is not RawInputMouseData data || data.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
+                        else 
+                        {
+                            tokenSource.Cancel();
+                            App.Input -= MouseInput;
+                        }
+                                            
+                    }                   
+                    _ = Task.Run(() => 
+                    {
+                        App.Input += MouseInput;
+                    }).ConfigureAwait(false);
+
+                    await SSHF.Infrastructure.SharedFunctions.WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token);
                 }
                 catch (Exception) { }
             })).ConfigureAwait(false);
 
         });
+
+
         #endregion
 
 

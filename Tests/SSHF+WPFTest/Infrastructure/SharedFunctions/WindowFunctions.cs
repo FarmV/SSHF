@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
@@ -18,16 +19,33 @@ namespace SSHF.Infrastructure.SharedFunctions
 
         internal class RefreshWindowPositin
         {
+            internal static Task RefreshWindowPosCursor(Window window, CancellationToken token)
+            {
+                WindowInteropHelper helper = new WindowInteropHelper(window);
+                while (token.IsCancellationRequested is not true)
+                {
+                    CursorFunctions.POINT point;
+                    CursorFunctions.GetCursorPos(out point);
+                    window.Dispatcher.Invoke(() =>
+                    {
+                        SetWindowPos(helper.Handle, -1, Convert.ToInt32(point.X), Convert.ToInt32(point.Y),
+                        Convert.ToInt32(window.Width), Convert.ToInt32(window.Height), 0x0400 | 0x0040);
+                    });
+                }
+                return Task.CompletedTask;
+            }
+
+
             [DllImport("user32.dll")]
-            public static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
+            internal static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
         }
 
 
 
 
         internal class RefreshStatusWinow
-        { 
-            
+        {
+
             // To get a handle to the specified monitor
             [DllImport("user32.dll")]
             private static extern IntPtr MonitorFromWindow(IntPtr hwnd, int dwFlags);
@@ -136,7 +154,7 @@ namespace SSHF.Infrastructure.SharedFunctions
             }
 
         }
-    
-      
+
+
     }
 }

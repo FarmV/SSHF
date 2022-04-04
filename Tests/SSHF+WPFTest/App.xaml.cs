@@ -66,7 +66,7 @@ namespace SSHF
                           DataContext = new MainWindowViewModel()
                       };
                       mainWindow.Show();
-                     // mainWindow.Hide();
+                      mainWindow.Hide();
                       if(WindowsIsOpen.TryAdd(GetMyMainWindow, new KeyValuePair<Window,Dispatcher>(mainWindow, dispThreadMainWindow)) is not true) throw new InvalidOperationException();
                       System.Windows.Threading.Dispatcher.Run();
                  }),
