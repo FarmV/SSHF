@@ -22,12 +22,10 @@ namespace SSHF.ViewModels.MainWindowViewModel
         public override object ProvideValue(IServiceProvider serviceProvider) => this;
 
         readonly MainWindowModel _Model;
-        readonly CursorFunction _Cursor;
-
+     
         public MainWindowViewModel()
         {
-            _Model = new MainWindowModel(this);
-            _Cursor = new CursorFunction();
+            _Model = new MainWindowModel(this);         
         }
         #region Заголовок окна
 
@@ -37,21 +35,16 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
         #endregion
 
-        bool _FlagRefreshCurrentWindow = false;
 
-
+        private bool _FlagRefreshCurrentWindow = false;
         public bool RefreshWindow
         {
             get { return _FlagRefreshCurrentWindow; }
             set { Set(ref _FlagRefreshCurrentWindow, value); }
-
-
         }
 
 
-
         private BitmapImage? _ImageForButton;
-
         public BitmapImage Image
         {
             get
@@ -66,7 +59,6 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
 
         private BitmapImage? _ImageForButtonOpacity;
-
         public BitmapImage? ImageOpacity
         {
             get
@@ -76,22 +68,15 @@ namespace SSHF.ViewModels.MainWindowViewModel
                     BitmapImage? sacleImage = IntegratingImages.ImageScale(Image);
                     _ImageForButtonOpacity = sacleImage;
                     return sacleImage;
-                };
-
-               // if (_ImageForButtonOpacity is null) throw new InvalidOperationException();
-
+                };           
                 return _ImageForButtonOpacity;
             }
             set
             {
-                if (value is null) return;
-              
+                if (value is null) return;             
                 BitmapImage? res = _ImageForButtonOpacity?.Clone();
-
                 if (res is null)throw new NullReferenceException("ImageOpacity null");
-
                 _ImageForButtonOpacity = IntegratingImages.ImageScale(value);
-
                 Set(ref res, _ImageForButtonOpacity); 
             }
         }

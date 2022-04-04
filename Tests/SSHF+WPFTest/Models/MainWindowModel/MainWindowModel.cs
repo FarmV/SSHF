@@ -30,7 +30,7 @@ namespace SSHF.Models.MainWindowModel
 {
     internal class MainWindowModel
     {
-        readonly MainWindowViewModel _ViewModel;  
+        readonly MainWindowViewModel _ViewModel;
         public MainWindowModel(MainWindowViewModel ViewModel)
         {
             using (_ViewModel = ViewModel)
@@ -52,7 +52,7 @@ namespace SSHF.Models.MainWindowModel
             Y = (1080 / 2)
         };
 
-        public async void RefreshWindowOnExecute(object? parameter) => await Task.Run(() =>
+        public void RefreshWindowOnExecute(object? parameter) => Task.Run(() =>
         {
             _ViewModel.RefreshWindow = true;
             while (_ViewModel.RefreshWindow)
@@ -61,24 +61,13 @@ namespace SSHF.Models.MainWindowModel
 
                 WindowFunction.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X, _CursorPoint.Y, 10, 10, 0x0400 | 0x0001);
             }
-
-
-
-
-
-
-
-
-        });
+        }).ConfigureAwait(false);
         public bool IsRefreshWindowOn(object? parameter) => _ViewModel.RefreshWindow is false;
 
 
-
         public void RefreshWindowOffExecute(object? parameter) => _ViewModel.RefreshWindow = false;
-        public bool IsExecuteRefreshWindowOff(object? parameter)
-        {
-            return _ViewModel.RefreshWindow is true;
-        }
+        public bool IsExecuteRefreshWindowOff(object? parameter) => _ViewModel.RefreshWindow is true;
+
 
         #endregion
 
@@ -100,8 +89,8 @@ namespace SSHF.Models.MainWindowModel
         // public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(App._GlobaKeyboardHook, "+");
 
 
-        
-        void RegisterFunctions()
+
+        private Task RegisterFunctions() => Task.Run(() =>
         {
             KeyboardKeyCallbackFunction callback = KeyboardKeyCallbackFunction.GetInstance();
             string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
@@ -112,7 +101,7 @@ namespace SSHF.Models.MainWindowModel
                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_2,
                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_3
             };
-            callback.AddCallBackTask(keyCombianteionGetTranslate, () => new Task(async() => 
+            callback.AddCallBackTask(keyCombianteionGetTranslate, () => new Task(async () =>
             {
                 AlgorithmGetTranslateAbToDepl instance = await AlgorithmGetTranslateAbToDepl.GetInstance(DeeplDirectory, ScreenshotReaderDirectory);
                 try
@@ -120,7 +109,7 @@ namespace SSHF.Models.MainWindowModel
                     await instance.Start<string, bool>(false);
                 }
                 catch (Exception) { }
-            }));
+            })).ConfigureAwait(false);
 
             var keyCombianteionGetClipboardImageAndRefresh = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
             {
@@ -136,59 +125,28 @@ namespace SSHF.Models.MainWindowModel
                     BitmapSource bitSor = await instance.Start<BitmapSource, object>(new object());
 
                     using MemoryStream createFileFromImageBuffer = new MemoryStream();         //todo переехать в интерфейс конвертации изображений
-
                     BitmapEncoder encoder = new PngBitmapEncoder();
+                    BitmapFrame ccc = BitmapFrame.Create(bitSor);
                     encoder.Frames.Add(BitmapFrame.Create(bitSor));
                     encoder.Save(createFileFromImageBuffer);
-
                     BitmapImage image = new BitmapImage();
                     image.BeginInit();
                     image.StreamSource = createFileFromImageBuffer;
                     image.EndInit();
                     image.Freeze();
 
-                    _ViewModel.Image = image;
-                    _ViewModel.ImageOpacity = image;
-
-
+                    await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(() =>
+                    {
+                        _ViewModel.Image = image;
+                        _ViewModel.ImageOpacity = image;
+                    });
 
                 }
                 catch (Exception) { }
-            }));
+            })).ConfigureAwait(false);
 
-
-
-
-        }
+        });
         #endregion
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -220,13 +178,7 @@ namespace SSHF.Models.MainWindowModel
             _ViewModel.ImageOpacity = image;
 
         }
-
-        public bool IsExecuteSelectFile(object? parameter)
-        {
-            return true;
-        }
-
-
+        public bool IsExecuteSelectFile(object? parameter) => true;
         #endregion
 
         #region Вызов нотификатора
@@ -258,17 +210,8 @@ namespace SSHF.Models.MainWindowModel
             {
                 System.Windows.MessageBox.Show("Функци сохранения изображения выернула ошибку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
-
-
-
-
         }
-        public bool IsExecuteSaveFileDialog(object? _)
-        {
-            return true;
-        }
-
+        public bool IsExecuteSaveFileDialog(object? _) => true;
         #endregion
         #endregion
     }

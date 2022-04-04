@@ -17,7 +17,7 @@ using SSHF.Infrastructure.Interfaces;
 namespace SSHF.Infrastructure.Algorithms
 {
     internal class AlgorithmGetClipboardImage: BaseAlgorithm
-    {     
+    {
         protected internal override bool IsCheceked => isProcessing;
 
         protected internal override string Name => "GetClipboardImage";
@@ -50,15 +50,15 @@ namespace SSHF.Infrastructure.Algorithms
 
 
             var StartFunctionFails = ExHelp.GetLazzyDictionaryFails
-            (             
+            (
               new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.It_Is_Not_Possible_To_Perform_a_Startup_Before_The_Current_Operation_is_Complete, "Невозможно выполнить запуск до завершения текущей операции"),//0
               new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.Clipboard_Empty, "В буффере обмена остувует изображение"),                                                                                      //1
               new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.The_Output_Type_Is_Not_BitmapSource, $"Тип {nameof(T)} долженя вляется {typeof(BitmapSource)}"),                                                //2
               new KeyValuePair<GetClipboardImageStartFail, string>(GetClipboardImageStartFail.OperationCanceled, $"Операция операция получила запрос отмены через {nameof(CancellationToken)} и была отмененна")                              //3
-            );         
+            );
             try
             {
-                if (Equals(typeof(T), typeof(BitmapSource)) is not true) throw new InvalidOperationException().Report(StartFunctionFails.Value[2]);               
+                if (Equals(typeof(T), typeof(BitmapSource)) is not true) throw new InvalidOperationException().Report(StartFunctionFails.Value[2]);
                 if (isProcessing is true) throw new InvalidOperationException().Report(StartFunctionFails.Value[0]);
 
                 if (Cancel.IsCancellationRequested is true) throw new OperationCanceledException(Cancel).Report(StartFunctionFails.Value[3]);
@@ -105,19 +105,21 @@ namespace SSHF.Infrastructure.Algorithms
             BitmapSource? ReturnValue = null;
             Thread STAThread = new Thread(() =>
             {
-                if (Clipboard.ContainsImage() is true) ReturnValue = Clipboard.GetImage();              
-                else ReturnValue = null;              
-            });
+                if (Clipboard.ContainsImage() is true)
+                {
+                    BitmapSource res = Clipboard.GetImage();
+                    RenderOptions.SetBitmapScalingMode(res, BitmapScalingMode.NearestNeighbor);
+                    res.Freeze();
+                    ReturnValue = res;
+                }
 
+            });
             if (Cancel.IsCancellationRequested is true) throw new OperationCanceledException(Cancel).Report(GetClipboardImageFails.Value[0]);
 
-            STAThread.SetApartmentState(ApartmentState.STA);          
+            STAThread.SetApartmentState(ApartmentState.STA);
             STAThread.Start();
             STAThread.Join();
 
-            
-
-           // RenderOptions.SetBitmapScalingMode(ReturnValue, BitmapScalingMode.NearestNeighbor);
             return ReturnValue;
         }
         #endregion                   
