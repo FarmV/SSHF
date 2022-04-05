@@ -21,7 +21,10 @@
     </security>
   </trustInfo>
 
-  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+
+
+
+	<compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
     <application>
       <!-- Список версий Windows, на которых это приложение было протестировано
            и будет работать. Раскомментируйте соответствующие элементы, чтобы ОС Windows 
@@ -87,4 +90,7 @@
 		</windowsSettings>
 	</application>
 
+
+
+ 
 </assembly>

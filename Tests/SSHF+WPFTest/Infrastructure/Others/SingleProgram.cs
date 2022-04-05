@@ -10,26 +10,24 @@ namespace SSHF.Infrastructure.SharedFunctions
     internal class SingleProgram
     {
 
+        //private static volatile Mutex? InstanceCheckMutex;
 
-        private static volatile Mutex? InstanceCheckMutex;
+        //private static bool SingleProgramCheck()
+        //{
+        //    bool isNew = true;
+        //    InstanceCheckMutex = new Mutex(true, "MyMutexSingleProgramCheck", out isNew);
+        //    return isNew;
 
-
-        private static bool SingleProgramCheck()
-        {
-            bool isNew = true;
-            InstanceCheckMutex = new Mutex(true, "MyMutexSingleProgramCheck", out isNew);
-            return isNew;
-
-        }
-        void OFFthisAPP()
-        {
-            throw new NotImplementedException();
-            if (!SingleProgramCheck())
-            {
-                App.Current.Shutdown();
-               // this.Dispose();
-                return;
-            }
-        }
+        //}
+        //void OFFthisAPP()
+        //{
+        //    throw new NotImplementedException();
+        //    if (!SingleProgramCheck())
+        //    {
+        //        App.Current.Shutdown();
+        //       // this.Dispose();
+        //        return;
+        //    }
+        //}
     }
 }

@@ -9,15 +9,15 @@ namespace SSHF.Infrastructure
 {
     class RelayCommand : ICommand
     {
-        readonly Action<object> _execute;
-        readonly Predicate<object>? _canExecute;
+        readonly Action<object?> _execute;
+        readonly Predicate<object?>? _canExecute;
 
         //public RelayCommand(Action<object> execute)
         //    : this(execute, null)
         //{
         //}
 
-        public RelayCommand(Action<object> execute, Predicate<object>? canExecute = null)
+        public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
         {
             if (execute is null) throw new ArgumentNullException(nameof(execute));
  

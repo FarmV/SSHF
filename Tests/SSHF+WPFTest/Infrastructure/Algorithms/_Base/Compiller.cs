@@ -103,20 +103,20 @@ namespace SSHF.Infrastructure.Algorithms.Base
         }
 
 
-        internal static Task test1(Assembly assembly)
-        {
-            throw new NotImplementedException();
+        //internal static Task test1(Assembly assembly)
+        //{
+        //    throw new NotImplementedException();
 
 
-            Type type = assembly.GetType("RoslynCompileSample.Writer");
+        //    Type type = assembly.GetType("RoslynCompileSample.Writer");
 
-            object instance = assembly.CreateInstance("RoslynCompileSample.Writer");
+        //    object instance = assembly.CreateInstance("RoslynCompileSample.Writer");
 
-            var meth = type.GetMember("Main").First() as MethodInfo;
+        //    var meth = type.GetMember("Main").First() as MethodInfo;
 
-            meth.Invoke(instance, new string[1]);
+        //    meth.Invoke(instance, new string[1]);
           
-        }
+        //}
 
 
       
