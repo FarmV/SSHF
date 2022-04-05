@@ -49,7 +49,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             get
             {
-                if (_ImageForButton is null) _ImageForButton = ImagesFunctions.SetImageToMemoryFromDrive(ImagesFunctions.GetUriApp(@"ФWindows\MainWindow\MainWindowRes\Test.png"));
+                if (_ImageForButton is null) _ImageForButton = ImagesFunctions.SetImageToMemoryFromDrive(ImagesFunctions.GetUriApp(@"Windows\MainWindow\MainWindowRes\Test.png"));
                 if (_ImageForButton is null) throw new InvalidOperationException();
                
                 return _ImageForButton;
