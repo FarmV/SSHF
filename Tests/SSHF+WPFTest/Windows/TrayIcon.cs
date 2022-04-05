@@ -27,9 +27,13 @@ namespace SSHF.ViewModels
 {
     internal class TrayIcon
     {
-        //private static TrayIcon? Instance;
-        private static NotifyIcon? _notifyIcon;
-        private NotificatorViewModel Notificator = App.GetNotificator();
+        private NotifyIcon _notifyIcon = new NotifyIcon
+        {
+            Icon = Icon.ExtractAssociatedIcon(@"C:\Program Files\nodejs\node.exe"),
+            Visible = true
+        };
+        
+        private readonly NotificatorViewModel Notificator = App.GetNotificator();
 
         public TrayIcon()
         {
@@ -41,8 +45,7 @@ namespace SSHF.ViewModels
                     if (_notifyIcon is not null) _notifyIcon?.Dispose();
                 }
                 finally { Init(); }
-            };
-
+            };           
             void Init()
             {
                 _notifyIcon = new NotifyIcon
@@ -52,11 +55,11 @@ namespace SSHF.ViewModels
                 };
                 _notifyIcon.MouseDown += NotifyIcon_MouseDown;
             }
-            Init();
+            _notifyIcon.MouseDown += NotifyIcon_MouseDown;
         }
 
 
-        private static Rectangle GetRectanglePosition()
+        private  Rectangle GetRectanglePosition()
         {
             return NotifyIconHelper.GetIconRect(_notifyIcon);
         }
@@ -102,7 +105,7 @@ namespace SSHF.ViewModels
             }
         }
 
-        internal static System.Windows.Point GetRectCorrect(Window window)
+        internal System.Windows.Point GetRectCorrect(Window window)
         {
             System.Windows.Point point = new System.Windows.Point();
 
@@ -120,7 +123,7 @@ namespace SSHF.ViewModels
         }
 
 
-        internal static System.Windows.Size GetElementPixelSize(UIElement element)
+        internal  System.Windows.Size GetElementPixelSize(UIElement element)
         {
             Matrix transformToDevice;
 
