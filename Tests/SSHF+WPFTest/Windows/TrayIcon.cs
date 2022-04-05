@@ -31,33 +31,6 @@ namespace SSHF.ViewModels
         private static NotifyIcon? _notifyIcon;
         private NotificatorViewModel Notificator = App.GetNotificator();
 
-        //internal static TrayIcon GetInstance() => Instance is not null ? Instance : Instance = new TrayIcon();
-
-        //private TrayIcon()
-        //{
-
-        //    App.DPIChange += (obj, ev) =>
-        //    {
-        //        try
-        //        {
-        //            if (_notifyIcon is not null) _notifyIcon.MouseDown -= NotifyIcon_MouseDown;
-        //            if (_notifyIcon is not null) _notifyIcon?.Dispose();
-        //        }
-        //        finally { Init(); }
-        //    };
-
-        //    void Init()
-        //    {
-        //        _notifyIcon = new NotifyIcon
-        //        {
-        //            Icon = Icon.ExtractAssociatedIcon(@"C:\Program Files\nodejs\node.exe"),
-        //            Visible = true
-        //        };
-        //        _notifyIcon.MouseDown += NotifyIcon_MouseDown;
-        //    }
-        //    Init();
-        //}
-
         public TrayIcon()
         {
             App.DPIChange += (obj, ev) =>
