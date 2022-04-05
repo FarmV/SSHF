@@ -8,22 +8,33 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 
+using Microsoft.Win32.SafeHandles;
+
 using SSHF.Views.Windows.Notify;
 
 namespace SSHF.Infrastructure.SharedFunctions
 {
 
+         
 
     internal class WindowFunctions
     {
 
+     
+
         internal class RefreshWindowPositin
         {
+
+
+            
+
             internal static async Task RefreshWindowPosCursor(Window window, CancellationToken token)
             {
                 WindowInteropHelper helper = new WindowInteropHelper(window);
+        
                 while (token.IsCancellationRequested is not true)
-                {
+                { 
+                    await Task.Delay(1);   // узнать можно ли починитиь
                     CursorFunctions.POINT point;
                     CursorFunctions.GetCursorPos(out point);
                     await window.Dispatcher.BeginInvoke(() =>
@@ -31,7 +42,7 @@ namespace SSHF.Infrastructure.SharedFunctions
                          SetWindowPos(helper.Handle, -1, Convert.ToInt32(point.X - 30), Convert.ToInt32(point.Y - 30),
                          Convert.ToInt32(window.Width), Convert.ToInt32(window.Height), 0x0400 | 0x0040);
                     }, System.Windows.Threading.DispatcherPriority.Send);
-                }
+                }                
             }
 
 
