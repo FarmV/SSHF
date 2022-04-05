@@ -24,8 +24,8 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base
     }
     internal class KeyBordBaseRawInput
     {
+        internal static List<VKeys> PresKeys => new List<VKeys>(IsPressedKeys);
 
-            
         internal static event EventHandler<DataKeysNotificator>? ChangeTheKeyPressure;
 
         private static readonly List<VKeys> IsPressedKeys = IsPressedKeys = new List<VKeys>();

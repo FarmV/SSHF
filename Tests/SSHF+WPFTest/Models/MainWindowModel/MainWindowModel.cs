@@ -24,6 +24,7 @@ using SSHF.Infrastructure.Algorithms;
 using SSHF.Infrastructure.Interfaces;
 using SSHF.Infrastructure.Algorithms.Base;
 using System.Threading;
+using SSHF.Infrastructure.Algorithms.KeyBoards.Base;
 
 namespace SSHF.Models.MainWindowModel
 {
@@ -142,19 +143,28 @@ namespace SSHF.Models.MainWindowModel
                         App.WindowsIsOpen[App.GetMyMainWindow].Key.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                         App.WindowsIsOpen[App.GetMyMainWindow].Key.Show();
                     });
-                    CancellationTokenSource tokenSource = new CancellationTokenSource();           
+                    CancellationTokenSource tokenSource = new CancellationTokenSource();
 
                     void MouseInput(object? sender, Infrastructure.Algorithms.Input.RawInputEvent e)
                     {
+                        if (e.Data is RawInputKeyboardData)
+                        {
+                            if (KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.CONTROL) is true)
+                            {
+                                tokenSource.Cancel();
+                                App.Input -= MouseInput;
+                                return;
+                            }
+                        }
                         if (e.Data is not RawInputMouseData data || data.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
-                        else 
+                        else
                         {
                             tokenSource.Cancel();
                             App.Input -= MouseInput;
                         }
-                                            
-                    }                   
-                    _ = Task.Run(() => 
+
+                    }
+                    _ = Task.Run(() =>
                     {
                         App.Input += MouseInput;
                     }).ConfigureAwait(false);
