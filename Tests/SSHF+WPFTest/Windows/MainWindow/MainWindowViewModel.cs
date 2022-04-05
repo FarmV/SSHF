@@ -27,10 +27,9 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             _Model = new MainWindowModel(this);         
         }
-        #region Заголовок окна
 
+        #region Заголовок окна
         private string _Title = "Окно быстрого доступа";
-        /// <summary>Заголовок окна</summary>
         public string Title { get => _Title; set => Set(ref _Title, value); }
 
         #endregion
@@ -44,44 +43,18 @@ namespace SSHF.ViewModels.MainWindowViewModel
         }
 
 
-        private BitmapImage? _ImageForButton;
+        private BitmapImage? _ImageBackground;
         public BitmapImage Image
         {
             get
             {
-                if (_ImageForButton is null) _ImageForButton = ImagesFunctions.SetImageToMemoryFromDrive(ImagesFunctions.GetUriApp(@"Windows\MainWindow\MainWindowRes\Test.png"));
-                if (_ImageForButton is null) throw new InvalidOperationException();
+                if (_ImageBackground is null) _ImageBackground = ImagesFunctions.SetImageToMemoryFromDrive(ImagesFunctions.GetUriApp(@"Windows\MainWindow\MainWindowRes\Test.png"));
+                if (_ImageBackground is null) throw new InvalidOperationException();
                
-                return _ImageForButton;
+                return _ImageBackground;
             }
-            set => Set(ref _ImageForButton, value);
+            set => Set(ref _ImageBackground, value);
         }
-
-
-        private BitmapImage? _ImageForButtonOpacity;
-        public BitmapImage? ImageOpacity
-        {
-            get
-            {
-                if (_ImageForButtonOpacity is null) 
-                {
-                    BitmapImage? sacleImage = ImagesFunctions.ImageScale(Image);
-                    _ImageForButtonOpacity = sacleImage;
-                    return sacleImage;
-                };           
-                return _ImageForButtonOpacity;
-            }
-            set
-            {
-                if (value is null) return;             
-                BitmapImage? res = _ImageForButtonOpacity?.Clone();
-                if (res is null)throw new NullReferenceException("ImageOpacity null");
-                _ImageForButtonOpacity = ImagesFunctions.ImageScale(value);
-                Set(ref res, _ImageForButtonOpacity); 
-            }
-        }
-
-
-
+        
     }
 }

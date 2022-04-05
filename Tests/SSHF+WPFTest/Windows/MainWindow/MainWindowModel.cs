@@ -33,63 +33,14 @@ namespace SSHF.Models.MainWindowModel
         readonly MainWindowViewModel _ViewModel;
         public MainWindowModel(MainWindowViewModel ViewModel)
         {
-            using (_ViewModel = ViewModel)
+            _ViewModel = ViewModel;
 
-                if (App.IsDesignMode is not true)
-                {
-                    RegisterFunctions();
-                }
-
-        }
-
-
-        #region Обновление окна
-        static IntPtr MainWindowHandle => new Func<IntPtr>(() => { Process currentProcess = Process.GetCurrentProcess(); return currentProcess.MainWindowHandle; }).Invoke();
-        POINT _CursorPoint = default;
-        readonly POINT _PositionShift = new POINT
-        {
-            X = (1920 / 2),
-            Y = (1080 / 2)
-        };
-
-        public void RefreshWindowOnExecute(object? parameter) => Task.Run(() =>
-        {
-            _ViewModel.RefreshWindow = true;
-            while (_ViewModel.RefreshWindow)
+            if (App.IsDesignMode is not true)
             {
-                GetCursorPos(out _CursorPoint);
-
-                WindowFunctions.RefreshWindowPositin.SetWindowPos(MainWindowHandle, -1, _CursorPoint.X, _CursorPoint.Y, 10, 10, 0x0400 | 0x0001);
+                RegisterFunctions();
             }
-        }).ConfigureAwait(false);
-        public bool IsRefreshWindowOn(object? parameter) => _ViewModel.RefreshWindow is false;
-
-
-        public void RefreshWindowOffExecute(object? parameter) => _ViewModel.RefreshWindow = false;
-        public bool IsExecuteRefreshWindowOff(object? parameter) => _ViewModel.RefreshWindow is true;
-
-
-        #endregion
-
-        #region Вызов окна Help
-
-        public void HelpInvoce(object? parameter) => new Action(() => { }).Invoke();
-        public bool IsExecuteHelp(object? parameter)
-        {
-            return true;
-
 
         }
-
-        #endregion
-
-
-        #region Обработчик клавиатурного вввода
-
-        // public readonly FkeyHandler _FuncAndKeyHadler = new FkeyHandler(App._GlobaKeyboardHook, "+");
-
-
-
         private Task RegisterFunctions() => Task.Run(() =>
         {
             KeyboardKeyCallbackFunction callback = KeyboardKeyCallbackFunction.GetInstance();
@@ -168,7 +119,6 @@ namespace SSHF.Models.MainWindowModel
                     {
                         App.Input += MouseInput;
                     }).ConfigureAwait(false);
-
                     await SSHF.Infrastructure.SharedFunctions.WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token);
                 }
                 catch (Exception) { }
@@ -177,15 +127,11 @@ namespace SSHF.Models.MainWindowModel
         });
 
 
-        #endregion
 
 
 
 
         // todo перенести в нужную модель
-        #region Перенести в нужную модель
-
-
         #region Выбор файла изображения
 
         public void SelectFileExecute(object? parameter)
@@ -205,50 +151,11 @@ namespace SSHF.Models.MainWindowModel
             };
 
             _ViewModel.Image = image;
-
-            _ViewModel.ImageOpacity = image;
-
-        }
-        public bool IsExecuteSelectFile(object? parameter) => true;
+        }        
         #endregion
-
-        #region Вызов нотификатора
-
-
-        public void NotificatorExecute(object? _)
-        {
-            List<NotificatorViewModel.DataModelCommands> commands = new List<NotificatorViewModel.DataModelCommands>
-            {
-                new NotificatorViewModel.DataModelCommands("Выбрать файл", _ViewModel.SelectFileCommand),
-                new NotificatorViewModel.DataModelCommands("Сохранить файл", _ViewModel.InvoceSaveFileDialogCommand)
-            };
-
-            //Notificator.SetCommand(commands);
-        }
-        public bool IsExecuteInvoceNotificator(object? _)
-        {
-            return true;
-        }
-        #endregion
-        #region Вызов сохранения
-
-        public void SaveFileDialogExecute(object? _)
-        {
-            if (DialogFileFunctions.SaveFileDirectory("Выбирете директория для сохранения") is not string directory) return;
-            if (_ViewModel.ImageOpacity is null) throw new NullReferenceException("_ViewModel.ImageOpacit is NULL");
-
-            if (ImagesFunctions.SafeImage(new Uri(directory), _ViewModel.ImageOpacity) is false)
-            {
-                System.Windows.MessageBox.Show("Функци сохранения изображения выернула ошибку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-        public bool IsExecuteSaveFileDialog(object? _) => true;
-        #endregion
-        #endregion
+        
+        
+      
     }
-
-
-
-
 
 }

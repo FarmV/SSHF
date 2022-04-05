@@ -44,27 +44,30 @@ namespace SSHF.Infrastructure.Algorithms.Base
             KeyBordBaseRawInput.ChangeTheKeyPressure += KeyBordBaseRawInput_ChangeTheKeyPressure;
         }
 
-        private static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)
+        private async static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)
         {
 
             VKeys[] pressedKeys = e.Keys;
             if (pressedKeys.Length is 0) return;
-
-            _ = Task.Run(() =>
+            
+            VKeys[][]? keys =
+            await Task.Run(() =>
             {
-
-                var keys = Tasks.FunctionsCallback.Keys.Where(x =>
+                return keys = Tasks.FunctionsCallback.Keys.Where(x =>
                 {
                     if (pressedKeys.Length != x.Length) return false;
-                    
+
                     for (int i = 0;i < pressedKeys.Length;i++)
                     {
                         if (x.Any((x) => x == pressedKeys[i]) is not true) return false;
-                    }                  
+                    }
                     return true;
                 }).ToArray();
-                if (keys.Length is 0) return;
-                if (keys.Length > 1) throw new InvalidOperationException();
+            });
+            if (keys.Length is 0) return;
+            if (keys.Length > 1) throw new InvalidOperationException();
+            _ = Task.Run(() =>
+            {
                 try
                 {
                     Tasks.FunctionsCallback[keys.ToArray()[0]].Invoke().Start();
@@ -77,12 +80,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
                 {
 
                 }
-
-
             }).ConfigureAwait(false);
-
-
-
         }
 
         internal static KeyboardKeyCallbackFunction GetInstance() => Instance;
