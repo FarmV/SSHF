@@ -168,8 +168,5 @@ namespace SSHF
                 }, DispatcherPriority.Render);
             });
         });
-
-
-
     }
 }
