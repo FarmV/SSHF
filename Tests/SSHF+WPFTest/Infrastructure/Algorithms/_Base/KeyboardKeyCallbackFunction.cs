@@ -40,27 +40,49 @@ namespace SSHF.Infrastructure.Algorithms.Base
         private KeyboardKeyCallbackFunction()
         {
 
-            KeyBordBaseRawInput input = KeyBordBaseRawInput.GetInstance();            
+            KeyBordBaseRawInput input = KeyBordBaseRawInput.GetInstance();
             KeyBordBaseRawInput.ChangeTheKeyPressure += KeyBordBaseRawInput_ChangeTheKeyPressure;
         }
 
         private static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)
-       {
-       
-            VKeys[] pressedKeys = e.Keys.ToArray();
+        {
+
+            VKeys[] pressedKeys = e.Keys;
             if (pressedKeys.Length is 0) return;
 
-            try
+            _ = Task.Run(() =>
             {
-                for (int i = 0; i < pressedKeys.Length;i++)
+
+                var keys = Tasks.FunctionsCallback.Keys.Where(x =>
                 {
-                 Debug.WriteLine(pressedKeys[i]);
+                    if (pressedKeys.Length != x.Length) return false;
+                    
+                    for (int i = 0;i < pressedKeys.Length;i++)
+                    {
+                        if (x.Any((x) => x == pressedKeys[i]) is not true) return false;
+                    }                  
+                    return true;
+                }).ToArray();
+                if (keys.Length is 0) return;
+                if (keys.Length > 1) throw new InvalidOperationException();
+                try
+                {
+                    Tasks.FunctionsCallback[keys.ToArray()[0]].Invoke().Start();
                 }
-                Tasks.FunctionsCallback[pressedKeys].Invoke().Start();            
-            }
-            catch (Exception)
-            {            
-            }            
+                catch (InvalidOperationException)
+                {
+                    throw;
+                }
+                catch (Exception)
+                {
+
+                }
+
+
+            }).ConfigureAwait(false);
+
+
+
         }
 
         internal static KeyboardKeyCallbackFunction GetInstance() => Instance;
@@ -69,7 +91,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
         {
             internal static Dictionary<VKeys[], Func<Task>> FunctionsCallback = new Dictionary<VKeys[], Func<Task>>(new VKeysEqualityComparer());
         }
-            
+
         enum AddCallBackTaskFail
         {
             None,
@@ -77,7 +99,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
             IsOneKey,
             KeyCombinationEmpty
         }
-        
+
         internal Task AddCallBackTask(VKeys[] keyCombo, Func<Task> callbackTask, bool isOneKey = default)
         {
             var AddCallBackTaskFails = ExHelp.GetLazzyDictionaryFails
@@ -98,19 +120,23 @@ namespace SSHF.Infrastructure.Algorithms.Base
             return Task.CompletedTask;
         }
 
-        internal static Task<IEnumerable<KeyValuePair<VKeys[], Func<Task>>>> ReturnCollectionRegistrationFunction() => new Task<IEnumerable<KeyValuePair<VKeys[], Func<Task>>>>(()=>
+        internal static Task<IEnumerable<KeyValuePair<VKeys[], Func<Task>>>> ReturnCollectionRegistrationFunction() => new Task<IEnumerable<KeyValuePair<VKeys[], Func<Task>>>>(() =>
         {
             static IEnumerable<KeyValuePair<VKeys[], Func<Task>>> GetFunction()
             {
-                foreach(var item in Tasks.FunctionsCallback)
+                foreach (var item in Tasks.FunctionsCallback)
                 {
                     yield return item;
                 }
-            } return GetFunction();
+            }
+            return GetFunction();
         });
 
         internal static Task<bool> ContainsKeyComibantion(VKeys[] keyCombo) => new Task<bool>(()
-            => {if (Tasks.FunctionsCallback.ContainsKey(keyCombo) is true) return true; else return false; });
+            =>
+        {
+            if (Tasks.FunctionsCallback.ContainsKey(keyCombo) is true) return true; else return false;
+        });
 
 
 
