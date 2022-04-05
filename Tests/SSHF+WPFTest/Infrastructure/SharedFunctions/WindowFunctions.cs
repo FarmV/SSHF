@@ -28,8 +28,8 @@ namespace SSHF.Infrastructure.SharedFunctions
                 while (token.IsCancellationRequested is not true)
                 { 
                     await Task.Delay(1);   // узнать можно ли починитиь ошибку диспечера потоков окна?
-                    CursorFunctions.POINT point;
-                    CursorFunctions.GetCursorPos(out point);
+
+                    Point point = CursorFunctions.GetCursorPosition();
                     await window.Dispatcher.BeginInvoke(() =>
                     {
                          SetWindowPos(helper.Handle, -1, Convert.ToInt32(point.X - 30), Convert.ToInt32(point.Y - 30),

@@ -25,9 +25,9 @@ namespace SSHF.Infrastructure.SharedFunctions
         }
 
         [DllImport("user32.dll")]
-        public static extern bool GetCursorPos(out POINT lpPoint);
+        private static extern bool GetCursorPos(out POINT lpPoint);
 
-        public static Point GetCursorPosition()
+        internal static Point GetCursorPosition()
         {
             GetCursorPos(out POINT lpPoint);
             return lpPoint;
@@ -35,7 +35,7 @@ namespace SSHF.Infrastructure.SharedFunctions
 
 
 
-        public static Point GetCursorXY(UIElement element)
+        internal static Point GetCursorXY(UIElement element)
         {
 
             var transform = PresentationSource.FromVisual(element).CompositionTarget.TransformFromDevice;
@@ -45,7 +45,7 @@ namespace SSHF.Infrastructure.SharedFunctions
         }
 
 
-        public static Point GetWindosPosToCursor(UIElement element)
+        internal static Point GetWindosPosToCursor(UIElement element)
         {
             return App.Current.MainWindow.TranslatePoint(CursorFunctions.GetCursorXY(App.Current.MainWindow), element);
         }

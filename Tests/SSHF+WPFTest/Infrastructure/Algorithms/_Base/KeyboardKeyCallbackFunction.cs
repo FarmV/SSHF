@@ -130,8 +130,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
             return GetFunction();
         });
 
-        internal static Task<bool> ContainsKeyComibantion(VKeys[] keyCombo) => new Task<bool>(()
-            =>
+        internal static Task<bool> ContainsKeyComibantion(VKeys[] keyCombo) => new Task<bool>(() =>
         {
             if (Tasks.FunctionsCallback.ContainsKey(keyCombo) is true) return true; else return false;
         });
