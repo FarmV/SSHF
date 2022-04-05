@@ -18,23 +18,16 @@ namespace SSHF.Infrastructure.SharedFunctions
          
 
     internal class WindowFunctions
-    {
-
-     
-
+    {   
         internal class RefreshWindowPositin
-        {
-
-
-            
-
+        {           
             internal static async Task RefreshWindowPosCursor(Window window, CancellationToken token)
             {
                 WindowInteropHelper helper = new WindowInteropHelper(window);
         
                 while (token.IsCancellationRequested is not true)
                 { 
-                    await Task.Delay(1);   // узнать можно ли починитиь
+                    await Task.Delay(1);   // узнать можно ли починитиь ошибку диспечера потоков окна?
                     CursorFunctions.POINT point;
                     CursorFunctions.GetCursorPos(out point);
                     await window.Dispatcher.BeginInvoke(() =>
@@ -44,15 +37,9 @@ namespace SSHF.Infrastructure.SharedFunctions
                     }, System.Windows.Threading.DispatcherPriority.Send);
                 }                
             }
-
-
             [DllImport("user32.dll")]
             internal static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
         }
-
-
-
-
         internal class RefreshStatusWinow
         {
 

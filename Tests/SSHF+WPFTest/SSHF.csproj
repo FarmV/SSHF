@@ -17,10 +17,6 @@
     <None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA2.dll" />
     <None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA3.dll" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="Models\Новая папка\" />
-  </ItemGroup>
     
   <ItemGroup>
     <PackageReference Include="FlaUI.Core" Version="3.2.0" />
@@ -70,13 +66,13 @@
 		<Resource Include="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA3.dll">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Resource>
-		<Resource Include="Views\Windows\MainWindow\MainWindowRes\Test.png">
+		<Resource Include="Windows\MainWindow\MainWindowRes\Test.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Resource>
-		<Resource Include="Views\Windows\MainWindow\MainWindowRes\F_Logo.png">
+		<Resource Include="Windows\MainWindow\MainWindowRes\F_Logo.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Resource>
-		<Resource Include="Views\Windows\MainWindow\MainWindowRes\F_Logo2.png">
+		<Resource Include="Windows\MainWindow\MainWindowRes\F_Logo2.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Resource>
 	</ItemGroup>
