@@ -20,37 +20,25 @@ namespace SSHF.ViewModels.MainWindowViewModel
 {
     internal partial class MainWindowViewModel : ViewModel
     {
+        
+
+
         public override object ProvideValue(IServiceProvider serviceProvider) => this;
 
-        readonly MainWindowModel _Model;
+        private readonly MainWindowModel _model;
 
-        public MainWindowViewModel()
-        {
-            _Model = new MainWindowModel(this);
+        public MainWindowViewModel() 
+        { 
+            _model = new MainWindowModel(this);
         }
 
-        #region Заголовок окна
-        private string _Title = "Окно быстрого доступа";
-        public string Title
-        {
-            get => _Title; set => Set(ref _Title, value);
-        }
 
-        #endregion
+        private string _title = "Fast Window";
+        public string Title { get => _title; set => Set(ref _title, value); }
 
 
-        private bool _FlagRefreshCurrentWindow = false;
-        public bool RefreshWindow
-        {
-            get
-            {
-                return _FlagRefreshCurrentWindow;
-            }
-            set
-            {
-                Set(ref _FlagRefreshCurrentWindow, value);
-            }
-        }
+        private bool _isRefreshWindow = false;
+        public bool RefreshWindow { get => _isRefreshWindow; set { Set(ref _isRefreshWindow, value); } }
 
 
         private BitmapImage? _ImageBackground;
@@ -70,6 +58,17 @@ namespace SSHF.ViewModels.MainWindowViewModel
                 if (obj is not CancelEventArgs evArgs) throw new InvalidOperationException();
                 App.WindowsIsOpen[App.GetMyMainWindow].Key.Hide();
                 evArgs.Cancel = true;
+            });
+        }
+
+        private static RelayCommand? _doubleClickHideWindowCommand;
+        public static RelayCommand DoubleClickHideWindowCommand
+        {
+            get => _doubleClickHideWindowCommand = _doubleClickHideWindowCommand is not null ? _doubleClickHideWindowCommand : new RelayCommand(obj =>
+            {
+                if (obj is not MouseButtonEventArgs evArgs) throw new InvalidOperationException();
+                if (evArgs.Source is not Window window) throw new InvalidOperationException();
+                window.Hide();
             });
         }
     }

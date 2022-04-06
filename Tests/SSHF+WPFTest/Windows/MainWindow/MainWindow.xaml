@@ -12,8 +12,7 @@
     xmlns:convert ="clr-namespace:SSHF.Infrastructure.Converters"
     
 
-         
-    Title="MainWindow" 
+             
     AllowsTransparency="True"
  
     WindowStyle="None"      
@@ -27,6 +26,7 @@
   
   
     Background="{DynamicResource BackG}"
+    Title="{Binding Title}"
 >
     <Window.Resources>
         <ImageBrush x:Key="BackG"  ImageSource="{Binding Image}"/>
@@ -40,6 +40,10 @@
         <!-- Пререхватыаем евент закрытия окна --> 
         <behaviors:EventTrigger EventName="Closing" SourceObject="{Binding ElementName=Fast}">
             <behaviors:InvokeCommandAction Command="{Binding Path = ClosingCommand}" PassEventArgsToCommand="True"/>
+        </behaviors:EventTrigger>
+        <!-- Скрываем окно по двойному клику -->
+        <behaviors:EventTrigger EventName="MouseDoubleClick" SourceObject="{Binding ElementName=Fast}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = DoubleClickHideWindowCommand}" PassEventArgsToCommand="True"/>
         </behaviors:EventTrigger>
     </behaviors:Interaction.Triggers>
 
