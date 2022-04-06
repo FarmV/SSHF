@@ -9,7 +9,7 @@
     xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
     xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
     xmlns:cvv ="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:convert ="clr-namespace:SSHF.Infrastructure.Converters"
+    xmlns:converts ="clr-namespace:SSHF.Infrastructure.Converters"
     
 
              
@@ -30,6 +30,7 @@
 >
     <Window.Resources>
         <ImageBrush x:Key="BackG"  ImageSource="{Binding Image}"/>
+        <converts:EvenArgsAddWindow x:Key="convetAddWidnow"/>
     </Window.Resources>
 
     <WindowChrome.WindowChrome>

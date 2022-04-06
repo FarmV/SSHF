@@ -20,15 +20,15 @@ namespace SSHF.ViewModels.MainWindowViewModel
 {
     internal partial class MainWindowViewModel : ViewModel
     {
-        
+
 
 
         public override object ProvideValue(IServiceProvider serviceProvider) => this;
 
         private readonly MainWindowModel _model;
 
-        public MainWindowViewModel() 
-        { 
+        public MainWindowViewModel()
+        {
             _model = new MainWindowModel(this);
         }
 
@@ -45,7 +45,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         public BitmapImage Image
         {
             get => _ImageBackground = _ImageBackground is not null ?
-                     _ImageBackground : ImagesFunctions.GetBitmapImage(ImagesFunctions.GetUriApp(@"Windows\MainWindow\MainWindowRes\Test.png")) ?? throw new NullReferenceException();
+                    _ImageBackground : ImagesFunctions.GetBitmapImage(ImagesFunctions.GetUriApp(@"Windows\MainWindow\MainWindowRes\Test.png")) ?? throw new NullReferenceException();
             set => Set(ref _ImageBackground, value);
         }
 
@@ -55,6 +55,9 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             get => _closingCommand = _closingCommand is not null ? _closingCommand : new RelayCommand(obj =>
             {
+              //  _ = obj is not CancelEventArgs eventArgs ? throw new ArgumentException()
+              //  eventArgs.
+
                 if (obj is not CancelEventArgs evArgs) throw new InvalidOperationException();
                 App.WindowsIsOpen[App.GetMyMainWindow].Key.Hide();
                 evArgs.Cancel = true;
@@ -64,12 +67,10 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private static RelayCommand? _doubleClickHideWindowCommand;
         public static RelayCommand DoubleClickHideWindowCommand
         {
-            get => _doubleClickHideWindowCommand = _doubleClickHideWindowCommand is not null ? _doubleClickHideWindowCommand : new RelayCommand(obj =>
-            {
-                if (obj is not MouseButtonEventArgs evArgs) throw new InvalidOperationException();
-                if (evArgs.Source is not Window window) throw new InvalidOperationException();
-                window.Hide();
-            });
+            get =>
+             _doubleClickHideWindowCommand = _doubleClickHideWindowCommand is not null ? _doubleClickHideWindowCommand : new RelayCommand(obj =>
+              ( obj is not MouseButtonEventArgs ev ? throw new ArgumentException("Неверный входной параметр",typeof(MouseButtonEventArgs).ToString()) :
+               ev.Source is not Window win ? throw new InvalidOperationException() : win ).Hide());
         }
     }
 }
