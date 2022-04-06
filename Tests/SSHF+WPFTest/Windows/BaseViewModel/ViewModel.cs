@@ -28,7 +28,7 @@ namespace SSHF.ViewModels.Base
         //    Dispose(false);
         //}
 
-        protected virtual void OnProertyChanged([CallerMemberName] string ?PropertyName = null)
+        protected virtual void OnProertyChanged([CallerMemberName] string? PropertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(PropertyName));
         }

@@ -8,10 +8,10 @@
     xmlns:l="clr-namespace:SSHF"
     xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
     xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
-    xmlns:cursor="clr-namespace:SSHF.Infrastructure.SharedFunctions"
     xmlns:cvv ="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:convert ="clr-namespace:SSHF.Infrastructure.Converters"
-  
+    
+
          
     Title="MainWindow" 
     AllowsTransparency="True"
@@ -33,14 +33,15 @@
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
-
         <WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0" NonClientFrameEdges="None" ResizeBorderThickness="0" UseAeroCaptionButtons="False" />
-
     </WindowChrome.WindowChrome>
 
-    
-
-   
+    <behaviors:Interaction.Triggers>
+        <!-- Пререхватыаем евент закрытия окна --> 
+        <behaviors:EventTrigger EventName="Closing" SourceObject="{Binding ElementName=Fast}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = ClosingCommand}" PassEventArgsToCommand="True"/>
+        </behaviors:EventTrigger>
+    </behaviors:Interaction.Triggers>
 
     <!--<mc:AlternateContent>
         <mc:Choice Requires ="d">
@@ -52,7 +53,7 @@
         </mc:Fallback>
     </mc:AlternateContent>-->
 
-    
+
 
 
 
@@ -97,14 +98,16 @@
                     >
                     </Image>
 
-                    --><!--<Image Source="{Binding Image}"/>-->
-                    <!--<Button.Background>
+                    -->
+    <!--<Image Source="{Binding Image}"/>-->
+    <!--<Button.Background>
                     <ImageBrush ImageSource="{Binding Image}"/>
                     </Button.Background>-->
 
-                    <!--<Button.Foreground>
+    <!--<Button.Foreground>
                     <ImageBrush ImageSource="{Binding Image}"/>
-                    </Button.Foreground>--><!--
+                    </Button.Foreground>-->
+    <!--
                     <Button.OpacityMask>
                     <ImageBrush x:Name="OPA" Stretch="None"  ImageSource="{Binding ImageOpacity}"/>
                     </Button.OpacityMask>
@@ -113,7 +116,9 @@
                         <behaviors:EventTrigger EventName="MouseRightButtonUp">
 
                             <behaviors:InvokeCommandAction Command="{Binding Path=IvoceNotificatorView}"/>
-                            --><!--<behaviors:ChangePropertyAction  TargetObject="{Binding ElementName=Stack1}" PropertyName="Visibility" Value="Visible"/>--><!--
+                            -->
+    <!--<behaviors:ChangePropertyAction  TargetObject="{Binding ElementName=Stack1}" PropertyName="Visibility" Value="Visible"/>-->
+    <!--
                         </behaviors:EventTrigger>
                     </behaviors:Interaction.Triggers>
 
@@ -122,5 +127,5 @@
         <TextBox  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Center"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Width}"/>
         <TextBox  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Right"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Height}"/>
     </Grid>-->
-  
+
 </Window>

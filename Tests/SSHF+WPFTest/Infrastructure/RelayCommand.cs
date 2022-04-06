@@ -26,10 +26,7 @@ namespace SSHF.Infrastructure
             _canExecute = canExecute;
         }
             
-        public bool CanExecute(object? parameter)
-        {          
-            return _canExecute == null || _canExecute.Invoke(parameter);
-        }
+        public bool CanExecute(object? parameter) => _canExecute is null || _canExecute.Invoke(parameter);
 
         public event EventHandler? CanExecuteChanged
         {

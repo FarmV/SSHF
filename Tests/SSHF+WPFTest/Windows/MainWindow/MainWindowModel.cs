@@ -25,6 +25,7 @@ using SSHF.Infrastructure.Interfaces;
 using SSHF.Infrastructure.Algorithms.Base;
 using System.Threading;
 using SSHF.Infrastructure.Algorithms.KeyBoards.Base;
+using System.ComponentModel;
 
 namespace SSHF.Models.MainWindowModel
 {
@@ -39,7 +40,7 @@ namespace SSHF.Models.MainWindowModel
             {
                 RegisterFunctions();
             }
-
+          
         }
         private Task RegisterFunctions() => Task.Run(() =>
         {
@@ -125,11 +126,6 @@ namespace SSHF.Models.MainWindowModel
             })).ConfigureAwait(false);
 
         });
-
-
-
-
-
 
         // todo перенести в нужную модель
         #region Выбор файла изображения

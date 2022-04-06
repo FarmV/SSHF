@@ -82,7 +82,7 @@ namespace SSHF
                      NotificatorViewModel noti = new NotificatorViewModel();
                      Notificator = noti;
                      myNotification.DataContext = noti;
-                     
+
                      myNotification.Show();
                      myNotification.Hide();
 
@@ -93,7 +93,7 @@ namespace SSHF
                      System.Windows.Threading.Dispatcher.Run();
                  })
             };
-            
+
             _ = Task.Run(() =>
             {
                 startInit.AsParallel().ForAll(x =>
