@@ -47,7 +47,7 @@ namespace SSHF.Infrastructure.SharedFunctions
         ///     <br>Путь извлечения изображения <see cref="Uri"/> <paramref name="path"/></br>
         /// </summary>
         /// <returns>Возращает изображание, помещённое в память, или NULL в случае ошибки.</returns>
-        internal static BitmapImage? SetImageToMemoryFromDrive(Uri path)
+        internal static BitmapImage? GetBitmapImage(Uri path)
         {
 
             try

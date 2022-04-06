@@ -138,7 +138,7 @@ namespace SSHF.Models.MainWindowModel
 
             FileInfo file = new FileInfo(filePath);
 
-            BitmapImage? image = ImagesFunctions.SetImageToMemoryFromDrive(new Uri(file.FullName, UriKind.Absolute));
+            BitmapImage? image = ImagesFunctions.GetBitmapImage(new Uri(file.FullName, UriKind.Absolute));
 
             if (image is null)
             {

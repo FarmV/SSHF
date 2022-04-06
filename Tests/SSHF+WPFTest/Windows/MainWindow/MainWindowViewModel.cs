@@ -18,7 +18,7 @@ using System.ComponentModel;
 
 namespace SSHF.ViewModels.MainWindowViewModel
 {
-    internal partial class MainWindowViewModel: ViewModel
+    internal partial class MainWindowViewModel : ViewModel
     {
         public override object ProvideValue(IServiceProvider serviceProvider) => this;
 
@@ -56,35 +56,21 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private BitmapImage? _ImageBackground;
         public BitmapImage Image
         {
-            get
-            {
-                if (_ImageBackground is null) _ImageBackground = ImagesFunctions.SetImageToMemoryFromDrive(ImagesFunctions.GetUriApp(@"Windows\MainWindow\MainWindowRes\Test.png"));
-                if (_ImageBackground is null) throw new InvalidOperationException();
-
-                return _ImageBackground;
-            }
+            get => _ImageBackground = _ImageBackground is not null ?
+                     _ImageBackground : ImagesFunctions.GetBitmapImage(ImagesFunctions.GetUriApp(@"Windows\MainWindow\MainWindowRes\Test.png")) ?? throw new NullReferenceException();
             set => Set(ref _ImageBackground, value);
         }
 
-                       
 
-        //  private RelayCommand _closingCommand;
+        private static RelayCommand? _closingCommand;
         public static RelayCommand ClosingCommand
         {
-            get
+            get => _closingCommand = _closingCommand is not null ? _closingCommand : new RelayCommand(obj =>
             {
-                return new RelayCommand(obj =>
-               {
-                   if (obj is not CancelEventArgs e) throw new InvalidOperationException();
-                   App.WindowsIsOpen[App.GetMyMainWindow].Key.Hide();
-                   e.Cancel = true;
-               });
-
-            }
+                if (obj is not CancelEventArgs evArgs) throw new InvalidOperationException();
+                App.WindowsIsOpen[App.GetMyMainWindow].Key.Hide();
+                evArgs.Cancel = true;
+            });
         }
-        
-
-
-
     }
 }
