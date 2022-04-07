@@ -1,0 +1,147 @@
+﻿<Window 
+    x:Name="Fast"
+    x:Class="SSHF.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" mc:Ignorable="d"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:l="clr-namespace:SSHF"
+    xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
+    xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" 
+    xmlns:cvv ="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converts ="clr-namespace:SSHF.Infrastructure.Converters"
+    
+
+             
+    AllowsTransparency="True"
+ 
+    WindowStyle="None"      
+    Topmost="True" 
+    WindowStartupLocation="CenterScreen"
+
+  
+    d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
+ 
+ 
+  
+  
+    Background="{DynamicResource BackG}"
+    Title="{Binding Title}"
+>
+    <Window.Resources>
+        <ImageBrush x:Key="BackG"  ImageSource="{Binding Image}"/>
+    </Window.Resources>
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0" NonClientFrameEdges="None" ResizeBorderThickness="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <behaviors:Interaction.Triggers>
+
+        <!-- Отправляем ссылку на самого себя в DataContext -->
+        <behaviors:EventTrigger EventName="Loaded" SourceObject="{Binding ElementName=Fast}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = GetThisWindow}" PassEventArgsToCommand="True"/>
+        </behaviors:EventTrigger>
+        
+        <!-- Пререхватыаем эвент закрытия окна --> 
+        <behaviors:EventTrigger EventName="Closing" SourceObject="{Binding ElementName=Fast}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = NotClosingCommand}" PassEventArgsToCommand="True"/>
+        </behaviors:EventTrigger>
+        
+        <!-- Скрываем окно по двойному клику -->
+        <behaviors:EventTrigger EventName="MouseDoubleClick" SourceObject="{Binding ElementName=Fast}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = DoubleClickHideWindowCommand}" PassEventArgsToCommand="False"/>
+        </behaviors:EventTrigger>
+
+        <behaviors:EventTrigger EventName="PreviewMouseWheel" SourceObject="{Binding ElementName=Fast}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = MouseWheel}" PassEventArgsToCommand="True"/>
+        </behaviors:EventTrigger>
+
+    </behaviors:Interaction.Triggers>
+
+    <!--<mc:AlternateContent>
+        <mc:Choice Requires ="d">
+            <Window.DataContext>
+                <vm:MainWindowViewModel/>
+            </Window.DataContext>
+        </mc:Choice>
+        <mc:Fallback>
+        </mc:Fallback>
+    </mc:AlternateContent>-->
+
+
+
+
+
+
+
+    <!--Width="{Binding ElementName=OPA, Path=ImageSource.Width}" 
+         Height="{Binding ElementName=OPA, Path=ImageSource.Height}"-->
+
+
+    <!--<Grid>
+
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid.Resources>
+                <convert:Ratio x:Key="Ratio2" K="2"/>
+            </Grid.Resources>
+                <Button 
+                     SnapsToDevicePixels="True" 
+               
+                     
+                     x:Name="But"
+                     Style="{DynamicResource ButtonImage}" 
+                     
+                     Command ="{Binding RefreshOnCommand}"          
+                                        
+                     Focusable="False" 
+                     IsEnabled="True"
+                     Background="Coral"
+                     VerticalContentAlignment="Center"
+                     HorizontalContentAlignment="Center"
+                             Height="1080"
+                    Width="1920"
+              >
+
+                    <Image 
+                          
+                          
+                          Stretch="None"
+                          StretchDirection="Both"
+                          Source="{Binding Path=Image}"             
+                         
+                          
+                    >
+                    </Image>
+
+                    -->
+    <!--<Image Source="{Binding Image}"/>-->
+    <!--<Button.Background>
+                    <ImageBrush ImageSource="{Binding Image}"/>
+                    </Button.Background>-->
+
+    <!--<Button.Foreground>
+                    <ImageBrush ImageSource="{Binding Image}"/>
+                    </Button.Foreground>-->
+    <!--
+                    <Button.OpacityMask>
+                    <ImageBrush x:Name="OPA" Stretch="None"  ImageSource="{Binding ImageOpacity}"/>
+                    </Button.OpacityMask>
+
+                    <behaviors:Interaction.Triggers>
+                        <behaviors:EventTrigger EventName="MouseRightButtonUp">
+
+                            <behaviors:InvokeCommandAction Command="{Binding Path=IvoceNotificatorView}"/>
+                            -->
+    <!--<behaviors:ChangePropertyAction  TargetObject="{Binding ElementName=Stack1}" PropertyName="Visibility" Value="Visible"/>-->
+    <!--
+                        </behaviors:EventTrigger>
+                    </behaviors:Interaction.Triggers>
+
+                </Button>
+            </Grid>
+        <TextBox  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Center"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Width}"/>
+        <TextBox  TextAlignment="Center" FontSize="25"  HorizontalAlignment="Right"  VerticalAlignment="Bottom" Text="{Binding ElementName=Fast,Path=Height}"/>
+    </Grid>-->
+
+</Window>
