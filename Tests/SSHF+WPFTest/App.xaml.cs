@@ -70,7 +70,7 @@ namespace SSHF
                       if(WindowsIsOpen.TryAdd(GetMyMainWindow, new KeyValuePair<Window,Dispatcher>(mainWindow, dispThreadMainWindow)) is not true) throw new InvalidOperationException();
                       System.Windows.Threading.Dispatcher.Run();
                  }),
-                 new Thread(() =>
+                 new Thread(async () =>
                  {
                      Dispatcher dispThreadNotification = Dispatcher.CurrentDispatcher;
 
@@ -86,7 +86,7 @@ namespace SSHF
                      myNotification.Show();
                      myNotification.Hide();
 
-                     TrayIcon icon = new TrayIcon();
+                     await using TrayIcon icon = new TrayIcon();
 
                      if(WindowsIsOpen.TryAdd(GetWindowNotification, new KeyValuePair<Window,Dispatcher>(myNotification, dispThreadNotification)) is not true) throw new InvalidOperationException();
 

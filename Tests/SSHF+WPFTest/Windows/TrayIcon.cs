@@ -25,8 +25,10 @@ using static SSHF.ViewModels.NotifyIconViewModel.NotificatorViewModel;
 
 namespace SSHF.ViewModels
 {
-    internal class TrayIcon
+    internal class TrayIcon : IAsyncDisposable
     {
+        public async ValueTask DisposeAsync() => await Task.Run(() => _notifyIcon.Dispose()); 
+
         private NotifyIcon _notifyIcon = new NotifyIcon
         {
             Icon = Icon.ExtractAssociatedIcon(@"C:\Program Files\nodejs\node.exe"),
@@ -149,6 +151,7 @@ namespace SSHF.ViewModels
 
             return (System.Windows.Size)transformToDevice.Transform((Vector)element.DesiredSize);
         }
+
 
         internal class NotifyIconHelper
         {

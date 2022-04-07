@@ -25,10 +25,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private Window? _thisWindow;
 
         private readonly MainWindowModel _model;
-        public MainWindowViewModel()
-        {
-            _model = new MainWindowModel(this);
-        }
+        public MainWindowViewModel() { _model = new MainWindowModel(this); }
 
         private string _title = "Fast Window";
         public string Title { get => _title; set => Set(ref _title, value); }
@@ -37,7 +34,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private bool _isRefreshWindow = false;
         public bool RefreshWindow { get => _isRefreshWindow; set => Set(ref _isRefreshWindow, value); }
 
-
+        
         private BitmapImage? _ImageBackground;
         public BitmapImage Image
         {
@@ -63,7 +60,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
         private RelayCommand? _doubleClickHideWindowCommand;
         public RelayCommand DoubleClickHideWindowCommand => _doubleClickHideWindowCommand = _doubleClickHideWindowCommand is not null ?
-                              _doubleClickHideWindowCommand : new RelayCommand(obj => _thisWindow?.Hide());
+                             _doubleClickHideWindowCommand : new RelayCommand(obj => _thisWindow?.Hide());
 
     }
 }
