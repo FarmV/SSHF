@@ -15,6 +15,7 @@ using SSHF.Infrastructure.SharedFunctions;
 using SSHF.Views.Windows.Notify;
 using System.Windows.Interop;
 using System.ComponentModel;
+using System.Windows.Media.Animation;
 
 namespace SSHF.ViewModels.MainWindowViewModel
 {
@@ -34,7 +35,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private bool _isRefreshWindow = false;
         public bool RefreshWindow { get => _isRefreshWindow; set => Set(ref _isRefreshWindow, value); }
 
-        
+
         private BitmapImage? _ImageBackground;
         public BitmapImage Image
         {
@@ -51,7 +52,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
 
         private RelayCommand? _closingCommand;
-        public RelayCommand ClosingCommand => _closingCommand = _closingCommand is not null ? _closingCommand : new RelayCommand(obj =>
+        public RelayCommand NotClosingCommand => _closingCommand = _closingCommand is not null ? _closingCommand : new RelayCommand(obj =>
         {
             _ = obj is not CancelEventArgs eventArgs ? throw new ArgumentException() : eventArgs.Cancel = true;
             _thisWindow?.Hide();
@@ -61,6 +62,53 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private RelayCommand? _doubleClickHideWindowCommand;
         public RelayCommand DoubleClickHideWindowCommand => _doubleClickHideWindowCommand = _doubleClickHideWindowCommand is not null ?
                              _doubleClickHideWindowCommand : new RelayCommand(obj => _thisWindow?.Hide());
+
+
+
+        private double _heightWindow = default;
+        private double _widthWindow = default;
+        private int _countWheel = default;
+        private RelayCommand? _mouseWheel;
+        public RelayCommand MouseWheel => _mouseWheel = _mouseWheel is not null ? _mouseWheel : new RelayCommand(async obj =>
+        {
+            int res = obj is not MouseWheelEventArgs eventArgs ? throw new ArgumentException() : eventArgs.Delta;
+
+            if (res > 0)
+            {
+                if (_thisWindow is null) throw new NullReferenceException(nameof(_thisWindow));
+
+                //await Task.Run(() =>
+                //{
+                //    DoubleAnimation DA = new DoubleAnimation();
+                //    DA.From = _thisWindow.Width;
+                //    DA.To = _thisWindow.Width + 20;
+                //    DA.Duration = TimeSpan.FromMilliseconds(500);
+                //    DA.BeginAnimation(_thisWindow.ActualWidth, DA)
+                //    var w = _thisWindow.Width + 20;
+                //    var h = _thisWindow.Height + 20;
+
+
+                //});
+
+                _thisWindow.Width += 20;
+                _thisWindow.Height += 20;
+
+                _heightWindow = _thisWindow.Height;
+                _widthWindow = _thisWindow.Width;
+                eventArgs.Handled = true;
+                return;
+            }
+            if (res < 0)
+            {
+                if (_thisWindow is null) throw new NullReferenceException(nameof(_thisWindow));
+                if (_thisWindow.Width - 20 < 0 || _thisWindow.Height - 20 < 0) return;
+                _thisWindow.Width -= 20;
+                _thisWindow.Height -= 20;
+                eventArgs.Handled = true;
+                return;
+            }
+
+        });
 
     }
 }

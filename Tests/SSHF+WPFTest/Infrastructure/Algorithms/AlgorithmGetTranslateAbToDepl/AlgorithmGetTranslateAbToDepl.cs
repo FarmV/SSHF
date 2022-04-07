@@ -224,11 +224,7 @@ namespace SSHF.Infrastructure.Algorithms
                     if (сancelToken.IsCancellationRequested is true) throw new OperationCanceledException(сancelToken).Report(reasonFailsList.Value[0]);
 
                 }
-
-                var ccc = Path.GetDirectoryName(savePathDll);
-                var bbb = Path.ChangeExtension(Name, ".dll");
-
-
+              
                 CmdInvoke($"cd \"{Path.GetDirectoryName(savePathDll)}\" & dotnet {Path.ChangeExtension(Name, ".dll")}");
     
                 await ClipboardClear();
