@@ -25,18 +25,17 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private Window? _thisWindow;
 
         private readonly MainWindowModel _model;
-
         public MainWindowViewModel()
         {
-            _model = new MainWindowModel(this);     
-        }   
+            _model = new MainWindowModel(this);
+        }
 
         private string _title = "Fast Window";
         public string Title { get => _title; set => Set(ref _title, value); }
 
 
         private bool _isRefreshWindow = false;
-        public bool RefreshWindow { get => _isRefreshWindow; set { Set(ref _isRefreshWindow, value); } }
+        public bool RefreshWindow { get => _isRefreshWindow; set => Set(ref _isRefreshWindow, value); }
 
 
         private BitmapImage? _ImageBackground;
@@ -47,32 +46,24 @@ namespace SSHF.ViewModels.MainWindowViewModel
             set => Set(ref _ImageBackground, value);
         }
 
-
-        private static RelayCommand? _closingCommand;
-        public static RelayCommand ClosingCommand
-        {
-            get => _closingCommand = _closingCommand is not null ? _closingCommand : new RelayCommand(obj =>
-            {
-              //  _ = obj is not CancelEventArgs eventArgs ? throw new ArgumentException()
-              //  eventArgs.
-
-                if (obj is not CancelEventArgs evArgs) throw new InvalidOperationException();
-                App.WindowsIsOpen[App.GetMyMainWindow].Key.Hide();
-                evArgs.Cancel = true;
-            });
-        }
-
-
-        private  RelayCommand? _doubleClickHideWindowCommand;
-        public  RelayCommand DoubleClickHideWindowCommand => _doubleClickHideWindowCommand = _doubleClickHideWindowCommand is not null ?
-            _doubleClickHideWindowCommand : new RelayCommand(obj => _thisWindow?.Hide());
-        
-
-        private  RelayCommand? _getThisWindow;
+        private RelayCommand? _getThisWindow;
         public RelayCommand GetThisWindow => _getThisWindow = _getThisWindow is not null ? _getThisWindow :
-                        new RelayCommand(obj => _thisWindow = obj is not RoutedEventArgs ev ?
-                         throw new ArgumentException("Неверный входной параметр", typeof(RoutedEventArgs).ToString()) :
-                          ev.Source is not Window win ? throw new InvalidOperationException() : win);            
-        
+                             new RelayCommand(obj => _thisWindow = obj is not RoutedEventArgs ev ?
+                              throw new ArgumentException("Неверный входной параметр", typeof(RoutedEventArgs).ToString()) :
+                               ev.Source is not Window win ? throw new InvalidOperationException() : win);
+
+
+        private RelayCommand? _closingCommand;
+        public RelayCommand ClosingCommand => _closingCommand = _closingCommand is not null ? _closingCommand : new RelayCommand(obj =>
+        {
+            _ = obj is not CancelEventArgs eventArgs ? throw new ArgumentException() : eventArgs.Cancel = true;
+            _thisWindow?.Hide();
+        });
+
+
+        private RelayCommand? _doubleClickHideWindowCommand;
+        public RelayCommand DoubleClickHideWindowCommand => _doubleClickHideWindowCommand = _doubleClickHideWindowCommand is not null ?
+                              _doubleClickHideWindowCommand : new RelayCommand(obj => _thisWindow?.Hide());
+
     }
 }
