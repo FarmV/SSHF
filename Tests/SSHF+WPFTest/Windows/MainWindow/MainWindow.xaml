@@ -30,7 +30,7 @@
 >
     <Window.Resources>
         <ImageBrush x:Key="BackG"  ImageSource="{Binding Image}"/>
-        <converts:EvenArgsAddWindow x:Key="convetAddWidnow"/>
+        <converts:WinToFE x:Key="convetToFE"/>
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
@@ -38,6 +38,11 @@
     </WindowChrome.WindowChrome>
 
     <behaviors:Interaction.Triggers>
+
+        <!-- Отправляем ссылку на самого себя в DataContext -->
+        <behaviors:EventTrigger EventName="Loaded" SourceObject="{Binding ElementName=Fast, Converter= {StaticResource convetToFE}}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = GetThisWindow}" PassEventArgsToCommand="True"/>
+        </behaviors:EventTrigger>
         <!-- Пререхватыаем евент закрытия окна --> 
         <behaviors:EventTrigger EventName="Closing" SourceObject="{Binding ElementName=Fast}">
             <behaviors:InvokeCommandAction Command="{Binding Path = ClosingCommand}" PassEventArgsToCommand="True"/>
