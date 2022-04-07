@@ -20,17 +20,15 @@ namespace SSHF.ViewModels.MainWindowViewModel
 {
     internal partial class MainWindowViewModel : ViewModel
     {
-
-
-
         public override object ProvideValue(IServiceProvider serviceProvider) => this;
+
+        private Window? _thisWindow;
 
         private readonly MainWindowModel _model;
 
         public MainWindowViewModel()
         {
-            _model = new MainWindowModel(this);
-     
+            _model = new MainWindowModel(this);     
         }   
 
         private string _title = "Fast Window";
@@ -64,22 +62,17 @@ namespace SSHF.ViewModels.MainWindowViewModel
             });
         }
 
+
         private  RelayCommand? _doubleClickHideWindowCommand;
-        public  RelayCommand DoubleClickHideWindowCommand
-        {
-            get => new RelayCommand((_) => _window1.Hide() );
-            
-        }
+        public  RelayCommand DoubleClickHideWindowCommand => _doubleClickHideWindowCommand = _doubleClickHideWindowCommand is not null ?
+            _doubleClickHideWindowCommand : new RelayCommand(obj => _thisWindow?.Hide());
+        
 
-
-        private Window _window1;
         private  RelayCommand? _getThisWindow;
-        public RelayCommand GetThisWindow
-        {
-            get => _getThisWindow = _getThisWindow is not null ? _getThisWindow :
-                        new RelayCommand(obj => _window1 = obj is not RoutedEventArgs ev ?
+        public RelayCommand GetThisWindow => _getThisWindow = _getThisWindow is not null ? _getThisWindow :
+                        new RelayCommand(obj => _thisWindow = obj is not RoutedEventArgs ev ?
                          throw new ArgumentException("Неверный входной параметр", typeof(RoutedEventArgs).ToString()) :
                           ev.Source is not Window win ? throw new InvalidOperationException() : win);            
-        }
+        
     }
 }

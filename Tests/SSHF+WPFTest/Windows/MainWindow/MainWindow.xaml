@@ -30,7 +30,6 @@
 >
     <Window.Resources>
         <ImageBrush x:Key="BackG"  ImageSource="{Binding Image}"/>
-        <converts:WinToFE x:Key="convetToFE"/>
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
@@ -40,16 +39,16 @@
     <behaviors:Interaction.Triggers>
 
         <!-- Отправляем ссылку на самого себя в DataContext -->
-        <behaviors:EventTrigger EventName="Loaded" SourceObject="{Binding ElementName=Fast, Converter= {StaticResource convetToFE}}">
+        <behaviors:EventTrigger EventName="Loaded" SourceObject="{Binding ElementName=Fast}">
             <behaviors:InvokeCommandAction Command="{Binding Path = GetThisWindow}" PassEventArgsToCommand="True"/>
         </behaviors:EventTrigger>
-        <!-- Пререхватыаем евент закрытия окна --> 
+        <!-- Пререхватыаем эвент закрытия окна --> 
         <behaviors:EventTrigger EventName="Closing" SourceObject="{Binding ElementName=Fast}">
             <behaviors:InvokeCommandAction Command="{Binding Path = ClosingCommand}" PassEventArgsToCommand="True"/>
         </behaviors:EventTrigger>
         <!-- Скрываем окно по двойному клику -->
         <behaviors:EventTrigger EventName="MouseDoubleClick" SourceObject="{Binding ElementName=Fast}">
-            <behaviors:InvokeCommandAction Command="{Binding Path = DoubleClickHideWindowCommand}" PassEventArgsToCommand="True"/>
+            <behaviors:InvokeCommandAction Command="{Binding Path = DoubleClickHideWindowCommand}" PassEventArgsToCommand="False"/>
         </behaviors:EventTrigger>
     </behaviors:Interaction.Triggers>
 
