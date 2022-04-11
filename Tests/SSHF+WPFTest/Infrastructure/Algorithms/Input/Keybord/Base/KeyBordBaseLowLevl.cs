@@ -10,8 +10,6 @@ namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
 {
     internal class KeyBordBaseLowLevl
     {
-        public KeyBordBaseLowLevl(KeyboardHookLowLevl hook)
-        {
-        }
+  
     }
 }

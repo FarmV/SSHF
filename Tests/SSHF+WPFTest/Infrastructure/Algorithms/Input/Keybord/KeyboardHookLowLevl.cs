@@ -10,108 +10,101 @@ using SSHF.Infrastructure.Algorithms.Input.Keybord.Base;
 
 namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base.Input
 {
-    internal class KeyboardHookLowLevl
+   
+    
+    internal class MyLowlevlhook : IAsyncDisposable
     {
-        ///// <summary>
-        ///// Internal callback processing function
-        ///// </summary>
-        //private delegate IntPtr KeyboardHookHandler(int nCode, IntPtr wParam, IntPtr lParam);
-        //private KeyboardHookHandler hookHandler;
 
-        ///// <summary>
-        ///// Function that will be called when defined events occur
-        ///// </summary>
-        ///// <param name="key">VKeys</param>
-        //public delegate void KeyboardHookCallback(VKeys key);
+        public async ValueTask DisposeAsync() => await Task.Run(() => { UninstallHook(); GC.SuppressFinalize(this); });
 
-        //#region Events
-        //public event KeyboardHookCallback KeyDown;
-        //public event KeyboardHookCallback KeyUp;
-        //#endregion
+        private delegate IntPtr KeyboardHookHandler(int nCode, WMEvent wParam, TagKBDLLHOOKSTRUCT lParam);
+        private KeyboardHookHandler? hookHandler;
 
-        ///// <summary>
-        ///// Hook ID
-        ///// </summary>
-        //private IntPtr hookID = IntPtr.Zero;
+        private IntPtr hookID = IntPtr.Zero;
 
-        ///// <summary>
-        ///// Install low level keyboard hook
-        ///// </summary>
-        //public void Install()
-        //{
-        //    hookHandler = HookFunc;
-        //    hookID = SetHook(hookHandler);
-        //}
+        public void InstallHook()
+        {
+            hookHandler = HookFunc;
+            hookID = SetHook(hookHandler);
+        }
 
-        ///// <summary>
-        ///// Remove low level keyboard hook
-        ///// </summary>
-        //public void Uninstall()
-        //{
-        //    UnhookWindowsHookEx(hookID);
-        //}
+        ~MyLowlevlhook() => UninstallHook();
 
-        ///// <summary>
-        ///// Registers hook with Windows API
-        ///// </summary>
-        ///// <param name="proc">Callback function</param>
-        ///// <returns>Hook ID</returns>
-        //private IntPtr SetHook(KeyboardHookHandler proc)
-        //{
-        //    using (ProcessModule module = Process.GetCurrentProcess().MainModule)
-        //        return SetWindowsHookEx(13, proc, GetModuleHandle(module.ModuleName), 0);
-        //}
+        public void UninstallHook() => UnhookWindowsHookEx(hookID);
 
-        ///// <summary>
-        ///// Default hook call, which analyses pressed keys
-        ///// </summary>
-        //private IntPtr HookFunc(int nCode, IntPtr wParam, IntPtr lParam)
-        //{
-        //    if (nCode >= 0)
-        //    {
-        //        int iwParam = wParam.ToInt32();
 
-        //        if ((iwParam == WM_KEYDOWN || iwParam == WM_SYSKEYDOWN))
-        //            if (KeyDown != null)
-        //                KeyDown((VKeys)Marshal.ReadInt32(lParam));
-        //        if ((iwParam == WM_KEYUP || iwParam == WM_SYSKEYUP))
-        //            if (KeyUp != null)
-        //                KeyUp((VKeys)Marshal.ReadInt32(lParam));
-        //    }
+        private readonly int WH_KEYBOARD_LL = 13;
+        private IntPtr SetHook(KeyboardHookHandler proc) => SetWindowsHookEx(WH_KEYBOARD_LL, proc,
+                 GetModuleHandleW(Process.GetCurrentProcess().MainModule is not ProcessModule module2 ? throw new NullReferenceException() : module2.ModuleName ?? throw new NullReferenceException()), 0);
 
-        //    return CallNextHookEx(hookID, nCode, wParam, lParam);
-        //}
 
-        ///// <summary>
-        ///// Destructor. Unhook current hook
-        ///// </summary>
-        //~KeyboardHookLowLevl()
-        //{
-        //    Uninstall();
-        //}
+        public delegate void KeyboardHookCallback(VKeys key);
+        public event KeyboardHookCallback? KeyDown;
+        public event KeyboardHookCallback? KeyUp;
+        private IntPtr HookFunc(int nCode, WMEvent wParam, TagKBDLLHOOKSTRUCT lParam)
+        {
+            if (nCode >= 0)
+            {
+                if (wParam is WMEvent.WM_KEYDOWN | wParam is WMEvent.WM_SYSKEYDOWN) KeyDown?.Invoke(lParam.Vkcode);
+                if (wParam is WMEvent.WM_KEYUP | wParam is WMEvent.WM_SYSKEYUP) KeyUp?.Invoke(lParam.Vkcode);
+            }
 
-        ///// <summary>
-        ///// Low-Level function declarations
-        ///// </summary>
-        //#region WinAPI
-        //private const int WM_KEYDOWN = 0x100;
-        //private const int WM_SYSKEYDOWN = 0x104;
-        //private const int WM_KEYUP = 0x101;
-        //private const int WM_SYSKEYUP = 0x105;
+            return CallNextHookEx(hookID, nCode, wParam, lParam);
+        }
+        enum WMEvent
+        {
+            WM_KEYDOWN = 256,
+            WM_SYSKEYDOWN = 260,
+            WM_KEYUP = 257,
+            WM_SYSKEYUP = 261
+        }
+        // https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-kbdllhookstruct?redirectedfrom=MSDN
+        [StructLayout(LayoutKind.Sequential)]
+        private struct TagKBDLLHOOKSTRUCT
+        {
+            internal readonly VKeys Vkcode;
+            internal readonly int ScanCode;
+            internal readonly int Flags;
+            internal readonly int Time; // Милисикунды между сообщениями. Обнуляются при переполнинии.
+            internal readonly UIntPtr DwExtraInfo;   //??
+        }
+        internal struct KeyStats
+        {
+            internal bool Extendedkey;
+            internal bool EventjectedisLow;
+            internal bool EventIsInjected;
+            internal bool ALTkeyIsPpressed;
+            internal bool KeyNotIsPressed;
+            internal int CountRepeat;
 
-        //[DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        //private static extern IntPtr SetWindowsHookEx(int idHook, KeyboardHookHandler lpfn, IntPtr hMod, uint dwThreadId);
+            public static implicit operator KeyStats(int flags) => new KeyStats
+            {
+                Extendedkey = Convert.ToBoolean(flags >> 0),
+                EventjectedisLow = Convert.ToBoolean(flags >> 1),
+                EventIsInjected = Convert.ToBoolean(flags >> 4),
+                ALTkeyIsPpressed = Convert.ToBoolean(flags >> 5),
+                KeyNotIsPressed = Convert.ToBoolean(flags >> 7),
+                CountRepeat = Convert.ToInt32(flags >> 15),
+            };
 
-        //[DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        //[return: MarshalAs(UnmanagedType.Bool)]
-        //private static extern bool UnhookWindowsHookEx(IntPtr hhk);
+        }
 
-        //[DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        //private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
 
-        //[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        //private static extern IntPtr GetModuleHandle(string lpModuleName);
-        //#endregion
+
+
+        #region WinAPI
+        [DllImport("user32.dll")]
+        private static extern IntPtr SetWindowsHookEx(int idHook, KeyboardHookHandler lpfn, IntPtr hMod, uint dwThreadId);
+
+        [DllImport("user32.dll")]
+        private static extern bool UnhookWindowsHookEx(IntPtr hhk);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, WMEvent wParam, TagKBDLLHOOKSTRUCT lParam);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+        private static extern IntPtr GetModuleHandleW([MarshalAs(UnmanagedType.LPWStr)] string lpModuleName);
+        #endregion
     }
 }
 

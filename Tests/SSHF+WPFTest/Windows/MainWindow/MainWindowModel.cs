@@ -49,9 +49,9 @@ namespace SSHF.Models.MainWindowModel
             string ScreenshotReaderDirectory = @"D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe";
             var keyCombianteionGetTranslate = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
             {
-                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_1,
-                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_2,
-                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_3
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_KEY_1,
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_KEY_2,
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_KEY_3
             };
             callback.AddCallBackTask(keyCombianteionGetTranslate, () => new Task(async () =>
             {
@@ -65,9 +65,9 @@ namespace SSHF.Models.MainWindowModel
 
             var keyCombianteionGetClipboardImageAndRefresh = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
             {
-                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.LWIN,
-                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.SHIFT,
-                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.KEY_A
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_LWIN,
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_SHIFT,
+                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_KEY_A
             };
             callback.AddCallBackTask(keyCombianteionGetClipboardImageAndRefresh, () => new Task(async () =>
             {
@@ -101,7 +101,7 @@ namespace SSHF.Models.MainWindowModel
                     {
                         if (e.Data is RawInputKeyboardData)
                         {
-                            if (KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.CONTROL) is true)
+                            if (KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL) is true)
                             {
                                 tokenSource.Cancel();
                                 App.Input -= MouseInput;
@@ -114,7 +114,7 @@ namespace SSHF.Models.MainWindowModel
                             tokenSource.Cancel();
                             App.Input -= MouseInput;
                         }
-
+                        
                     }
                     _ = Task.Run(() =>
                     {

@@ -13,10 +13,11 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using SSHF.Infrastructure.Algorithms.KeyBoards.Base.Input;
 
 namespace SSHF.Infrastructure.Algorithms.Base
 {
-    internal class VKeysEqualityComparer: IEqualityComparer<VKeys[]>
+    internal class VKeysEqualityComparer : IEqualityComparer<VKeys[]>
     {
         public bool Equals(VKeys[]? x, VKeys[]? y)
         {
@@ -44,39 +45,64 @@ namespace SSHF.Infrastructure.Algorithms.Base
             KeyBordBaseRawInput.ChangeTheKeyPressure += KeyBordBaseRawInput_ChangeTheKeyPressure;
         }
 
+        private static async Task<bool> PreKeys(VKeys[] keys)
+        {
+            bool res = default;
+            void checkKey(VKeys key)
+            {
+                if (keys.Contains(key)) res = true;
+            }
+            MyLowlevlhook lowlevlhook = new MyLowlevlhook();
+            lowlevlhook.InstallHook();
+            lowlevlhook.KeyDown += checkKey;
+            await Task.Delay(2000);
+            lowlevlhook.UninstallHook();
+            lowlevlhook.KeyDown -= checkKey;
+            return res;
+        }
+
         private async static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)
         {
 
             VKeys[] pressedKeys = e.Keys;
             if (pressedKeys.Length is 0) return;
-            
-            VKeys[][]? keys =
-            await Task.Run(() =>
-            {
-                return keys = Tasks.FunctionsCallback.Keys.Where(x =>
-                {
-                    if (pressedKeys.Length != x.Length) return false;
 
-                    for (int i = 0;i < pressedKeys.Length;i++)
-                    {
-                        if (x.Any((x) => x == pressedKeys[i]) is not true) return false;
-                    }
-                    return true;
-                }).ToArray();
-            });
-            if (keys.Length is 0) return;
-            if (keys.Length > 1) throw new InvalidOperationException();
+            //var preKeys = Tasks.FunctionsCallback.Keys.Where(x =>
+            //{
+
+            //    for (int i = 0; i < pressedKeys.Length; i++)
+            //    {
+            //        if (x.Any((x) => x == pressedKeys[i]) is not true) return false;
+            //    }
+            //    return true;
+
+
+            //});
+
+
+
+            List<VKeys[]> keys = await Task.Run(() => Tasks.FunctionsCallback.Keys.Where(x =>
+            {
+                if (pressedKeys.Length != x.Length) return false;
+
+                for (int i = 0; i < pressedKeys.Length; i++)
+                {
+                    if (x.Any((x) => x == pressedKeys[i]) is not true) return false;
+                }
+                return true;
+            }).ToList());
+
+            if (keys.Count is 0) return;
+            if (keys.Count > 1) throw new InvalidOperationException();
             _ = Task.Run(() =>
             {
                 try
                 {
-                    Tasks.FunctionsCallback[keys.ToArray()[0]].Invoke().Start();
-                }
-                catch (InvalidOperationException)
+                    Tasks.FunctionsCallback[keys[0]].Invoke().Start();
+                } catch (InvalidOperationException)
                 {
                     throw;
-                }
-                catch (Exception)
+                } catch (Exception)
                 {
 
                 }
