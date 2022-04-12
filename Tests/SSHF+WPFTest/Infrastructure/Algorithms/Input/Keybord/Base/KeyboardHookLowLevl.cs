@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Interop;
+using System.Windows;
+using System.Windows.Threading;
 
 using SSHF.Infrastructure.Algorithms.Input.Keybord.Base;
 
@@ -24,9 +28,14 @@ namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
             hookHandler = HookFunc;
             hookID = SetHook(hookHandler);
 
-         //   System.Windows.Forms.Application.Run();       // =(     
+             // Thread.CurrentThread.Name = "Тест creacte InstallHook";
+            // System.Windows.Forms.Application.Run();       // =(
+            // Dispatcher.Run();                              // =(
+    
         }
-   
+
+
+
         ~MyLowlevlhook() => UninstallHook();
 
         public void UninstallHook() => UnhookWindowsHookEx(hookID);
@@ -45,7 +54,7 @@ namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
 
             if (nCode >= 0)
             {
-               
+
             }
 
             return CallNextHookEx(hookID, nCode, wParam, lParam);

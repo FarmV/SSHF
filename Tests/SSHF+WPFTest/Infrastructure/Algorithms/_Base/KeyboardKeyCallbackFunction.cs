@@ -177,8 +177,12 @@ namespace SSHF.Infrastructure.Algorithms.Base
 
         internal static KeyboardKeyCallbackFunction GetInstance()
         {
-            Lowlevlhook = new MyLowlevlhook();
-            Lowlevlhook.InstallHook();
+            App.WindowsIsOpen[App.GetMyMainWindow].Value.Invoke(() =>
+            {
+                Lowlevlhook = new MyLowlevlhook();
+                Lowlevlhook.InstallHook();
+
+            });
             return Instance;
         }
 
