@@ -58,8 +58,9 @@ namespace SSHF.Infrastructure.Algorithms.Base
 
         internal static MyLowlevlhook? Lowlevlhook;
         //  private readonly EventWaitHandle WaitHandlePreKeys = new EventWaitHandle(false, EventResetMode.AutoReset);
-        private static VKeys? PreKeys(List<VKeys> keys)
+        private static VKeys? PreKeys(List<VKeys> keys)//
         {
+            
             EventWaitHandle WaitHandlePreKeys = new EventWaitHandle(false, EventResetMode.AutoReset);
 
             _ = Task.Run(() =>
@@ -71,7 +72,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
                         WaitHandlePreKeys.Set();
 
                     } catch (Exception) { };
-                }), null, 200, Timeout.Infinite);
+                }), null, 60, Timeout.Infinite);
             });
             VKeys? res = null;
 
@@ -110,10 +111,9 @@ namespace SSHF.Infrastructure.Algorithms.Base
 
 
         static readonly object _lockMethod = new object();
-        private static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)
+        private static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)//A
         {
-            lock (_lockMethod)
-            {
+            
                 VKeys[] pressedKeys = e.Keys;
                 if (pressedKeys.Length is 0) return;
 
@@ -140,7 +140,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
                     return true;
                 }).Where(x => x.Length == pressedKeys.Length).ToList();
                 
-                if (listPreKeys.Count > 0)
+                if (listPreKeys.Count > 0)//AAAAA
                 {
                     VKeys? callhook = PreKeys(listPreKeys);
                     if (callhook.HasValue is true)
@@ -165,7 +165,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
                        }).Where(x => x.Length == pressedKeys.Length + 1).ToList();
                     }
                 }
-
+                
                 if (keys.Count is 0) return;
                 if (keys.Count > 1) throw new InvalidOperationException();
                 _ = Task.Run(() =>
@@ -181,7 +181,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
 
                     }
                 }).ConfigureAwait(false);
-            }
+            
         }
         private static bool _instal = default;
         internal static KeyboardKeyCallbackFunction GetInstance()

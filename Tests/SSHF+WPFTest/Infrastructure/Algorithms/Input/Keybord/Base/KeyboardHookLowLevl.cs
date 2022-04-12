@@ -41,31 +41,42 @@ namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
         public void UninstallHook() => UnhookWindowsHookEx(hookID);
 
 
-        private readonly int WH_KEYBOARD_LL = 13;
+        private readonly int WH_KEYBOARD_LL = 13;//
         private IntPtr SetHook(KeyboardHookHandler proc) => SetWindowsHookEx(WH_KEYBOARD_LL, proc,
                  GetModuleHandleW(Process.GetCurrentProcess().MainModule is not ProcessModule module2 ? throw new NullReferenceException() : module2.ModuleName ?? throw new NullReferenceException()), 0);
 
 
         internal delegate void KeyboardHookCallback(VKeys key, SettingHook setting);
         internal event KeyboardHookCallback? KeyDown;
-     //   internal event KeyboardHookCallback? KeyUp;
+        //   internal event KeyboardHookCallback? KeyUp;
 
         internal SettingHook Settings = new SettingHook();
+        private int Count = default;
         private IntPtr HookFunc(int nCode, WMEvent wParam, TagKBDLLHOOKSTRUCT lParam)
         {
+            if (Count < 0 || Count > 1) throw  new InvalidOperationException();
             if (nCode >= 0)
             {
-                if (wParam is WMEvent.WM_KEYDOWN || wParam is WMEvent.WM_SYSKEYDOWN) KeyDown?.Invoke(lParam.Vkcode, Settings);
-                //if (wParam is WMEvent.WM_KEYUP || wParam is WMEvent.WM_SYSKEYDOWN) KeyUp?.Invoke(lParam.Vkcode, Settings);
-
-                if (Settings.Break is true)
+            
+                if ((wParam is WMEvent.WM_KEYUP || wParam is WMEvent.WM_SYSKEYUP) & Count is 1)
                 {
-                    Settings.Break = false;
-                   // Thread.Sleep(700);
-                    return (System.IntPtr)1;
+                    Count--;
+                    return (System.IntPtr)1; 
                 }
+
+                if ( wParam is WMEvent.WM_KEYDOWN || wParam is WMEvent.WM_SYSKEYDOWN ) 
+                {
+                    KeyDown?.Invoke(lParam.Vkcode, Settings);
+                    if (Settings.Break is true)
+                    {
+                        Settings.Break = false;
+                        Count++;
+                        return (System.IntPtr)1;
+                    }
+                }
+
             }
-           return CallNextHookEx(hookID, nCode, wParam, lParam);         
+            return CallNextHookEx(hookID, nCode, wParam, lParam);
         }
         enum WMEvent
         {

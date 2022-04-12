@@ -26,6 +26,7 @@ using SSHF.Infrastructure.Algorithms;
 using System.Windows.Media.Imaging;
 using System.IO;
 using SSHF.Infrastructure.Algorithms.KeyBoards.Base;
+using SSHF.ViewModels.Base;
 
 namespace SSHF
 {
@@ -144,7 +145,7 @@ namespace SSHF
                             case WM_INPUT:
                             {
                                 RawInputData? data = RawInputData.FromHandle(lParam); // нельзя асинхронно
-                                _ = Task.Run(() => { Input?.Invoke(WindowsIsOpen[GetMyMainWindow].Key, new Infrastructure.Algorithms.Input.RawInputEvent(data)); });
+                                Input?.Invoke(WindowsIsOpen[GetMyMainWindow].Key, new Infrastructure.Algorithms.Input.RawInputEvent(data));
                             }
                             break;
                             case WM_DPICHANGED:
@@ -193,6 +194,8 @@ namespace SSHF
                     } catch (Exception) { }
                 })).ConfigureAwait(false);
 
+
+
                 var keyCombianteionGetClipboardImageAndRefresh = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
                 {
                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_LWIN,
@@ -201,13 +204,18 @@ namespace SSHF
                 };
                 callback.AddCallBackTask(keyCombianteionGetClipboardImageAndRefresh, () => new Task(async () =>
                 {
+                    await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(() =>
+                    {
+                        MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
+                        if (ViewModel.RefreshWindow is true) return;
+                    });
                     AlgorithmGetClipboardImage instance = new AlgorithmGetClipboardImage();
                     try
                     {
                         BitmapSource bitSor = await instance.Start<BitmapSource, object>(new object());
 
                         using MemoryStream createFileFromImageBuffer = new MemoryStream();         //todo переехать в интерфейс конвертации изображений
-                            BitmapEncoder encoder = new PngBitmapEncoder();
+                        BitmapEncoder encoder = new PngBitmapEncoder();
                         BitmapFrame ccc = BitmapFrame.Create(bitSor);
                         encoder.Frames.Add(BitmapFrame.Create(bitSor));
                         encoder.Save(createFileFromImageBuffer);
@@ -219,13 +227,14 @@ namespace SSHF
 
                         await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(() =>
                         {
-                            MainWindowViewModel abbb = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
 
-                            abbb.Image = image;
+                            MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
+                            ViewModel.Image = image;
                             App.WindowsIsOpen[App.GetMyMainWindow].Key.Height = image.Height;
                             App.WindowsIsOpen[App.GetMyMainWindow].Key.Width = image.Width;
                             App.WindowsIsOpen[App.GetMyMainWindow].Key.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                             App.WindowsIsOpen[App.GetMyMainWindow].Key.Show();
+                            App.WindowsIsOpen[App.GetMyMainWindow].Key.Focus();
                         });
                         CancellationTokenSource tokenSource = new CancellationTokenSource();
 
@@ -252,7 +261,13 @@ namespace SSHF
                         {
                             App.Input += MouseInput;
                         }).ConfigureAwait(false);
-                        await SSHF.Infrastructure.SharedFunctions.WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token);
+                        await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(async() =>
+                        {
+                            MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
+                            ViewModel.RefreshWindow = true;
+                            await WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token);
+                            ViewModel.RefreshWindow = false;
+                        });
                     } catch (Exception) { }
                 })).ConfigureAwait(false);
 
