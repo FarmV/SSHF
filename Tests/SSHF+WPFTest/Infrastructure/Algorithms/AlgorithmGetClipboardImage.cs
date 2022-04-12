@@ -70,7 +70,7 @@ namespace SSHF.Infrastructure.Algorithms
                     return source;
                 }
                 catch (Exception)
-                {
+                A{
                     throw;
                 }
             }

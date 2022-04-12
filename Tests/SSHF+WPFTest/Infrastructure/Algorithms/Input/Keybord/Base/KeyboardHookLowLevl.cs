@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 
 using SSHF.Infrastructure.Algorithms.Input.Keybord.Base;
 
-namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base.Input
+namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
 {
-   
-    
+
+
     internal class MyLowlevlhook : IAsyncDisposable
     {
 
@@ -26,8 +23,10 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base.Input
         {
             hookHandler = HookFunc;
             hookID = SetHook(hookHandler);
-        }
 
+         //   System.Windows.Forms.Application.Run();       // =(     
+        }
+   
         ~MyLowlevlhook() => UninstallHook();
 
         public void UninstallHook() => UnhookWindowsHookEx(hookID);
@@ -43,10 +42,10 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base.Input
         public event KeyboardHookCallback? KeyUp;
         private IntPtr HookFunc(int nCode, WMEvent wParam, TagKBDLLHOOKSTRUCT lParam)
         {
+
             if (nCode >= 0)
             {
-                if (wParam is WMEvent.WM_KEYDOWN | wParam is WMEvent.WM_SYSKEYDOWN) KeyDown?.Invoke(lParam.Vkcode);
-                if (wParam is WMEvent.WM_KEYUP | wParam is WMEvent.WM_SYSKEYUP) KeyUp?.Invoke(lParam.Vkcode);
+               
             }
 
             return CallNextHookEx(hookID, nCode, wParam, lParam);
@@ -88,9 +87,6 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base.Input
             };
 
         }
-
-
-
 
         #region WinAPI
         [DllImport("user32.dll")]
