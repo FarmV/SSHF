@@ -159,7 +159,7 @@ namespace SSHF
                 _ = dispThreadMainWindow.InvokeAsync(() =>
                 {
                     Thread dispMain = dispThreadMainWindow.Thread;
-                    dispMain.Name = GetMyMainWindow;
+                    dispMain.Name = GetWindowNotification;
                     Dispatcher disMainWindow = WindowsIsOpen[GetWindowNotification].Key.Dispatcher;
 
                     Window mainWindow = WindowsIsOpen[GetWindowNotification].Key;
