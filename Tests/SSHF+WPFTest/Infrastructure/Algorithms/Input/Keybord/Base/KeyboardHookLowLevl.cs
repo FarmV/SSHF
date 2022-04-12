@@ -28,10 +28,10 @@ namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
             hookHandler = HookFunc;
             hookID = SetHook(hookHandler);
 
-             // Thread.CurrentThread.Name = "Тест creacte InstallHook";
+            // Thread.CurrentThread.Name = "Тест creacte InstallHook";
             // System.Windows.Forms.Application.Run();       // =(
             // Dispatcher.Run();                              // =(
-    
+
         }
 
 
@@ -46,18 +46,26 @@ namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
                  GetModuleHandleW(Process.GetCurrentProcess().MainModule is not ProcessModule module2 ? throw new NullReferenceException() : module2.ModuleName ?? throw new NullReferenceException()), 0);
 
 
-        public delegate void KeyboardHookCallback(VKeys key);
-        public event KeyboardHookCallback? KeyDown;
-        public event KeyboardHookCallback? KeyUp;
+        internal delegate void KeyboardHookCallback(VKeys key, SettingHook setting);
+        internal event KeyboardHookCallback? KeyDown;
+     //   internal event KeyboardHookCallback? KeyUp;
+
+        internal SettingHook Settings = new SettingHook();
         private IntPtr HookFunc(int nCode, WMEvent wParam, TagKBDLLHOOKSTRUCT lParam)
         {
-
             if (nCode >= 0)
             {
+                if (wParam is WMEvent.WM_KEYDOWN || wParam is WMEvent.WM_SYSKEYDOWN) KeyDown?.Invoke(lParam.Vkcode, Settings);
+                //if (wParam is WMEvent.WM_KEYUP || wParam is WMEvent.WM_SYSKEYDOWN) KeyUp?.Invoke(lParam.Vkcode, Settings);
 
+                if (Settings.Break is true)
+                {
+                    Settings.Break = false;
+                   // Thread.Sleep(700);
+                    return (System.IntPtr)1;
+                }
             }
-
-            return CallNextHookEx(hookID, nCode, wParam, lParam);
+           return CallNextHookEx(hookID, nCode, wParam, lParam);         
         }
         enum WMEvent
         {
@@ -95,6 +103,11 @@ namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
                 CountRepeat = Convert.ToInt32(flags >> 15),
             };
 
+        }
+
+        internal class SettingHook
+        {
+            internal bool Break { get; set; } = default;
         }
 
         #region WinAPI
