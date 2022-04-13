@@ -49,31 +49,27 @@ namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
 
         internal delegate void KeyboardHookCallback(VKeys key, SettingHook setting);
         internal event KeyboardHookCallback? KeyDown;
-        //   internal event KeyboardHookCallback? KeyUp;
+
 
         internal SettingHook Settings = new SettingHook();
         private int Count = default;
         private List<(WMEvent,int)> test = new List<(WMEvent, int)> ();
+     
         private IntPtr HookFunc(int nCode, WMEvent wParam, TagKBDLLHOOKSTRUCT lParam)
         {
             test.Add((wParam, lParam.Time));
-            if (Count < 0 || Count > 1) throw  new InvalidOperationException();
-            if (nCode >= 0 &  ((KeyStats)lParam.Flags).KeyNotIsPressed )//A
-            {
-            
-                if ((wParam is WMEvent.WM_KEYUP || wParam is WMEvent.WM_SYSKEYUP) & Count is 1)
-                {
-                    Count--;
-                    return (System.IntPtr)1; //
-                }
+        
 
+            if (nCode >= 0)
+            {
+                       
                 if ( wParam is WMEvent.WM_KEYDOWN || wParam is WMEvent.WM_SYSKEYDOWN ) 
                 {
                     KeyDown?.Invoke(lParam.Vkcode, Settings);
                     if (Settings.Break is true)
                     {
                         Settings.Break = false;
-                        Count++;
+                        //Count++;
                         return (System.IntPtr)1;
                     }
                 }
