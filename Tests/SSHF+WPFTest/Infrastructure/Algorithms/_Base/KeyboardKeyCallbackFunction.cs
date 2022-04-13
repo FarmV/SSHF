@@ -59,7 +59,8 @@ namespace SSHF.Infrastructure.Algorithms.Base
         }
 
         internal static MyLowlevlhook? Lowlevlhook;
-        //  private readonly EventWaitHandle WaitHandlePreKeys = new EventWaitHandle(false, EventResetMode.AutoReset);
+     
+      //  private static readonly EventWaitHandle WaitKeysHandler = new EventWaitHandle(false, EventResetMode.AutoReset);
         private static VKeys? PreKeys(List<VKeys> keys)//
         {
             if (Lowlevlhook is null) throw new NullReferenceException(nameof(MyLowlevlhook));
@@ -111,11 +112,11 @@ namespace SSHF.Infrastructure.Algorithms.Base
             Lowlevlhook.KeyDown -= CheckKey;
             WaitHandlePreKeys.Dispose();
             return res;
-        }
+        }//A
 
+      
 
-
-        private static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)//A
+        private static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)//AAAAAAAA
         {
 
             VKeys[] pressedKeys = e.Keys;

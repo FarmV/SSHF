@@ -152,10 +152,13 @@ namespace SSHF
                     {
                         const int WM_INPUT = 0x00FF;
                         const int WM_DPICHANGED = 0x02E0;
+
                         switch (msg)
                         {
                             case WM_INPUT:
                             {
+
+
                                 RawInputData? data = RawInputData.FromHandle(lParam); // нельзя асинхронно
                                 Input?.Invoke(WindowsIsOpen[GetMyMainWindow].Key, new Infrastructure.Algorithms.Input.RawInputEvent(data));
                             }
