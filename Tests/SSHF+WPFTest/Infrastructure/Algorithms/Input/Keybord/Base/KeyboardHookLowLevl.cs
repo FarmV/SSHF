@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Threading;
 
 using SSHF.Infrastructure.Algorithms.Input.Keybord.Base;
+using System.Collections.Generic;
 
 namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
 {
@@ -52,16 +53,18 @@ namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
 
         internal SettingHook Settings = new SettingHook();
         private int Count = default;
+        private List<(WMEvent,int)> test = new List<(WMEvent, int)> ();
         private IntPtr HookFunc(int nCode, WMEvent wParam, TagKBDLLHOOKSTRUCT lParam)
         {
+            test.Add((wParam, lParam.Time));
             if (Count < 0 || Count > 1) throw  new InvalidOperationException();
-            if (nCode >= 0)
+            if (nCode >= 0 &  ((KeyStats)lParam.Flags).KeyNotIsPressed )//A
             {
             
                 if ((wParam is WMEvent.WM_KEYUP || wParam is WMEvent.WM_SYSKEYUP) & Count is 1)
                 {
                     Count--;
-                    return (System.IntPtr)1; 
+                    return (System.IntPtr)1; //
                 }
 
                 if ( wParam is WMEvent.WM_KEYDOWN || wParam is WMEvent.WM_SYSKEYDOWN ) 
@@ -102,16 +105,14 @@ namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
             internal bool EventIsInjected;
             internal bool ALTkeyIsPpressed;
             internal bool KeyNotIsPressed;
-            internal int CountRepeat;
 
             public static implicit operator KeyStats(int flags) => new KeyStats
             {
-                Extendedkey = Convert.ToBoolean(flags >> 0),
-                EventjectedisLow = Convert.ToBoolean(flags >> 1),
-                EventIsInjected = Convert.ToBoolean(flags >> 4),
-                ALTkeyIsPpressed = Convert.ToBoolean(flags >> 5),
-                KeyNotIsPressed = Convert.ToBoolean(flags >> 7),
-                CountRepeat = Convert.ToInt32(flags >> 15),
+                Extendedkey = Convert.ToBoolean(flags & 0b_0000_0000),
+                EventjectedisLow = Convert.ToBoolean(flags & 0b_0000_0010),
+                EventIsInjected = Convert.ToBoolean(flags & 0b_0001_0000),
+                ALTkeyIsPpressed = Convert.ToBoolean(flags & 0b_0010_0000),
+                KeyNotIsPressed = Convert.ToBoolean(flags & 0b_1000_0000),
             };
 
         }
