@@ -14,10 +14,21 @@ using System.Diagnostics;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 
+using System.Threading;
+using System.Windows.Interop;
+using System.Windows;
+using static SSHF.Infrastructure.Algorithms.Input.Keybord.Base.MyLowlevlhook;
+
 namespace SSHF.Infrastructure.Algorithms.Base
 {
-    internal class VKeysEqualityComparer: IEqualityComparer<VKeys[]>
+    internal class VKeysEqualityComparer : IEqualityComparer<VKeys[]>, IAsyncDisposable
     {
+        public async ValueTask DisposeAsync() => await Task.Run(async () =>
+        {
+            await KeyboardKeyCallbackFunction.Lowlevlhook.DisposeAsync();
+            GC.SuppressFinalize(this);
+        });
+
         public bool Equals(VKeys[]? x, VKeys[]? y)
         {
             if (x is null || y is null) return false;
@@ -37,6 +48,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
     {
 
         private readonly static KeyboardKeyCallbackFunction Instance = new KeyboardKeyCallbackFunction();
+
         private KeyboardKeyCallbackFunction()
         {
 
@@ -44,46 +56,149 @@ namespace SSHF.Infrastructure.Algorithms.Base
             KeyBordBaseRawInput.ChangeTheKeyPressure += KeyBordBaseRawInput_ChangeTheKeyPressure;
         }
 
-        private async static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)
+        internal static MyLowlevlhook? Lowlevlhook;
+        //  private readonly EventWaitHandle WaitHandlePreKeys = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private static VKeys? PreKeys(List<VKeys> keys)//
         {
-
-            VKeys[] pressedKeys = e.Keys;
-            if (pressedKeys.Length is 0) return;
             
-            VKeys[][]? keys =
-            await Task.Run(() =>
-            {
-                return keys = Tasks.FunctionsCallback.Keys.Where(x =>
-                {
-                    if (pressedKeys.Length != x.Length) return false;
+            EventWaitHandle WaitHandlePreKeys = new EventWaitHandle(false, EventResetMode.AutoReset);
 
-                    for (int i = 0;i < pressedKeys.Length;i++)
-                    {
-                        if (x.Any((x) => x == pressedKeys[i]) is not true) return false;
-                    }
-                    return true;
-                }).ToArray();
-            });
-            if (keys.Length is 0) return;
-            if (keys.Length > 1) throw new InvalidOperationException();
             _ = Task.Run(() =>
             {
-                try
+                using Timer breakTimer = new Timer(new TimerCallback((arg) =>
                 {
-                    Tasks.FunctionsCallback[keys.ToArray()[0]].Invoke().Start();
-                }
-                catch (InvalidOperationException)
-                {
-                    throw;
-                }
-                catch (Exception)
-                {
+                    try
+                    {
+                        WaitHandlePreKeys.Set();
 
+                    } catch (Exception) { };
+                }), null, 60, Timeout.Infinite);
+            });
+            VKeys? res = null;
+
+            void CheckKey(VKeys key, SettingHook setting)
+            {
+                if (keys.Contains(key))
+                {
+                    res = key;
+                    setting.Break = true;
+                    try
+                    {
+                        WaitHandlePreKeys.Set();
+                    } catch (Exception)
+                    {
+                    }
+                } else
+                {
+                    try
+                    {
+                        WaitHandlePreKeys.Set();
+                        WaitHandlePreKeys.Dispose();
+                    } catch
+                    {
+                        Lowlevlhook.KeyDown -= CheckKey;
+                    }
                 }
-            }).ConfigureAwait(false);
+
+            }
+
+            Lowlevlhook.KeyDown += CheckKey;
+            WaitHandlePreKeys.WaitOne();
+            Lowlevlhook.KeyDown -= CheckKey;
+            WaitHandlePreKeys.Dispose();
+            return res;
         }
 
-        internal static KeyboardKeyCallbackFunction GetInstance() => Instance;
+
+        static readonly object _lockMethod = new object();
+        private static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)//A
+        {
+            
+                VKeys[] pressedKeys = e.Keys;
+                if (pressedKeys.Length is 0) return;
+
+
+                List<VKeys> listPreKeys = new List<VKeys>();
+
+
+                List<VKeys[]> keys = Tasks.FunctionsCallback.Keys.Where(x =>  // Почему то метод пропускается при активации формы в хуке
+                {
+                    for (int i = 0; i < pressedKeys.Length; i++)
+                    {
+                        if (x.Any((x) => x == pressedKeys[i]) is not true)
+                        {
+                            return false;
+                        }
+                        if (x.Any((x) => x == pressedKeys[i]) is true)
+                        {
+                            if (x.Length - pressedKeys.Length is 1 & x.Length - 1 == i + 1)
+                            {
+                                listPreKeys.Add(x[^1]);
+                            }
+                        }
+                    }
+                    return true;
+                }).Where(x => x.Length == pressedKeys.Length).ToList();
+                
+                if (listPreKeys.Count > 0)//AAAAA
+                {
+                    VKeys? callhook = PreKeys(listPreKeys);
+                    if (callhook.HasValue is true)
+                    {
+                        VKeys[] preseedKeys1 = pressedKeys.Append(callhook.Value).ToArray();
+
+                        keys = Tasks.FunctionsCallback.Keys.Where(x =>
+                       {
+                           if (preseedKeys1.Length != x.Length)
+                           {
+                               throw new InvalidOperationException();
+                           }
+
+                           for (int i = 0; i < preseedKeys1.Length; i++)
+                           {
+                               if (x.Any((x) => x == preseedKeys1[i]) is not true)
+                               {
+                                   return false;
+                               }
+                           }
+                           return true;
+                       }).Where(x => x.Length == pressedKeys.Length + 1).ToList();
+                    }
+                }
+                
+                if (keys.Count is 0) return;
+                if (keys.Count > 1) throw new InvalidOperationException();
+                _ = Task.Run(() =>
+                {
+                    try
+                    {
+                        Tasks.FunctionsCallback[keys[0]].Invoke().Start();
+                    } catch (InvalidOperationException)
+                    {
+                        throw;
+                    } catch (Exception)
+                    {
+
+                    }
+                }).ConfigureAwait(false);
+            
+        }
+        private static bool _instal = default;
+        internal static KeyboardKeyCallbackFunction GetInstance()
+        {
+            if (_instal is false)
+            {
+
+                App.WindowsIsOpen[App.GetMyMainWindow].Value.Invoke(() =>
+                {
+                    Lowlevlhook = new MyLowlevlhook();
+                    Lowlevlhook.InstallHook();
+
+                });
+                _instal = true;
+            }
+            return Instance;
+        }
 
         private static class Tasks
         {

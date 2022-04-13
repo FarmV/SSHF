@@ -21,11 +21,17 @@ using SSHF.Infrastructure.SharedFunctions;
 using System.Collections.Concurrent;
 using System.Windows.Threading;
 using SSHF.ViewModels;
+using SSHF.Infrastructure.Algorithms.Base;
+using SSHF.Infrastructure.Algorithms;
+using System.Windows.Media.Imaging;
+using System.IO;
+using SSHF.Infrastructure.Algorithms.KeyBoards.Base;
+using SSHF.ViewModels.Base;
 
 namespace SSHF
 {
 
-    public partial class App: System.Windows.Application
+    public partial class App : System.Windows.Application
     {
         internal static bool IsDesignMode { get; private set; } = true;
 
@@ -137,16 +143,16 @@ namespace SSHF
                         switch (msg)
                         {
                             case WM_INPUT:
-                                {
-                                    RawInputData? data = RawInputData.FromHandle(lParam); // нельзя асинхронно
-                                    _ = Task.Run(() => { Input?.Invoke(WindowsIsOpen[GetMyMainWindow].Key, new Infrastructure.Algorithms.Input.RawInputEvent(data)); });
-                                }
-                                break;
+                            {
+                                RawInputData? data = RawInputData.FromHandle(lParam); // нельзя асинхронно
+                                Input?.Invoke(WindowsIsOpen[GetMyMainWindow].Key, new Infrastructure.Algorithms.Input.RawInputEvent(data));
+                            }
+                            break;
                             case WM_DPICHANGED:
-                                {
-                                    _ = Task.Run(() => { DPIChange?.Invoke(new object(), EventArgs.Empty); }).ConfigureAwait(false);
-                                }
-                                break;
+                            {
+                                _ = Task.Run(() => { DPIChange?.Invoke(new object(), EventArgs.Empty); }).ConfigureAwait(false);
+                            }
+                            break;
                         }
                         return hwnd;
                     }
@@ -159,14 +165,122 @@ namespace SSHF
                 _ = dispThreadMainWindow.InvokeAsync(() =>
                 {
                     Thread dispMain = dispThreadMainWindow.Thread;
-                    dispMain.Name = GetMyMainWindow;
+                    dispMain.Name = GetWindowNotification;
                     Dispatcher disMainWindow = WindowsIsOpen[GetWindowNotification].Key.Dispatcher;
 
                     Window mainWindow = WindowsIsOpen[GetWindowNotification].Key;
 
                     if (WindowsIsOpen.TryUpdate(GetWindowNotification, new KeyValuePair<Window, Dispatcher>(mainWindow, disMainWindow), WindowsIsOpen[GetWindowNotification]) is not true) throw new InvalidOperationException();
                 }, DispatcherPriority.Render);
+            }).ContinueWith((T) =>
+            {
+
+
+                KeyboardKeyCallbackFunction callback = KeyboardKeyCallbackFunction.GetInstance();
+                string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
+                string ScreenshotReaderDirectory = @"D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe";
+                var keyCombianteionGetTranslate = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
+                {
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_KEY_1,
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_KEY_2,
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_KEY_3
+                };
+                callback.AddCallBackTask(keyCombianteionGetTranslate, () => new Task(async () =>
+                {
+                    AlgorithmGetTranslateAbToDepl instance = await AlgorithmGetTranslateAbToDepl.GetInstance(DeeplDirectory, ScreenshotReaderDirectory);
+                    try
+                    {
+                        await instance.Start<string, bool>(false);
+                    } catch (Exception) { }
+                })).ConfigureAwait(false);
+
+
+
+                var keyCombianteionGetClipboardImageAndRefresh = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
+                {
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_LWIN,
+                Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_SHIFT,
+                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_KEY_A
+                };
+                callback.AddCallBackTask(keyCombianteionGetClipboardImageAndRefresh, () => new Task(async () =>
+                {
+                    await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(() =>
+                    {
+                        MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
+                        if (ViewModel.RefreshWindow is true) return;
+                    });
+                    AlgorithmGetClipboardImage instance = new AlgorithmGetClipboardImage();
+                    try
+                    {
+                        BitmapSource bitSor = await instance.Start<BitmapSource, object>(new object());
+
+                        using MemoryStream createFileFromImageBuffer = new MemoryStream();         //todo переехать в интерфейс конвертации изображений
+                        BitmapEncoder encoder = new PngBitmapEncoder();
+                        BitmapFrame ccc = BitmapFrame.Create(bitSor);
+                        encoder.Frames.Add(BitmapFrame.Create(bitSor));
+                        encoder.Save(createFileFromImageBuffer);
+                        BitmapImage image = new BitmapImage();
+                        image.BeginInit();
+                        image.StreamSource = createFileFromImageBuffer;
+                        image.EndInit();
+                        image.Freeze();
+
+                        await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(() =>
+                        {
+
+                            MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
+                            ViewModel.Image = image;
+                            App.WindowsIsOpen[App.GetMyMainWindow].Key.Height = image.Height;
+                            App.WindowsIsOpen[App.GetMyMainWindow].Key.Width = image.Width;
+                            App.WindowsIsOpen[App.GetMyMainWindow].Key.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                            App.WindowsIsOpen[App.GetMyMainWindow].Key.Show();
+                            App.WindowsIsOpen[App.GetMyMainWindow].Key.Focus();
+                        });
+                        CancellationTokenSource tokenSource = new CancellationTokenSource();
+
+                        void MouseInput(object? sender, Infrastructure.Algorithms.Input.RawInputEvent e)
+                        {
+                            if (e.Data is RawInputKeyboardData)
+                            {
+                                if (KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL) is true)
+                                {
+                                    tokenSource.Cancel();
+                                    App.Input -= MouseInput;
+                                    return;
+                                }
+                            }
+                            if (e.Data is not RawInputMouseData data || data.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
+                            else
+                            {
+                                tokenSource.Cancel();
+                                App.Input -= MouseInput;
+                            }
+
+                        }
+                        _ = Task.Run(() =>
+                        {
+                            App.Input += MouseInput;
+                        }).ConfigureAwait(false);
+                        await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(async() =>
+                        {
+                            MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
+                            ViewModel.RefreshWindow = true;
+                            await WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token);
+                            ViewModel.RefreshWindow = false;
+                        });
+                    } catch (Exception) { }
+                })).ConfigureAwait(false);
+
+
             });
         });
+
+
+
+
+
+
+
+
     }
 }
