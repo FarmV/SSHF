@@ -27,12 +27,23 @@ using System.Windows.Media.Imaging;
 using System.IO;
 using SSHF.Infrastructure.Algorithms.KeyBoards.Base;
 using SSHF.ViewModels.Base;
+using System.Windows.Media;
 
 namespace SSHF
 {
 
-    public partial class App : System.Windows.Application
+    public partial class App : System.Windows.Application, IAsyncDisposable
     {
+        protected override async void OnExit(ExitEventArgs e) => await DisposeAsync();
+
+        public async ValueTask DisposeAsync()
+        {
+            if (CallbackFunction is not null) await CallbackFunction.DisposeAsync();
+            GC.SuppressFinalize(this);
+        }
+
+        internal static KeyboardKeyCallbackFunction? CallbackFunction;
+
         internal static bool IsDesignMode { get; private set; } = true;
 
         internal static event EventHandler<SSHF.Infrastructure.Algorithms.Input.RawInputEvent>? Input;
@@ -46,7 +57,7 @@ namespace SSHF
         private static NotificatorViewModel? Notificator;
         internal static NotificatorViewModel GetNotificator() => Notificator is null ? throw new NullReferenceException("Нотификатор не инициализирован") : Notificator;
 
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             Thread.CurrentThread.Name = "General stream!";
             IsDesignMode = false;
@@ -54,6 +65,7 @@ namespace SSHF
             if (IsDesignMode is false)
             {
                 _ = StartConfigurations();
+
             }
             base.OnStartup(e);
         }
@@ -160,6 +172,9 @@ namespace SSHF
 
             }).ContinueWith((taskInTask) =>
             {
+                _ = Task.Run(() => { CallbackFunction = KeyboardKeyCallbackFunction.GetInstance(); });
+
+
                 Dispatcher dispThreadMainWindow = WindowsIsOpen[GetWindowNotification].Key.Dispatcher;
 
                 _ = dispThreadMainWindow.InvokeAsync(() =>
@@ -209,32 +224,43 @@ namespace SSHF
                         MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
                         if (ViewModel.RefreshWindow is true) return;
                     });
-                    AlgorithmGetClipboardImage instance = new AlgorithmGetClipboardImage();
+
                     try
                     {
-                        BitmapSource bitSor = await instance.Start<BitmapSource, object>(new object());
 
-                        using MemoryStream createFileFromImageBuffer = new MemoryStream();         //todo переехать в интерфейс конвертации изображений
-                        BitmapEncoder encoder = new PngBitmapEncoder();
-                        BitmapFrame ccc = BitmapFrame.Create(bitSor);
-                        encoder.Frames.Add(BitmapFrame.Create(bitSor));
-                        encoder.Save(createFileFromImageBuffer);
-                        BitmapImage image = new BitmapImage();
-                        image.BeginInit();
-                        image.StreamSource = createFileFromImageBuffer;
-                        image.EndInit();
-                        image.Freeze();
 
                         await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(() =>
                         {
+                            if (System.Windows.Clipboard.ContainsImage() is true)
+                            {
+                                BitmapSource bitSor = System.Windows.Clipboard.GetImage();
+                                RenderOptions.SetBitmapScalingMode(bitSor, BitmapScalingMode.NearestNeighbor);
 
-                            MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
-                            ViewModel.Image = image;
-                            App.WindowsIsOpen[App.GetMyMainWindow].Key.Height = image.Height;
-                            App.WindowsIsOpen[App.GetMyMainWindow].Key.Width = image.Width;
-                            App.WindowsIsOpen[App.GetMyMainWindow].Key.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                            App.WindowsIsOpen[App.GetMyMainWindow].Key.Show();
-                            App.WindowsIsOpen[App.GetMyMainWindow].Key.Focus();
+                                using MemoryStream createFileFromImageBuffer = new MemoryStream();         //todo переехать в интерфейс конвертации изображений
+                                BitmapEncoder encoder = new PngBitmapEncoder();
+                                BitmapFrame ccc = BitmapFrame.Create(bitSor);
+                                encoder.Frames.Add(BitmapFrame.Create(bitSor));
+                                encoder.Save(createFileFromImageBuffer);
+                                BitmapImage image = new BitmapImage();
+                                image.BeginInit();
+                                image.StreamSource = createFileFromImageBuffer;
+                                image.EndInit();
+
+                                var curPos = SSHF.Infrastructure.SharedFunctions.CursorFunctions.GetCursorPosition();
+                                MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
+                                ViewModel.BackgroundImage = image;
+                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Height = image.Height;
+                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Width = image.Width;
+                                App.WindowsIsOpen[App.GetMyMainWindow].Key.WindowStartupLocation = WindowStartupLocation.Manual;
+                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Top = curPos.Y;
+                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Left = curPos.X;
+                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Show();
+                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Focus();
+                            } else
+                            {
+                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Show();
+                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Focus();
+                            }
                         });
                         CancellationTokenSource tokenSource = new CancellationTokenSource();
 
@@ -261,7 +287,7 @@ namespace SSHF
                         {
                             App.Input += MouseInput;
                         }).ConfigureAwait(false);
-                        await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(async() =>
+                        await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(async () =>
                         {
                             MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
                             ViewModel.RefreshWindow = true;
@@ -274,13 +300,6 @@ namespace SSHF
 
             });
         });
-
-
-
-
-
-
-
 
     }
 }

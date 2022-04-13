@@ -32,12 +32,15 @@ namespace SSHF.ViewModels.MainWindowViewModel
         public string Title { get => _title; set => Set(ref _title, value); }
 
 
+
+
+
         private bool _isRefreshWindow = false;
         public bool RefreshWindow { get => _isRefreshWindow; set => Set(ref _isRefreshWindow, value); }
 
 
         private BitmapImage? _ImageBackground;
-        public BitmapImage Image
+        public BitmapImage BackgroundImage
         {
             get => _ImageBackground = _ImageBackground is not null ?
                     _ImageBackground : ImagesFunctions.GetBitmapImage(ImagesFunctions.GetUriApp(@"Windows\MainWindow\MainWindowRes\Test.png")) ?? throw new NullReferenceException();
@@ -76,19 +79,6 @@ namespace SSHF.ViewModels.MainWindowViewModel
             if (res > 0)
             {
                 if (_thisWindow is null) throw new NullReferenceException(nameof(_thisWindow));
-
-                //await Task.Run(() =>
-                //{
-                //    DoubleAnimation DA = new DoubleAnimation();
-                //    DA.From = _thisWindow.Width;
-                //    DA.To = _thisWindow.Width + 20;
-                //    DA.Duration = TimeSpan.FromMilliseconds(500);
-                //    DA.BeginAnimation(_thisWindow.ActualWidth, DA)
-                //    var w = _thisWindow.Width + 20;
-                //    var h = _thisWindow.Height + 20;
-
-
-                //});
 
                 _thisWindow.Width += 20;
                 _thisWindow.Height += 20;

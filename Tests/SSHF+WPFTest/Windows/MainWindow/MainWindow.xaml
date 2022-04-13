@@ -29,7 +29,7 @@
     Title="{Binding Title}"
 >
     <Window.Resources>
-        <ImageBrush x:Key="BackG"  ImageSource="{Binding Image}"/>
+        <ImageBrush x:Key="BackG"  ImageSource="{Binding BackgroundImage}"/>
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
