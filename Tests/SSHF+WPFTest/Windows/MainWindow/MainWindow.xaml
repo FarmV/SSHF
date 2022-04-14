@@ -18,6 +18,7 @@
     WindowStyle="None"      
     Topmost="True" 
     WindowStartupLocation="CenterScreen"
+    AllowDrop="True"
 
   
     d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
@@ -25,8 +26,8 @@
  
   
   
-    Background="{DynamicResource BackG}"
     Title="{Binding Title}"
+    Background="{DynamicResource BackG}"
 >
     <Window.Resources>
         <ImageBrush x:Key="BackG"  ImageSource="{Binding BackgroundImage}"/>
@@ -52,13 +53,34 @@
         <behaviors:EventTrigger EventName="MouseDoubleClick" SourceObject="{Binding ElementName=Fast}">
             <behaviors:InvokeCommandAction Command="{Binding Path = DoubleClickHideWindowCommand}" PassEventArgsToCommand="False"/>
         </behaviors:EventTrigger>
-
+        
+        <!-- изменение размеров окна -->
         <behaviors:EventTrigger EventName="PreviewMouseWheel" SourceObject="{Binding ElementName=Fast}">
             <behaviors:InvokeCommandAction Command="{Binding Path = MouseWheel}" PassEventArgsToCommand="True"/>
         </behaviors:EventTrigger>
+        
+        <!-- изменение размеров окна -->
+        <behaviors:EventTrigger EventName="PreviewMouseMove" SourceObject="{Binding ElementName=Fast}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = DropImage}" PassEventArgsToCommand="True"/>
+       
+        </behaviors:EventTrigger>
+        
+        <!-- Передача событий клавиатурного ввода --><!--
+        <behaviors:EventTrigger EventName="PreviewKeyDown" SourceObject="{Binding ElementName=Fast}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = LastKeyCommand}" PassEventArgsToCommand="True"/>
+        </behaviors:EventTrigger>-->
+
 
     </behaviors:Interaction.Triggers>
 
+
+    <!--<Window.InputBindings>
+        <KeyBinding  Gesture="CTRL+R" Command="ApplicationCommands.Open" />
+
+    </Window.InputBindings>-->
+    
+    
+    
     <!--<mc:AlternateContent>
         <mc:Choice Requires ="d">
             <Window.DataContext>

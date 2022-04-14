@@ -72,7 +72,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private double _widthWindow = default;
         private int _countWheel = default;
         private RelayCommand? _mouseWheel;
-        public RelayCommand MouseWheel => _mouseWheel = _mouseWheel is not null ? _mouseWheel : new RelayCommand(async obj =>
+        public RelayCommand MouseWheel => _mouseWheel = _mouseWheel is not null ? _mouseWheel : new RelayCommand(obj =>
         {
             int res = obj is not MouseWheelEventArgs eventArgs ? throw new ArgumentException() : eventArgs.Delta;
 
@@ -99,6 +99,27 @@ namespace SSHF.ViewModels.MainWindowViewModel
             }
 
         });
+
+        private RelayCommand? _dropImage;
+        public RelayCommand DropImage => _dropImage = _dropImage is not null ? _dropImage : new RelayCommand(obj =>
+        {
+
+            if (obj is not System.Windows.Input.MouseEventArgs Event) throw new InvalidOperationException();
+            if (Event.MouseDevice.LeftButton == MouseButtonState.Pressed)
+            {
+                string[] arrayDrops = new string[] { @"C:\TEK_PROJECT\SSHF\123.png" };
+                DataObject dataObject = new DataObject(DataFormats.FileDrop, arrayDrops);
+                dataObject.SetData(DataFormats.StringFormat, dataObject);
+                DragDrop.DoDragDrop((System.Windows.Controls.Border)Event.Source, dataObject, DragDropEffects.Copy);
+
+            }
+
+        });
+
+
+
+
+
 
     }
 }
