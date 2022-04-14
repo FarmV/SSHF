@@ -16,6 +16,7 @@ using SSHF.Views.Windows.Notify;
 using System.Windows.Interop;
 using System.ComponentModel;
 using System.Windows.Media.Animation;
+using System.IO;
 
 namespace SSHF.ViewModels.MainWindowViewModel
 {
@@ -99,19 +100,33 @@ namespace SSHF.ViewModels.MainWindowViewModel
             }
 
         });
-
+        
         private RelayCommand? _dropImage;
         public RelayCommand DropImage => _dropImage = _dropImage is not null ? _dropImage : new RelayCommand(obj =>
         {
 
-            if (obj is not System.Windows.Input.MouseEventArgs Event) throw new InvalidOperationException();
+            if (obj is not MouseEventArgs Event) throw new InvalidOperationException();
             if (Event.MouseDevice.LeftButton == MouseButtonState.Pressed)
             {
-                string[] arrayDrops = new string[] { @"C:\TEK_PROJECT\SSHF\123.png" };
+                var temp = Path.ChangeExtension(Path.GetTempFileName(), "PNG");
+
+                Path.ChangeExtension(Path.GetTempFileName(), "PNG");
+
+                using (FileStream createFile = new FileStream(temp, FileMode.OpenOrCreate))
+                {
+                    BitmapEncoder encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(_ImageBackground));
+                    encoder.Save(createFile);
+                }
+
+                string[] arrayDrops = new string[] { temp };
                 DataObject dataObject = new DataObject(DataFormats.FileDrop, arrayDrops);
                 dataObject.SetData(DataFormats.StringFormat, dataObject);
+
+              
                 DragDrop.DoDragDrop((System.Windows.Controls.Border)Event.Source, dataObject, DragDropEffects.Copy);
 
+                if(File.Exists(temp) is true) File.Delete(temp);
             }
 
         });
