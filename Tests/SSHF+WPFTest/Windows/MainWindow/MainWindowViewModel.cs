@@ -125,12 +125,12 @@ namespace SSHF.ViewModels.MainWindowViewModel
             if (obj is not MouseEventArgs Event) throw new InvalidOperationException();
             if (Event.MouseDevice.LeftButton == MouseButtonState.Pressed)
             {
-                string temp = Path.ChangeExtension(Path.GetTempFileName(), "png");
+                string temp = Path.GetTempFileName();
                 FileInfo fileInfo = new FileInfo(temp)
                 {
                     Attributes = FileAttributes.Temporary
                 };
-
+                temp = Path.ChangeExtension(Path.GetTempFileName(), "png");
                 using (FileStream createFile = new FileStream(temp, FileMode.OpenOrCreate))
                 {
                     BitmapEncoder encoder = new PngBitmapEncoder();
