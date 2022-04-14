@@ -61,13 +61,12 @@
         <!-- изменение размеров окна -->
         <behaviors:EventTrigger EventName="PreviewMouseMove" SourceObject="{Binding ElementName=Fast}">
             <behaviors:InvokeCommandAction Command="{Binding Path = DropImage}" PassEventArgsToCommand="True"/>
-       
         </behaviors:EventTrigger>
-        
-        <!-- Передача событий клавиатурного ввода --><!--
-        <behaviors:EventTrigger EventName="PreviewKeyDown" SourceObject="{Binding ElementName=Fast}">
+
+        <!-- Вызываем рефреш окна по правому клику -->
+        <behaviors:EventTrigger EventName="MouseRightButtonDown" SourceObject="{Binding ElementName=Fast}">
             <behaviors:InvokeCommandAction Command="{Binding Path = LastKeyCommand}" PassEventArgsToCommand="True"/>
-        </behaviors:EventTrigger>-->
+        </behaviors:EventTrigger>
 
 
     </behaviors:Interaction.Triggers>

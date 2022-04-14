@@ -57,7 +57,7 @@ namespace SSHF
         private static NotificatorViewModel? Notificator;
         internal static NotificatorViewModel GetNotificator() => Notificator is null ? throw new NullReferenceException("Нотификатор не инициализирован") : Notificator;
 
-        protected override async void OnStartup(StartupEventArgs e)
+        protected override void OnStartup(StartupEventArgs e)
         {
             Thread.CurrentThread.Name = "General stream!";
             IsDesignMode = false;
@@ -192,7 +192,8 @@ namespace SSHF
                 }, DispatcherPriority.Render);
             }).ContinueWith((T) =>
             {
-
+                // Регстрация функций
+                //Depl translete
 
                 KeyboardKeyCallbackFunction callback = KeyboardKeyCallbackFunction.GetInstance();
                 string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
@@ -213,91 +214,34 @@ namespace SSHF
                 })).ConfigureAwait(false);
 
 
-
+                // показ окна Fast
                 var keyCombianteionGetClipboardImageAndRefresh = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
                 {
                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_LWIN,
                 Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_SHIFT,
                  Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_KEY_A
                 };
-                callback.AddCallBackTask(keyCombianteionGetClipboardImageAndRefresh, () => new Task(async () =>
+                callback.AddCallBackTask(keyCombianteionGetClipboardImageAndRefresh, () => new Task(() =>
+                {
+                   _ = WindowsIsOpen[GetMyMainWindow].Value.InvokeAsync(() => ((System.Windows.Input.ICommand)(( (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext ).InvoceRefreshWindow)).Execute(new object()));          
+                    
+                })).ConfigureAwait(false);
+                // блок обновления окна
+                var keyCombianteionBlockWindowRefreshFast = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
+                {
+                  Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL,
+                  Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CAPITAL,
+
+                };
+                callback.AddCallBackTask(keyCombianteionBlockWindowRefreshFast, () => new Task(async () =>
                 {
                     await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(() =>
                     {
                         MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
-                        if (ViewModel.RefreshWindow is true) return;
+                        if (ViewModel.IsRefreshWindow is true) return;
+                        ViewModel.BlockRefresh = !ViewModel.BlockRefresh;
                     });
 
-                    try
-                    {
-
-
-                        await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(() =>
-                        {
-                            if (System.Windows.Clipboard.ContainsImage() is true)
-                            {
-                                BitmapSource bitSor = System.Windows.Clipboard.GetImage();
-                                RenderOptions.SetBitmapScalingMode(bitSor, BitmapScalingMode.NearestNeighbor);
-
-                                using MemoryStream createFileFromImageBuffer = new MemoryStream();         //todo переехать в интерфейс конвертации изображений
-                                BitmapEncoder encoder = new PngBitmapEncoder();
-                                BitmapFrame ccc = BitmapFrame.Create(bitSor);
-                                encoder.Frames.Add(BitmapFrame.Create(bitSor));
-                                encoder.Save(createFileFromImageBuffer);
-                                BitmapImage image = new BitmapImage();
-                                image.BeginInit();
-                                image.StreamSource = createFileFromImageBuffer;
-                                image.EndInit();
-
-                                var curPos = SSHF.Infrastructure.SharedFunctions.CursorFunctions.GetCursorPosition();
-                                MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
-                                ViewModel.BackgroundImage = image;
-                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Height = image.Height;
-                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Width = image.Width;
-                                App.WindowsIsOpen[App.GetMyMainWindow].Key.WindowStartupLocation = WindowStartupLocation.Manual;
-                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Top = curPos.Y;
-                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Left = curPos.X;
-                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Show();
-                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Focus();
-                            } else
-                            {
-                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Show();
-                                App.WindowsIsOpen[App.GetMyMainWindow].Key.Focus();
-                            }
-                        });
-                        CancellationTokenSource tokenSource = new CancellationTokenSource();
-
-                        void MouseInput(object? sender, Infrastructure.Algorithms.Input.RawInputEvent e)
-                        {
-                            if (e.Data is RawInputKeyboardData)
-                            {
-                                if (KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL) is true)
-                                {
-                                    tokenSource.Cancel();
-                                    App.Input -= MouseInput;
-                                    return;
-                                }
-                            }
-                            if (e.Data is not RawInputMouseData data || data.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
-                            else
-                            {
-                                tokenSource.Cancel();
-                                App.Input -= MouseInput;
-                            }
-
-                        }
-                        _ = Task.Run(() =>
-                        {
-                            App.Input += MouseInput;
-                        }).ConfigureAwait(false);
-                        await App.WindowsIsOpen[App.GetMyMainWindow].Value.InvokeAsync(async () =>
-                        {
-                            MainWindowViewModel ViewModel = (MainWindowViewModel)WindowsIsOpen[GetMyMainWindow].Key.DataContext;
-                            ViewModel.RefreshWindow = true;
-                            await WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token);
-                            ViewModel.RefreshWindow = false;
-                        });
-                    } catch (Exception) { }
                 })).ConfigureAwait(false);
 
 

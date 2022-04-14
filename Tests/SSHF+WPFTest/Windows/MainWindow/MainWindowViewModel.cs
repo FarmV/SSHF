@@ -17,6 +17,10 @@ using System.Windows.Interop;
 using System.ComponentModel;
 using System.Windows.Media.Animation;
 using System.IO;
+using Linearstar.Windows.RawInput;
+using SSHF.Infrastructure.Algorithms.KeyBoards.Base;
+using System.Threading;
+using System.Windows.Media;
 
 namespace SSHF.ViewModels.MainWindowViewModel
 {
@@ -36,8 +40,9 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
 
 
+
         private bool _isRefreshWindow = false;
-        public bool RefreshWindow { get => _isRefreshWindow; set => Set(ref _isRefreshWindow, value); }
+        public bool IsRefreshWindow { get => _isRefreshWindow; set => Set(ref _isRefreshWindow, value); }
 
 
         private BitmapImage? _ImageBackground;
@@ -100,7 +105,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
             }
 
         });
-        
+
         private RelayCommand? _dropImage;
         public RelayCommand DropImage => _dropImage = _dropImage is not null ? _dropImage : new RelayCommand(obj =>
         {
@@ -123,17 +128,101 @@ namespace SSHF.ViewModels.MainWindowViewModel
                 DataObject dataObject = new DataObject(DataFormats.FileDrop, arrayDrops);
                 dataObject.SetData(DataFormats.StringFormat, dataObject);
 
-              
+
                 DragDrop.DoDragDrop((System.Windows.Controls.Border)Event.Source, dataObject, DragDropEffects.Copy);
 
-                if(File.Exists(temp) is true) File.Delete(temp);
+                if (File.Exists(temp) is true) File.Delete(temp);
             }
 
         });
 
+        private bool _blockRefresh;
+
+        public bool BlockRefresh
+        {
+            get { return _blockRefresh; }
+            set => Set(ref _blockRefresh, value);
+        }
 
 
 
+
+        private RelayCommand? _refreshWindow;
+        public RelayCommand InvoceRefreshWindow => _refreshWindow = _refreshWindow is not null ? _refreshWindow : new RelayCommand(async obj =>
+        {
+            if (_thisWindow is null) throw new NullReferenceException();
+            if (IsRefreshWindow is true) return;
+            try
+            {
+                if (System.Windows.Clipboard.ContainsImage() is true)
+                {
+                    BitmapSource bitSor = System.Windows.Clipboard.GetImage();
+                    RenderOptions.SetBitmapScalingMode(bitSor, BitmapScalingMode.NearestNeighbor);
+
+                    using MemoryStream createFileFromImageBuffer = new MemoryStream();         //todo переехать в интерфейс конвертации изображений
+                    BitmapEncoder encoder = new PngBitmapEncoder();
+                    BitmapFrame ccc = BitmapFrame.Create(bitSor);
+                    encoder.Frames.Add(BitmapFrame.Create(bitSor));
+                    encoder.Save(createFileFromImageBuffer);
+                    BitmapImage image = new BitmapImage();
+                    image.BeginInit();
+                    image.StreamSource = createFileFromImageBuffer;
+                    image.EndInit();
+
+                    var curPos = SSHF.Infrastructure.SharedFunctions.CursorFunctions.GetCursorPosition();
+
+                    BackgroundImage = image;
+                    _thisWindow.Height = image.Height;
+                    _thisWindow.Width = image.Width;
+                    if (BlockRefresh is not true)
+                    {
+                        _thisWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                        _thisWindow.Top = curPos.Y;
+                        _thisWindow.Left = curPos.X;
+                    }
+                    _thisWindow.Show();
+                    _thisWindow.Focus();
+                } else
+                {
+                    _thisWindow.Show();
+                    _thisWindow.Focus();
+                }
+
+                CancellationTokenSource tokenSource = new CancellationTokenSource();
+
+                void MouseInput(object? sender, Infrastructure.Algorithms.Input.RawInputEvent e)
+                {
+                    if (e.Data is RawInputKeyboardData)
+                    {
+                        if (KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL) is true)
+                        {
+                            tokenSource.Cancel();
+                            App.Input -= MouseInput;
+                            return;
+                        }
+                    }
+                    if (e.Data is not RawInputMouseData data || data.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
+                    else
+                    {
+                        tokenSource.Cancel();
+                        App.Input -= MouseInput;
+                    }
+
+                }
+                _ = Task.Run(() =>
+                {
+                    App.Input += MouseInput;
+                }).ConfigureAwait(false);
+
+                if (BlockRefresh is true) return;
+                IsRefreshWindow = true;
+                await WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token);
+                IsRefreshWindow = false;
+
+            } catch (Exception) { }
+
+
+        });
 
 
     }

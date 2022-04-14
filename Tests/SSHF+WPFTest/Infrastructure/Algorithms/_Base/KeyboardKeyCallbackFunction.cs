@@ -40,12 +40,12 @@ namespace SSHF.Infrastructure.Algorithms.Base
             return 0;
         }
     }
-    internal class KeyboardKeyCallbackFunction: IAsyncDisposable
+    internal class KeyboardKeyCallbackFunction : IAsyncDisposable
     {
         public async ValueTask DisposeAsync() => await Task.Run(async () =>
         {
             if (Lowlevlhook is not null) await Lowlevlhook.DisposeAsync();
-            
+
             GC.SuppressFinalize(this);
         });
 
@@ -59,8 +59,8 @@ namespace SSHF.Infrastructure.Algorithms.Base
         }
 
         internal static MyLowlevlhook? Lowlevlhook;
-     
-      //  private static readonly EventWaitHandle WaitKeysHandler = new EventWaitHandle(false, EventResetMode.AutoReset);
+
+        //  private static readonly EventWaitHandle WaitKeysHandler = new EventWaitHandle(false, EventResetMode.AutoReset);
         private static VKeys? PreKeys(List<VKeys> keys)//
         {
             if (Lowlevlhook is null) throw new NullReferenceException(nameof(MyLowlevlhook));
@@ -114,7 +114,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
             return res;
         }//A
 
-      
+
 
         private static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)//AAAAAAAA
         {
@@ -153,11 +153,11 @@ namespace SSHF.Infrastructure.Algorithms.Base
                     VKeys[] preseedKeys1 = pressedKeys.Append(callhook.Value).ToArray();
 
                     keys = Tasks.FunctionsCallback.Keys.Where(x =>
-                   {
-                       if (preseedKeys1.Length != x.Length)
-                       {
-                           throw new InvalidOperationException();
-                       }
+                    {
+                       //if (preseedKeys1.Length != x.Length)
+                       //{
+                       //    throw new InvalidOperationException();
+                       //}
 
                        for (int i = 0; i < preseedKeys1.Length; i++)
                        {
@@ -217,25 +217,28 @@ namespace SSHF.Infrastructure.Algorithms.Base
             IsOneKey,
             KeyCombinationEmpty
         }
-
+        private static object _lockMedthod = new object();
         internal Task AddCallBackTask(VKeys[] keyCombo, Func<Task> callbackTask, bool isOneKey = default)
         {
-            var AddCallBackTaskFails = ExHelp.GetLazzyDictionaryFails
-                (
-                 new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.KeysAreAlreadyRegistered, "Комибинация клавиш(клавиши) уже зарегистрированна"), //0
-                 new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.IsOneKey, $"Была передана одна клавиша для регистрации с ключем {nameof(isOneKey)} false"), //1
-                 new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.KeyCombinationEmpty, $"Невозможно зарегистрировать пустую комбинацию клавиш") //2
-                );
+            lock (_lockMedthod)
+            {
+                var AddCallBackTaskFails = ExHelp.GetLazzyDictionaryFails
+                    (
+                     new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.KeysAreAlreadyRegistered, "Комибинация клавиш(клавиши) уже зарегистрированна"), //0
+                     new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.IsOneKey, $"Была передана одна клавиша для регистрации с ключем {nameof(isOneKey)} false"), //1
+                     new KeyValuePair<AddCallBackTaskFail, string>(AddCallBackTaskFail.KeyCombinationEmpty, $"Невозможно зарегистрировать пустую комбинацию клавиш") //2
+                    );
 
-            if (keyCombo.Length is 0) throw new InvalidOperationException().Report(AddCallBackTaskFails.Value[2]);
+                if (keyCombo.Length is 0) throw new InvalidOperationException().Report(AddCallBackTaskFails.Value[2]);
 
-            if (Tasks.FunctionsCallback.ContainsKey(keyCombo) is true) throw new InvalidOperationException().Report(AddCallBackTaskFails.Value[0]);
+                if (Tasks.FunctionsCallback.ContainsKey(keyCombo) is true) throw new InvalidOperationException().Report(AddCallBackTaskFails.Value[0]);
 
-            if (keyCombo.Length is 1 & isOneKey is false) throw new InvalidOperationException().Report(AddCallBackTaskFails.Value[1]);
+                if (keyCombo.Length is 1 & isOneKey is false) throw new InvalidOperationException().Report(AddCallBackTaskFails.Value[1]);
 
-            Tasks.FunctionsCallback.Add(keyCombo, callbackTask);
+                Tasks.FunctionsCallback.Add(keyCombo, callbackTask);
 
-            return Task.CompletedTask;
+                return Task.CompletedTask;
+            }
         }
 
         internal static Task<IEnumerable<KeyValuePair<VKeys[], Func<Task>>>> ReturnCollectionRegistrationFunction() => new Task<IEnumerable<KeyValuePair<VKeys[], Func<Task>>>>(() =>
