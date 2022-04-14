@@ -66,6 +66,8 @@ namespace SSHF.Infrastructure.Algorithms.Base
             if (Lowlevlhook is null) throw new NullReferenceException(nameof(MyLowlevlhook));
             VKeys? res = null;
 
+            bool ret = default;
+            Lowlevlhook.KeyDown += CheckKey;
             void CheckKey(VKeys key, SettingHook setting)
             {
                 if (Lowlevlhook is null) throw new NullReferenceException(nameof(MyLowlevlhook));
@@ -74,21 +76,27 @@ namespace SSHF.Infrastructure.Algorithms.Base
                     res = key;
                     setting.Break = true;
                     Lowlevlhook.KeyDown -= CheckKey;
-                } else Lowlevlhook.KeyDown -= CheckKey;              
+                    ret = true;
+                } else 
+                { 
+                 Lowlevlhook.KeyDown -= CheckKey;
+                    ret = true;
+                } 
             }
+
             for (int i = 0; i < 61; i++)
             {
-                if (res.HasValue is true) break;
+                if (ret is true) break; 
                 await Task.Delay(1);
-            }       
+            }
             return res;
-        }//A
+        }//
 
 
         
         private static async void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)//AAAAAAAA
         {
-
+            
             VKeys[] pressedKeys = e.Keys;
             if (pressedKeys.Length is 0) return;
 
