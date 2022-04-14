@@ -106,6 +106,18 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
         });
 
+
+        ~MainWindowViewModel() 
+        {
+            foreach (var deleteFile in deleteTMP)
+            {
+                if (File.Exists(deleteFile)) File.Delete(deleteFile);
+            }
+
+        }
+
+
+        private static List<string> deleteTMP = new List<string>();  
         private RelayCommand? _dropImage;
         public RelayCommand DropImage => _dropImage = _dropImage is not null ? _dropImage : new RelayCommand(obj =>
         {
@@ -113,15 +125,18 @@ namespace SSHF.ViewModels.MainWindowViewModel
             if (obj is not MouseEventArgs Event) throw new InvalidOperationException();
             if (Event.MouseDevice.LeftButton == MouseButtonState.Pressed)
             {
-                var temp = Path.ChangeExtension(Path.GetTempFileName(), "PNG");
-
-                Path.ChangeExtension(Path.GetTempFileName(), "PNG");
+                string temp = Path.ChangeExtension(Path.GetTempFileName(), "png");
+                FileInfo fileInfo = new FileInfo(temp)
+                {
+                    Attributes = FileAttributes.Temporary
+                };
 
                 using (FileStream createFile = new FileStream(temp, FileMode.OpenOrCreate))
                 {
                     BitmapEncoder encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(_ImageBackground));
                     encoder.Save(createFile);
+                    
                 }
 
                 string[] arrayDrops = new string[] { temp };
@@ -131,7 +146,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
                 DragDrop.DoDragDrop((System.Windows.Controls.Border)Event.Source, dataObject, DragDropEffects.Copy);
 
-                if (File.Exists(temp) is true) File.Delete(temp);
+                deleteTMP.Add(temp);
             }
 
         });
