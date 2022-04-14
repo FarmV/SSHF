@@ -107,7 +107,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         });
 
 
-        ~MainWindowViewModel() 
+        ~MainWindowViewModel()
         {
             foreach (var deleteFile in deleteTMP)
             {
@@ -117,7 +117,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         }
 
 
-        private static readonly List<string> deleteTMP = new List<string>();  
+        private static readonly List<string> deleteTMP = new List<string>();
         private RelayCommand? _dropImage;
         public RelayCommand DropImage => _dropImage = _dropImage is not null ? _dropImage : new RelayCommand(obj =>
         {
@@ -137,7 +137,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
                     BitmapEncoder encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(_ImageBackground));
                     encoder.Save(createFile);
-                    
+
                 }
 
                 string[] arrayDrops = new string[] { temp };
@@ -167,79 +167,83 @@ namespace SSHF.ViewModels.MainWindowViewModel
         public RelayCommand InvoceRefreshWindow => _refreshWindow = _refreshWindow is not null ? _refreshWindow : new RelayCommand(async obj =>
         {
             if (_thisWindow is null) throw new NullReferenceException();
-            if (IsRefreshWindow is true) return;
-            if(KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL)) return;
-
-            try
+            await _thisWindow.Dispatcher.InvokeAsync(async () =>
             {
-                if (System.Windows.Clipboard.ContainsImage() is true)
+                if (IsRefreshWindow is true) return;
+                if (KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL)) return;
+
+                try
                 {
-                    BitmapSource bitSor = System.Windows.Clipboard.GetImage();
-                    RenderOptions.SetBitmapScalingMode(bitSor, BitmapScalingMode.NearestNeighbor);
-
-                    using MemoryStream createFileFromImageBuffer = new MemoryStream();         //todo переехать в интерфейс конвертации изображений
-                    BitmapEncoder encoder = new PngBitmapEncoder();
-                    BitmapFrame ccc = BitmapFrame.Create(bitSor);
-                    encoder.Frames.Add(BitmapFrame.Create(bitSor));
-                    encoder.Save(createFileFromImageBuffer);
-                    BitmapImage image = new BitmapImage();
-                    image.BeginInit();
-                    image.StreamSource = createFileFromImageBuffer;
-                    image.EndInit();
-
-                    var curPos = SSHF.Infrastructure.SharedFunctions.CursorFunctions.GetCursorPosition();
-
-                    BackgroundImage = image;
-                    _thisWindow.Height = image.Height;
-                    _thisWindow.Width = image.Width;
-                    if (BlockRefresh is not true)
+                    if (System.Windows.Clipboard.ContainsImage() is true)
                     {
-                        _thisWindow.WindowStartupLocation = WindowStartupLocation.Manual;
-                        _thisWindow.Top = curPos.Y;
-                        _thisWindow.Left = curPos.X;
+                        BitmapSource bitSor = System.Windows.Clipboard.GetImage();
+                        RenderOptions.SetBitmapScalingMode(bitSor, BitmapScalingMode.NearestNeighbor);
+
+                        using MemoryStream createFileFromImageBuffer = new MemoryStream();         //todo переехать в интерфейс конвертации изображений
+                        BitmapEncoder encoder = new PngBitmapEncoder();
+                        BitmapFrame ccc = BitmapFrame.Create(bitSor);
+                        encoder.Frames.Add(BitmapFrame.Create(bitSor));
+                        encoder.Save(createFileFromImageBuffer);
+                        BitmapImage image = new BitmapImage();
+                        image.BeginInit();
+                        image.StreamSource = createFileFromImageBuffer;
+                        image.EndInit();
+
+                        var curPos = SSHF.Infrastructure.SharedFunctions.CursorFunctions.GetCursorPosition();
+
+                        BackgroundImage = image;
+                        _thisWindow.Height = image.Height;
+                        _thisWindow.Width = image.Width;
+                        if (BlockRefresh is not true)
+                        {
+                            _thisWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                            _thisWindow.Top = curPos.Y;
+                            _thisWindow.Left = curPos.X;
+                        }
+                        _thisWindow.Show();
+                        _thisWindow.Focus();
+                    } else
+                    {
+                        _thisWindow.Show();
+                        _thisWindow.Focus();
                     }
-                    _thisWindow.Show();
-                    _thisWindow.Focus();
-                } else
-                {
-                    _thisWindow.Show();
-                    _thisWindow.Focus();
-                }
 
-                CancellationTokenSource tokenSource = new CancellationTokenSource();
+                    CancellationTokenSource tokenSource = new CancellationTokenSource();
 
-                void MouseInput(object? sender, Infrastructure.Algorithms.Input.RawInputEvent e)
-                {
-                    if (e.Data is RawInputKeyboardData)
+                    void MouseInput(object? sender, Infrastructure.Algorithms.Input.RawInputEvent e)
                     {
-                        if (KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL) is true)
+                        if (e.Data is RawInputKeyboardData)
+                        {
+                            if (KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL) is true)
+                            {
+                                tokenSource.Cancel();
+                                App.Input -= MouseInput;
+                                return;
+                            }
+                        }
+                        if (e.Data is not RawInputMouseData data || data.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
+                        else
                         {
                             tokenSource.Cancel();
                             App.Input -= MouseInput;
-                            return;
                         }
+
                     }
-                    if (e.Data is not RawInputMouseData data || data.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
-                    else
+                    _ = Task.Run(() =>
                     {
-                        tokenSource.Cancel();
-                        App.Input -= MouseInput;
-                    }
+                        App.Input += MouseInput;
+                    }).ConfigureAwait(false);
 
-                }
-                _ = Task.Run(() =>
-                {
-                    App.Input += MouseInput;
-                }).ConfigureAwait(false);
+                    if (BlockRefresh is true) return;
+                    IsRefreshWindow = true;
+                    await _thisWindow.Dispatcher.InvokeAsync(new Action(async () => { await WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token); }),
+                        System.Windows.Threading.DispatcherPriority.Send);
 
-                if (BlockRefresh is true) return;
-                IsRefreshWindow = true;
-                await _thisWindow.Dispatcher.InvokeAsync(new Action(async () => { await WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token); }),
-                    System.Windows.Threading.DispatcherPriority.Send);
-               
-                IsRefreshWindow = false;
+                    IsRefreshWindow = false;
 
-            } catch (Exception) { }
+                } catch (Exception) { }
+            }, System.Windows.Threading.DispatcherPriority.Send);
+
 
 
         });
