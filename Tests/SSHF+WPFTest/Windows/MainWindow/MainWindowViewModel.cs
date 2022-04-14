@@ -117,13 +117,13 @@ namespace SSHF.ViewModels.MainWindowViewModel
         }
 
 
-        private static List<string> deleteTMP = new List<string>();  
+        private static readonly List<string> deleteTMP = new List<string>();  
         private RelayCommand? _dropImage;
         public RelayCommand DropImage => _dropImage = _dropImage is not null ? _dropImage : new RelayCommand(obj =>
         {
-
+            if (IsRefreshWindow is true) return;
             if (obj is not MouseEventArgs Event) throw new InvalidOperationException();
-            if (Event.MouseDevice.RightButton == MouseButtonState.Pressed)
+            if (Event.MouseDevice.LeftButton == MouseButtonState.Pressed)
             {
                 string temp = Path.GetTempFileName();
                 FileInfo fileInfo = new FileInfo(temp)
@@ -166,7 +166,8 @@ namespace SSHF.ViewModels.MainWindowViewModel
         public RelayCommand InvoceRefreshWindow => _refreshWindow = _refreshWindow is not null ? _refreshWindow : new RelayCommand(async obj =>
         {
             if (_thisWindow is null) throw new NullReferenceException();
-            if (IsRefreshWindow is true) return;           
+            if (IsRefreshWindow is true) return;
+            if (KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL)) return;
             try
             {
                 if (System.Windows.Clipboard.ContainsImage() is true)

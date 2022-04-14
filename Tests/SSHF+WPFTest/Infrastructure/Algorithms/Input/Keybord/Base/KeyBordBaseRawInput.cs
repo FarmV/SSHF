@@ -52,7 +52,7 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base
             VirutalKeyNonVKeys
         }
 
-        private static object _lockMedthod = new object();
+        private static readonly object _lockMedthod = new object();
         private static void RawInputHandler(object? sender, RawInputEvent e) => Task.Run(() =>
         {
 
@@ -69,7 +69,7 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base
 
                 RawKeyboardFlags chekUPE0 = RawKeyboardFlags.Up | RawKeyboardFlags.KeyE0;
 
-            lock (_lockMedthod)
+            lock (_lockMedthod) // при локе второй поток в небытье поподает
             {
                 if (keyboardData.Keyboard.Flags is RawKeyboardFlags.None | keyboardData.Keyboard.Flags is RawKeyboardFlags.KeyE0) // клавиша KeyDown
                 {
