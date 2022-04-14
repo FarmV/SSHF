@@ -123,7 +123,8 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             if (IsRefreshWindow is true) return;
             if (obj is not MouseEventArgs Event) throw new InvalidOperationException();
-            if (Event.MouseDevice.LeftButton == MouseButtonState.Pressed)
+
+            if (( Event.MouseDevice.LeftButton == MouseButtonState.Pressed ) & KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL) is true)
             {
                 string temp = Path.GetTempFileName();
                 FileInfo fileInfo = new FileInfo(temp)
@@ -143,7 +144,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
                 DataObject dataObject = new DataObject(DataFormats.FileDrop, arrayDrops);
                 dataObject.SetData(DataFormats.StringFormat, dataObject);
 
-
+                if (IsRefreshWindow is true) return;
                 DragDrop.DoDragDrop((System.Windows.Controls.Border)Event.Source, dataObject, DragDropEffects.Copy);
 
                 deleteTMP.Add(temp);
@@ -168,6 +169,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
             if (_thisWindow is null) throw new NullReferenceException();
             if (IsRefreshWindow is true) return;
             if(KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL)) return;
+
             try
             {
                 if (System.Windows.Clipboard.ContainsImage() is true)
@@ -232,7 +234,9 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
                 if (BlockRefresh is true) return;
                 IsRefreshWindow = true;
-                await WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token);
+                await _thisWindow.Dispatcher.InvokeAsync(new Action(async () => { await WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token); }),
+                    System.Windows.Threading.DispatcherPriority.Render);
+               
                 IsRefreshWindow = false;
 
             } catch (Exception) { }
