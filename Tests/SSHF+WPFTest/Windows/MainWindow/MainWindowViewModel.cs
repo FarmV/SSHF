@@ -123,7 +123,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
 
             if (obj is not MouseEventArgs Event) throw new InvalidOperationException();
-            if (Event.MouseDevice.LeftButton == MouseButtonState.Pressed)
+            if (Event.MouseDevice.RightButton == MouseButtonState.Pressed)
             {
                 string temp = Path.GetTempFileName();
                 FileInfo fileInfo = new FileInfo(temp)
@@ -166,7 +166,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         public RelayCommand InvoceRefreshWindow => _refreshWindow = _refreshWindow is not null ? _refreshWindow : new RelayCommand(async obj =>
         {
             if (_thisWindow is null) throw new NullReferenceException();
-            if (IsRefreshWindow is true) return;
+            if (IsRefreshWindow is true) return;           
             try
             {
                 if (System.Windows.Clipboard.ContainsImage() is true)

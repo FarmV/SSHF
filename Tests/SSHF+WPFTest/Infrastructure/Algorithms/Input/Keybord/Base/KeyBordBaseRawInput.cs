@@ -28,7 +28,7 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base
             get;
         }
     }
-    internal class KeyBordBaseRawInput
+    internal class KeyBordBaseRawInput 
     {
         internal static List<VKeys> PresKeys => new List<VKeys>(IsPressedKeys);
 
@@ -55,8 +55,6 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base
         private static object _lockMedthod = new object();
         private static void RawInputHandler(object? sender, RawInputEvent e) => Task.Run(() =>
         {
-            lock (_lockMedthod)
-            {
 
                 if (e.Data is not RawInputKeyboardData keyboardData) return;
 
@@ -71,6 +69,8 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base
 
                 RawKeyboardFlags chekUPE0 = RawKeyboardFlags.Up | RawKeyboardFlags.KeyE0;
 
+            lock (_lockMedthod)
+            {
                 if (keyboardData.Keyboard.Flags is RawKeyboardFlags.None | keyboardData.Keyboard.Flags is RawKeyboardFlags.KeyE0) // клавиша KeyDown
                 {
                     if (IsPressedKeys.Contains(FlagVkeys)) return;

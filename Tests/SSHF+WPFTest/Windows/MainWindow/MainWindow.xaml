@@ -58,21 +58,21 @@
             <behaviors:InvokeCommandAction Command="{Binding Path = MouseWheel}" PassEventArgsToCommand="True"/>
         </behaviors:EventTrigger>
         
-        <!-- изменение размеров окна -->
+        <!-- Дроп файла скриншота-->     
         <behaviors:EventTrigger EventName="PreviewMouseMove" SourceObject="{Binding ElementName=Fast}">
             <behaviors:InvokeCommandAction Command="{Binding Path = DropImage}" PassEventArgsToCommand="True"/>
         </behaviors:EventTrigger>
 
-        <!-- Вызываем рефреш окна по правому клику -->
-        <behaviors:EventTrigger EventName="MouseRightButtonDown" SourceObject="{Binding ElementName=Fast}">
-            <behaviors:InvokeCommandAction Command="{Binding Path = LastKeyCommand}" PassEventArgsToCommand="True"/>
+        <!-- Вызываем рефреш окна по левому клику -->
+        <behaviors:EventTrigger EventName="MouseLeftButtonDown" SourceObject="{Binding ElementName=Fast}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = InvoceRefreshWindow}" PassEventArgsToCommand="True"/>
         </behaviors:EventTrigger>
 
 
     </behaviors:Interaction.Triggers>
 
 
-    <!--<Window.InputBindings>
+    <!--<Window.InputBindingsPreviewMouseMove
         <KeyBinding  Gesture="CTRL+R" Command="ApplicationCommands.Open" />
 
     </Window.InputBindings>-->
