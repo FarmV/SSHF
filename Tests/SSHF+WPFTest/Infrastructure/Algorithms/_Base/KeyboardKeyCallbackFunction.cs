@@ -61,23 +61,9 @@ namespace SSHF.Infrastructure.Algorithms.Base
         internal static MyLowlevlhook? Lowlevlhook;
 
         //  private static readonly EventWaitHandle WaitKeysHandler = new EventWaitHandle(false, EventResetMode.AutoReset);
-        private static VKeys? PreKeys(List<VKeys> keys)//
+        private async static Task<VKeys?> PreKeys(List<VKeys> keys)//
         {
             if (Lowlevlhook is null) throw new NullReferenceException(nameof(MyLowlevlhook));
-
-            EventWaitHandle WaitHandlePreKeys = new EventWaitHandle(false, EventResetMode.AutoReset);
-
-            _ = Task.Run(() =>
-            {
-                using Timer breakTimer = new Timer(new TimerCallback((arg) =>
-                {
-                    try
-                    {
-                        WaitHandlePreKeys.Set();
-
-                    } catch (Exception) { };
-                }), null, 60, Timeout.Infinite);
-            });
             VKeys? res = null;
 
             void CheckKey(VKeys key, SettingHook setting)
@@ -87,36 +73,20 @@ namespace SSHF.Infrastructure.Algorithms.Base
                 {
                     res = key;
                     setting.Break = true;
-                    try
-                    {
-                        WaitHandlePreKeys.Set();
-                    } catch (Exception)
-                    {
-                    }
-                } else
-                {
-                    try
-                    {
-                        WaitHandlePreKeys.Set();
-                        WaitHandlePreKeys.Dispose();
-                    } catch
-                    {
-                        Lowlevlhook.KeyDown -= CheckKey;
-                    }
-                }
-
+                    Lowlevlhook.KeyDown -= CheckKey;
+                } else Lowlevlhook.KeyDown -= CheckKey;              
             }
-
-            Lowlevlhook.KeyDown += CheckKey;
-            WaitHandlePreKeys.WaitOne();
-            Lowlevlhook.KeyDown -= CheckKey;
-            WaitHandlePreKeys.Dispose();
+            for (int i = 0; i < 61; i++)
+            {
+                if (res.HasValue is true) break;
+                await Task.Delay(1);
+            }       
             return res;
         }//A
 
 
-
-        private static void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)//AAAAAAAA
+        
+        private static async void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)//AAAAAAAA
         {
 
             VKeys[] pressedKeys = e.Keys;
@@ -147,7 +117,7 @@ namespace SSHF.Infrastructure.Algorithms.Base
 
             if (listPreKeys.Count > 0)
             {
-                VKeys? callhook = PreKeys(listPreKeys);
+                VKeys? callhook = await PreKeys(listPreKeys);
                 if (callhook.HasValue is true)
                 {
                     VKeys[] preseedKeys1 = pressedKeys.Append(callhook.Value).ToArray();

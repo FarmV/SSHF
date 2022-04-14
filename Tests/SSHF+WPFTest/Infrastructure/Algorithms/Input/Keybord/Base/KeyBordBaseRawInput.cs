@@ -69,19 +69,21 @@ namespace SSHF.Infrastructure.Algorithms.KeyBoards.Base
 
                 RawKeyboardFlags chekUPE0 = RawKeyboardFlags.Up | RawKeyboardFlags.KeyE0;
 
-            lock (_lockMedthod) // при локе второй поток в небытье поподает
+            lock (_lockMedthod)
             {
                 if (keyboardData.Keyboard.Flags is RawKeyboardFlags.None | keyboardData.Keyboard.Flags is RawKeyboardFlags.KeyE0) // клавиша KeyDown
                 {
                     if (IsPressedKeys.Contains(FlagVkeys)) return;
                     IsPressedKeys.Add(FlagVkeys);
                     ChangeTheKeyPressure?.Invoke(null, new DataKeysNotificator(IsPressedKeys.ToArray()));
+                    return;
                 }
                 if (keyboardData.Keyboard.Flags is RawKeyboardFlags.Up | keyboardData.Keyboard.Flags == chekUPE0)  // клавиша KeyUp
                 {
                     if (IsPressedKeys.Contains(FlagVkeys) is not true) return;
                     IsPressedKeys.Remove(FlagVkeys);
-                    ChangeTheKeyPressure?.Invoke(null, new DataKeysNotificator(IsPressedKeys.ToArray()));
+                    //ChangeTheKeyPressure?.Invoke(null, new DataKeysNotificator(IsPressedKeys.ToArray()));
+                    return;
                 }
             }
         });

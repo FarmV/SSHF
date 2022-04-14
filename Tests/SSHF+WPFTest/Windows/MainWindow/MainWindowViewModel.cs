@@ -167,7 +167,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             if (_thisWindow is null) throw new NullReferenceException();
             if (IsRefreshWindow is true) return;
-            if (KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL)) return;
+            if(KeyBordBaseRawInput.PresKeys.Contains(Infrastructure.Algorithms.Input.Keybord.Base.VKeys.VK_CONTROL)) return;
             try
             {
                 if (System.Windows.Clipboard.ContainsImage() is true)
