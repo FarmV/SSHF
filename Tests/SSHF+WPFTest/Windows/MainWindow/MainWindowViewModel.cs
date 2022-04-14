@@ -235,7 +235,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
                 if (BlockRefresh is true) return;
                 IsRefreshWindow = true;
                 await _thisWindow.Dispatcher.InvokeAsync(new Action(async () => { await WindowFunctions.RefreshWindowPositin.RefreshWindowPosCursor(App.WindowsIsOpen[App.GetMyMainWindow].Key, tokenSource.Token); }),
-                    System.Windows.Threading.DispatcherPriority.Render);
+                    System.Windows.Threading.DispatcherPriority.Send);
                
                 IsRefreshWindow = false;
 
