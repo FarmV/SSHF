@@ -3,9 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32126.317
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSHF", "Tests\SSHF+WPFTest\SSHF.csproj", "{78F47A34-8410-4C03-B666-BC67958DB582}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{D2EEFB2F-8D40-4ACC-A477-0249A9B919B9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSHF", "Base\SSHF\SSHF.csproj", "{78F47A34-8410-4C03-B666-BC67958DB582}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

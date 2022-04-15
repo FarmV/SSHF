@@ -63,7 +63,7 @@ namespace SSHF.Models.MainWindowModel
                 return;
             };
 
-            _ViewModel.Image = image;
+            _ViewModel.BackgroundImage = image;
         }        
         #endregion
         

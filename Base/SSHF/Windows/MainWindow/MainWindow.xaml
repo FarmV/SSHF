@@ -25,11 +25,11 @@
  
   
   
-    Background="{DynamicResource BackG}"
     Title="{Binding Title}"
+    Background="{DynamicResource BackG}"
 >
     <Window.Resources>
-        <ImageBrush x:Key="BackG"  ImageSource="{Binding Image}"/>
+        <ImageBrush x:Key="BackG"  ImageSource="{Binding BackgroundImage}"/>
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
@@ -52,13 +52,33 @@
         <behaviors:EventTrigger EventName="MouseDoubleClick" SourceObject="{Binding ElementName=Fast}">
             <behaviors:InvokeCommandAction Command="{Binding Path = DoubleClickHideWindowCommand}" PassEventArgsToCommand="False"/>
         </behaviors:EventTrigger>
-
+        
+        <!-- изменение размеров окна -->
         <behaviors:EventTrigger EventName="PreviewMouseWheel" SourceObject="{Binding ElementName=Fast}">
             <behaviors:InvokeCommandAction Command="{Binding Path = MouseWheel}" PassEventArgsToCommand="True"/>
         </behaviors:EventTrigger>
+        
+        <!-- Дроп файла скриншота-->     
+        <behaviors:EventTrigger EventName="PreviewMouseMove" SourceObject="{Binding ElementName=Fast}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = DropImage}" PassEventArgsToCommand="True"/>
+        </behaviors:EventTrigger>
+
+        <!-- Вызываем рефреш окна по левому клику -->
+        <behaviors:EventTrigger EventName="MouseLeftButtonDown" SourceObject="{Binding ElementName=Fast}">
+            <behaviors:InvokeCommandAction Command="{Binding Path = InvoceRefreshWindow}" PassEventArgsToCommand="True"/>
+        </behaviors:EventTrigger>
+
 
     </behaviors:Interaction.Triggers>
 
+
+    <!--<Window.InputBindingsPreviewMouseMove
+        <KeyBinding  Gesture="CTRL+R" Command="ApplicationCommands.Open" />
+
+    </Window.InputBindings>-->
+    
+    
+    
     <!--<mc:AlternateContent>
         <mc:Choice Requires ="d">
             <Window.DataContext>
