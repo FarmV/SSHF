@@ -31,7 +31,7 @@ namespace SSHF.ViewModels
 
         private NotifyIcon _notifyIcon = new NotifyIcon
         {
-            Icon = Icon.ExtractAssociatedIcon(@"C:\Program Files\nodejs\node.exe"),
+            Icon = Icon.ExtractAssociatedIcon(@"C:\Windows\winhlp32.exe"),
             Visible = true
         };
         

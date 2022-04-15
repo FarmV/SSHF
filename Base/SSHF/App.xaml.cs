@@ -196,7 +196,7 @@ namespace SSHF
                 //Depl translete
 
                 KeyboardKeyCallbackFunction callback = KeyboardKeyCallbackFunction.GetInstance();
-                string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\DeepL.exe";
+                string DeeplDirectory = @"C:\Users\Vikto\AppData\Local\DeepL\app-3.4.15088\DeepL.exe";
                 string ScreenshotReaderDirectory = @"D:\_MyHome\Требуется сортировка барахла\Portable ABBYY Screenshot Reader\ScreenshotReader.exe";
                 var keyCombianteionGetTranslate = new Infrastructure.Algorithms.Input.Keybord.Base.VKeys[]
                 {
