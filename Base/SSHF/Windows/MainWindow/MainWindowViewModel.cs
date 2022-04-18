@@ -143,6 +143,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
                 if (IsRefreshWindow is true) return;
                 DragDrop.DoDragDrop((System.Windows.Controls.Border)Event.Source, dataObject, DragDropEffects.Copy);
 
+                Array.ForEach(deleteTMP.ToArray(), (x) => { if (File.Exists(x) is true) File.Delete(x); else deleteTMP.Remove(x); });
                 deleteTMP.Add(temp);
             }
 
