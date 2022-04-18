@@ -103,16 +103,10 @@ namespace SSHF.ViewModels.MainWindowViewModel
         });
 
 
-        ~MainWindowViewModel()
-        {
-            foreach (var deleteFile in deleteTMP)
-            {
-                if (File.Exists(deleteFile)) File.Delete(deleteFile);
-            }
-
-        }
+        ~MainWindowViewModel() => ClearTMP();
 
 
+        private void ClearTMP() => Array.ForEach(deleteTMP.ToArray(), (x) => { if (File.Exists(x) is true) File.Delete(x); else deleteTMP.Remove(x); });
         private static readonly List<string> deleteTMP = new List<string>();
         private RelayCommand? _dropImage;
         public RelayCommand DropImage => _dropImage = _dropImage is not null ? _dropImage : new RelayCommand(obj =>
@@ -143,7 +137,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
                 if (IsRefreshWindow is true) return;
                 DragDrop.DoDragDrop((System.Windows.Controls.Border)Event.Source, dataObject, DragDropEffects.Copy);
 
-                Array.ForEach(deleteTMP.ToArray(), (x) => { if (File.Exists(x) is true) File.Delete(x); else deleteTMP.Remove(x); });
+                ClearTMP();
                 deleteTMP.Add(temp);
             }
 
