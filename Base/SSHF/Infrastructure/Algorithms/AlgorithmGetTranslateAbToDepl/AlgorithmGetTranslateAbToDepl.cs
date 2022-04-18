@@ -202,7 +202,7 @@ namespace SSHF.Infrastructure.Algorithms
                       typeof(Task<>).GetTypeInfo().Assembly.Location,
                       typeof(System.ComponentModel.Component).GetTypeInfo().Assembly.Location,
 
-                      Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location), "System.Runtime.dll")
+                      Path.Combine(Path.GetDirectoryName(typeof(System.Runtime.GCSettings).GetTypeInfo().Assembly.Location) ?? throw new NullReferenceException(), "System.Runtime.dll")
                     };
 
                     CSharpCompilation comiplation = await Compiller.GetCompiller(parsingTextInstance, Name, assemblyDependencies, сancelToken);

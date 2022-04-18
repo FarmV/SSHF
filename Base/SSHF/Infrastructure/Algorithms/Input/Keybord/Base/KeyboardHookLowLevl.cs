@@ -52,7 +52,7 @@ namespace SSHF.Infrastructure.Algorithms.Input.Keybord.Base
 
 
         internal SettingHook Settings = new SettingHook();
-        private int Count = default;
+
         private List<(WMEvent,int)> test = new List<(WMEvent, int)> ();
      
         private IntPtr HookFunc(int nCode, WMEvent wParam, TagKBDLLHOOKSTRUCT lParam)

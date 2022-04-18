@@ -186,29 +186,22 @@ namespace SSHF.ViewModels
                 public Int32 cbSize; // размер структуры
                 public IntPtr hWnd; //handle родительского окна используемое функцией вызова
                 public UInt32 uID; //Определенный приложением идентификатор значка уведомления
-                public Guid guidItem;
+                public Guid guidItem;                
             }
 
             [DllImport("shell32.dll", SetLastError = true)]
             private static extern int Shell_NotifyIconGetRect([In] ref NOTIFYICONIDENTIFIER identifier, [Out] out RECT iconLocation);
 
             private static FieldInfo? windowField = typeof(NotifyIcon).GetField("window", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            private static IntPtr GetHandle(NotifyIcon icon)
-            {
-                if (windowField is null) throw new NullReferenceException("Ошибка поиска дескриптора окна иконки");
-                NativeWindow? window = windowField.GetValue(icon) as NativeWindow;
-
-                if (window is null) throw new NullReferenceException("Ошибка поиска дескриптора окна иконки");
-                return window.Handle;
-            }
+            private static IntPtr GetHandle(NotifyIcon icon)=>  windowField is null ? throw new NullReferenceException("Ошибка поиска дескриптора окна иконки") :
+                    windowField.GetValue(icon) is not NativeWindow window ? throw new NullReferenceException("Ошибка поиска дескриптора окна иконки") : window.Handle;
+            
 
             private static FieldInfo? idField = typeof(NotifyIcon).GetField("id", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             private static uint GetId(NotifyIcon icon)
             {
 
-                if (idField is null) throw new NullReferenceException("Не удалось найти закрытое поле идификатора NotifyIcon");
-
-                return (uint)idField.GetValue(icon);
+                return idField is not null ? Convert.ToUInt32(idField.GetValue(icon)): throw new NullReferenceException("Не удалось найти закрытое поле идификатора NotifyIcon");
             }
 
         }

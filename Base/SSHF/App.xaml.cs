@@ -64,6 +64,7 @@ namespace SSHF
             // SystemParameters
             if (IsDesignMode is false)
             {
+             
                 _ = StartConfigurations();
 
             }

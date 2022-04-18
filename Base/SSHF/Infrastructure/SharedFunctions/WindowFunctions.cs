@@ -147,7 +147,7 @@ namespace SSHF.Infrastructure.SharedFunctions
                 public Rect rcWork; // Working area
                 public int dwFlags;
                 [MarshalAs(UnmanagedType.ByValArray, SizeConst = 0x20)]
-                public char[] szDevice;
+                public char[]? szDevice;
             }
 
         }

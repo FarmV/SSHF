@@ -74,9 +74,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
 
 
-        private double _heightWindow = default;
-        private double _widthWindow = default;
-        private int _countWheel = default;
+
         private RelayCommand? _mouseWheel;
         public RelayCommand MouseWheel => _mouseWheel = _mouseWheel is not null ? _mouseWheel : new RelayCommand(obj =>
         {
@@ -89,8 +87,6 @@ namespace SSHF.ViewModels.MainWindowViewModel
                 _thisWindow.Width += 20;
                 _thisWindow.Height += 20;
 
-                _heightWindow = _thisWindow.Height;
-                _widthWindow = _thisWindow.Width;
                 eventArgs.Handled = true;
                 return;
             }
