@@ -103,8 +103,8 @@ namespace SSHF.Infrastructure.Algorithms.Base
             if (operation is HelpOperationForNotification.ThePreviousOperationWasNotCompleted & type is null) return $"Предыдущий вызов операции не был завершён";
             if (operation is HelpOperationForNotification.ThePreviousOperationWasNotCompleted & type is not null) return $"Предыдущий вызов операции {type?.Name} не был завершён";
 
-            if (operation is HelpOperationForNotification.CompilationFail & type is null) return $"Неудачяная компиляция";
-            if (operation is HelpOperationForNotification.CompilationFail & type is not null) return $"Неудачяная компиляция {type?.Name}";
+            if (operation is HelpOperationForNotification.CompilationFail & type is null) return $"Ошибка компиляции";
+            if (operation is HelpOperationForNotification.CompilationFail & type is not null) return $"Ошибка компиляции - {type?.Name}";
 
 
             throw new Exception($"Нельзя отправлять {nameof(HelpOperationForNotification.None)}");

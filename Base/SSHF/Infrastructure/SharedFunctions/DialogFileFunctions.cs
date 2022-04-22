@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,7 +33,7 @@ namespace SSHF.Infrastructure.SharedFunctions
 
         internal static bool OpenFiles(string Title, out IEnumerable<string> SelectedFile, string Filter = "Все файлы (*.*)|*.*")
         {
-            OpenFileDialog? fileDialog = new OpenFileDialog
+            OpenFileDialog fileDialog = new OpenFileDialog
             {
                 Title = Title,
                 Filter = Filter,
@@ -64,7 +65,7 @@ namespace SSHF.Infrastructure.SharedFunctions
             {
                 return null;
             }
-
+            
             return fileDialog.FileName;// todo Оценить необходимость фильтрации типов                      
         }
     }
