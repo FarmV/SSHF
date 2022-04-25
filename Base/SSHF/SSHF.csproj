@@ -2,15 +2,19 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
     <RootNamespace>SSHF</RootNamespace>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>True</UseWindowsForms>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>   
-	  	 
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+    <Product>Screen Shot Helper by FarmV</Product>
+	<Description>Screen Shot Helper by FarmV</Description>
+    <Version>0.0.1</Version>
+    <Copyright>https://github.com/FarmV/SSHF</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
