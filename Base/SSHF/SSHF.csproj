@@ -15,9 +15,12 @@
 	<Description>Screen Shot Helper by FarmV</Description>
     <Version>0.0.1</Version>
     <Copyright>https://github.com/FarmV/SSHF</Copyright>
+
+
   </PropertyGroup>
 
-  <ItemGroup>
+
+	<ItemGroup>
     <None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.Core.dll" />
     <None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA2.dll" />
     <None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA3.dll" />
