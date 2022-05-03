@@ -104,20 +104,20 @@ namespace SSHF.Infrastructure.Algorithms.Base
             List<VKeys> listPreKeys = new List<VKeys>();
 
 
-            List<VKeys[]> keys = Tasks.FunctionsCallback.Keys.Where(x =>  // Почему то метод пропускается при активации формы в хуке
+            List<VKeys[]> keys = Tasks.FunctionsCallback.Keys.Where(itemKeyArray =>  // Почему то метод пропускается при активации формы в хуке
             {
                 for (int i = 0; i < pressedKeys.Length; i++)
                 {
-                    if (x.Any((x) => x == pressedKeys[i]) is not true)
+                    if (itemKeyArray.Any((xVkey) => xVkey == pressedKeys[i]) is not true) return false;
+                    else
                     {
-                        return false;
-                    }
-                    if (x.Any((x) => x == pressedKeys[i]) is true)
-                    {
-                        if (x.Length - pressedKeys.Length is 1 & x.Length - 1 == i + 1)
+                        VKeys[] keyPre = itemKeyArray.Except(pressedKeys).ToArray();
+                        if (keyPre.Length > 1) return false;
+                        else
                         {
-                            listPreKeys.Add(x[^1]);
+                            listPreKeys.Add(keyPre[0]);
                         }
+                        
                     }
                 }
                 return true;
@@ -132,11 +132,6 @@ namespace SSHF.Infrastructure.Algorithms.Base
 
                     keys = Tasks.FunctionsCallback.Keys.Where(x =>
                     {
-                       //if (preseedKeys1.Length != x.Length)
-                       //{
-                       //    throw new InvalidOperationException();
-                       //}
-
                        for (int i = 0; i < preseedKeys1.Length; i++)
                        {
                            if (x.Any((x) => x == preseedKeys1[i]) is not true)
