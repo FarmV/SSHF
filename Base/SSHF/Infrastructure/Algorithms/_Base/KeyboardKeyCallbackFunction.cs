@@ -77,51 +77,63 @@ namespace SSHF.Infrastructure.Algorithms.Base
                     setting.Break = true;
                     Lowlevlhook.KeyDown -= CheckKey;
                     ret = true;
-                } else 
-                { 
-                 Lowlevlhook.KeyDown -= CheckKey;
+                }
+                else
+                {
+                    Lowlevlhook.KeyDown -= CheckKey;
                     ret = true;
-                } 
+                }
             }
 
-            for (int i = 0; i < 61; i++)
+            for (int i = 0; i < 20; i++)
             {
-                if (ret is true) break; 
+                if (ret is true) break;
                 await Task.Delay(1);
             }
             return res;
         }//
 
 
-        
+
         private static async void KeyBordBaseRawInput_ChangeTheKeyPressure(object? sender, DataKeysNotificator e)//AAAAAAAA
         {
-            
+
             VKeys[] pressedKeys = e.Keys;
             if (pressedKeys.Length is 0) return;
 
 
             List<VKeys> listPreKeys = new List<VKeys>();
 
-
-            List<VKeys[]> keys = Tasks.FunctionsCallback.Keys.Where(x =>  // Почему то метод пропускается при активации формы в хуке
+            List<VKeys[]> fullV = new List<VKeys[]>();
+            List<VKeys[]> keys = Tasks.FunctionsCallback.Keys.Where(itemKeyArray =>  // Почему то метод пропускается при активации формы в хуке
             {
                 for (int i = 0; i < pressedKeys.Length; i++)
                 {
-                    if (x.Any((x) => x == pressedKeys[i]) is not true)
+                    if (itemKeyArray.Any((xVkey) => xVkey == pressedKeys[i]) is not true) return false;
+                    else
                     {
-                        return false;
-                    }
-                    if (x.Any((x) => x == pressedKeys[i]) is true)
-                    {
-                        if (x.Length - pressedKeys.Length is 1 & x.Length - 1 == i + 1)
+                        VKeys[] keyPre = itemKeyArray.Except(pressedKeys).ToArray();
+                        if (keyPre.Length > 1) return false;
+                        else
                         {
-                            listPreKeys.Add(x[^1]);
+                            if (keyPre.Length is 0)
+                            {
+                            //  fullV.Add(itemKeyArray); // Вообще надо бы сделать более эфективную с логической точки срения обработку.
+                                return false;
+                            };
+                            listPreKeys.Add(keyPre[0]);
                         }
+
                     }
                 }
                 return true;
             }).Where(x => x.Length == pressedKeys.Length).ToList();
+
+            if(fullV.Count is 1 & listPreKeys.Count is 0)
+            {
+                keys.Clear();
+                keys.Add(fullV.ToArray()[0]);
+            }
 
             if (listPreKeys.Count > 0)
             {
@@ -132,23 +144,18 @@ namespace SSHF.Infrastructure.Algorithms.Base
 
                     keys = Tasks.FunctionsCallback.Keys.Where(x =>
                     {
-                       //if (preseedKeys1.Length != x.Length)
-                       //{
-                       //    throw new InvalidOperationException();
-                       //}
-
-                       for (int i = 0; i < preseedKeys1.Length; i++)
-                       {
-                           if (x.Any((x) => x == preseedKeys1[i]) is not true)
-                           {
-                               return false;
-                           }
-                       }
-                       return true;
-                   }).Where(x => x.Length == pressedKeys.Length + 1).ToList();
+                        for (int i = 0; i < preseedKeys1.Length; i++)
+                        {
+                            if (x.Any((x) => x == preseedKeys1[i]) is not true)
+                            {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }).Where(x => x.Length == pressedKeys.Length + 1).ToList();
                 }
             }
-
+            
             if (keys.Count is 0) return;
             if (keys.Count > 1) throw new InvalidOperationException();
             _ = Task.Run(() =>
@@ -156,10 +163,12 @@ namespace SSHF.Infrastructure.Algorithms.Base
                 try
                 {
                     Tasks.FunctionsCallback[keys[0]].Invoke().Start();
-                } catch (InvalidOperationException)
+                }
+                catch (InvalidOperationException)
                 {
                     throw;
-                } catch (Exception)
+                }
+                catch (Exception)
                 {
 
                 }

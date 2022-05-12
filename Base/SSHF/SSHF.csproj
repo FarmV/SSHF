@@ -1,67 +1,80 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
-    <RootNamespace>SSHF</RootNamespace>
-    <Nullable>enable</Nullable>
-    <UseWPF>true</UseWPF>
-    <UseWindowsForms>True</UseWindowsForms>
-    <PlatformTarget>x64</PlatformTarget>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
-    <Product>Screen Shot Helper by FarmV</Product>
-	<Description>Screen Shot Helper by FarmV</Description>
-    <Version>0.0.1</Version>
-    <Copyright>https://github.com/FarmV/SSHF</Copyright>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
+		<RootNamespace>SSHF</RootNamespace>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<UseWindowsForms>True</UseWindowsForms>
+		<PlatformTarget>x64</PlatformTarget>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+		<Product>Screen Shot Helper by FarmV</Product>
+		<Description>Screen Shot Helper by FarmV</Description>
+		<Version>0.0.1</Version>
+		<Copyright>https://github.com/FarmV/SSHF</Copyright>
 
-  <ItemGroup>
-    <None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.Core.dll" />
-    <None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA2.dll" />
-    <None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA3.dll" />
-  </ItemGroup>
-    
-  <ItemGroup>
-    <PackageReference Include="FlaUI.Core" Version="3.2.0" />
-    <PackageReference Include="FlaUI.UIA2" Version="3.2.0" />
-    <PackageReference Include="FlaUI.UIA3" Version="3.2.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0" />
-    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
-    <PackageReference Include="RawInput.Sharp" Version="0.0.4" />
-    <PackageReference Include="runtime.win-x86.Microsoft.NETCore.Runtime.CoreCLR" Version="2.0.8" />
-    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
-    <PackageReference Include="System.Runtime" Version="4.3.1" />
-    <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Properties\Settings.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-  </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>	  
-  </ItemGroup>
 
-	
-	
+	</PropertyGroup>
+
+
+
+
+
+
+
+
+
+
+	<ItemGroup>
+		<None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.Core.dll" />
+		<None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA2.dll" />
+		<None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA3.dll" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FlaUI.Core" Version="3.2.0"/>
+		<PackageReference Include="FlaUI.UIA2" Version="3.2.0" />
+		<PackageReference Include="FlaUI.UIA3" Version="3.2.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0" />
+		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
+		<PackageReference Include="RawInput.Sharp" Version="0.0.4" />
+		<PackageReference Include="runtime.win-x86.Microsoft.NETCore.Runtime.CoreCLR" Version="2.0.8" />
+		<PackageReference Include="System.Drawing.Common" Version="6.0.0" />
+		<PackageReference Include="System.Runtime" Version="4.3.1" />
+		<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Settings.Designer.cs">
+			<DesignTimeSharedInput>True</DesignTimeSharedInput>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Settings.settings</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Properties\Settings.settings">
+			<Generator>SettingsSingleFileGenerator</Generator>
+			<LastGenOutput>Settings.Designer.cs</LastGenOutput>
+		</None>
+	</ItemGroup>
+
+
+
 	<ItemGroup>
 		<Resource Include="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.Core.dll">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA2.dll">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA3.dll">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="Windows\MainWindow\MainWindowRes\Test.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -73,5 +86,14 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Resource>
 	</ItemGroup>
+	
+
+
+<Target Name="AfterBuild">
+  <Message Text="AfterBuild event" Importance="high"></Message>
+</Target>
+<Target Name="BeforeBuild">
+  <Message Text="BeforeBuild event" Importance="high"></Message>
+</Target>
 
 </Project>
