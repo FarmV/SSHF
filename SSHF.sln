@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.32126.317
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSHF", "Base\SSHF\SSHF.csproj", "{78F47A34-8410-4C03-B666-BC67958DB582}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WixSharp_Setup1", "InstalTest\WixSharp_Setup1\WixSharp_Setup1.csproj", "{9536490A-F975-48D6-AD66-6C8FF02E3CBA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WixSharp_Setup1", "Base\InstallerSSHF\InstallerSSHF.csproj", "{9536490A-F975-48D6-AD66-6C8FF02E3CBA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
