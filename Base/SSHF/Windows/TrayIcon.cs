@@ -16,30 +16,23 @@ using System.Windows.Threading;
 using Linearstar.Windows.RawInput;
 
 using SSHF.Infrastructure;
-using SSHF.Infrastructure.Algorithms.Input;
 using SSHF.Infrastructure.SharedFunctions;
 using SSHF.ViewModels.NotifyIconViewModel;
 using SSHF.Views.Windows.Notify;
 
 using static SSHF.ViewModels.NotifyIconViewModel.NotificatorViewModel;
+using static SSHF.ViewModels.TrayIconManager;
 
 namespace SSHF.ViewModels
 {
-    internal class TrayIcon : IAsyncDisposable
+    internal class TrayIconManager : IAsyncDisposable
     {
-        public async ValueTask DisposeAsync() => await Task.Run(() => _notifyIcon.Dispose()); 
-
-        private NotifyIcon _notifyIcon = new NotifyIcon
+        private Window _notificatorWindow;
+        internal EventHandler<Visibility>? VisibilityChange;
+        public TrayIconManager(Window notificatorWindow)
         {
-            Icon = Icon.ExtractAssociatedIcon(@"C:\Windows\winhlp32.exe"),
-            Visible = true
-        };
-        
-        private readonly NotificatorViewModel Notificator = App.GetNotificator();
-
-        public TrayIcon()
-        {
-            App.DPIChange += (obj, ev) =>
+            _notificatorWindow = notificatorWindow;
+            Program.DpiChange += (_, _) =>
             {
                 try
                 {
@@ -52,21 +45,28 @@ namespace SSHF.ViewModels
             {
                 _notifyIcon = new NotifyIcon
                 {
-                    Icon = Icon.ExtractAssociatedIcon(@"C:\Program Files\nodejs\node.exe"),
+                    Icon = Icon.ExtractAssociatedIcon(@"C:\Windows\winhlp32.exe"),
                     Visible = true
                 };
                 _notifyIcon.MouseDown += NotifyIcon_MouseDown;
             }
             _notifyIcon.MouseDown += NotifyIcon_MouseDown;
         }
+        public async ValueTask DisposeAsync() => await Task.Run(() => _notifyIcon.Dispose()); 
+        private NotifyIcon _notifyIcon = new NotifyIcon
+        {
+            Icon = Icon.ExtractAssociatedIcon(@"C:\Windows\winhlp32.exe"),
+            Visible = true
+        };
+        //private readonly NotificatorViewModel Notificator = App.GetNotificator();
 
 
         private  Rectangle GetRectanglePosition()
         {
-            return NotifyIconHelper.GetIconRect(_notifyIcon);
+            return NotifyIconHelper.GetIconRectangle(_notifyIcon);
         }
 
-        private enum RectPos
+        public enum RectPos
         {
             Centre = 0,
             Left = 1,
@@ -74,7 +74,7 @@ namespace SSHF.ViewModels
             Right = 3,
             Bottom = 4,
         }
-        private System.Windows.Point GetPositinRectangle(Rectangle rectangleIcon, RectPos posOutput)
+        private System.Windows.Point GetOffsetPointInRectangle(Rectangle rectangleIcon, RectPos posOutput)
         {
             int xCentre = rectangleIcon.Location.X + rectangleIcon.Size.Width / 2;
             int yCentre = rectangleIcon.Location.Y + rectangleIcon.Size.Height / 2;
@@ -86,25 +86,39 @@ namespace SSHF.ViewModels
             throw new InvalidOperationException();
         }
 
-        private async void NotifyIcon_MouseDown(object? sender, MouseEventArgs e)
+        private void NotifyIcon_MouseDown(object? sender, MouseEventArgs e)
         {
-            if (Notificator.NotificatorIsOpen && e.Button is MouseButtons.Right)
+            if (_notificatorWindow.Visibility is Visibility.Visible)
             {
-                Notificator.CloseNotificator(); return;
-            }
-
-            if (!Notificator.NotificatorIsOpen && e.Button is MouseButtons.Right)
-            {                           
-                await Notificator.SetPositionInvoke(new DataModelCommands[1] { new DataModelCommands("Закрыть",
-                   new RelayCommand((obj) => 
-                   {
-                       App.WindowsIsOpen[App.GetMyMainWindow].Value.BeginInvokeShutdown(DispatcherPriority.Normal);
-                       App.WindowsIsOpen[App.GetWindowNotification].Value.BeginInvokeShutdown(DispatcherPriority.Normal);
-                       App.Current.Dispatcher.Invoke(() => {App.Current.Shutdown();});
-                   }))}, GetPositinRectangle(NotifyIconHelper.GetIconRect(_notifyIcon), RectPos.Bottom),
-                   NotifyIconHelper.GetIconRect(_notifyIcon));
+                VisibilityChange?.Invoke(this, Visibility.Hidden);
+                _notificatorWindow.Visibility = Visibility.Hidden;
                 return;
             }
+
+            if (_notificatorWindow.Visibility is Visibility.Hidden && e.Button is MouseButtons.Right || e.Button is MouseButtons.Left)
+            {
+                VisibilityChange?.Invoke(this, Visibility.Visible);
+                System.Windows.Point point = GetOffsetPointInRectangle(NotifyIconHelper.GetIconRectangle(_notifyIcon), RectPos.Bottom);
+                _notificatorWindow.Visibility = Visibility.Visible;
+
+                _notificatorWindow.Left = point.X;
+                _notificatorWindow.Top = point.Y;
+               
+                return;
+            }
+
+            //if (Notificator.NotificatorIsOpen is not true && e.Button is MouseButtons.Right)
+            //{                           
+            //    await Notificator.SetPositionInvoke(new DataModelCommands[1] { new DataModelCommands("Закрыть",
+            //       new RelayCommand((obj) => 
+            //       {
+            //           App.WindowsIsOpen[App.GetMyMainWindow].Value.BeginInvokeShutdown(DispatcherPriority.Normal);
+            //           App.WindowsIsOpen[App.GetWindowNotification].Value.BeginInvokeShutdown(DispatcherPriority.Normal);
+            //           App.Current.Dispatcher.Invoke(() => {App.Current.Shutdown();});
+            //       }))}, GetPositinRectangle(NotifyIconHelper.GetIconRect(_notifyIcon), RectPos.Bottom),
+            //       NotifyIconHelper.GetIconRect(_notifyIcon));
+            //    return;
+            //}
         }
 
         internal System.Windows.Point GetRectCorrect(Window window)
@@ -125,7 +139,7 @@ namespace SSHF.ViewModels
         }
 
 
-        internal  System.Windows.Size GetElementPixelSize(UIElement element)
+        internal System.Windows.Size GetElementPixelSize(UIElement element)
         {
             Matrix transformToDevice;
 
@@ -155,7 +169,7 @@ namespace SSHF.ViewModels
 
         internal class NotifyIconHelper
         {
-            public static Rectangle GetIconRect(NotifyIcon icon)
+            public static Rectangle GetIconRectangle(NotifyIcon icon)
             {
                 RECT rect = new RECT();
                 NOTIFYICONIDENTIFIER notifyIcon = new NOTIFYICONIDENTIFIER();

@@ -9,7 +9,7 @@ using Microsoft.Win32;
 
 namespace SSHF.Infrastructure.SharedFunctions
 {
-    internal static class DialogFileFunctions
+    internal static class DialogFiles
     {
         internal static bool OpenFile(string Title, out string? SelectedFile, string Filter = "Все файлы (*.*)|*.*")
         {

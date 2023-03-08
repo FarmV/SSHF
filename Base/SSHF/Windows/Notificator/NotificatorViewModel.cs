@@ -12,28 +12,30 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
 
-using Linearstar.Windows.RawInput;
+using FVH.Background.Input;
 
+using Linearstar.Windows.RawInput;
 using SSHF.Infrastructure;
-using SSHF.Infrastructure.Algorithms.Base;
-using SSHF.Infrastructure.Algorithms.Input;
 using SSHF.Infrastructure.SharedFunctions;
 using SSHF.Models.NotifyIconModel;
-using SSHF.ViewModels.Base;
 using SSHF.Views.Windows.Notify;
 
 namespace SSHF.ViewModels.NotifyIconViewModel
 {
-    internal class NotificatorViewModel: ViewModel
+    internal class NotificatorViewModel
     {
-        private Window GeneralNotificatorWindow => App.WindowsIsOpen[App.GetWindowNotification].Key;
-        private readonly NotificatorModel _model;
-        public bool NotificatorIsOpen => GeneralNotificatorWindow.IsVisible;
-        public override object ProvideValue(IServiceProvider serviceProvider) => this;
-        public NotificatorViewModel()
+       // private Window GeneralNotificatorWindow => App.WindowsIsOpen[App.GetWindowNotification].Key;
+        private Window _trayIconWindow;
+        private IMouseHandler _mouseHandler;
+        public NotificatorViewModel(Window windowNotificator, TrayIconManager trayIcon, IMouseHandler mouseHandler)
         {
-            _model = _model is not null ? _model : new NotificatorModel(this);
+            _trayIconWindow = windowNotificator;
+            _mouseHandler = mouseHandler;
         }
+
+      
+
+        public bool NotificatorIsOpen => _trayIconWindow.IsVisible;
 
         private ObservableCollection<DataModelCommands> DataCommandsCollection = new ObservableCollection<DataModelCommands>();
 
@@ -61,15 +63,15 @@ namespace SSHF.ViewModels.NotifyIconViewModel
         {
             if (NotificatorIsOpen is true)
             {
-                GeneralNotificatorWindow.Dispatcher.Invoke(() =>
+                _trayIconWindow.Dispatcher.Invoke(() =>
                 {
-                    GeneralNotificatorWindow.Hide();
+                    _trayIconWindow.Hide();
                     DataCommandsCollection.Clear();
                     CommandsCollecition.Clear();
                 });
             }
 
-            await GeneralNotificatorWindow.Dispatcher.BeginInvoke(() =>
+            await _trayIconWindow.Dispatcher.BeginInvoke(() =>
             {
                 App.WindowsIsOpen[App.GetWindowNotification].Value.Invoke((IEnumerable<DataModelCommands> comm) =>
                 {
@@ -77,23 +79,23 @@ namespace SSHF.ViewModels.NotifyIconViewModel
                 }, DispatcherPriority.Render, commands);
             });
 
-            GeneralNotificatorWindow.Show();
+            _trayIconWindow.Show();
 
             System.Windows.Point cursorShowPosition = showPostionWindow == default ? CursorFunctions.GetCursorPosition() : showPostionWindow;
             Rectangle iconPos = ignoreAreaClick == default ? default : ignoreAreaClick;
 
 
-            WindowInteropHelper helper = new WindowInteropHelper(GeneralNotificatorWindow);
+            WindowInteropHelper helper = new WindowInteropHelper(_trayIconWindow);
 
-            bool res = WindowFunctions.RefreshWindowPositin.SetWindowPos(helper.Handle, -1, Convert.ToInt32(cursorShowPosition.X), Convert.ToInt32(cursorShowPosition.Y),
-            Convert.ToInt32(GeneralNotificatorWindow.Width), Convert.ToInt32(GeneralNotificatorWindow.Height), 0x0400 | 0x0040);
+            bool res = Win32ApiWindow.RefreshWindowPositin.SetWindowPos(helper.Handle, -1, Convert.ToInt32(cursorShowPosition.X), Convert.ToInt32(cursorShowPosition.Y),
+            Convert.ToInt32(_trayIconWindow.Width), Convert.ToInt32(_trayIconWindow.Height), 0x0400 | 0x0040);
 
             _ = Task.Run(() =>
             {
                 WaitHandleClearCollection.WaitOne();
-                GeneralNotificatorWindow.Dispatcher.Invoke(() =>
+                _trayIconWindow.Dispatcher.Invoke(() =>
                 {
-                    GeneralNotificatorWindow.Hide();
+                    _trayIconWindow.Hide();
                     DataCommandsCollection.Clear();
                     CommandsCollecition.Clear();
                 });
@@ -104,8 +106,8 @@ namespace SSHF.ViewModels.NotifyIconViewModel
             {
                 if (e.Data is not RawInputMouseData mouseData || mouseData.Mouse.Buttons is Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None) return;
 
-                if (GeneralNotificatorWindow.IsVisible is false) return;
-                if (GeneralNotificatorWindow.IsMouseOver) return;
+                if (_trayIconWindow.IsVisible is false) return;
+                if (_trayIconWindow.IsMouseOver) return;
 
                 if (ignoreAreaClick == default)
                 {
@@ -139,11 +141,11 @@ namespace SSHF.ViewModels.NotifyIconViewModel
         }
         internal Task CloseNotificatorAsync() => Task.Run(() =>
         {
-            _ = App.WindowsIsOpen[App.GetWindowNotification].Value.InvokeAsync(() =>
+            _ = _trayIconWindow.InvokeAsync(() =>
             {
-                GeneralNotificatorWindow.Dispatcher.Invoke(() =>
+                _trayIconWindow.Dispatcher.Invoke(() =>
                 {
-                    GeneralNotificatorWindow.Hide();
+                    _trayIconWindow.Hide();
                     DataCommandsCollection.Clear();
                     CommandsCollecition.Clear();
                 });
@@ -151,11 +153,11 @@ namespace SSHF.ViewModels.NotifyIconViewModel
         });
         internal async void CloseNotificator()
         {
-            await App.WindowsIsOpen[App.GetWindowNotification].Value.InvokeAsync(() =>
+            await _trayIconWindow.InvokeAsync(() =>
             {
-                GeneralNotificatorWindow.Dispatcher.Invoke(() =>
+                _trayIconWindow.Dispatcher.Invoke(() =>
                 {
-                    GeneralNotificatorWindow.Hide();
+                    _trayIconWindow.Hide();
                     DataCommandsCollection.Clear();
                     CommandsCollecition.Clear();
                 });

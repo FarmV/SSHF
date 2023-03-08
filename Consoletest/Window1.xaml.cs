@@ -12,14 +12,14 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace SSHF.Views.Windows.WorkSpace
+namespace Consoletest
 {
     /// <summary>
-    /// Логика взаимодействия для WorkSpace.xaml
+    /// Логика взаимодействия для Window1.xaml
     /// </summary>
-    public partial class WorkSpace: Window
+    public partial class Window1 : Window
     {
-        public WorkSpace()
+        public Window1()
         {
             InitializeComponent();
         }

@@ -16,7 +16,6 @@ using System.Windows.Threading;
 using Linearstar.Windows.RawInput;
 
 using SSHF.Infrastructure;
-using SSHF.Infrastructure.Algorithms.Input;
 using SSHF.Infrastructure.SharedFunctions;
 
 using SSHF.ViewModels.NotifyIconViewModel;

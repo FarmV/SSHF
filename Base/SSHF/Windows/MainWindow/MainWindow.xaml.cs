@@ -20,26 +20,19 @@ using System.Windows.Shapes;
 using Linearstar.Windows.RawInput;
 using Linearstar.Windows.RawInput.Native;
 
+using SSHF.ViewModels.MainWindowViewModel;
+
 namespace SSHF
 {
 
 
 
-    public partial class MainWindow : Window
+    public partial class MainWindow : MahApps.Metro.Controls.MetroWindow
     {
-
         public MainWindow()
         {
             InitializeComponent();
-
-           
-          
-
-        }
-     
-
-
-
-
+            this.Title = "Fast Window";
+        }    
     }
 }
