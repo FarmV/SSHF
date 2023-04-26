@@ -8,70 +8,76 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
     xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
-
-             
+  
+    xmlns:converter ="clr-namespace:SSHF.Windows.MainWindow"   
+    xmlns:actions="clr-namespace:MahApps.Metro.Actions;assembly=MahApps.Metro"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:rxui="clr-namespace:System.Reactive;assembly=System.Reactive"
+    xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
+    
     AllowsTransparency="True"
- 
     WindowStyle="None"      
     Topmost="True" 
-    WindowStartupLocation="CenterScreen"
 
-  
-   
+    ShowInTaskbar="False"    
+    ShowTitleBar="False"
+    ShowMinButton="False"
+    ShowCloseButton="False"
+    ShowMaxRestoreButton="False"
+    NonActiveBorderBrush="Transparent"
  
- 
-  
+      
+    ResizeMode="NoResize"
     d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
-   
-    Background="{DynamicResource BackG}"
->
+    Visibility="Visible"
+   >
     <Window.Resources>
-        <ImageBrush x:Key="BackG"  ImageSource="{Binding BackgroundImage}"/>
+        <converter:ConverterImageDPIViewport x:Key="ConDPIViewport"/>
+        <converter:ConverterVisibleToOpacity x:Key="ConVisToOP"/>
     </Window.Resources>
 
-    <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0" NonClientFrameEdges="None" ResizeBorderThickness="0" UseAeroCaptionButtons="False" />
-    </WindowChrome.WindowChrome>
+    <i:Interaction.Triggers>
 
-    <!--d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}"-->
+        <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
+            <i:InvokeCommandAction Command="{Binding StopWindowUpdater}" 
+                                   CommandParameter="{x:Static rxui:Unit.Default}"/>
+        </i:EventTrigger>
 
+        <i:EventTrigger EventName="PreviewMouseDoubleClick">
+            <i:InvokeCommandAction Command="{Binding HideWindow}" 
+                                   CommandParameter="{x:Static rxui:Unit.Default}"/>
+        </i:EventTrigger>
 
-    <!--<behaviors:Interaction.Triggers>
+        <i:EventTrigger EventName="MouseLeftButtonDown">
+            <i:InvokeCommandAction Command="{Binding DragMoveWindow}" 
+                                   CommandParameter="{x:Static rxui:Unit.Default}"/>
+        </i:EventTrigger>
 
-         Отправляем ссылку на самого себя в DataContext 
-        <behaviors:EventTrigger EventName="Loaded" SourceObject="{Binding ElementName=Fast}">
-            <behaviors:InvokeCommandAction Command="{Binding Path = GetThisWindow}" PassEventArgsToCommand="True"/>
-        </behaviors:EventTrigger>
+        <i:EventTrigger EventName="PreviewMouseMove">
+            <i:InvokeCommandAction Command="{Binding DropImage}"                                  
+                                   PassEventArgsToCommand="True"/>
+        </i:EventTrigger>
+
+    </i:Interaction.Triggers>
+    <Window.Style>
+        <Style TargetType="{x:Type Window}">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <Binding Path="BackgroundImage" Converter="{StaticResource ConDPIViewport}"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Opacity">
+                <Setter.Value>
+                    <Binding Path="VisibleCondition" Converter="{StaticResource ConVisToOP}"/>
+                </Setter.Value>
+            </Setter>
+
+        </Style>
+    </Window.Style>
+
+    <!--<Grid Background="{Binding BackgroundImage, Converter={StaticResource ConDPIViewport}}" >
         
-         Пререхватыаем эвент закрытия окна  
-        <behaviors:EventTrigger EventName="Closing" SourceObject="{Binding ElementName=Fast}">
-            <behaviors:InvokeCommandAction Command="{Binding Path = NotClosingCommand}" PassEventArgsToCommand="True"/>
-        </behaviors:EventTrigger>
-        
-         Скрываем окно по двойному клику 
-        <behaviors:EventTrigger EventName="MouseDoubleClick" SourceObject="{Binding ElementName=Fast}">
-            <behaviors:InvokeCommandAction Command="{Binding Path = DoubleClickHideWindowCommand}" PassEventArgsToCommand="False"/>
-        </behaviors:EventTrigger>
-        
-         изменение размеров окна 
-        <behaviors:EventTrigger EventName="PreviewMouseWheel" SourceObject="{Binding ElementName=Fast}">
-            <behaviors:InvokeCommandAction Command="{Binding Path = MouseWheel}" PassEventArgsToCommand="True"/>
-        </behaviors:EventTrigger>
-        
-         Дроп файла скриншота     
-        <behaviors:EventTrigger EventName="PreviewMouseMove" SourceObject="{Binding ElementName=Fast}">
-            <behaviors:InvokeCommandAction Command="{Binding Path = DropImage}" PassEventArgsToCommand="True"/>
-        </behaviors:EventTrigger>
-
-         Вызываем рефреш окна по левому клику 
-        <behaviors:EventTrigger EventName="MouseLeftButtonDown" SourceObject="{Binding ElementName=Fast}">
-            <behaviors:InvokeCommandAction Command="{Binding Path = InvoceRefreshWindow}" PassEventArgsToCommand="True"/>
-        </behaviors:EventTrigger>
-
-
-    </behaviors:Interaction.Triggers>-->
-
-
-    
+    </Grid>-->
 
 </mah:MetroWindow>

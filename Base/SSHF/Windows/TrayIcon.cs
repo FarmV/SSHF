@@ -27,12 +27,12 @@ namespace SSHF.ViewModels
 {
     internal class TrayIconManager : IAsyncDisposable
     {
-        private Window _notificatorWindow;
-        internal EventHandler<Visibility>? VisibilityChange;
+        private readonly Window _notificatorWindow;
+
         public TrayIconManager(Window notificatorWindow)
         {
             _notificatorWindow = notificatorWindow;
-            Program.DpiChange += (_, _) =>
+            App.DpiChange += (_, _) =>
             {
                 try
                 {
@@ -86,26 +86,37 @@ namespace SSHF.ViewModels
             throw new InvalidOperationException();
         }
 
+        bool blockOne = false;
         private void NotifyIcon_MouseDown(object? sender, MouseEventArgs e)
         {
-            if (_notificatorWindow.Visibility is Visibility.Visible)
-            {
-                VisibilityChange?.Invoke(this, Visibility.Hidden);
-                _notificatorWindow.Visibility = Visibility.Hidden;
+           if (blockOne is true) return;
+           blockOne = true;
+           if (System.Windows.MessageBox.Show("Закрыть приложение?","Запрос SSHF",MessageBoxButton.YesNo,MessageBoxImage.Question,MessageBoxResult.No) is MessageBoxResult.Yes)
+           {
+                
+                this._notifyIcon.Dispose();
+                System.Windows.Application.Current.Shutdown();
                 return;
-            }
+           }
+           blockOne = false;
+            //if (_notificatorWindow.Visibility is Visibility.Visible)
+            //{
+            //   // VisibilityChange?.Invoke(this, Visibility.Hidden);
+            //    _notificatorWindow.Visibility = Visibility.Hidden;
+            //    return;
+            //}
 
-            if (_notificatorWindow.Visibility is Visibility.Hidden && e.Button is MouseButtons.Right || e.Button is MouseButtons.Left)
-            {
-                VisibilityChange?.Invoke(this, Visibility.Visible);
-                System.Windows.Point point = GetOffsetPointInRectangle(NotifyIconHelper.GetIconRectangle(_notifyIcon), RectPos.Bottom);
-                _notificatorWindow.Visibility = Visibility.Visible;
+            //if (_notificatorWindow.Visibility is Visibility.Hidden && e.Button is MouseButtons.Right || e.Button is MouseButtons.Left)
+            //{
+            //  //  VisibilityChange?.Invoke(this, Visibility.Visible);
+            //    System.Windows.Point point = GetOffsetPointInRectangle(NotifyIconHelper.GetIconRectangle(_notifyIcon), RectPos.Bottom);
+            //    _notificatorWindow.Visibility = Visibility.Visible;
 
-                _notificatorWindow.Left = point.X;
-                _notificatorWindow.Top = point.Y;
-               
-                return;
-            }
+            //    _notificatorWindow.Left = point.X;
+            //    _notificatorWindow.Top = point.Y;
+
+            //    return;
+            //}
 
             //if (Notificator.NotificatorIsOpen is not true && e.Button is MouseButtons.Right)
             //{                           

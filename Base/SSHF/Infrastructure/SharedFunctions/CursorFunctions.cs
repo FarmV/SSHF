@@ -45,10 +45,10 @@ namespace SSHF.Infrastructure.SharedFunctions
         }
 
 
-        internal static Point GetWindosPosToCursor(UIElement element)
-        {
-            return App.Current.MainWindow.TranslatePoint(CursorFunctions.GetCursorXY(App.Current.MainWindow), element);
-        }
+        //internal static Point GetWindosPosToCursor(UIElement element)
+        //{
+        //    return App.Current.MainWindow.TranslatePoint(CursorFunctions.GetCursorXY(App.Current.MainWindow), element);
+        //}
 
 
     }

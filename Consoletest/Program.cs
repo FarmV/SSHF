@@ -10,27 +10,20 @@ namespace Consoletest
 {
     internal class Program
     {
-        [STAThread]
-        static void Main(string[] args)
+
+        private static bool a1 = false;
+        private static string a2 = a2 ?? throw new NullReferenceException(); 
+
+        static Program()
         {
-       
+            Console.WriteLine("static");
+        }
 
-            //Console.WriteLine($"{NameOfFullName<Action>(() => new A1.A2().Test(default, default), false)}");
-            //Console.WriteLine($"{NameOfFullName<Action>(() => new A1.A2().Test(default, default))}");
-            //Console.WriteLine($"{NameOfFullName<Action>(() => new A1.A2().Myprop, false)}");
-            //Console.WriteLine(nameof(A1.A2.Myprop));
-            //Console.WriteLine(nameof(A1.A2.Test2));
-            //Console.WriteLine($"{NameOfFullName<Action>(() => new A1.A2().Myprop)}");
-            //Console.WriteLine($"{NameOfFullName<Func<object>>(() => new A1.A2().Test2(default,default))}");
-            Window1 window = new Window1();
-
-            Application application = new Application();
-            application.Run(window);
-
-
-            
-
-
+        static async Task Main(string[] args)
+        {   
+            //a1 = true;
+            Console.WriteLine("test");
+            await Task.Delay(1000);           
         }
         static string NameOfFullName<T>(LambdaExpression expr,bool isFullName = true)
         {
@@ -143,6 +136,24 @@ namespace Consoletest
         }
 
    
+    }
+
+    internal class A123
+    {
+        private string a2;
+        private A123( string bbb) 
+        {
+            a2 = bbb;
+
+        }
+        internal static async Task<A123> Create()
+        {
+            return new A123(await getStr());
+        }
+        private static Task<string> getStr()
+        {
+            return Task.FromResult("Test0000");
+        }
     }
 }
 namespace ConsoletestA
