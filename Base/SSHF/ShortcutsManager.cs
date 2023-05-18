@@ -54,7 +54,7 @@ namespace SSHF
             {
                 listShortcuts.GetShortcuts().ToList().ForEach(shortcut =>
                 {
-                    _keyboardCallback.AddCallbackTask(shortcut.KeyCombo, shortcut.CallbackTask, shortcut.Identifier ?? shortcut.CallbackTask.Method.Name);
+                    _keyboardCallback.AddCallBackTask(shortcut.KeyCombo, shortcut.CallbackTask, shortcut.Identifier ?? shortcut.CallbackTask.Method.Name);
                 });
             });
             _isInit = true;

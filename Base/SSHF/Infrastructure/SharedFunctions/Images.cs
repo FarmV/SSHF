@@ -68,7 +68,7 @@ namespace SSHF.Infrastructure.SharedFunctions
             DragDrop.DoDragDrop(_window, dataObject, DragDropEffects.Copy);
 
         }
-        public void SaveImageFromDrop(object ev,ImageSource image)
+        public void SaveImageFromDrop(object ev, ImageSource image)
         {
             try
             {

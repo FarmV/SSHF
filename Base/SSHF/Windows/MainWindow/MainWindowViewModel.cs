@@ -1,39 +1,19 @@
 ﻿using System;
 using System.Windows;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
-
-using SSHF.Infrastructure;
-
-using SSHF.Models;
-using System.Windows.Media.Imaging;
 using SSHF.Infrastructure.SharedFunctions;
-using SSHF.Views.Windows.Notify;
-using System.Windows.Interop;
-using System.ComponentModel;
-using System.Windows.Media.Animation;
-using System.IO;
-using Linearstar.Windows.RawInput;
 using System.Threading;
 using System.Windows.Media;
 using System.Reflection;
 using ReactiveUI;
 using System.Reactive;
-using System.Diagnostics.CodeAnalysis;
-using System.Security.Cryptography.X509Certificates;
-using System.Data.Common;
-using System.Windows.Documents;
 using FVH.Background.Input;
 using System.Reactive.Linq;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
-using System.Globalization;
-using System.Windows.Data;
-using System.Runtime.Intrinsics.Arm;
+using System.Reactive.Threading.Tasks;
+using System.Windows.Threading;
+using System.Linq;
 
 namespace SSHF.ViewModels.MainWindowViewModel
 {
@@ -50,6 +30,8 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private bool _ICancellingUpdate = false;
         private readonly DpiCorrector _dpiCorrector;
         private readonly SetImage _setImage;
+        private bool _dropCondition;
+        private bool _dragMoveCondition;
 
 #pragma warning disable CS8618 // Empty class constructor for designer only
         public MainWindowViewModel()
@@ -69,8 +51,8 @@ namespace SSHF.ViewModels.MainWindowViewModel
             SwithBlockRefreshWindow = ReactiveCommand.Create(SwitchBlockRefresh);
             HideWindow = ReactiveCommand.Create(Hide);
             ShowWindow = ReactiveCommand.Create(Show);
-            DragMoveWindow = ReactiveCommand.Create(DragMove);
-            DropImage = ReactiveCommand.Create<object>(x => DropWindowImage(x));
+            DragMoveWindow = ReactiveCommand.Create(DragMove, this.WhenAnyValue(x => x.DragMoveCondition));
+            DropImage = ReactiveCommand.Create<object>(DropWindowImage, this.WhenAnyValue(x => x.DropCondition));
         }
         public ReactiveCommand<Unit, Unit> RefreshWindowInvoke { get; private set; }
         public ReactiveCommand<Unit, Unit> StopWindowUpdater { get; private set; }
@@ -94,12 +76,12 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             if (BackgroundImage is not ImageSource img) return;
             if (_windowPositionUpdater.IsUpdateWindow is true) return;
-            if (Keyboard.IsKeyDown(Key.LeftCtrl) is not true) return;
+            //if (Keyboard.IsKeyDown(Key.LeftCtrl) is not true) return;
             _setImage.SaveImageFromDrop(ev, img);
         }
-        private void DragMove() => _windowPositionUpdater.DargMove();       
-        private void Hide() => VisibleCondition = Visibility.Hidden;        
-        private void Show() => VisibleCondition = Visibility.Visible;        
+        private void DragMove() => _windowPositionUpdater.DargMove();
+        private void Hide() => VisibleCondition = Visibility.Hidden;
+        private void Show() => VisibleCondition = Visibility.Visible;
         private void StopUpdateWindow()
         {
             if (_windowPositionUpdater.IsUpdateWindow is false) return;
@@ -116,7 +98,12 @@ namespace SSHF.ViewModels.MainWindowViewModel
             DPISacaleMonitor dpi = _dpiCorrector.GetCurretDPI();
             Height = image.Height / dpi.DpiScaleY;
             Width = image.Width / dpi.DpiScaleX;
-            BackgroundImage = image;         
+            BackgroundImage = image;
+        }
+        public bool DropCondition
+        {
+            get => _dropCondition;
+            set => this.RaiseAndSetIfChanged(ref _dropCondition, value);
         }
         public IWindowPositionUpdater WindowPositionUpdater
         {
@@ -148,6 +135,11 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             get => _width;
             private set => this.RaiseAndSetIfChanged(ref _width, value);
+        }
+        public bool DragMoveCondition
+        {
+            get => _dragMoveCondition;
+            set => this.RaiseAndSetIfChanged(ref _dragMoveCondition, value);
         }
         public Visibility VisibleCondition
         {
@@ -466,59 +458,93 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
     internal class MainWindowCommand : IInvokeShortcuts
     {
-        private Shortcuts _shortcutPresentNewImage;
-        private Shortcuts _shortcutSwithBlockRefreshWindow;
+        private IKeyboardHandler _keyboardHandler;
+        private bool _executePresentNewImage = false;
+        private readonly System.Windows.Window _window;
         public MainWindowViewModel MainWindowViewModel { get; }
         public IEnumerable<Shortcuts> GetShortcuts() => new Shortcuts[]
         {
-            _shortcutPresentNewImage,
-            _shortcutSwithBlockRefreshWindow
-        };
-        public MainWindowCommand(MainWindowViewModel mainWindowView)
-        {
-            MainWindowViewModel = mainWindowView;
-
-            _shortcutPresentNewImage = new Shortcuts(new VKeys[]
+            new Shortcuts(new VKeys[]
             {
                 VKeys.VK_LWIN,
                 VKeys.VK_SHIFT,
                 VKeys.VK_KEY_A
             },
-            new Func<Task>(PresentNewImage), nameof(MainWindowCommand.PresentNewImage));
+            new Func<Task>(PresentNewImage), nameof(MainWindowCommand.PresentNewImage)),
 
-            _shortcutSwithBlockRefreshWindow = new Shortcuts(new VKeys[]
+            new Shortcuts(new VKeys[]
             {
                 VKeys.VK_CONTROL,
                 VKeys.VK_CAPITAL
             },
-            () => new Task(SwithBlockRefreshWindow), nameof(MainWindowCommand.SwithBlockRefreshWindow));
+            new Func<Task>(SwithBlockRefreshWindow), nameof(MainWindowCommand.SwithBlockRefreshWindow)),
+
+            new Shortcuts(new VKeys[]
+            {
+                VKeys.VK_CONTROL
+            },
+            new Func<Task>(StopRefreshWindow), nameof(MainWindowCommand.StopRefreshWindow))
+
+        };
+        public MainWindowCommand(System.Windows.Window window, MainWindowViewModel mainWindowView, IKeyboardHandler keyboardHandler)
+        {
+            _window = window;
+            MainWindowViewModel = mainWindowView;
+            _keyboardHandler = keyboardHandler;
+
+            IObservable<VKeys[]> keyPressObservable = Observable.FromEventPattern(
+                                 (EventHandler<IKeysNotificator> handler) => keyboardHandler.KeyPressEvent += handler,
+                                 (EventHandler<IKeysNotificator> handler) => keyboardHandler.KeyPressEvent -= handler).Select(x => x.EventArgs.Keys);
+
+
+            IObservable<VKeys[]> keyUPObservable = Observable.FromEventPattern(
+                                 (EventHandler<IKeysNotificator> handler) => keyboardHandler.KeyUpPressEvent += handler,
+                                 (EventHandler<IKeysNotificator> handler) => keyboardHandler.KeyUpPressEvent -= handler).Select(x => x.EventArgs.Keys);
+
+            keyPressObservable.ObserveOn(RxApp.MainThreadScheduler).Subscribe(x =>
+            {
+                if (x.Contains(VKeys.VK_CONTROL) && x.Length is 1)
+                {
+                    this.MainWindowViewModel.DragMoveCondition = false;
+                    MainWindowViewModel.DropCondition = true;
+                }              
+            });
+            keyUPObservable.ObserveOn(RxApp.MainThreadScheduler).Subscribe(x => // todo разобратся почему приходит пустой эвент
+            {
+                if (this.MainWindowViewModel.VisibleCondition == Visibility.Hidden) return;              
+                if (Keyboard.IsKeyUp(Key.LeftCtrl) is true)
+                {
+                    this.MainWindowViewModel.DragMoveCondition = true;
+                    MainWindowViewModel.DropCondition = false;
+                }
+            });
+
         }
-        public void SwithBlockRefreshWindow() => MainWindowViewModel.SwithBlockRefreshWindow.Execute().Subscribe().Dispose();
+        public async Task SwithBlockRefreshWindow() => await Application.Current.Dispatcher.InvokeAsync(async () => await MainWindowViewModel.SwithBlockRefreshWindow.Execute().FirstAsync());
 
-
-        private bool _executePresentNewImage = false;
         public async Task PresentNewImage()
         {
             if (_executePresentNewImage is true) return;
             try
             {
                 _executePresentNewImage = true;
-                await Task.Run(async () =>
+                await Application.Current.Dispatcher.InvokeAsync(async () =>
                 {
-                    await Application.Current.Dispatcher.InvokeAsync(async () => await MainWindowViewModel.SetNewImage.Execute().FirstAsync());
-                    await Application.Current.Dispatcher.InvokeAsync(async () => await MainWindowViewModel.ShowWindow.Execute().FirstAsync());
-                    if (await MainWindowViewModel.RefreshWindowInvoke.CanExecute.FirstAsync() is true)
-                    {
-                        await Application.Current.Dispatcher.InvokeAsync(async() => await MainWindowViewModel.RefreshWindowInvoke.Execute().FirstAsync());
-                    }
-                }).ConfigureAwait(false);
+                    await MainWindowViewModel.SetNewImage.Execute().FirstAsync();
+                    await MainWindowViewModel.ShowWindow.Execute().FirstAsync();
+
+                    _ = await this.MainWindowViewModel.RefreshWindowInvoke.CanExecute.FirstAsync() is true ? await MainWindowViewModel.RefreshWindowInvoke.Execute().FirstAsync() : Unit.Default;
+                }).Task.ConfigureAwait(false);
             }
-            finally
+            finally { _executePresentNewImage = false; }
+        }
+        public async Task StopRefreshWindow()
+        {
+            if (MainWindowViewModel.WindowPositionUpdater.IsUpdateWindow is true)
             {
-                _executePresentNewImage = false;
+                await Application.Current.Dispatcher.InvokeAsync(async () => await MainWindowViewModel.StopWindowUpdater.Execute().FirstAsync());
             }
         }
-        public void StopRefreshWindow() => MainWindowViewModel.StopWindowUpdater.Execute().Subscribe().Dispose();
 
 
     }

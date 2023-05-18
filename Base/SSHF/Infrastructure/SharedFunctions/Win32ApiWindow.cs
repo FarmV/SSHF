@@ -65,10 +65,9 @@ namespace SSHF.Infrastructure.SharedFunctions
 
                 while (token.IsCancellationRequested is not true)
                 {
-                    await Task.Delay(1, token);
+                    await Task.Delay(1, token); //меньше миллисекунды не приходят эвенты мыши.
 
                     if (token.IsCancellationRequested is true) return;
-
                     Point point = CursorFunctions.GetCursorPosition();
                     await _window.Dispatcher.InvokeAsync(() =>
                     {

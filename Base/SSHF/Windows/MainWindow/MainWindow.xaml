@@ -31,6 +31,9 @@
     ResizeMode="NoResize"
     d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
     Visibility="Visible"
+    
+    
+
    >
     <Window.Resources>
         <converter:ConverterImageDPIViewport x:Key="ConDPIViewport"/>
@@ -72,7 +75,6 @@
                     <Binding Path="VisibleCondition" Converter="{StaticResource ConVisToOP}"/>
                 </Setter.Value>
             </Setter>
-
         </Style>
     </Window.Style>
 

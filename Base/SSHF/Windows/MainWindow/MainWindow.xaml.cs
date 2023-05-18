@@ -39,6 +39,9 @@ namespace SSHF
 
             InitializeComponent();
             this.Title = "Fast Window";
+
+
+
         }
         /// <summary>
         /// Заглушка - Изменения свойста Visibility деактивирует привязку к размерам окна.
@@ -54,6 +57,8 @@ namespace SSHF
                  this.ViewModel,
                  vm => vm.Width,
                  w => w.Width);
+
+           
         }
         object? IViewFor.ViewModel
         {
@@ -70,5 +75,6 @@ namespace SSHF
             get => (MainWindowViewModel)GetValue(ViewModelProperty);
             set => SetValue(ViewModelProperty, value);
         }
+
     }
 }
