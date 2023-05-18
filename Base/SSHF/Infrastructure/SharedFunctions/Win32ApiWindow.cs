@@ -42,7 +42,14 @@ namespace SSHF.Infrastructure.SharedFunctions
             get => _dispatcher;
             private set => this.RaiseAndSetIfChanged(ref _dispatcher, value);
         }
-        internal async Task UpdateWindowPositionRelativeToCursor(CancellationToken token)
+        public Task UpdateWindowPos(CancellationToken token) => UpdateWindowPositionRelativeToCursor(token);
+        public void DargMove() => _window.Dispatcher.Invoke(() =>
+        {
+            if (Mouse.LeftButton is MouseButtonState.Pressed) _window.DragMove();
+        });
+        [DllImport("user32.dll")]
+        internal static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
+        private async Task UpdateWindowPositionRelativeToCursor(CancellationToken token)
         {
             try
             {
@@ -68,19 +75,6 @@ namespace SSHF.Infrastructure.SharedFunctions
             {
                 IsUpdateWindow = false;
             }
-        }
-        [DllImport("user32.dll")]
-        internal static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
-        public Task UpdateWindowPos(CancellationToken token) => UpdateWindowPositionRelativeToCursor(token);
-        public void DargMove()
-        {
-            _window.Dispatcher.Invoke(() =>
-            {
-                if (Mouse.LeftButton is MouseButtonState.Pressed)
-                {
-                    _window.DragMove();
-                }
-            });
         }
     }
 }
