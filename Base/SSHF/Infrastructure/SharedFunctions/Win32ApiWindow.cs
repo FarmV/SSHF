@@ -34,6 +34,11 @@ namespace SSHF.Infrastructure.SharedFunctions
         private readonly Window _window;
         private Dispatcher _dispatcher;
         private bool _isUpdateWindow;
+        private const int IGNORE_SIZE_WINDOW = -1;
+        private const int HWND_TOP = 0;
+        private const int NOT_MESSAGE_WM_WINDOWPOSCHANGING = 0x0400;
+        private const int SWP_NOSIZE = 0x0001;
+        private const int OFFSET_CURSOR = 30;
         public Win32WPFWindowPositionUpdater(Window window)
         {
             _window = window;
@@ -53,11 +58,6 @@ namespace SSHF.Infrastructure.SharedFunctions
         {
             try
             {
-                int SizeWindow = -1;
-                int margin = 30;
-                int notMessage_WM_WINDOWPOSCHANGING = 0x0400;
-                int ignorNewSizeWindow = 0x0001;
-
                 if (IsUpdateWindow is true) throw new InvalidOperationException("You cannot update a window that is already being updated");
                 IsUpdateWindow = true;
 
@@ -71,8 +71,8 @@ namespace SSHF.Infrastructure.SharedFunctions
                     Point point = CursorFunctions.GetCursorPosition();
                     await _window.Dispatcher.InvokeAsync(() =>
                     {
-                        SetWindowPos(helper.Handle, 0, Convert.ToInt32(point.X - margin), Convert.ToInt32(point.Y - margin),
-                            SizeWindow, SizeWindow, notMessage_WM_WINDOWPOSCHANGING | ignorNewSizeWindow);
+                        SetWindowPos(helper.Handle, HWND_TOP, Convert.ToInt32(point.X - OFFSET_CURSOR), Convert.ToInt32(point.Y - OFFSET_CURSOR),
+                            IGNORE_SIZE_WINDOW, IGNORE_SIZE_WINDOW, NOT_MESSAGE_WM_WINDOWPOSCHANGING | SWP_NOSIZE);
                     }, System.Windows.Threading.DispatcherPriority.Render, token);
                 }
             }
