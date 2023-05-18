@@ -163,10 +163,7 @@ namespace SSHF
                         container.BuildServiceProvider().GetRequiredService<MainWindow>(),
                         container.BuildServiceProvider().GetRequiredService<MainWindowViewModel>()
                         );
-
-
-                    
-
+                 
                     container.AddSingleton<Notificator>(
                         CreateAnIconInTheNotificationArea(container.BuildServiceProvider().GetRequiredService<Input>().GetMouseHandler(), ref container) //todo исправить затычку
                         );
@@ -179,19 +176,19 @@ namespace SSHF
                         );
 
                     container.AddSingleton<ShortcutsManager>(
-                        CreateShortcutsManager(
-                            container.BuildServiceProvider().GetRequiredService<Input>().GetKeyboardCallbackFunction(),
-                            new IInvokeShortcuts[]
-                            {
-                              container.BuildServiceProvider().GetRequiredService<MainWindowCommand>()
-                            }));
+                              CreateShortcutsManager(
+                                                     container.BuildServiceProvider().GetRequiredService<Input>().GetKeyboardCallbackFunction(),
+                                                               new IInvokeShortcuts[]
+                                                               {
+                                                                   container.BuildServiceProvider().GetRequiredService<MainWindowCommand>()
+                                                               }));
                 });
             }).Build();
             private static Dispatcher GetWPFUIDispatcher(Thread uiThread)  => Dispatcher.FromThread(uiThread) is not Dispatcher uiDispatcher ? throw new InvalidOperationException() : uiDispatcher;
             private static IWindowPositionUpdater CreatePositionUpdaterWin32WPF(Window window) => new Win32WPFWindowPositionUpdater(window);
             private static IGetImage CreateImageProvider() => new ImageManager();
             private static MainWindowViewModel CreateMainWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, DpiCorrector corrector, SetImage setImage) =>
-                new MainWindowViewModel(imageProvider, windowPositionUpdater, corrector, setImage);
+                           new MainWindowViewModel(imageProvider, windowPositionUpdater, corrector, setImage);
 
             private static void SetDataContextMainWindow(Window window, MainWindowViewModel mainWindowViewModel)
             {
