@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,25 +7,16 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
 
-using FVH.Background.Input;
-
-using Microsoft.Win32.SafeHandles;
-
 using ReactiveUI;
-
-using SSHF.Views.Windows.Notify;
 
 namespace SSHF.Infrastructure.SharedFunctions
 {
-
     public interface IWindowPositionUpdater
     {
         bool IsUpdateWindow { get; }
         Task UpdateWindowPos(CancellationToken token);
         void DargMove();
     }
-
-
     internal class Win32WPFWindowPositionUpdater : ReactiveUI.ReactiveObject, IWindowPositionUpdater
     {
         private readonly Window _window;
@@ -92,10 +80,8 @@ namespace SSHF.Infrastructure.SharedFunctions
                 {
                     _window.DragMove();
                 }
-
             });
         }
-
     }
 }
 
