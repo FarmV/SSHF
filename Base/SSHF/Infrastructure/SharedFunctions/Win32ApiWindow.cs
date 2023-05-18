@@ -17,7 +17,7 @@ namespace SSHF.Infrastructure.SharedFunctions
         Task UpdateWindowPos(CancellationToken token);
         void DargMove();
     }
-    internal class Win32WPFWindowPositionUpdater : ReactiveUI.ReactiveObject, IWindowPositionUpdater
+    internal partial class Win32WPFWindowPositionUpdater : ReactiveUI.ReactiveObject, IWindowPositionUpdater
     {
         private readonly Window _window;
         private Dispatcher _dispatcher;
@@ -47,8 +47,9 @@ namespace SSHF.Infrastructure.SharedFunctions
         {
             if (Mouse.LeftButton is MouseButtonState.Pressed) _window.DragMove();
         });
-        [DllImport("user32.dll")]
-        internal static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
+        [LibraryImport("user32")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
         private async Task UpdateWindowPositionRelativeToCursor(CancellationToken token)
         {
             try
