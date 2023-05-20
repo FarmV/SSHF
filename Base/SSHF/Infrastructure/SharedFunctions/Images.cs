@@ -101,17 +101,34 @@ internal class ImageManager : IGetImage
             if (Clipboard.ContainsImage() is true)
             {
                 IDataObject data = Clipboard.GetDataObject();
-                if (data.GetDataPresent(DataFormats.Dib))
+                var bba = data.GetFormats();
+
+                if (data.GetDataPresent("PNG") is not true)
                 {
-                    using MemoryStream stream = (MemoryStream)data.GetData(DataFormats.Dib);
-                    MemoryStream imagePngStram = ClipboardDibConverter.ConvertToPng(stream);
-                    BitmapImage bitmapImage = new BitmapImage();
-                    bitmapImage.BeginInit();
-                    bitmapImage.StreamSource = imagePngStram;
-                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmapImage.EndInit();
-                    returnImage = bitmapImage;
-                    returnImage.Freeze();
+                    if (data.GetDataPresent(DataFormats.Dib) is true)
+                    {
+                        using MemoryStream stream = (MemoryStream)data.GetData(DataFormats.Dib);
+                        MemoryStream imagePngStram = ClipboardDibConverter.ConvertToPng(stream);
+                        MemoryStream copyOriginalImage = new MemoryStream(imagePngStram.ToArray());
+
+                        BitmapImage ImageInfo = new BitmapImage();
+                        ImageInfo.BeginInit();
+                        ImageInfo.StreamSource = imagePngStram;
+                        ImageInfo.CacheOption = BitmapCacheOption.OnLoad;
+                        ImageInfo.EndInit();
+
+                        BitmapImage returnImageDPI96 = new BitmapImage();
+                        returnImageDPI96.BeginInit();
+                        returnImageDPI96.StreamSource = copyOriginalImage;
+                        returnImageDPI96.DecodePixelWidth = (int)(ImageInfo.PixelWidth * ImageInfo.DpiX / 96d);
+                        returnImageDPI96.DecodePixelHeight = (int)(ImageInfo.PixelHeight * ImageInfo.DpiY / 96d);
+                        returnImageDPI96.CacheOption = BitmapCacheOption.OnLoad;
+                        returnImageDPI96.EndInit();
+
+                        returnImage = returnImageDPI96;
+                        RenderOptions.SetBitmapScalingMode(ImageInfo, BitmapScalingMode.NearestNeighbor);                        
+                        returnImage.Freeze();
+                    }
                 }
                 else
                 {
