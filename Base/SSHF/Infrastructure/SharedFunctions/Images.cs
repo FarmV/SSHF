@@ -92,7 +92,7 @@ internal class ImageManager : IGetImage
     /// <returns>Возращает изображание, помещённое в память, из буфера обмена. Или пустую ссылку.</returns>
     internal static Task<BitmapSource?> GetClipboardImage(CancellationToken token = default)
     {
-        var isCancelled = token.IsCancellationRequested;
+        bool isCancelled = token.IsCancellationRequested;
         if (isCancelled is true) throw new OperationCanceledException(token);
 
         BitmapSource? returnImage = null;
@@ -101,7 +101,6 @@ internal class ImageManager : IGetImage
             if (Clipboard.ContainsImage() is true)
             {
                 IDataObject data = Clipboard.GetDataObject();
-                var bba = data.GetFormats();
 
                 if (data.GetDataPresent("PNG") is not true)
                 {
@@ -120,13 +119,13 @@ internal class ImageManager : IGetImage
                         BitmapImage returnImageDPI96 = new BitmapImage();
                         returnImageDPI96.BeginInit();
                         returnImageDPI96.StreamSource = copyOriginalImage;
-                        returnImageDPI96.DecodePixelWidth = (int)(ImageInfo.PixelWidth * ImageInfo.DpiX / 96d);
-                        returnImageDPI96.DecodePixelHeight = (int)(ImageInfo.PixelHeight * ImageInfo.DpiY / 96d);
+                        returnImageDPI96.DecodePixelWidth = Convert.ToInt32(ImageInfo.PixelWidth * ImageInfo.DpiX / 96d);
+                        returnImageDPI96.DecodePixelHeight = Convert.ToInt32(ImageInfo.PixelHeight * ImageInfo.DpiY / 96d);
                         returnImageDPI96.CacheOption = BitmapCacheOption.OnLoad;
                         returnImageDPI96.EndInit();
 
                         returnImage = returnImageDPI96;
-                        RenderOptions.SetBitmapScalingMode(ImageInfo, BitmapScalingMode.NearestNeighbor);                        
+                        RenderOptions.SetBitmapScalingMode(returnImageDPI96, BitmapScalingMode.NearestNeighbor);                        
                         returnImage.Freeze();
                     }
                 }
@@ -138,7 +137,6 @@ internal class ImageManager : IGetImage
                     returnImage = res;
                 }
             }
-
         });
         if (isCancelled is true) throw new OperationCanceledException(token);
 
