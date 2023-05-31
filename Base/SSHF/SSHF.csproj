@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
+		<TargetFramework>net7.0-windows</TargetFramework>
 		<RootNamespace>SSHF</RootNamespace>
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
@@ -15,38 +15,33 @@
 		<Description>Screen Shot Helper by FarmV</Description>
 		<Version>0.0.1</Version>
 		<Copyright>https://github.com/FarmV/SSHF</Copyright>
+		<ApplicationIcon>SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
 
 
 
 
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
 
-
-
-
-
-
-
-
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
 
 	<ItemGroup>
-		<None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.Core.dll" />
-		<None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA2.dll" />
-		<None Remove="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA3.dll" />
+	  <None Remove="SSHF-S16-32-SS-36-128-Max256-512.ico" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="FlaUI.Core" Version="3.2.0"/>
-		<PackageReference Include="FlaUI.UIA2" Version="3.2.0" />
-		<PackageReference Include="FlaUI.UIA3" Version="3.2.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0" />
+		<PackageReference Include="MahApps.Metro" Version="2.4.9" />
+		<PackageReference Include="MahApps.Metro.IconPacks" Version="4.11.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0-preview.1.23110.8" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
-		<PackageReference Include="RawInput.Sharp" Version="0.0.4" />
-		<PackageReference Include="runtime.win-x86.Microsoft.NETCore.Runtime.CoreCLR" Version="2.0.8" />
-		<PackageReference Include="System.Drawing.Common" Version="6.0.0" />
-		<PackageReference Include="System.Runtime" Version="4.3.1" />
-		<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
+		<PackageReference Include="ReactiveUI" Version="18.4.26" />
+		<PackageReference Include="ReactiveUI.Events.WPF" Version="15.1.1" />
+		<PackageReference Include="System.Drawing.Common" Version="7.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -67,24 +62,13 @@
 
 
 	<ItemGroup>
-		<Resource Include="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.Core.dll">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Resource>
-		<Resource Include="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA2.dll">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Resource>
-		<Resource Include="Infrastructure\Algorithms\AlgorithmGetTranslateAbToDepl\Resources\FlaUI.UIA3.dll">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Resource>
-		<Resource Include="Windows\MainWindow\MainWindowRes\Test.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Resource>
-		<Resource Include="Windows\MainWindow\MainWindowRes\F_Logo.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Resource>
-		<Resource Include="Windows\MainWindow\MainWindowRes\F_Logo2.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Resource>
+		<Resource Include="SSHF-S16-32-SS-36-128-Max256-512.ico" />
+	</ItemGroup>
+
+
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\..\Callback\FVH.Callback.Client\FVH.Callback.Client\BacgroundCallbackSharp\BackgroundCallbackSharp.csproj" />
 	</ItemGroup>
 	
 
