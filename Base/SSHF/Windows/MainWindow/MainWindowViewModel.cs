@@ -14,6 +14,7 @@ using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using System.Windows.Threading;
 using System.Linq;
+using SSHF.Infrastructure;
 
 namespace SSHF.ViewModels.MainWindowViewModel
 {
@@ -21,17 +22,17 @@ namespace SSHF.ViewModels.MainWindowViewModel
     {
         private readonly IGetImage _imageProvider;
         private readonly IWindowPositionUpdater _windowPositionUpdater;
-        private ImageSource? _imageBackground;
-        private bool _blockRefresh;
-        private Visibility _visibleCondition = Visibility.Hidden;
-        private double _height;
-        private double _width;
-        private CancellationTokenSource _cancellationToken = new CancellationTokenSource();
-        private bool _ICancellingUpdate = false;
         private readonly DpiCorrector _dpiCorrector;
         private readonly SetImage _setImage;
-        private bool _dropCondition;
-        private bool _dragMoveCondition;
+        private Visibility _visibleCondition = Visibility.Hidden;
+        private ImageSource? _imageBackground;
+        private CancellationTokenSource _updateWindowCancellationToken = new CancellationTokenSource();
+        private bool _blockRefresh = false;
+        private bool _ICancellingUpdate = false;
+        private bool _dropCondition = false;
+        private bool _dragMoveCondition = false;
+        private double _width = 0;
+        private double _height = 0;
 
 #pragma warning disable CS8618 // Empty class constructor for designer only
         public MainWindowViewModel()
@@ -68,8 +69,8 @@ namespace SSHF.ViewModels.MainWindowViewModel
             if (_ICancellingUpdate is true) return;
             else
             {
-                if (_cancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
-                _windowPositionUpdater.UpdateWindowPos(_cancellationToken.Token);
+                if (_updateWindowCancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
+                _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token);
             }
         }
         private void DropWindowImage(object ev)
@@ -86,16 +87,16 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             if (_windowPositionUpdater.IsUpdateWindow is false) return;
             _ICancellingUpdate = true;
-            _cancellationToken.Cancel();
+            _updateWindowCancellationToken.Cancel();
             while (System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, TimeSpan.FromMilliseconds(300)));
             if (_windowPositionUpdater.IsUpdateWindow is false) throw new InvalidOperationException();
-            _cancellationToken = new CancellationTokenSource();
+            _updateWindowCancellationToken = new CancellationTokenSource();
             _ICancellingUpdate = false;
         }
         private async Task SetNewBackgoundImage()
         {
             if (await _imageProvider.GetImageFromClipboard() is not ImageSource image) return;
-            DPISacaleMonitor dpi = _dpiCorrector.GetCurretDPI();
+            DpiSacaleMonitor dpi = _dpiCorrector.GetCurretDPI();
             Height = image.Height / dpi.DpiScaleY;
             Width = image.Width / dpi.DpiScaleX;
             BackgroundImage = image;
@@ -433,7 +434,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
     internal class WPFWindowManager : ReactiveObject, IWindowHandler, IWindowPositionUpdater
     {
         private readonly IGetImage _imageProvider;
-        private Window _window;
+        private readonly Window _window;
         private IWindowPositionUpdater _positionUpdaterWpf;
         public WPFWindowManager(Window window, IGetImage imageProvider)
         {
@@ -484,7 +485,6 @@ namespace SSHF.ViewModels.MainWindowViewModel
                 VKeys.VK_CONTROL
             },
             new Func<Task>(StopRefreshWindow), nameof(MainWindowCommand.StopRefreshWindow))
-
         };
         public MainWindowCommand(System.Windows.Window window, MainWindowViewModel mainWindowView, IKeyboardHandler keyboardHandler)
         {
@@ -521,7 +521,6 @@ namespace SSHF.ViewModels.MainWindowViewModel
 
         }
         public async Task SwithBlockRefreshWindow() => await Application.Current.Dispatcher.InvokeAsync(async () => await MainWindowViewModel.SwithBlockRefreshWindow.Execute().FirstAsync());
-
         public async Task PresentNewImage()
         {
             if (_executePresentNewImage is true) return;
@@ -545,7 +544,5 @@ namespace SSHF.ViewModels.MainWindowViewModel
                 await Application.Current.Dispatcher.InvokeAsync(async () => await MainWindowViewModel.StopWindowUpdater.Execute().FirstAsync());
             }
         }
-
-
     }
 }

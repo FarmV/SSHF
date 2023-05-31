@@ -29,7 +29,7 @@ namespace SSHF
         internal static bool DesignerMode = true;
         internal static event EventHandler? DpiChange;
         private const string MutexNameSingleInstance = "FVH.SSHF.SingleProgramInstance";
-        private CancellationTokenSource _tokenShutdownHost;
+        private readonly CancellationTokenSource _tokenShutdownHost;
         private readonly IHost _host;
         private IServiceProvider _serviceProvider;
         private static Mutex? _mutexSingleInstance;
@@ -48,6 +48,7 @@ namespace SSHF
             try { _mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out mutexWasCreated); }
             catch { Environment.Exit(-100501); }
             if (mutexWasCreated is false) Environment.Exit(-100501);
+            
             Thread.CurrentThread.Name = "FVH Main Thread";
             System.Windows.Application application = new System.Windows.Application();
             application.Startup += async (_, _) => await Start(args).ConfigureAwait(false);

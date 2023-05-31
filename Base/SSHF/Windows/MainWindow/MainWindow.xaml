@@ -67,7 +67,8 @@
         <Style TargetType="{x:Type Window}">
             <Setter Property="Background">
                 <Setter.Value>
-                    <Binding Path="BackgroundImage" Converter="{StaticResource ConDPIViewport}"/>
+                    <Binding 
+                             Path="BackgroundImage" Converter="{StaticResource ConDPIViewport}"/>
                 </Setter.Value>
             </Setter>
             <Setter Property="Opacity">
@@ -78,8 +79,13 @@
         </Style>
     </Window.Style>
 
-    <!--<Grid Background="{Binding BackgroundImage, Converter={StaticResource ConDPIViewport}}" >
+    <!--<Grid Background="{Binding BackgroundImage,diag:PresentationTraceSources.TraceLevel=High, Converter={StaticResource ConDPIViewport}}" >
         
     </Grid>-->
+	<!--<Grid>
+		<Border BorderBrush="Red" BorderThickness="2">
+			
+		</Border>
+	</Grid>-->
 
 </mah:MetroWindow>
