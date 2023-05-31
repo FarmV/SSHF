@@ -15,6 +15,7 @@ using System.Windows.Threading;
 
 using Linearstar.Windows.RawInput;
 
+
 using SSHF.Infrastructure;
 using SSHF.Infrastructure.SharedFunctions;
 using SSHF.ViewModels.NotifyIconViewModel;
@@ -28,6 +29,8 @@ namespace SSHF.ViewModels
     internal class TrayIconManager : IAsyncDisposable
     {
         private readonly Window _notificatorWindow;
+        private NotifyIcon _notifyIcon;
+        public async ValueTask DisposeAsync() => await Task.Run(() => _notifyIcon.Dispose());
 
         public TrayIconManager(Window notificatorWindow)
         {
@@ -45,20 +48,20 @@ namespace SSHF.ViewModels
             {
                 _notifyIcon = new NotifyIcon
                 {
-                    Icon = Icon.ExtractAssociatedIcon(@"C:\Windows\winhlp32.exe"),
+                    Icon = new Icon(System.Windows.Application.GetResourceStream(UriHelper.GetResourceUriApp("SSHF-S16-32-SS-36-128-Max256-512.ico")).Stream),
                     Visible = true
                 };
                 _notifyIcon.MouseDown += NotifyIcon_MouseDown;
             }
+            _notifyIcon = new NotifyIcon
+            {
+                Icon = new Icon(System.Windows.Application.GetResourceStream(UriHelper.GetResourceUriApp("SSHF-S16-32-SS-36-128-Max256-512.ico")).Stream),
+                Visible = true
+            };
             _notifyIcon.MouseDown += NotifyIcon_MouseDown;
         }
-        public async ValueTask DisposeAsync() => await Task.Run(() => _notifyIcon.Dispose()); 
-        private NotifyIcon _notifyIcon = new NotifyIcon
-        {
-            Icon = Icon.ExtractAssociatedIcon(@"C:\Windows\winhlp32.exe"),
-            Visible = true
-        };
-        //private readonly NotificatorViewModel Notificator = App.GetNotificator();
+
+   
 
 
         private  Rectangle GetRectanglePosition()
