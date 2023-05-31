@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SSHF.Infrastructure;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,28 +13,31 @@ namespace SSHF
 {
     public class DpiCorrector
     {
-        private Window _window;
-        private Dispatcher _dispatcher;
+        private readonly Window _window;
+        private readonly Dispatcher _dispatcher;
         public DpiCorrector(Window window, Dispatcher dispatcher)
         {
             _window = window;
             _dispatcher = dispatcher;
         }
-        public DPISacaleMonitor GetCurretDPI() => _dispatcher.Invoke(() =>
+        public DpiSacaleMonitor GetCurretDPI() => _dispatcher.Invoke(() =>
         {
             DpiScale dpi = VisualTreeHelper.GetDpi(_window);
-            return new DPISacaleMonitor(dpi.DpiScaleX, dpi.DpiScaleY);
-        });        
+            return new DpiSacaleMonitor(dpi.DpiScaleX, dpi.DpiScaleY);
+        });
     }
 }
-public readonly struct DPISacaleMonitor
+namespace SSHF.Infrastructure
 {
-    public DPISacaleMonitor(double dpiScaleX, double dpiScaleY)
+    public readonly struct DpiSacaleMonitor
     {
-        DpiScaleX = dpiScaleX;
-        DpiScaleY = dpiScaleY;
+        public DpiSacaleMonitor(double dpiScaleX, double dpiScaleY)
+        {
+            DpiScaleX = dpiScaleX;
+            DpiScaleY = dpiScaleY;
+        }
+        public double DpiScaleX { get; }
+        public double DpiScaleY { get; }
     }
-    public double DpiScaleX { get; }
-    public double DpiScaleY { get; }
 }
 
