@@ -101,6 +101,7 @@ namespace SSHF
         {
             _tokenShutdownHost?.Cancel();
             if (_host.Services.GetService<Input>() is Input input) input.Dispose();
+            if (_host.Services.GetService<SetImage>() is SetImage setImage) setImage.Dispose();
             _mutexSingleInstance?.ReleaseMutex();
             _mutexSingleInstance?.Close();
             if (_host.Services.GetService<TrayIconManager>() is TrayIconManager notificator) await notificator.DisposeAsync();
@@ -150,15 +151,21 @@ namespace SSHF
                     container.AddSingleton<IGetImage>(CreateImageProvider());
 
                     container.AddSingleton<MainWindow>(CreateMainWindow(uiDispatcher));
-                    container.AddSingleton<MainWindowViewModel>(
-                        CreateMainWindowViewModel(
-                        CreateImageProvider(),
-                        CreatePositionUpdaterWin32WPF(
-                            container.BuildServiceProvider().GetRequiredService<MainWindow>()),
-                        new DpiCorrector(container.BuildServiceProvider().GetRequiredService<MainWindow>(),
-                        container.BuildServiceProvider().GetRequiredService<Dispatcher>()),
-                        new SetImage(container.BuildServiceProvider().GetRequiredService<MainWindow>(),
-                        container.BuildServiceProvider().GetRequiredService<Dispatcher>())));
+
+                    container.AddSingleton<SetImage>(
+                        new SetImage(container.BuildServiceProvider().GetRequiredService<MainWindow>(), 
+                        container.BuildServiceProvider().GetRequiredService<Dispatcher>()
+                        ));
+
+                    container.AddSingleton<MainWindowViewModel>(CreateMainWindowViewModel(
+                        imageProvider:CreateImageProvider(),
+                        windowPositionUpdater:CreatePositionUpdaterWin32WPF( 
+                            window: container.BuildServiceProvider().GetRequiredService<MainWindow>()),
+                        corrector: new DpiCorrector( 
+                            window: container.BuildServiceProvider().GetRequiredService<MainWindow>(), 
+                            dispatcher: container.BuildServiceProvider().GetRequiredService<Dispatcher>()),
+                        setImage:container.BuildServiceProvider().GetRequiredService<SetImage>()
+                        ));
 
                     SetDataContextMainWindow(
                         container.BuildServiceProvider().GetRequiredService<MainWindow>(),
