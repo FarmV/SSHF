@@ -29,37 +29,64 @@ namespace SSHF.Infrastructure.SharedFunctions
     {
         Task<ImageSource?> GetImageFromClipboard();
         Task<ImageSource?> GetImageFromFile(Uri path);
-
     }
-    public class SetImage
+    public class SetImage : IDisposable
     {
         private Window _window;
         private Dispatcher _dispatcher;
         private string fileTmpPath;
+        private Timer? _clearTMPtimer;
+        public void Dispose()
+        {
+            ClearTmpFile();
+            _clearTMPtimer?.Dispose();
+            GC.SuppressFinalize(this);
+        }
         public SetImage(Window window, Dispatcher dispatcher)
         {
             _window = window;
             _dispatcher = dispatcher;
         }
-
-        private void _window_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void CreateTMPFile(string name)
         {
-            throw new NotImplementedException();
+            ClearTmpFile();
+            fileTmpPath = Path.ChangeExtension($"{Path.GetTempPath()}{name}", "png");
+            File.Create(fileTmpPath).Dispose();
+            File.SetAttributes(fileTmpPath, FileAttributes.Temporary);
+            _clearTMPtimer = new Timer(new TimerCallback((_) =>
+            {
+                ClearTmpFile();
+            }), null, 300_000, Timeout.Infinite);
+            _clearTMPtimer.Dispose();
         }
-
+        private void ClearTmpFile()
+        {
+            if (fileTmpPath is null) return;
+            if (File.Exists(fileTmpPath) is true) File.Delete(fileTmpPath);
+        }
         private void SaveBitmapSourceFromDrop(object ev, BitmapSource image)
         {
             if (ev is not System.Windows.Input.MouseEventArgs e) return;
-            fileTmpPath = Path.ChangeExtension(Path.GetTempFileName(), "png");
-            File.Create(fileTmpPath).Dispose();
-            File.SetAttributes(fileTmpPath, FileAttributes.Temporary);
 
-            using (FileStream createFile = new FileStream(fileTmpPath, FileMode.OpenOrCreate))
+            if (Path.GetFileName(fileTmpPath) != $"{image.GetHashCode()}.png")
             {
+                CreateTMPFile(image.GetHashCode().ToString());
+                using FileStream createFile = new FileStream(fileTmpPath, FileMode.Truncate);
                 BitmapEncoder encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(image));
                 encoder.Save(createFile);
             }
+
+            //fileTmpPath = Path.ChangeExtension(Path.GetTempFileName(), "png");
+            //File.Create(fileTmpPath).Dispose();
+            //File.SetAttributes(fileTmpPath, FileAttributes.Temporary);
+
+            //using (FileStream createFile = new FileStream(fileTmpPath, FileMode.Open))
+            //{
+            //    BitmapEncoder encoder = new PngBitmapEncoder();
+            //    encoder.Frames.Add(BitmapFrame.Create(image));
+            //    encoder.Save(createFile);
+            //}
 
             string[] arrayDrops = new string[] { fileTmpPath };
             DataObject dataObject = new DataObject(DataFormats.FileDrop, arrayDrops);
@@ -78,10 +105,10 @@ namespace SSHF.Infrastructure.SharedFunctions
             }
             finally
             {
-                if (File.Exists(fileTmpPath) is true) File.Delete(fileTmpPath);
+                //  if (File.Exists(fileTmpPath) is true) File.Delete(fileTmpPath);
             }
-
         }
+
     }
 }
 internal class ImageManager : IGetImage
@@ -125,7 +152,7 @@ internal class ImageManager : IGetImage
                         returnImageDPI96.EndInit();
 
                         returnImage = returnImageDPI96;
-                        RenderOptions.SetBitmapScalingMode(returnImageDPI96, BitmapScalingMode.NearestNeighbor);                        
+                        RenderOptions.SetBitmapScalingMode(returnImageDPI96, BitmapScalingMode.NearestNeighbor);
                         returnImage.Freeze();
                     }
                 }
