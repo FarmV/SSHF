@@ -32,9 +32,10 @@ namespace SSHF.Infrastructure.SharedFunctions
     }
     public class SetImage : IDisposable
     {
-        private Window _window;
-        private Dispatcher _dispatcher;
-        private string fileTmpPath;
+        private readonly Window _window;
+        private readonly Dispatcher _dispatcher;
+        private string _fileTmpPath = string.Empty;
+        private DataObject _dropData;
         private Timer? _clearTMPtimer;
         public void Dispose()
         {
@@ -46,13 +47,14 @@ namespace SSHF.Infrastructure.SharedFunctions
         {
             _window = window;
             _dispatcher = dispatcher;
+            _dropData = new DataObject();
         }
         private void CreateTMPFile(string name)
         {
             ClearTmpFile();
-            fileTmpPath = Path.ChangeExtension($"{Path.GetTempPath()}{name}", "png");
-            File.Create(fileTmpPath).Dispose();
-            File.SetAttributes(fileTmpPath, FileAttributes.Temporary);
+            _fileTmpPath = Path.ChangeExtension($"{Path.GetTempPath()}{name}", "png");
+            File.Create(_fileTmpPath).Dispose();
+            File.SetAttributes(_fileTmpPath, FileAttributes.Temporary);
             _clearTMPtimer = new Timer(new TimerCallback((_) =>
             {
                 ClearTmpFile();
@@ -61,54 +63,37 @@ namespace SSHF.Infrastructure.SharedFunctions
         }
         private void ClearTmpFile()
         {
-            if (fileTmpPath is null) return;
-            if (File.Exists(fileTmpPath) is true) File.Delete(fileTmpPath);
+            if (_fileTmpPath is null) return;
+            if (File.Exists(_fileTmpPath) is true) File.Delete(_fileTmpPath);
+        }
+        private void SetDataObject()
+        {
+            string[] arrayDrops = new string[] { _fileTmpPath };
+            DataObject dataObject = new DataObject(DataFormats.FileDrop, arrayDrops);
+            dataObject.SetData(DataFormats.StringFormat, dataObject);
+            _dropData = dataObject;
         }
         private void SaveBitmapSourceFromDrop(object ev, BitmapSource image)
         {
-            if (ev is not System.Windows.Input.MouseEventArgs e) return;
+            if (ev is not System.Windows.Input.MouseEventArgs) return;
 
-            if (Path.GetFileName(fileTmpPath) != $"{image.GetHashCode()}.png")
+            if (Path.GetFileName(_fileTmpPath) != $"{image.GetHashCode()}.png")
             {
                 CreateTMPFile(image.GetHashCode().ToString());
-                using FileStream createFile = new FileStream(fileTmpPath, FileMode.Truncate);
+                using FileStream createFile = new FileStream(_fileTmpPath, FileMode.Truncate);
                 BitmapEncoder encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(image));
                 encoder.Save(createFile);
+                SetDataObject();
             }
-
-            //fileTmpPath = Path.ChangeExtension(Path.GetTempFileName(), "png");
-            //File.Create(fileTmpPath).Dispose();
-            //File.SetAttributes(fileTmpPath, FileAttributes.Temporary);
-
-            //using (FileStream createFile = new FileStream(fileTmpPath, FileMode.Open))
-            //{
-            //    BitmapEncoder encoder = new PngBitmapEncoder();
-            //    encoder.Frames.Add(BitmapFrame.Create(image));
-            //    encoder.Save(createFile);
-            //}
-
-            string[] arrayDrops = new string[] { fileTmpPath };
-            DataObject dataObject = new DataObject(DataFormats.FileDrop, arrayDrops);
-            dataObject.SetData(DataFormats.StringFormat, dataObject);
-            // if (e.MouseDevice.LeftButton == MouseButtonState.Pressed & )
-
-            DragDrop.DoDragDrop(_window, dataObject, DragDropEffects.Copy);
-
+            DragDrop.DoDragDrop(_window, _dropData, DragDropEffects.Copy);
         }
         public void SaveImageFromDrop(object ev, ImageSource image)
         {
-            try
-            {
-                if (image is not BitmapSource bitSource) throw new InvalidCastException();
-                SaveBitmapSourceFromDrop(ev, bitSource);
-            }
-            finally
-            {
-                //  if (File.Exists(fileTmpPath) is true) File.Delete(fileTmpPath);
-            }
-        }
 
+            if (image is not BitmapSource bitSource) throw new InvalidCastException();
+            SaveBitmapSourceFromDrop(ev, bitSource);
+        }
     }
 }
 internal class ImageManager : IGetImage
