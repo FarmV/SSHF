@@ -16,6 +16,7 @@ using System.Windows.Threading;
 using System.Linq;
 using SSHF.Infrastructure;
 
+
 namespace SSHF.ViewModels.MainWindowViewModel
 {
     public partial class MainWindowViewModel : ReactiveObject
@@ -77,7 +78,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             if (BackgroundImage is not ImageSource img) return;
             if (_windowPositionUpdater.IsUpdateWindow is true) return;
-            //if (Keyboard.IsKeyDown(Key.LeftCtrl) is not true) return;
+            if (Keyboard.IsKeyDown(Key.LeftCtrl) is not true) return; //todo обдумать
             _setImage.SaveImageFromDrop(ev, img);
         }
         private void DragMove() => _windowPositionUpdater.DargMove();
@@ -88,7 +89,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
             if (_windowPositionUpdater.IsUpdateWindow is false) return;
             _ICancellingUpdate = true;
             _updateWindowCancellationToken.Cancel();
-            while (System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, TimeSpan.FromMilliseconds(300)));
+            while (System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, TimeSpan.FromMilliseconds(300))) ;
             if (_windowPositionUpdater.IsUpdateWindow is false) throw new InvalidOperationException();
             _updateWindowCancellationToken = new CancellationTokenSource();
             _ICancellingUpdate = false;
@@ -435,7 +436,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
     {
         private readonly IGetImage _imageProvider;
         private readonly Window _window;
-        private IWindowPositionUpdater _positionUpdaterWpf;
+        private readonly IWindowPositionUpdater _positionUpdaterWpf;
         public WPFWindowManager(Window window, IGetImage imageProvider)
         {
             _window = window;
@@ -501,22 +502,28 @@ namespace SSHF.ViewModels.MainWindowViewModel
                                  (EventHandler<IKeysNotificator> handler) => keyboardHandler.KeyUpPressEvent += handler,
                                  (EventHandler<IKeysNotificator> handler) => keyboardHandler.KeyUpPressEvent -= handler).Select(x => x.EventArgs.Keys);
 
-            keyPressObservable.ObserveOn(RxApp.MainThreadScheduler).Subscribe(x =>
+            keyPressObservable.ObserveOn(RxApp.MainThreadScheduler).SubscribeOn(RxApp.MainThreadScheduler).Subscribe(x =>
             {
-                if (x.Contains(VKeys.VK_CONTROL) && x.Length is 1)
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    this.MainWindowViewModel.DragMoveCondition = false;
-                    MainWindowViewModel.DropCondition = true;
-                }              
+                    if (Keyboard.IsKeyUp(Key.LeftCtrl) is false)
+                    {
+                        this.MainWindowViewModel.DragMoveCondition = false;
+                        MainWindowViewModel.DropCondition = true;
+                    }
+                });
             });
             keyUPObservable.ObserveOn(RxApp.MainThreadScheduler).Subscribe(x => // todo разобратся почему приходит пустой эвент
             {
-                if (this.MainWindowViewModel.VisibleCondition == Visibility.Hidden) return;              
-                if (Keyboard.IsKeyUp(Key.LeftCtrl) is true)
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    this.MainWindowViewModel.DragMoveCondition = true;
-                    MainWindowViewModel.DropCondition = false;
-                }
+                    if (this.MainWindowViewModel.VisibleCondition == Visibility.Hidden) return;
+                    if (Keyboard.IsKeyUp(Key.LeftCtrl) is true)
+                    {
+                        this.MainWindowViewModel.DragMoveCondition = true;
+                        MainWindowViewModel.DropCondition = false;
+                    }
+                });
             });
 
         }
