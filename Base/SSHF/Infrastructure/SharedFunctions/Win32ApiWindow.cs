@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -52,6 +53,7 @@ namespace SSHF.Infrastructure.SharedFunctions
         internal static partial bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
         private async Task UpdateWindowPositionRelativeToCursor(CancellationToken token)
         {
+            if(NativeTimerHelper.TimeBeginPeriod(1) is not NativeTimerHelper.TIMERR_NOERROR) throw new InvalidOperationException("Failed to set the timer range");
             try
             {
                 if (IsUpdateWindow is true) throw new InvalidOperationException("You cannot update a window that is already being updated");
@@ -60,7 +62,7 @@ namespace SSHF.Infrastructure.SharedFunctions
                 WindowInteropHelper helper = new WindowInteropHelper(_window);
 
                 while (token.IsCancellationRequested is not true)
-                {
+                {                  
                     await Task.Delay(1, token); //меньше миллисекунды не приходят эвенты мыши.
 
                     if (token.IsCancellationRequested is true) return;
@@ -71,11 +73,24 @@ namespace SSHF.Infrastructure.SharedFunctions
                             IGNORE_SIZE_WINDOW, IGNORE_SIZE_WINDOW, NOT_MESSAGE_WM_WINDOWPOSCHANGING | SWP_NOSIZE);
                     }, System.Windows.Threading.DispatcherPriority.Render, token);
                 }
+                if (NativeTimerHelper.TimeEndPeriod(1) is not NativeTimerHelper.TIMERR_NOERROR) throw new InvalidOperationException("Failed to change the timer range");
             }
             finally
             {
-                IsUpdateWindow = false;
+                IsUpdateWindow = false;                
             }
+        }
+        public partial class NativeTimerHelper
+        {
+            public const uint TIMERR_NOERROR = 0;
+            public const uint TIMERR_NOCANDO = 93;
+
+            [LibraryImport("winmm", EntryPoint = "timeBeginPeriod")]
+            [return: MarshalAs(UnmanagedType.U4)]
+            public static partial uint TimeBeginPeriod(uint uMilliseconds);
+            [LibraryImport("winmm.dll", EntryPoint = "timeEndPeriod")]
+            [return: MarshalAs(UnmanagedType.U4)]
+            public static partial uint TimeEndPeriod(uint uMilliseconds);
         }
     }
 }
