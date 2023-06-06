@@ -16,7 +16,7 @@ using FVH.Background.Input;
 
 using Linearstar.Windows.RawInput;
 using SSHF.Infrastructure;
-using SSHF.Infrastructure.SharedFunctions;
+
 using SSHF.Models.NotifyIconModel;
 using SSHF.Views.Windows.Notify;
 

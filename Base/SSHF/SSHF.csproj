@@ -13,9 +13,9 @@
 		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
 		<Product>Screen Shot Helper by FarmV</Product>
 		<Description>Screen Shot Helper by FarmV</Description>
-		<Version>0.0.1</Version>
+		<Version>0.0.2</Version>
 		<Copyright>https://github.com/FarmV/SSHF</Copyright>
-		<ApplicationIcon>SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
+		<ApplicationIcon>Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
 
 
 
@@ -29,11 +29,7 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 	  <DebugType>embedded</DebugType>
 	</PropertyGroup>
-
-	<ItemGroup>
-	  <None Remove="SSHF-S16-32-SS-36-128-Max256-512.ico" />
-	</ItemGroup>
-
+	
 	<ItemGroup>
 		<PackageReference Include="MahApps.Metro" Version="2.4.9" />
 		<PackageReference Include="MahApps.Metro.IconPacks" Version="4.11.0" />
@@ -62,7 +58,9 @@
 
 
 	<ItemGroup>
-		<Resource Include="SSHF-S16-32-SS-36-128-Max256-512.ico" />
+		<Resource Include="Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico">
+		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Resource>
 	</ItemGroup>
 
 

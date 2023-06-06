@@ -1,6 +1,4 @@
-﻿using SSHF.Infrastructure;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +7,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 
-namespace SSHF
+namespace SSHF.Infrastructure
 {
     public class DpiCorrector
     {
@@ -25,19 +23,6 @@ namespace SSHF
             DpiScale dpi = VisualTreeHelper.GetDpi(_window);
             return new DpiSacaleMonitor(dpi.DpiScaleX, dpi.DpiScaleY);
         });
-    }
-}
-namespace SSHF.Infrastructure
-{
-    public readonly struct DpiSacaleMonitor
-    {
-        public DpiSacaleMonitor(double dpiScaleX, double dpiScaleY)
-        {
-            DpiScaleX = dpiScaleX;
-            DpiScaleY = dpiScaleY;
-        }
-        public double DpiScaleX { get; }
-        public double DpiScaleY { get; }
     }
 }
 
