@@ -10,12 +10,12 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace SSHF.Windows.MainWindow
+namespace SSHF.Infrastructure.Converters
 {
     public class ConverterImageDPIViewport : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {          
+        {
             if (value is ImageSource imageSource)
             {
                 ImageBrush brush = new ImageBrush(imageSource)
@@ -27,7 +27,7 @@ namespace SSHF.Windows.MainWindow
                 brush.Viewport = new Rect(0, 0, imageSource.Width / dpiScale.DpiScaleX, imageSource.Height / dpiScale.DpiScaleY);
 
 
-             
+
                 return brush;
             }
             return null;

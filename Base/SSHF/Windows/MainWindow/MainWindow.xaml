@@ -9,7 +9,7 @@
     xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
     xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
   
-    xmlns:converter ="clr-namespace:SSHF.Windows.MainWindow"   
+    xmlns:converter ="clr-namespace:SSHF.Infrastructure.Converters"   
     xmlns:actions="clr-namespace:MahApps.Metro.Actions;assembly=MahApps.Metro"
     xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:sys="clr-namespace:System;assembly=mscorlib"

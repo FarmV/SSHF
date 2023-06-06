@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 using Microsoft.Win32;
 
-namespace SSHF.Infrastructure.SharedFunctions
+namespace SSHF.Infrastructure
 {
     internal static class DialogFiles
     {
@@ -20,12 +20,12 @@ namespace SSHF.Infrastructure.SharedFunctions
             };
 
 
-            if(fileDialog.ShowDialog() is not true)
+            if (fileDialog.ShowDialog() is not true)
             {
                 SelectedFile = null;
                 return false;
             }
-            
+
             SelectedFile = fileDialog.FileName;
 
             return true;
@@ -59,13 +59,13 @@ namespace SSHF.Infrastructure.SharedFunctions
                 Title = Title,
                 Filter = Filter,
             };
-           
+
 
             if (fileDialog.ShowDialog() is not true)
             {
                 return null;
             }
-            
+
             return fileDialog.FileName;// todo Оценить необходимость фильтрации типов                      
         }
     }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 
-namespace SSHF.Windows.MainWindow
+namespace SSHF.Infrastructure.Converters
 {
     class ConverterVisibleToOpacity : IValueConverter
     {
@@ -21,15 +21,14 @@ namespace SSHF.Windows.MainWindow
                 throw new InvalidCastException();
             }
         }
-
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if(value is 100) return Visibility.Visible;
-            else if( value is 0) return Visibility.Hidden;
+            if (value is 100) return Visibility.Visible;
+            else if (value is 0) return Visibility.Hidden;
             else
             {
                 throw new InvalidCastException();
             }
-        }   
+        }
     }
 }

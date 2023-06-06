@@ -17,7 +17,7 @@ using Linearstar.Windows.RawInput;
 
 
 using SSHF.Infrastructure;
-using SSHF.Infrastructure.SharedFunctions;
+using SSHF.Infrastructure.Resources;
 using SSHF.ViewModels.NotifyIconViewModel;
 using SSHF.Views.Windows.Notify;
 
@@ -48,14 +48,14 @@ namespace SSHF.ViewModels
             {
                 _notifyIcon = new NotifyIcon
                 {
-                    Icon = new Icon(System.Windows.Application.GetResourceStream(UriHelper.GetResourceUriApp("SSHF-S16-32-SS-36-128-Max256-512.ico")).Stream),
+                    Icon = new Icon(App.GetResource(Resource.AppIcon).Stream),
                     Visible = true
                 };
                 _notifyIcon.MouseDown += NotifyIcon_MouseDown;
             }
             _notifyIcon = new NotifyIcon
             {
-                Icon = new Icon(System.Windows.Application.GetResourceStream(UriHelper.GetResourceUriApp("SSHF-S16-32-SS-36-128-Max256-512.ico")).Stream),
+                Icon = new Icon(App.GetResource(Resource.AppIcon).Stream),
                 Visible = true
             };
             _notifyIcon.MouseDown += NotifyIcon_MouseDown;
