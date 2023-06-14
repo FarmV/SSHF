@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0-windows</TargetFramework>
+    <RootNamespace>FVH.Background.Input</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <UseWPF>True</UseWPF>
+
+	<AssemblyVersion>0.0.2.0</AssemblyVersion>
+	<PackageVersion>0.0.2</PackageVersion>	  
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RawInput.Sharp" Version="0.0.4" />
+  </ItemGroup>
+
+</Project>

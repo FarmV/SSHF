@@ -39,6 +39,10 @@
 		<PackageReference Include="ReactiveUI.Events.WPF" Version="15.1.1" />
 		<PackageReference Include="System.Drawing.Common" Version="7.0.0" />
 	</ItemGroup>
+	
+	<ItemGroup>
+	  <ProjectReference Include="..\BacgroundCallbackSharp\BackgroundCallbackSharp.csproj" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<Compile Update="Properties\Settings.Designer.cs">
@@ -61,12 +65,6 @@
 		<Resource Include="Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Resource>
-	</ItemGroup>
-
-
-
-	<ItemGroup>
-	  <ProjectReference Include="..\..\..\Callback\FVH.Callback.Client\FVH.Callback.Client\BacgroundCallbackSharp\BackgroundCallbackSharp.csproj" />
 	</ItemGroup>
 	
 

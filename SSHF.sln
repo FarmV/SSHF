@@ -5,10 +5,10 @@ VisualStudioVersion = 17.0.32126.317
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSHF", "Base\SSHF\SSHF.csproj", "{78F47A34-8410-4C03-B666-BC67958DB582}"
 	ProjectSection(ProjectDependencies) = postProject
-		{ABB82E3F-9C7E-40D2-80A6-C945C740A3A0} = {ABB82E3F-9C7E-40D2-80A6-C945C740A3A0}
+		{A8474EF6-C206-4216-BE06-6543D8B20818} = {A8474EF6-C206-4216-BE06-6543D8B20818}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackgroundCallbackSharp", "..\Callback\FVH.Callback.Client\FVH.Callback.Client\BacgroundCallbackSharp\BackgroundCallbackSharp.csproj", "{ABB82E3F-9C7E-40D2-80A6-C945C740A3A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackgroundCallbackSharp", "Base\BacgroundCallbackSharp\BackgroundCallbackSharp.csproj", "{A8474EF6-C206-4216-BE06-6543D8B20818}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,14 +26,14 @@ Global
 		{78F47A34-8410-4C03-B666-BC67958DB582}.Release|Any CPU.Build.0 = Release|Any CPU
 		{78F47A34-8410-4C03-B666-BC67958DB582}.Release|x86.ActiveCfg = Release|Any CPU
 		{78F47A34-8410-4C03-B666-BC67958DB582}.Release|x86.Build.0 = Release|Any CPU
-		{ABB82E3F-9C7E-40D2-80A6-C945C740A3A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ABB82E3F-9C7E-40D2-80A6-C945C740A3A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ABB82E3F-9C7E-40D2-80A6-C945C740A3A0}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{ABB82E3F-9C7E-40D2-80A6-C945C740A3A0}.Debug|x86.Build.0 = Debug|Any CPU
-		{ABB82E3F-9C7E-40D2-80A6-C945C740A3A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ABB82E3F-9C7E-40D2-80A6-C945C740A3A0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ABB82E3F-9C7E-40D2-80A6-C945C740A3A0}.Release|x86.ActiveCfg = Release|Any CPU
-		{ABB82E3F-9C7E-40D2-80A6-C945C740A3A0}.Release|x86.Build.0 = Release|Any CPU
+		{A8474EF6-C206-4216-BE06-6543D8B20818}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8474EF6-C206-4216-BE06-6543D8B20818}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8474EF6-C206-4216-BE06-6543D8B20818}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A8474EF6-C206-4216-BE06-6543D8B20818}.Debug|x86.Build.0 = Debug|Any CPU
+		{A8474EF6-C206-4216-BE06-6543D8B20818}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8474EF6-C206-4216-BE06-6543D8B20818}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8474EF6-C206-4216-BE06-6543D8B20818}.Release|x86.ActiveCfg = Release|Any CPU
+		{A8474EF6-C206-4216-BE06-6543D8B20818}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
