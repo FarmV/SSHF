@@ -16,6 +16,7 @@ namespace SSHF.Infrastructure
         private string _fileTmpPath = string.Empty;
         private DataObject _dropData;
         private Timer? _clearTmpTimer;
+        private BitmapSource _previousImage;
         public void Dispose()
         {
             ClearTmpFile();
@@ -60,17 +61,23 @@ namespace SSHF.Infrastructure
         private void SaveBitmapSourceFromDrop(object ev, BitmapSource image)
         {
             if (ev is not MouseEventArgs) return;
-
-            if (Path.GetFileName(_fileTmpPath) != $"{image.GetHashCode()}.png")
+            if (_previousImage != image)
             {
-                CreateTMPFile(image.GetHashCode().ToString());
+                _previousImage = image;
+
+                string random = Path.GetRandomFileName().ToUpper();
+
+                CreateTMPFile($"{image.Height}x{image.Width}_{random.Remove(random.Length -8)}.png");
                 using FileStream createFile = new FileStream(_fileTmpPath, FileMode.Truncate);
                 BitmapEncoder encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(image));
                 encoder.Save(createFile);
                 SetDataObject();
             }
-            DragDrop.DoDragDrop(_window, _dropData, DragDropEffects.Copy);
+            else
+            {
+                DragDrop.DoDragDrop(_window, _dropData, DragDropEffects.Copy);
+            }
         }
     }
 }
