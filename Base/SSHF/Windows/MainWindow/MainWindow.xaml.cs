@@ -27,6 +27,7 @@ namespace SSHF
 
         private readonly int GWL_EXSTYLE = -20;
         private readonly long WS_EX_TOOLWINDOW = 0x00000080;
+        private readonly long WS_EX_NOACTIVATE = 0x08000000L;
         public MainWindow()
         {
 
@@ -38,7 +39,7 @@ namespace SSHF
         private void HideAltTabWindow()
         {
             IntPtr hWnd = new WindowInteropHelper(this).EnsureHandle();
-            NativeHelper.SetWindowLongPtrW(hWnd, GWL_EXSTYLE, new IntPtr(NativeHelper.GetWindowLongPtrW(hWnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW));
+            NativeHelper.SetWindowLongPtrW(hWnd, GWL_EXSTYLE, new IntPtr(NativeHelper.GetWindowLongPtrW(hWnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE));
         }
        
 
