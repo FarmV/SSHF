@@ -19,7 +19,7 @@ namespace SSHF.Infrastructure
         private Dispatcher _dispatcher;
         private bool _isUpdateWindow;
         private const int IGNORE_SIZE_WINDOW = -1;
-        private const int HWND_TOP = 0;
+        private const int HWND_TOPMOST = -1;
         private const int NOT_MESSAGE_WM_WINDOWPOSCHANGING = 0x0400;
         private const int SWP_NOSIZE = 0x0001;
         private const int OFFSET_CURSOR = 30;
@@ -67,7 +67,7 @@ namespace SSHF.Infrastructure
                     {
                         await _window.Dispatcher.InvokeAsync(() =>
                         {
-                            SetWindowPos(helper.Handle, HWND_TOP, Convert.ToInt32(point.X - OFFSET_CURSOR), Convert.ToInt32(point.Y - OFFSET_CURSOR),
+                            SetWindowPos(helper.Handle, HWND_TOPMOST, Convert.ToInt32(point.X - OFFSET_CURSOR), Convert.ToInt32(point.Y - OFFSET_CURSOR),
                                 IGNORE_SIZE_WINDOW, IGNORE_SIZE_WINDOW, NOT_MESSAGE_WM_WINDOWPOSCHANGING | SWP_NOSIZE);
                         }, System.Windows.Threading.DispatcherPriority.Render, token);
                     }
