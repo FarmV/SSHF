@@ -44,9 +44,8 @@ namespace SSHF.Infrastructure
         {
             if (Mouse.LeftButton is MouseButtonState.Pressed) _window.DragMove();
         });
-        [LibraryImport("user32")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static partial bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
+        [DllImport("user32")] //LibraryImport вызывает ошибку  1400(Недопустимый дескриптор окна?) при включённой оптимизации кода
+        internal static extern bool SetWindowPos(IntPtr handle, int handle2, int x, int y, int cx, int cy, int flag);
         private async Task UpdateWindowPositionRelativeToCursor(CancellationToken token)
         {
             if (Win32TimePeriod.TimeBeginPeriod(1) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to set the timer range");
