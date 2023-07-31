@@ -88,7 +88,6 @@ namespace SSHF
             private static IGetImage CreateImageProvider() => new ImageProvider();
             private static MainWindowViewModel CreateMainWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, DpiCorrector corrector, WPFDropImageFile setImage) =>
                            new MainWindowViewModel(imageProvider, windowPositionUpdater, corrector, setImage);
-
             private static void SetDataContextMainWindow(Window window, MainWindowViewModel mainWindowViewModel)
             {
                 window.DataContext = mainWindowViewModel;
@@ -114,8 +113,6 @@ namespace SSHF
                 TrayIconManager trayIconManager = new TrayIconManager(notificationTrayIconWindow);
                 collection.AddSingleton(trayIconManager);
                 notificationTrayIconWindow.DataContext = new NotificatorViewModel(notificationTrayIconWindow, trayIconManager, mouseHandler);
-                //notificationTrayIconWindow.Show(); //todo Проверить нужно ли показывать окно
-                //notificationTrayIconWindow.Hide();
                 return notificationTrayIconWindow;
             }
             private static Input CreateHadnlerInput(Dispatcher? uiDispatcher = null)
@@ -130,8 +127,5 @@ namespace SSHF
             private static MainWindowCommand CreateMainWindowCommand(Window window,MainWindowViewModel viewModel, IKeyboardHandler keyboardHandler) => new MainWindowCommand(window,viewModel, keyboardHandler);
         }
     }
-
-
-
 }
 

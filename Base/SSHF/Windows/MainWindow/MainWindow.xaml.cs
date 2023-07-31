@@ -19,17 +19,14 @@ namespace SSHF
         [LibraryImport("user32")]
         internal static partial IntPtr GetWindowLongPtrW(IntPtr hWnd, int nIndex);
     }
-
-
     public partial class MainWindow : MahApps.Metro.Controls.MetroWindow, IViewFor<MainWindowViewModel>
     {
         public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel), typeof(MainWindowViewModel), typeof(MainWindow));
-
         private readonly int GWL_EXSTYLE = -20;
         private readonly long WS_EX_TOOLWINDOW = 0x00000080;
+        private readonly long WS_EX_NOACTIVATE = 0x08000000L;
         public MainWindow()
         {
-
             InitializeComponent();
             this.Title = "Fast Window";
 
@@ -38,13 +35,8 @@ namespace SSHF
         private void HideAltTabWindow()
         {
             IntPtr hWnd = new WindowInteropHelper(this).EnsureHandle();
-            NativeHelper.SetWindowLongPtrW(hWnd, GWL_EXSTYLE, new IntPtr(NativeHelper.GetWindowLongPtrW(hWnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW));
-        }
-       
-
-
-
-
+            NativeHelper.SetWindowLongPtrW(hWnd, GWL_EXSTYLE, new IntPtr(NativeHelper.GetWindowLongPtrW(hWnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE));
+        }       
         /// <summary>
         /// Заглушка - Изменения свойста Visibility деактивирует привязку к размерам окна.
         /// Решение устанвоить приязку после изменение Visibility и не изменять это свойсто. Реализовать сокрытие окна через opacity.
@@ -58,9 +50,7 @@ namespace SSHF
             this.OneWayBind(
                  this.ViewModel,
                  vm => vm.Width,
-                 w => w.Width);
-
-           
+                 w => w.Width);          
         }
         object? IViewFor.ViewModel
         {
@@ -77,6 +67,5 @@ namespace SSHF
             get => (MainWindowViewModel)GetValue(ViewModelProperty);
             set => SetValue(ViewModelProperty, value);
         }
-
     }
 }

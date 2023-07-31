@@ -16,6 +16,7 @@ namespace SSHF.Infrastructure
         private string _fileTmpPath = string.Empty;
         private DataObject _dropData;
         private Timer? _clearTmpTimer;
+        private BitmapSource? _previousImage;
         public void Dispose()
         {
             ClearTmpFile();
@@ -61,16 +62,52 @@ namespace SSHF.Infrastructure
         {
             if (ev is not MouseEventArgs) return;
 
-            if (Path.GetFileName(_fileTmpPath) != $"{image.GetHashCode()}.png")
+            if (CompareBitmapSources(_previousImage, image) is false)
             {
-                CreateTMPFile(image.GetHashCode().ToString());
+                _previousImage = image;
+
+                string random = Path.GetRandomFileName().ToUpper();
+
+                CreateTMPFile($"{random.Remove(random.Length - 4)}.png");
                 using FileStream createFile = new FileStream(_fileTmpPath, FileMode.Truncate);
                 BitmapEncoder encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(image));
                 encoder.Save(createFile);
                 SetDataObject();
             }
-            DragDrop.DoDragDrop(_window, _dropData, DragDropEffects.Copy);
+            else
+            {
+                DragDrop.DoDragDrop(_window, _dropData, DragDropEffects.Copy);
+            }
+        }
+        private bool CompareBitmapSources(BitmapSource? bitmapSource1, BitmapSource? bitmapSource2)
+        {
+            if (bitmapSource1 is not BitmapSource || bitmapSource2 is not BitmapSource) return false;
+            if (bitmapSource1.PixelWidth != bitmapSource2.PixelWidth || bitmapSource1.PixelHeight != bitmapSource2.PixelHeight) return false;
+
+            PixelFormat pixelFormat1 = bitmapSource1.Format;
+            PixelFormat pixelFormat2 = bitmapSource2.Format;
+
+            if (pixelFormat1 != pixelFormat2) return false;
+
+            int bytesPerPixel = (pixelFormat1.BitsPerPixel + 7) / 8;
+
+            int stride = bitmapSource1.PixelWidth * bytesPerPixel;
+            int size = bitmapSource1.PixelHeight * stride;
+
+            byte[] pixels1 = new byte[size];
+            byte[] pixels2 = new byte[size];
+
+            bitmapSource1.CopyPixels(pixels1, stride, 0);
+
+            bitmapSource2.CopyPixels(pixels2, stride, 0);
+
+            for (int i = 0; i < size; i++)
+            {
+                if (pixels1[i] != pixels2[i]) return false;
+            }
+
+            return true;
         }
     }
 }
