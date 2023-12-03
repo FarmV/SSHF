@@ -1,9 +1,7 @@
 ﻿using DynamicData.Experimental;
 
 using Linearstar.Windows.RawInput;
-
 using SSHF.Infrastructure.Interfaces;
-
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -17,7 +15,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
 
-namespace SSHF
+namespace SSHF.Infrastructure.TrayIconManagment
 {
     internal class DpiIconHandler : IDisposable
     {
@@ -112,14 +110,14 @@ namespace SSHF
     internal class DpiHandler : IDisposable
     {
         private const int WM_DPICHANGED = 0x02E0;
-        private IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
+        private nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new nint(-4);
         private Thread? threadHendlerDPI;
         private volatile HwndSource? _proxyInputHandlerWindow = null;
         public event EventHandler<DpiScale>? DPIChange;
         private bool _disposed = false;
 
         [DllImport("user32", SetLastError = true)]
-        public static extern uint SetThreadDpiAwarenessContext(IntPtr dpiContext);
+        public static extern uint SetThreadDpiAwarenessContext(nint dpiContext);
         public DpiHandler()
         {
             Init();
@@ -128,7 +126,7 @@ namespace SSHF
         {
             threadHendlerDPI = new Thread(() =>
             {
-                if (SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == IntPtr.Zero)
+                if (SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == nint.Zero)
                 {
                     string error = Marshal.GetLastPInvokeErrorMessage();
                     throw new InvalidOperationException(error);
@@ -146,7 +144,7 @@ namespace SSHF
             threadHendlerDPI.Start();
 
 
-            if (System.Threading.SpinWait.SpinUntil(() => Dispatcher.FromThread(threadHendlerDPI) is not null &&
+            if (SpinWait.SpinUntil(() => Dispatcher.FromThread(threadHendlerDPI) is not null &&
             _proxyInputHandlerWindow is not null, TimeSpan.FromMilliseconds(300)) is false) throw new InvalidOperationException("Dispatcher is null or _proxyInputHandlerWindow null");
 
             Dispatcher dispatcherDPIWindowHendler = Dispatcher.FromThread(threadHendlerDPI);
@@ -155,12 +153,12 @@ namespace SSHF
             {
                 _proxyInputHandlerWindow?.AddHook(WndProc);
             });
-            IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+            nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
             {
                 if (msg is WM_DPICHANGED)
                 {
-                    int dpiX = (wParam.ToInt32() & 0xFFFF);
-                    int dpiY = (wParam.ToInt32() >> 16);
+                    int dpiX = wParam.ToInt32() & 0xFFFF;
+                    int dpiY = wParam.ToInt32() >> 16;
 
                     DPIChange?.Invoke(this, new DpiScale(dpiX, dpiY));
 
