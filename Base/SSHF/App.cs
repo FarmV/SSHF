@@ -4,16 +4,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using SSHF.Infrastructure;
-using SSHF.ViewModels;
-using SSHF.ViewModels.MainWindowViewModel;
+using SSHF.Infrastructure.TrayIconManagment;
 
 
 
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Interop;
 using System.Windows.Resources;
 
 namespace SSHF
@@ -21,12 +19,13 @@ namespace SSHF
     internal partial class App
     {
         internal static bool DesignerMode = true;
-        internal static event EventHandler? DpiChange;
         private const string MutexNameSingleInstance = "FVH.SSHF.SingleProgramInstance";
         private readonly CancellationTokenSource _tokenShutdownHost;
         private readonly IHost _host;
         private IServiceProvider _serviceProvider;
-        private static Mutex? _mutexSingleInstance;        
+        private static Mutex? _mutexSingleInstance;
+        private static nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new nint(-4);
+        private const int _errorCreatemutex = -100501;
         private Dependencie GetDependencie<Dependencie>() where Dependencie : notnull => _serviceProvider.GetRequiredService<Dependencie>();
         private App(IHost host)
         {
@@ -34,22 +33,31 @@ namespace SSHF
             _host = host;
             _serviceProvider = _host.Services;
         }
+        internal static StreamResourceInfo GetResource(Uri uriResource) => System.Windows.Application.GetResourceStream(uriResource);
         [STAThread]
         private static void Main(string[] args)
         {
             bool mutexWasCreated = false;
             try { _mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out mutexWasCreated); }
-            catch { Environment.Exit(-100501); }
-            if (mutexWasCreated is false) Environment.Exit(-100501);
+            catch { Environment.Exit(_errorCreatemutex); }
+            if (mutexWasCreated is false) Environment.Exit(_errorCreatemutex);
             
             Thread.CurrentThread.Name = "FVH Main Thread";
+
+            if (SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == nint.Zero) // чтобы окно при вставке изображение из буфера обмена сохраняло пропорции и не масштабировалось
+            {
+                string error = Marshal.GetLastPInvokeErrorMessage();
+                throw new InvalidOperationException(error);
+            }
+
             System.Windows.Application application = new System.Windows.Application();
             application.Startup += async (_, _) => await Start(args).ConfigureAwait(false);
             application.Run();
         }
-        internal static async Task Start(string[] args)
+        private static async Task Start(string[] args)
         {
             DesignerMode = false;
+         
             App app = new App(BasicDependencies.ConfigureDependencies(Thread.CurrentThread));
             app._serviceProvider = app._host.Services;
             app.RegShortcuts();
@@ -57,79 +65,17 @@ namespace SSHF
             await app._host.StartAsync();
         }
         private void RegShortcuts() => GetDependencie<ShortcutsProvider>().RegisterShortcuts();
-        private async Task RegisterKeysForMainWinodw()
-        {
-            Input input = GetDependencie<Input>();
-            MainWindow mainWindow = GetDependencie<MainWindow>();
-            IKeyboardCallback keyboardCallback = input.GetKeyboardCallbackFunction();
-            //Показ окна с изображеие
-            await keyboardCallback.AddCallBackTask(new VKeys[]
-            {
-                VKeys.VK_LWIN,
-                VKeys.VK_SHIFT,
-                VKeys.VK_KEY_A
-            },
-            () => new Task(() => mainWindow.Dispatcher.Invoke(() =>
-            {
-                MainWindowViewModel viewModel = (MainWindowViewModel)mainWindow.DataContext;
-                viewModel.RefreshWindowInvoke.Execute();
-            })));
-            //Блокировка перемещение окна
-            await keyboardCallback.AddCallBackTask(new VKeys[]
-            {
-                VKeys.VK_CONTROL,
-                VKeys.VK_CAPITAL
-            },
-            () => new Task(() =>
-            {
-                mainWindow.Dispatcher.Invoke(() =>
-                {
-                    MainWindowViewModel viewModel = (MainWindowViewModel)mainWindow.DataContext;
-                    if (viewModel.WindowPositionUpdater.IsUpdateWindow is true) return;
-                    viewModel.SwithBlockRefreshWindow.Execute();
-                });
-            }), nameof(MainWindowViewModel.BlockRefresh));
-        }
-        internal async void Shutdown()
+        [DllImport("user32", SetLastError = true)]
+        private static extern uint SetThreadDpiAwarenessContext(nint dpiContext);
+        private void Shutdown()
         {
             _tokenShutdownHost?.Cancel();
             if (_host.Services.GetService<Input>() is Input input) input.Dispose();
             if (_host.Services.GetService<WPFDropImageFile>() is WPFDropImageFile setImage) setImage.Dispose();
             _mutexSingleInstance?.ReleaseMutex();
             _mutexSingleInstance?.Close();
-            if (_host.Services.GetService<TrayIconManager>() is TrayIconManager notificator) await notificator.DisposeAsync();
-        }
-        internal static StreamResourceInfo GetResource(Uri uriResource) => System.Windows.Application.GetResourceStream(uriResource);
-        private void SubscribeDpiChange()
-        {
-            MainWindow mainWindow = GetDependencie<MainWindow>();
-            if (PresentationSource.FromVisual(mainWindow) is not HwndSource win32MainWindow) throw new InvalidOperationException();
-            win32MainWindow.AddHook(WndProc);
-
-            static IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-            {
-                const int WM_DPICHANGED = 0x02E0;
-
-                switch (msg)
-                {
-                    case WM_DPICHANGED:
-                        {
-                            _ = Task.Run(() => { DpiChange?.Invoke(default, EventArgs.Empty); }).ConfigureAwait(false);
-                            handled = true;
-                        }
-                        break;
-                }
-                return hwnd;
-            }
-        }
-        private async Task AssociateWindowClosingWithTheHost()
-        {
-            MainWindow mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
-            await mainWindow.Dispatcher.InvokeAsync(() => mainWindow.Closed += (_, _) => _tokenShutdownHost.Cancel());
+            if (_host.Services.GetService<TraiIcon>() is TraiIcon notificator) notificator.Dispose();
         }
     }
-
-
-
 }
 
