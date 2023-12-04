@@ -27,12 +27,12 @@
     ShowMaxRestoreButton="False"
     NonActiveBorderBrush="Transparent"
  
-      
+    
     ResizeMode="NoResize"
     d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
     Visibility="Visible"
-    
-    
+       
+    SizeToContent="Manual"   
 
    >
     <Window.Resources>
@@ -40,52 +40,53 @@
         <converter:ConverterVisibleToOpacity x:Key="ConVisToOP"/>
     </Window.Resources>
 
-    <i:Interaction.Triggers>
 
-        <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
-            <i:InvokeCommandAction Command="{Binding StopWindowUpdater}" 
-                                   CommandParameter="{x:Static rxui:Unit.Default}"/>
-        </i:EventTrigger>
+    <i:Interaction.Triggers>
 
         <i:EventTrigger EventName="PreviewMouseDoubleClick">
             <i:InvokeCommandAction Command="{Binding HideWindow}" 
-                                   CommandParameter="{x:Static rxui:Unit.Default}"/>
-        </i:EventTrigger>
-
-        <i:EventTrigger EventName="MouseLeftButtonDown">
-            <i:InvokeCommandAction Command="{Binding DragMoveWindow}" 
-                                   CommandParameter="{x:Static rxui:Unit.Default}"/>
-        </i:EventTrigger>
-
-        <i:EventTrigger EventName="PreviewMouseMove">
-            <i:InvokeCommandAction Command="{Binding DropImage}"                                  
-                                   PassEventArgsToCommand="True"/>
+                         CommandParameter="{x:Static rxui:Unit.Default}"/>
         </i:EventTrigger>
 
     </i:Interaction.Triggers>
-    <Window.Style>
-        <Style TargetType="{x:Type Window}">
-            <Setter Property="Background">
-                <Setter.Value>
-                    <Binding 
-                             Path="BackgroundImage" Converter="{StaticResource ConDPIViewport}"/>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Opacity">
-                <Setter.Value>
-                    <Binding Path="VisibleCondition" Converter="{StaticResource ConVisToOP}"/>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Style>
 
-    <!--<Grid Background="{Binding BackgroundImage,diag:PresentationTraceSources.TraceLevel=High, Converter={StaticResource ConDPIViewport}}" >
+    <Grid x:Name="GridContent">
         
-    </Grid>-->
-	<!--<Grid>
-		<Border BorderBrush="Red" BorderThickness="2">
-			
-		</Border>
-	</Grid>-->
+        <i:Interaction.Triggers>
 
+            <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
+                <i:InvokeCommandAction Command="{Binding StopWindowUpdater}" 
+                                   CommandParameter="{x:Static rxui:Unit.Default}"/>
+            </i:EventTrigger>
+         
+            <i:EventTrigger EventName="MouseLeftButtonDown">
+                <i:InvokeCommandAction Command="{Binding DragMoveWindow}" 
+                                   CommandParameter="{x:Static rxui:Unit.Default}"/>
+            </i:EventTrigger>
+
+            <i:EventTrigger EventName="PreviewMouseMove">
+                <i:InvokeCommandAction Command="{Binding DropImage}"                                  
+                                   PassEventArgsToCommand="True"/>
+            </i:EventTrigger>
+
+        </i:Interaction.Triggers>
+            
+        <Grid.Style>
+            <Style TargetType="{x:Type Grid}">
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <Binding 
+                             Path="BackgroundImage" Converter="{StaticResource ConDPIViewport}"/>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Opacity">
+                    <Setter.Value>
+                        <Binding Path="VisibleCondition" Converter="{StaticResource ConVisToOP}"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </Grid.Style>
+            
+    </Grid>
+  
 </mah:MetroWindow>

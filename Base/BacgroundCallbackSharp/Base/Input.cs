@@ -123,7 +123,7 @@ namespace FVH.Background.Input
 
                     Dispatcher.Run();
                 })
-                { Name = "Inupt Hanndler" };
+                { Name = "Inupt Handler" };
                 winThread.SetApartmentState(ApartmentState.STA);
                 winThread.Start();
             });

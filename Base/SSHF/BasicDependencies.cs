@@ -7,10 +7,9 @@ using ReactiveUI;
 
 using SSHF.Infrastructure;
 using SSHF.Infrastructure.Interfaces;
+using SSHF.Infrastructure.TrayIconManagment;
 using SSHF.ViewModels;
 using SSHF.ViewModels.MainWindowViewModel;
-using SSHF.ViewModels.NotifyIconViewModel;
-using SSHF.Views.Windows.Notify;
 
 
 
@@ -44,33 +43,31 @@ namespace SSHF
                     container.AddSingleton<MainWindow>(CreateMainWindow(uiDispatcher));
 
                     container.AddSingleton<WPFDropImageFile>(
-                        new WPFDropImageFile(container.BuildServiceProvider().GetRequiredService<MainWindow>(), 
+                        new WPFDropImageFile(container.BuildServiceProvider().GetRequiredService<MainWindow>(),
                         container.BuildServiceProvider().GetRequiredService<Dispatcher>()
                         ));
 
                     container.AddSingleton<MainWindowViewModel>(CreateMainWindowViewModel(
-                        imageProvider:CreateImageProvider(),
-                        windowPositionUpdater:CreatePositionUpdaterWin32WPF( 
+                        imageProvider: CreateImageProvider(),
+                        windowPositionUpdater: CreatePositionUpdaterWin32WPF(
                             window: container.BuildServiceProvider().GetRequiredService<MainWindow>()),
-                        corrector: new DpiCorrector( 
-                            window: container.BuildServiceProvider().GetRequiredService<MainWindow>(), 
+                        corrector: new DpiCorrector(
+                            window: container.BuildServiceProvider().GetRequiredService<MainWindow>(),
                             dispatcher: container.BuildServiceProvider().GetRequiredService<Dispatcher>()),
-                        setImage:container.BuildServiceProvider().GetRequiredService<WPFDropImageFile>()
+                        setImage: container.BuildServiceProvider().GetRequiredService<WPFDropImageFile>()
                         ));
 
                     SetDataContextMainWindow(
                         container.BuildServiceProvider().GetRequiredService<MainWindow>(),
                         container.BuildServiceProvider().GetRequiredService<MainWindowViewModel>()
                         );
-                 
-                    container.AddSingleton<Notificator>(
-                        CreateAnIconInTheNotificationArea(container.BuildServiceProvider().GetRequiredService<Input>().GetMouseHandler(), ref container) //todo исправить затычку
-                        );
+
+                    container.AddSingleton<TraiIcon>(CreateAnIconInTheNotificationArea());
 
                     container.AddSingleton<MainWindowCommand>(
                         CreateMainWindowCommand(
                           container.BuildServiceProvider().GetRequiredService<MainWindow>(),
-                        container.BuildServiceProvider().GetRequiredService<MainWindowViewModel>(), 
+                        container.BuildServiceProvider().GetRequiredService<MainWindowViewModel>(),
                         container.BuildServiceProvider().GetRequiredService<Input>().GetKeyboardHandler())
                         );
 
@@ -83,7 +80,7 @@ namespace SSHF
                                                                }));
                 });
             }).Build();
-            private static Dispatcher GetWPFUIDispatcher(Thread uiThread)  => Dispatcher.FromThread(uiThread) is not Dispatcher uiDispatcher ? throw new InvalidOperationException() : uiDispatcher;
+            private static Dispatcher GetWPFUIDispatcher(Thread uiThread) => Dispatcher.FromThread(uiThread) is not Dispatcher uiDispatcher ? throw new InvalidOperationException() : uiDispatcher;
             private static IWindowPositionUpdater CreatePositionUpdaterWin32WPF(Window window) => new Win32WPFWindowPositionUpdater(window);
             private static IGetImage CreateImageProvider() => new ImageProvider();
             private static MainWindowViewModel CreateMainWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, DpiCorrector corrector, WPFDropImageFile setImage) =>
@@ -107,13 +104,10 @@ namespace SSHF
 
                 return mainWindow;
             }
-            private static Notificator CreateAnIconInTheNotificationArea(IMouseHandler mouseHandler, ref IServiceCollection collection)
+            private static TraiIcon CreateAnIconInTheNotificationArea()
             {
-                Notificator notificationTrayIconWindow = new Notificator();
-                TrayIconManager trayIconManager = new TrayIconManager(notificationTrayIconWindow);
-                collection.AddSingleton(trayIconManager);
-                notificationTrayIconWindow.DataContext = new NotificatorViewModel(notificationTrayIconWindow, trayIconManager, mouseHandler);
-                return notificationTrayIconWindow;
+                TraiIcon traiIcon = new TraiIcon(App.GetResource(Resource.AppIcon).Stream);
+                return traiIcon;
             }
             private static Input CreateHadnlerInput(Dispatcher? uiDispatcher = null)
             {
@@ -124,7 +118,7 @@ namespace SSHF
                 return inputHendler ?? throw new NullReferenceException();
             }
             private static ShortcutsProvider CreateShortcutsManager(IKeyboardCallback keyboardCallback, IEnumerable<IInvokeShortcuts> listFunc) => new ShortcutsProvider(keyboardCallback, listFunc);
-            private static MainWindowCommand CreateMainWindowCommand(Window window,MainWindowViewModel viewModel, IKeyboardHandler keyboardHandler) => new MainWindowCommand(window,viewModel, keyboardHandler);
+            private static MainWindowCommand CreateMainWindowCommand(Window window, MainWindowViewModel viewModel, IKeyboardHandler keyboardHandler) => new MainWindowCommand(window, viewModel, keyboardHandler);
         }
     }
 }

@@ -30,8 +30,8 @@ namespace SSHF
             InitializeComponent();
             this.Title = "Fast Window";
 
-            HideAltTabWindow();
-        }
+            HideAltTabWindow();           
+        }    
         private void HideAltTabWindow()
         {
             IntPtr hWnd = new WindowInteropHelper(this).EnsureHandle();
@@ -42,7 +42,17 @@ namespace SSHF
         /// Решение устанвоить приязку после изменение Visibility и не изменять это свойсто. Реализовать сокрытие окна через opacity.
         /// </summary>
         private void SetBindingSizePostSwithVisible()
-        {
+        {           
+            this.OneWayBind(
+                 this.ViewModel,
+                 vm => vm.Height,
+                 w => w.GridContent.Height);
+            this.OneWayBind(
+                 this.ViewModel,
+                 vm => vm.Width,
+                 w => w.GridContent.Width);
+
+            // Не понятно нужно ли биндить размеры самого окна. При SizeToContent = WidthAndHeight размер окна фактически больше на пару пикселей чем целевой Gird (Стуктура населодвания фактически отличается в "MahApps.Metro.Controls.MetroWindow", ежели это было бы прямое наследование от "System.Windows.Window").
             this.OneWayBind(
                  this.ViewModel,
                  vm => vm.Height,
@@ -50,7 +60,7 @@ namespace SSHF
             this.OneWayBind(
                  this.ViewModel,
                  vm => vm.Width,
-                 w => w.Width);          
+                 w => w.Width);   
         }
         object? IViewFor.ViewModel
         {
