@@ -5,6 +5,7 @@ using ReactiveUI;
 using SSHF.Infrastructure.Interfaces;
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,9 +20,10 @@ namespace SSHF.Infrastructure
     {
         private const int IGNORE_SIZE_WINDOW = -1;
         private const int HWND_TOP = 0;
+        private const int OFFSET_CURSOR = 30;
         private const int NOT_MESSAGE_WM_WINDOWPOSCHANGING = 0x0400;
         private const int SWP_NOSIZE = 0x0001;
-        private const int OFFSET_CURSOR = 30;
+        private const int WM_WINDOWPOSCHANGING = 0x0046;
         private readonly Window _window;
         private nint _handleWindow;
         private bool _isUpdateWindow;
@@ -31,23 +33,33 @@ namespace SSHF.Infrastructure
             _window = window;
             _handleWindow = new WindowInteropHelper(_window).Handle;
             HwndSource hwndSource = HwndSource.FromHwnd(_handleWindow);
-            hwndSource.AddHook(WndProc);
+            hwndSource.AddHook(OverrideLogicToChangeWindowPosition);
         }
-        private static IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+#pragma warning disable CS0618            
+        private nint OverrideLogicToChangeWindowPosition(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
         {
-            switch (msg)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static bool CheckAndIgnoreWindowTopPosition(ref WINDOWPOS newWindowPos)
             {
-                case 0x46:
-                    if (Mouse.LeftButton != MouseButtonState.Pressed)
-                    {
-                        WINDOWPOS wp = (WINDOWPOS)Marshal.PtrToStructure(lParam, typeof(WINDOWPOS));
-                        wp.flags |= SWP.NOMOVE;
-                        Marshal.StructureToPtr(wp, lParam, false);
-                    }
-                    break;
+                if (newWindowPos.y is 0)
+                {
+                    newWindowPos.flags |= SWP.NOMOVE;
+                    return true;
+                }
+                else { return false; }
             }
-            return IntPtr.Zero;
+            if (msg is WM_WINDOWPOSCHANGING)
+            {
+                if (Mouse.LeftButton is not MouseButtonState.Pressed)
+                {
+                    WINDOWPOS wp = Marshal.PtrToStructure<WINDOWPOS>(lParam);
+                    if (CheckAndIgnoreWindowTopPosition(ref wp) is not true) return nint.Zero;
+                    Marshal.StructureToPtr(wp, lParam, false);
+                }
+            }
+            return nint.Zero;
         }
+#pragma warning restore CS0618
         public bool IsUpdateWindow
         {
             get => _isUpdateWindow;
