@@ -7,6 +7,7 @@ namespace SSHF.Infrastructure
     {
         internal const uint TIMERR_NOERROR = 0;
         internal const uint TIMERR_NOCANDO = 93;
+        internal const uint MinimumTimerResolution = 1;
 
         [LibraryImport("winmm", EntryPoint = "timeBeginPeriod")]
         [return: MarshalAs(UnmanagedType.U4)]

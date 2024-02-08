@@ -20,25 +20,25 @@ namespace SSHF.ViewModels.MainWindowViewModel
         public MainWindowViewModel MainWindowViewModel { get; }
         public IEnumerable<Shortcuts> GetShortcuts() => new Shortcuts[]
         {
-            new Shortcuts(new VKeys[]
-            {
+            new Shortcuts(
+            [
                 VKeys.VK_LWIN,
                 VKeys.VK_SHIFT,
                 VKeys.VK_KEY_A
-            },
+            ],
             new Func<Task>(PresentNewImage), nameof(MainWindowCommand.PresentNewImage)),
 
-            new Shortcuts(new VKeys[]
-            {
+            new Shortcuts(
+            [
                 VKeys.VK_CONTROL,
                 VKeys.VK_CAPITAL
-            },
+            ],
             new Func<Task>(SwithBlockRefreshWindow), nameof(MainWindowCommand.SwithBlockRefreshWindow)),
 
-            new Shortcuts(new VKeys[]
-            {
+            new Shortcuts(
+            [
                 VKeys.VK_CONTROL
-            },
+            ],
             new Func<Task>(StopRefreshWindow), nameof(MainWindowCommand.StopRefreshWindow))
         };
         public MainWindowCommand(System.Windows.Window window, MainWindowViewModel mainWindowView, IKeyboardHandler keyboardHandler)

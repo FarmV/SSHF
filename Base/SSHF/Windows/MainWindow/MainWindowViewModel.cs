@@ -25,7 +25,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private ImageSource? _imageBackground;
         private CancellationTokenSource _updateWindowCancellationToken = new CancellationTokenSource();
         private bool _blockRefresh = false;
-        private bool _ICancellingUpdate = false;
+        private bool _isCancellingUpdate = false;
         private bool _dropCondition = false;
         private bool _dragMoveCondition = false;
         private double _width = 0;
@@ -43,13 +43,13 @@ namespace SSHF.ViewModels.MainWindowViewModel
             _windowPositionUpdater = windowPositionUpdater;
             _dpiCorrector = dpiCorrector;
             _setImage = setImage;
-            RefreshWindowInvoke = ReactiveCommand.Create(WindowUpdate, this.WhenAnyValue(x => x.BlockRefresh, (bool blockRefresh) => blockRefresh is false));
-            StopWindowUpdater = ReactiveCommand.Create(StopUpdateWindow);
+            RefreshWindowInvoke = ReactiveCommand.CreateFromTask(WindowUpdate, this.WhenAnyValue(x => x.BlockRefresh, (bool blockRefresh) => blockRefresh is false));
+            StopWindowUpdater = ReactiveCommand.CreateFromTask(StopUpdateWindow);
             SetNewImage = ReactiveCommand.CreateFromTask(SetNewBackgoundImage);
             SwithBlockRefreshWindow = ReactiveCommand.Create(SwitchBlockRefresh);
             HideWindow = ReactiveCommand.Create(Hide);
             ShowWindow = ReactiveCommand.Create(Show);
-            DragMoveWindow = ReactiveCommand.Create(DragMove, this.WhenAnyValue(x => x.DragMoveCondition));
+            DragMoveWindow = ReactiveCommand.CreateFromTask(DragMove, this.WhenAnyValue(x => x.DragMoveCondition));
             DropImage = ReactiveCommand.Create<object>(DropWindowImage, this.WhenAnyValue(x => x.DropCondition));
         }
         public ReactiveCommand<Unit, Unit> RefreshWindowInvoke { get; private set; }
@@ -60,15 +60,18 @@ namespace SSHF.ViewModels.MainWindowViewModel
         public ReactiveCommand<Unit, Unit> ShowWindow { get; private set; }
         public ReactiveCommand<Unit, Unit> DragMoveWindow { get; private set; }
         public ReactiveCommand<object, Unit> DropImage { get; private set; }
-        private void WindowUpdate()
+        private async Task WindowUpdate()
         {
-            if (_windowPositionUpdater.IsUpdateWindow is true) return;
-            if (_ICancellingUpdate is true) return;
-            else
+            await Task.Factory.StartNew(async () =>
             {
-                if (_updateWindowCancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
-                _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token);
-            }
+                if (_windowPositionUpdater.IsUpdateWindow is true) return;
+                if (_isCancellingUpdate is true) return;
+                else
+                {
+                    if (_updateWindowCancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
+                    await _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token);
+                }
+            }).ConfigureAwait(false);
         }
         private void DropWindowImage(object ev)
         {
@@ -77,18 +80,21 @@ namespace SSHF.ViewModels.MainWindowViewModel
             if (Keyboard.IsKeyDown(Key.LeftCtrl) is not true) return; //todo обдумать
             _setImage.SaveImageFromDrop(ev, img);
         }
-        private void DragMove() => _windowPositionUpdater.DargMove();
+        private async Task DragMove()
+        {
+            if (_windowPositionUpdater.IsUpdateWindow is true) return;
+            await _windowPositionUpdater.DargMove();
+        }
         private void Hide() => VisibleCondition = Visibility.Hidden;
         private void Show() => VisibleCondition = Visibility.Visible;
-        private void StopUpdateWindow()
+        private async Task StopUpdateWindow()
         {
             if (_windowPositionUpdater.IsUpdateWindow is false) return;
-            _ICancellingUpdate = true;
+            _isCancellingUpdate = true;
             _updateWindowCancellationToken.Cancel();
-            while (System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, TimeSpan.FromMilliseconds(300))) ;
-            if (_windowPositionUpdater.IsUpdateWindow is false) throw new InvalidOperationException();
+            await Task.Run(() => { if (System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, TimeSpan.FromMilliseconds(300)) is not true) throw new TimeoutException(); });
             _updateWindowCancellationToken = new CancellationTokenSource();
-            _ICancellingUpdate = false;
+            _isCancellingUpdate = false;
         }
         private async Task SetNewBackgoundImage()
         {
