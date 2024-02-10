@@ -42,9 +42,7 @@ namespace SSHF
                     container.AddSingleton<MainWindow>(CreateMainWindow(uiDispatcher));
 
                     container.AddSingleton<WPFDropImageFile>(
-                        new WPFDropImageFile(container.BuildServiceProvider().GetRequiredService<MainWindow>(),
-                        container.BuildServiceProvider().GetRequiredService<Dispatcher>()
-                        ));
+                        new WPFDropImageFile(container.BuildServiceProvider().GetRequiredService<MainWindow>()));
 
                     container.AddSingleton<MainWindowViewModel>(CreateMainWindowViewModel(
                         imageProvider: CreateImageProvider(),

@@ -26,13 +26,10 @@ namespace SSHF.Infrastructure.Converters
                 DpiScale dpiScale = VisualTreeHelper.GetDpi(Application.Current.MainWindow);
                 brush.Viewport = new Rect(0, 0, imageSource.Width / dpiScale.DpiScaleX, imageSource.Height / dpiScale.DpiScaleY);
 
-
-
                 return brush;
             }
             return null;
         }
-
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();

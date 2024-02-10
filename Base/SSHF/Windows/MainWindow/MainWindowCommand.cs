@@ -15,32 +15,8 @@ namespace SSHF.ViewModels.MainWindowViewModel
     internal class MainWindowCommand : IInvokeShortcuts
     {
         private readonly System.Windows.Window _window;
-        private IKeyboardHandler _keyboardHandler;
+        private readonly IKeyboardHandler _keyboardHandler;
         private bool _executePresentNewImage = false;
-        public MainWindowViewModel MainWindowViewModel { get; }
-        public IEnumerable<Shortcuts> GetShortcuts() => new Shortcuts[]
-        {
-            new Shortcuts(
-            [
-                VKeys.VK_LWIN,
-                VKeys.VK_SHIFT,
-                VKeys.VK_KEY_A
-            ],
-            new Func<Task>(PresentNewImage), nameof(MainWindowCommand.PresentNewImage)),
-
-            new Shortcuts(
-            [
-                VKeys.VK_CONTROL,
-                VKeys.VK_CAPITAL
-            ],
-            new Func<Task>(SwithBlockRefreshWindow), nameof(MainWindowCommand.SwithBlockRefreshWindow)),
-
-            new Shortcuts(
-            [
-                VKeys.VK_CONTROL
-            ],
-            new Func<Task>(StopRefreshWindow), nameof(MainWindowCommand.StopRefreshWindow))
-        };
         public MainWindowCommand(System.Windows.Window window, MainWindowViewModel mainWindowView, IKeyboardHandler keyboardHandler)
         {
             _window = window;
@@ -79,8 +55,31 @@ namespace SSHF.ViewModels.MainWindowViewModel
                     }
                 });
             });
-
         }
+        public MainWindowViewModel MainWindowViewModel { get; }
+        public IEnumerable<Shortcuts> GetShortcuts() => new Shortcuts[]
+        {
+            new Shortcuts(
+            [
+                VKeys.VK_LWIN,
+                VKeys.VK_SHIFT,
+                VKeys.VK_KEY_A
+            ],
+            new Func<Task>(PresentNewImage), nameof(MainWindowCommand.PresentNewImage)),
+
+            new Shortcuts(
+            [
+                VKeys.VK_CONTROL,
+                VKeys.VK_CAPITAL
+            ],
+            new Func<Task>(SwithBlockRefreshWindow), nameof(MainWindowCommand.SwithBlockRefreshWindow)),
+
+            new Shortcuts(
+            [
+                VKeys.VK_CONTROL
+            ],
+            new Func<Task>(StopRefreshWindow), nameof(MainWindowCommand.StopRefreshWindow))
+        };
         public async Task SwithBlockRefreshWindow() => await Application.Current.Dispatcher.InvokeAsync(async () => await MainWindowViewModel.SwithBlockRefreshWindow.Execute().FirstAsync());
         public async Task PresentNewImage()
         {

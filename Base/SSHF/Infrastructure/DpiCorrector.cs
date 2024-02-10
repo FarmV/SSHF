@@ -9,15 +9,11 @@ using System.Windows.Threading;
 
 namespace SSHF.Infrastructure
 {
-    public class DpiCorrector
+    public class DpiCorrector(Window window, Dispatcher dispatcher)
     {
-        private readonly Window _window;
-        private readonly Dispatcher _dispatcher;
-        public DpiCorrector(Window window, Dispatcher dispatcher)
-        {
-            _window = window;
-            _dispatcher = dispatcher;
-        }
+        private readonly Window _window = window;
+        private readonly Dispatcher _dispatcher = dispatcher;
+
         public DpiSacaleMonitor GetCurretDPI() => _dispatcher.Invoke(() =>
         {
             DpiScale dpi = VisualTreeHelper.GetDpi(_window);

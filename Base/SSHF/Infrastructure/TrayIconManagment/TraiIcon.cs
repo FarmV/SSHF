@@ -13,16 +13,18 @@ namespace SSHF.Infrastructure.TrayIconManagment
 {
     internal class TraiIcon : IDisposable
     {
-        private NotifyIcon _taskbarIcon;
-        private DpiIconHandler _dpiCorrector;
         private bool _disposed;
         private bool _blockRepeatInvokeMessageBox = false;
+        private readonly DPIIconHandler _dpiCorrector;
+        private NotifyIcon _taskbarIcon;
         public TraiIcon(Stream resourceIcon, int[]? sizesIcon = null)
         {
-            _dpiCorrector = new DpiIconHandler(resourceIcon, sizesIcon);
-            _taskbarIcon = new NotifyIcon();
-            _taskbarIcon.Icon = _dpiCorrector.GetDefaultStartProccesIconDPI();
-            _taskbarIcon.Visible = true;
+            _dpiCorrector = new DPIIconHandler(resourceIcon, sizesIcon);
+            _taskbarIcon = new NotifyIcon
+            {
+                Icon = _dpiCorrector.GetDefaultStartProccesIconDPI(),
+                Visible = true
+            };
             _dpiCorrector.ActualSizeIcon += ActualSizeIconLogic;
             _taskbarIcon.MouseDown += TaskbarIcon_MouseDown;          
         }
@@ -50,9 +52,11 @@ namespace SSHF.Infrastructure.TrayIconManagment
             _taskbarIcon.Visible = false;
             _taskbarIcon.Dispose();
             Thread.Sleep(450); // NotifyIcon.Dispose Возвращает управление раньше чем фактически освободит ресурысы.
-            _taskbarIcon = new NotifyIcon();
-            _taskbarIcon.Icon = newSizeIcon;
-            _taskbarIcon.Visible = true;
+            _taskbarIcon = new NotifyIcon
+            {
+                Icon = newSizeIcon,
+                Visible = true
+            };
             _taskbarIcon.MouseDown += TaskbarIcon_MouseDown;
         }
     }

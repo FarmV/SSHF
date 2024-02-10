@@ -18,7 +18,6 @@ namespace SSHF.Infrastructure
 {
     internal partial class Win32WPFWindowPositionUpdater : ReactiveUI.ReactiveObject, IWindowPositionUpdater
     {
-        private readonly Window _window;
         private const int IGNORE_SIZE_WINDOW = -1;
         private const int HWND_TOP = 0;
         private const int OFFSET_CURSOR = 30;
@@ -28,6 +27,7 @@ namespace SSHF.Infrastructure
         private nint _handleWindow;
         private bool _isUpdateWindow;
         private Point _lastPontCursor = default;
+        private readonly Window _window;
         public Win32WPFWindowPositionUpdater(Window window)
         {
             _window = window;

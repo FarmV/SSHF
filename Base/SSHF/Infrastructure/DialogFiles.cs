@@ -19,7 +19,6 @@ namespace SSHF.Infrastructure
                 Filter = Filter,
             };
 
-
             if (fileDialog.ShowDialog() is not true)
             {
                 SelectedFile = null;
