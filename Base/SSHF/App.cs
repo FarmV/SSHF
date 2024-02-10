@@ -25,13 +25,13 @@ namespace SSHF
         private IServiceProvider _serviceProvider;
         private readonly CancellationTokenSource _tokenShutdownHost;
         private static Mutex? _mutexSingleInstance;
-        private Dependencie GetDependencie<Dependencie>() where Dependencie : notnull => _serviceProvider.GetRequiredService<Dependencie>();
         private App(IHost host)
         {
             _tokenShutdownHost = new CancellationTokenSource();
             _host = host;
             _serviceProvider = _host.Services;
         }
+        private Dependencie GetDependencie<Dependencie>() where Dependencie : notnull => _serviceProvider.GetRequiredService<Dependencie>();
         internal static StreamResourceInfo GetResource(Uri uriResource) => System.Windows.Application.GetResourceStream(uriResource);
         [STAThread]
         private static void Main(string[] args)
@@ -40,7 +40,7 @@ namespace SSHF
             try { _mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out mutexWasCreated); }
             catch { Environment.Exit(_errorCreatemutex); }
             if (mutexWasCreated is false) Environment.Exit(_errorCreatemutex);
-            
+
             Thread.CurrentThread.Name = "FVH Main Thread";
 
             if (SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == nint.Zero) // чтобы окно при вставке изображения из буфера обмена сохраняло пропорции и не масштабировалось
@@ -56,7 +56,7 @@ namespace SSHF
         private static async Task Start(string[] args)
         {
             DesignerMode = false;
-         
+
             App app = new App(BasicDependencies.ConfigureDependencies(Thread.CurrentThread));
             app._serviceProvider = app._host.Services;
             app.RegShortcuts();
