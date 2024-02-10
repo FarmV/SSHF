@@ -7,8 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
-using FVH.Background.Input;
 using System.Diagnostics;
+using FVH.Background.Input.Infrastructure.Interfaces;
 
 namespace FVH.Background.Input
 {

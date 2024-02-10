@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FVH.Background.Input.Infrastructure.Interfaces;
 
-namespace FVH.Background.Input
+namespace FVH.Background.Input.Infrastructure
 {
     public class RegFunctionGroupKeyboard
     {

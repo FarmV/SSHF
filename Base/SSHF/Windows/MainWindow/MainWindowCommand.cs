@@ -9,6 +9,7 @@ using FVH.Background.Input;
 using System.Reactive.Linq;
 using System.Linq;
 using SSHF.Infrastructure.Interfaces;
+using FVH.Background.Input.Infrastructure.Interfaces;
 
 namespace SSHF.ViewModels.MainWindowViewModel
 {

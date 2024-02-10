@@ -1,5 +1,4 @@
-﻿using FVH.Background.Input;
-using Linearstar.Windows.RawInput;
+﻿using Linearstar.Windows.RawInput;
 
 using System;
 using System.Collections.Generic;
@@ -7,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FVH.Background.Input
+namespace FVH.Background.Input.Infrastructure.Interfaces
 {
 
 

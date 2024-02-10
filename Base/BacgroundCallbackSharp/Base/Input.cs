@@ -1,17 +1,10 @@
-﻿using FVH.Background.Input;
-
+﻿using System.IO;
+using System.Windows.Interop;
+using System.Windows.Threading;
 
 using Linearstar.Windows.RawInput;
 
-using System;
-using System.IO;
-using System.Security.Policy;
-using System.Windows;
-using System.Windows.Interop;
-using System.Windows.Threading;
-using System.Xml.Linq;
-
-using static FVH.Background.Input.KeyboardHandler;
+using FVH.Background.Input.Infrastructure.Interfaces;
 
 namespace FVH.Background.Input
 {
@@ -21,11 +14,42 @@ namespace FVH.Background.Input
     ///<br><see langword="Ru"/></br>
     ///<br>Класс создает прокси-источник HwndSource. Регистрирует его для получения событий мыши и клавиатуры. Создает классы для обработки событий.</br>
     ///</summary>
-    public class Input : IDisposable
+    public partial class Input : IDisposable
     {
-        private volatile HwndSource? ProxyInputHandlerWindow;
-
+        /// <summary>
+        /// Примечание: WS_POPUP в Windows API обычно представлен как 32-битное значение (Int32),
+        /// но для ясности и соответствия документации используетcя тип long (Int64).
+        /// При приведении значения к типу int происходит потеря старших битов, но это безопасно,
+        /// так как младшие 32 бита достаточны для представления стиля окна WS_POPUP.
+        /// </summary>
+        private const long WS_POPUP = 0x80000000L;
         private bool isDispose = false;
+        private bool _isInitialized = false;
+        private volatile HwndSource? ProxyInputHandlerWindow;
+        private readonly IKeyboardHandler _keyboardHandler;
+        private readonly IMouseHandler _mouseHandler;
+        private readonly HandlersInput _initInput;
+        private IKeyboardCallback? _callbackFunction;
+        private readonly Action<RawInputKeyboardData> _callbackEventKeyboardData;
+        private readonly Action<RawInputMouseData> _callbackEventMouseData;
+        private LowLevlHook? _lowLevlHook;
+        private Thread? _winThread;
+
+        public Input() : this(null, HandlersInput.Keyboard | HandlersInput.Mouse) { }
+        public Input(IMouseHandler? mouseHandler = null, HandlersInput initInputHandle = HandlersInput.Keyboard | HandlersInput.Mouse)
+        {
+            _initInput = initInputHandle;
+
+            _keyboardHandler = new KeyboardHandler();
+            _mouseHandler = mouseHandler is IMouseHandler handlerMouse ? handlerMouse : new MouseHandler();
+
+            _callbackEventKeyboardData = new Action<RawInputKeyboardData>((x) => _keyboardHandler.HandlerKeyboard(x));
+            _callbackEventMouseData = new Action<RawInputMouseData>((x) => _mouseHandler.HandlerMouse(x));
+
+            Task waitForInitialization = Task.Run(async () => await Initialization());
+            waitForInitialization.Wait();
+            this._initInput = initInputHandle;
+        }
         public void Dispose()
         {
             if (isDispose is true) return;
@@ -35,7 +59,6 @@ namespace FVH.Background.Input
             isDispose = true;
             GC.SuppressFinalize(this);
         }
-
         ~Input()
         {
             if (isDispose is true) return;
@@ -46,19 +69,6 @@ namespace FVH.Background.Input
             }
             catch { }
         }
-
-
-        private bool isItialized = false;
-        private readonly Action<RawInputKeyboardData> _callbackEventKeyboardData;
-        private readonly Action<RawInputMouseData> _callbackEventMouseData;
-        private readonly IKeyboardHandler _keyboardHandler;
-        private readonly IMouseHandler _mouseHandler;
-        private LowLevlHook? _lowLevlHook;
-        private IKeyboardCallback? _callbackFunction;
-        private Thread? winThread;
-        private readonly HandlersInput initInput;
-
-
         ///<returns>
         /// <br><see langword="En"/></br>
         /// <br>Reference to the class that implements the <see cref="IKeyboardHandler"/>.</br>
@@ -80,61 +90,35 @@ namespace FVH.Background.Input
         /// <br>Cсылка на класс, реализующий интерфейс <see cref="IKeyboardCallback"/>.</br>
         ///</returns>
         public IKeyboardCallback GetKeyboardCallbackFunction() => _callbackFunction is IKeyboardCallback CallBack ? CallBack : throw new NullReferenceException(nameof(_callbackFunction));
-
-        [Flags]
-        public enum HandlersInput
-        {
-            Keyboard = 1,
-            Mouse = 2,
-        }
-
-
-        public Input() : this(null, HandlersInput.Keyboard | HandlersInput.Mouse) { }
-        public Input(IMouseHandler? mouseHandler = null, HandlersInput initInputHandle = HandlersInput.Keyboard | HandlersInput.Mouse)
-        {
-            initInput = initInputHandle;
-
-            _keyboardHandler = new KeyboardHandler();
-            _mouseHandler = mouseHandler is IMouseHandler handlerMouse ? handlerMouse : new MouseHandler();
-
-            _callbackEventKeyboardData = new Action<RawInputKeyboardData>((x) => _keyboardHandler.HandlerKeyboard(x));
-            _callbackEventMouseData = new Action<RawInputMouseData>((x) => _mouseHandler.HandlerMouse(x));
-
-            Task waitForInitialization = Task.Run(async () => await Initialization());
-            waitForInitialization.Wait();
-            this.initInput = initInputHandle;
-        }
-
-
-        private TimeSpan TimeoutInitialization => TimeSpan.FromSeconds(10);
+        private static TimeSpan TimeoutInitialization => TimeSpan.FromSeconds(10);
         private Task Initialization()
         {
-            if (isItialized is true) throw new InvalidOperationException($"The object({nameof(Input)}) cannot be re-initialized");
+            if (_isInitialized is true) throw new InvalidOperationException($"The object({nameof(Input)}) cannot be re-initialized");
 
             Task InitThreadAndSetWindowsHanlder = Task.Run(() =>
             {
-                winThread = new Thread(() =>
+                _winThread = new Thread(() =>
                 {
                     HwndSourceParameters configInitWindow = new HwndSourceParameters($"InputHandler-{Path.GetRandomFileName}", 0, 0)
                     {
-                        WindowStyle = 0x800000
+                        WindowStyle = unchecked((int)WS_POPUP)
                     };
                     ProxyInputHandlerWindow = new HwndSource(configInitWindow);
 
                     Dispatcher.Run();
                 })
                 { Name = "Inupt Handler" };
-                winThread.SetApartmentState(ApartmentState.STA);
-                winThread.Start();
+                _winThread.SetApartmentState(ApartmentState.STA);
+                _winThread.Start();
             });
 
             Task waitforWidnowDispather = Task.Run(async () =>
             {
-                Dispatcher? winDispatcher = Dispatcher.FromThread(winThread);
+                Dispatcher? winDispatcher = Dispatcher.FromThread(_winThread);
 
                 while (winDispatcher is null)
                 {
-                    winDispatcher = Dispatcher.FromThread(winThread);
+                    winDispatcher = Dispatcher.FromThread(_winThread);
                 }
 
                 bool TimeoutInitDispathcer = false;
@@ -162,7 +146,7 @@ namespace FVH.Background.Input
                 RawInputDeviceRegistration[] devices1 = new RawInputDeviceRegistration[2];
                 ProxyInputHandlerWindow.Dispatcher.Invoke(() => // синхронно?
                 {
-                    switch (initInput)
+                    switch (_initInput)
                     {
                         case HandlersInput.Keyboard | HandlersInput.Mouse:
                             devices.Add((HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, HandleWindow));
@@ -174,14 +158,13 @@ namespace FVH.Background.Input
                         case HandlersInput.Mouse:
                             devices.Add((HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, HandleWindow));
                             break;
-                        default: throw new NullReferenceException(nameof(initInput));
+                        default: throw new NullReferenceException(nameof(_initInput));
                     }
                     Array.ForEach(devices.ToArray(), (x) => RawInputDevice.RegisterDevice(x.Item1, x.Item2, x.Item3));
 
-
                     ProxyInputHandlerWindow.AddHook(WndProc);
 
-                    IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+                    nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
                     {
                         const int WM_INPUT = 0x00FF;
                         switch (msg)
@@ -217,7 +200,7 @@ namespace FVH.Background.Input
             Task.WaitAll(InitThreadAndSetWindowsHanlder, waitforWidnowDispather);
             subscribeWindowtoRawInput.Start();
             subscribeWindowtoRawInput.Wait();
-            isItialized = true;
+            _isInitialized = true;
             return Task.CompletedTask;
         }
     }

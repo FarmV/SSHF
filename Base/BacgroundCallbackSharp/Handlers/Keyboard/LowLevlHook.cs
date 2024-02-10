@@ -4,6 +4,7 @@ using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
 using System.Windows.Media.TextFormatting;
+using FVH.Background.Input.Infrastructure.Interfaces;
 
 namespace FVH.Background.Input
 {

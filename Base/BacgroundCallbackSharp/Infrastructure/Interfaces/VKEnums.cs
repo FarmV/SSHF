@@ -1,14 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 
-using static System.Net.WebRequestMethods;
-
-namespace FVH.Background.Input
+namespace FVH.Background.Input.Infrastructure.Interfaces
 {
     internal class VKeysEqualityComparer : IEqualityComparer<VKeys[]>
     {
@@ -23,8 +15,6 @@ namespace FVH.Background.Input
         }
         public int GetHashCode([DisallowNull] VKeys[] obj) => 0;
     }
-
-
     /// <summary>
     ///     <br/>Virtual key codes <see cref="VKeys"/>
     ///     <br/>
@@ -32,7 +22,7 @@ namespace FVH.Background.Input
     ///     <see href="https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes">docs.microsoft.com</see>  
     /// </summary>
     public enum VKeys
-    {      
+    {
         // Constant = Value        Description
 
         VK_LBUTTON = 0x01,         /* Left mouse button*/

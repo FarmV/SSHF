@@ -1,5 +1,4 @@
-﻿using FVH.Background.Input;
-
+﻿using FVH.Background.Input.Infrastructure.Interfaces;
 using ReactiveUI;
 
 using System;

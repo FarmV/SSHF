@@ -1,7 +1,5 @@
 ﻿using DynamicData;
-
-using FVH.Background.Input;
-
+using FVH.Background.Input.Infrastructure.Interfaces;
 using SSHF.Infrastructure.Interfaces;
 
 using System;

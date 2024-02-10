@@ -15,6 +15,7 @@ using SSHF.Infrastructure.Interfaces;
 using SSHF.Infrastructure.TrayIconManagment;
 using SSHF.ViewModels;
 using SSHF.ViewModels.MainWindowViewModel;
+using FVH.Background.Input.Infrastructure.Interfaces;
 
 
 

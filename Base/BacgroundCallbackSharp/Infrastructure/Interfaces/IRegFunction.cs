@@ -1,4 +1,4 @@
-﻿namespace FVH.Background.Input
+﻿namespace FVH.Background.Input.Infrastructure.Interfaces
 {
     public interface IRegFunction
     {

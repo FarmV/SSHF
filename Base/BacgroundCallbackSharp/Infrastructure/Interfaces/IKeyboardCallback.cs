@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FVH.Background.Input
+namespace FVH.Background.Input.Infrastructure.Interfaces
 {
     /// <summary>
     /// <br><see langword="En"/></br>

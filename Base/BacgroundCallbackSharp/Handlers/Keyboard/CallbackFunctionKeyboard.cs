@@ -1,5 +1,5 @@
-﻿using FVH.Background.Input;
-
+﻿using FVH.Background.Input.Infrastructure;
+using FVH.Background.Input.Infrastructure.Interfaces;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;

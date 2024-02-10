@@ -10,6 +10,13 @@ namespace SSHF.Infrastructure.TrayIconManagment
 {
     internal partial class DpiHandler : IDisposable
     {
+        /// <summary>
+        /// Примечание: WS_POPUP в Windows API обычно представлен как 32-битное значение (Int32),
+        /// но для ясности и соответствия документации используетcя тип long (Int64).
+        /// При приведении значения к типу int происходит потеря старших битов, но это безопасно,
+        /// так как младшие 32 бита достаточны для представления стиля окна WS_POPUP.
+        /// </summary>
+        private const long WS_POPUP = 0x80000000L;
         private const int WM_DPICHANGED = 0x02E0;
         private nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new nint(-4);
         private Thread? threadHendlerDPI;
@@ -33,7 +40,7 @@ namespace SSHF.Infrastructure.TrayIconManagment
 
                 HwndSourceParameters hwndSourceParameters = new HwndSourceParameters($"DpiHandler-{Path.GetRandomFileName}", 0, 0)
                 {
-                    WindowStyle = 0x800000
+                    WindowStyle =unchecked ((int)WS_POPUP)
                 };
                 _proxyInputHandlerWindow = new HwndSource(hwndSourceParameters);
                 Dispatcher.Run();
