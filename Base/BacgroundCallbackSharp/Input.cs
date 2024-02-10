@@ -143,25 +143,25 @@ namespace FVH.Background.Input
                 if (_proxyInputHandlerWindow is null) throw new NullReferenceException("The window could not initialize");
 
                 IntPtr HandleWindow = _proxyInputHandlerWindow.Handle;
-                List<(HidUsageAndPage, RawInputDeviceFlags, IntPtr)> devices = new();
+                List<(HidUsageAndPage InputType, RawInputDeviceFlags Mode, nint hWndTarget)> queryTypeList = new();
                 RawInputDeviceRegistration[] devices1 = new RawInputDeviceRegistration[2];
                 _proxyInputHandlerWindow.Dispatcher.Invoke(() => // синхронно?
                 {
                     switch (_initInput)
                     {
                         case HandlersInput.Keyboard | HandlersInput.Mouse:
-                            devices.Add((HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, HandleWindow));
-                            devices.Add((HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, HandleWindow));
+                            queryTypeList.Add((HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, HandleWindow));
+                            queryTypeList.Add((HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, HandleWindow));
                             break;
                         case HandlersInput.Keyboard:
-                            devices.Add((HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, HandleWindow));
+                            queryTypeList.Add((HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, HandleWindow));
                             break;
                         case HandlersInput.Mouse:
-                            devices.Add((HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, HandleWindow));
+                            queryTypeList.Add((HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, HandleWindow));
                             break;
                         default: throw new NullReferenceException(nameof(_initInput));
                     }
-                    Array.ForEach(devices.ToArray(), (x) => RawInputDevice.RegisterDevice(x.Item1, x.Item2, x.Item3));
+                    Array.ForEach(queryTypeList.ToArray(), (clientInput) => RawInputDevice.RegisterDevice(clientInput.InputType, clientInput.Mode, clientInput.hWndTarget));
 
                     _proxyInputHandlerWindow.AddHook(WndProc);
 
@@ -204,6 +204,3 @@ namespace FVH.Background.Input
         }
     }
 }
-
-
-
