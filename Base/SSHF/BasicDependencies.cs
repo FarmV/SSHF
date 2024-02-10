@@ -1,9 +1,14 @@
-﻿using FVH.Background.Input;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Windows;
+using System.Windows.Threading;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
 using ReactiveUI;
+
+using FVH.Background.Input;
 
 using SSHF.Infrastructure;
 using SSHF.Infrastructure.Interfaces;
@@ -12,12 +17,6 @@ using SSHF.ViewModels;
 using SSHF.ViewModels.MainWindowViewModel;
 
 
-
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Windows;
-using System.Windows.Threading;
 
 namespace SSHF
 {

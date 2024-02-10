@@ -107,7 +107,7 @@ namespace SSHF.Infrastructure.TrayIconManagment
         ~DpiIconHandler() { Dispose(false); }
     }
 
-    internal class DpiHandler : IDisposable
+    internal partial class DpiHandler : IDisposable
     {
         private const int WM_DPICHANGED = 0x02E0;
         private nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new nint(-4);
@@ -116,17 +116,16 @@ namespace SSHF.Infrastructure.TrayIconManagment
         public event EventHandler<DpiScale>? DPIChange;
         private bool _disposed = false;
 
-        [DllImport("user32", SetLastError = true)]
-        public static extern uint SetThreadDpiAwarenessContext(nint dpiContext);
-        public DpiHandler()
-        {
-            Init();
-        }
+        public DpiHandler() => Init();      
+        
+        [LibraryImport("user32", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.I4)]
+        private static partial int SetThreadDpiAwarenessContext(nint dpiContext);
         private void Init()
         {
             threadHendlerDPI = new Thread(() =>
             {
-                if (SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == nint.Zero)
+                if (SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == nint.Zero) // return 2147508241 вероятно возращаймое значение не корректно SetThreadDpiAwarenessContext должен возращать nint, из перечислеия DPI_AWARENESS_CONTEXT прошлого состояния потока
                 {
                     string error = Marshal.GetLastPInvokeErrorMessage();
                     throw new InvalidOperationException(error);

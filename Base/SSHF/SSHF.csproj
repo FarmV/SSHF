@@ -9,26 +9,14 @@
 		<UseWindowsForms>True</UseWindowsForms>
 		<PlatformTarget>x64</PlatformTarget>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
 		<Product>Screenshot Helper by FarmV</Product>
 		<Description>Screenshot Helper by FarmV</Description>
 		<Version>0.0.5.1</Version>
 		<Copyright>https://github.com/FarmV/SSHF</Copyright>
 		<ApplicationIcon>Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
 		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
-
-
-
-
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <DebugType>embedded</DebugType>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <DebugType>embedded</DebugType>
 	</PropertyGroup>
 	
 	<ItemGroup>
@@ -46,35 +34,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Update="Properties\Settings.Designer.cs">
-			<DesignTimeSharedInput>True</DesignTimeSharedInput>
-			<AutoGen>True</AutoGen>
-			<DependentUpon>Settings.settings</DependentUpon>
-		</Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Update="Properties\Settings.settings">
-			<Generator>SettingsSingleFileGenerator</Generator>
-			<LastGenOutput>Settings.Designer.cs</LastGenOutput>
-		</None>
-	</ItemGroup>
-
-
-
-	<ItemGroup>
 		<Resource Include="Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Resource>
 	</ItemGroup>
 	
-
-
-<Target Name="AfterBuild">
-  <Message Text="AfterBuild event" Importance="high"></Message>
-</Target>
-<Target Name="BeforeBuild">
-  <Message Text="BeforeBuild event" Importance="high"></Message>
-</Target>
-
 </Project>
