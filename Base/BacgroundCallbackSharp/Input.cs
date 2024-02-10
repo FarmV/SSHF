@@ -23,6 +23,7 @@ namespace FVH.Background.Input
         /// так как младшие 32 бита достаточны для представления стиля окна WS_POPUP.
         /// </summary>
         private const long WS_POPUP = 0x80000000L;
+        private const int WM_INPUT = 0x00FF;
         private bool isDispose = false;
         private bool _isInitialized = false;
         private readonly IKeyboardHandler _keyboardHandler;
@@ -166,7 +167,6 @@ namespace FVH.Background.Input
 
                     nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
                     {
-                        const int WM_INPUT = 0x00FF;
                         switch (msg)
                         {
                             case WM_INPUT:
@@ -183,7 +183,6 @@ namespace FVH.Background.Input
                                                 _callbackEventMouseData.Invoke(mouseData);
                                                 break;
                                         }
-
                                     }
                                 }
                                 break;
