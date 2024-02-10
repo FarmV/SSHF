@@ -25,13 +25,13 @@ namespace FVH.Background.Input
         private const long WS_POPUP = 0x80000000L;
         private bool isDispose = false;
         private bool _isInitialized = false;
-        private volatile HwndSource? ProxyInputHandlerWindow;
         private readonly IKeyboardHandler _keyboardHandler;
         private readonly IMouseHandler _mouseHandler;
         private readonly HandlersInput _initInput;
         private IKeyboardCallback? _callbackFunction;
         private readonly Action<RawInputKeyboardData> _callbackEventKeyboardData;
         private readonly Action<RawInputMouseData> _callbackEventMouseData;
+        private volatile HwndSource? _proxyInputHandlerWindow;
         private LowLevlHook? _lowLevlHook;
         private Thread? _winThread;
 
@@ -54,7 +54,7 @@ namespace FVH.Background.Input
         {
             if (isDispose is true) return;
 
-            ProxyInputHandlerWindow?.Dispatcher?.InvokeShutdown();
+            _proxyInputHandlerWindow?.Dispatcher?.InvokeShutdown();
             _lowLevlHook?.Dispose();
             isDispose = true;
             GC.SuppressFinalize(this);
@@ -65,7 +65,7 @@ namespace FVH.Background.Input
             try
             {
                 _lowLevlHook?.Dispose();
-                ProxyInputHandlerWindow?.Dispose();
+                _proxyInputHandlerWindow?.Dispose();
             }
             catch { }
         }
@@ -103,7 +103,7 @@ namespace FVH.Background.Input
                     {
                         WindowStyle = unchecked((int)WS_POPUP)
                     };
-                    ProxyInputHandlerWindow = new HwndSource(configInitWindow);
+                    _proxyInputHandlerWindow = new HwndSource(configInitWindow);
 
                     Dispatcher.Run();
                 })
@@ -139,12 +139,12 @@ namespace FVH.Background.Input
 
             Task subscribeWindowtoRawInput = new Task(() =>
             {
-                if (ProxyInputHandlerWindow is null) throw new NullReferenceException("The window could not initialize");
+                if (_proxyInputHandlerWindow is null) throw new NullReferenceException("The window could not initialize");
 
-                IntPtr HandleWindow = ProxyInputHandlerWindow.Handle;
+                IntPtr HandleWindow = _proxyInputHandlerWindow.Handle;
                 List<(HidUsageAndPage, RawInputDeviceFlags, IntPtr)> devices = new();
                 RawInputDeviceRegistration[] devices1 = new RawInputDeviceRegistration[2];
-                ProxyInputHandlerWindow.Dispatcher.Invoke(() => // синхронно?
+                _proxyInputHandlerWindow.Dispatcher.Invoke(() => // синхронно?
                 {
                     switch (_initInput)
                     {
@@ -162,7 +162,7 @@ namespace FVH.Background.Input
                     }
                     Array.ForEach(devices.ToArray(), (x) => RawInputDevice.RegisterDevice(x.Item1, x.Item2, x.Item3));
 
-                    ProxyInputHandlerWindow.AddHook(WndProc);
+                    _proxyInputHandlerWindow.AddHook(WndProc);
 
                     nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
                     {
