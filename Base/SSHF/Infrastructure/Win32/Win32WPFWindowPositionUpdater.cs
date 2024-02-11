@@ -71,7 +71,7 @@ namespace SSHF.Infrastructure
             if (_isUpdateWindow is true) throw new InvalidOperationException($"The window drag operation cannot be invoked while the window is being updated. Check {nameof(IsUpdateWindow)} property");
 
             IsUpdateWindow = true;
-            _window.DragMove();
+            if(Mouse.LeftButton is MouseButtonState.Pressed) _window.DragMove();
             IsUpdateWindow = false;
         });
         private async Task UpdateWindowPositionRelativeToCursor(CancellationToken сancelToken)

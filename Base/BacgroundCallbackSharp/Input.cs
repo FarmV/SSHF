@@ -8,8 +8,8 @@ using FVH.Background.Input.Infrastructure.Interfaces;
 
 namespace FVH.Background.Input
 {
-    /// <summary>
-    /// <br><see langword="En"/></br>
+    ///<summary>
+    ///<br><see langword="En"/></br>
     ///<br/>The class creates a proxy <see cref="HwndSource"/>. Registers it to receive mouse and keyboard events. Creates classes to handle events.
     ///<br><see langword="Ru"/></br>
     ///<br>Класс создает прокси-источник HwndSource. Регистрирует его для получения событий мыши и клавиатуры. Создает классы для обработки событий.</br>
