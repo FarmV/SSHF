@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Threading;
 using System.Windows.Media;
-using System.Reflection;
 using System.Reactive;
 
 using ReactiveUI;

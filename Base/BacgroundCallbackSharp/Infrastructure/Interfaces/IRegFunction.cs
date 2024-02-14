@@ -2,7 +2,7 @@
 {
     public interface IRegFunction
     {
-        Func<Task> CallBackTask { get; }
+        Func<Task> CallbackTask { get; }
         object? Identifier { get; }
     }
 }

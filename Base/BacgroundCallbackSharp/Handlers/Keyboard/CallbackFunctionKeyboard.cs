@@ -1,5 +1,6 @@
 ﻿using FVH.Background.Input.Infrastructure;
 using FVH.Background.Input.Infrastructure.Interfaces;
+
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -8,12 +9,13 @@ namespace FVH.Background.Input
 {
     internal class CallbackFunctionKeyboard : IKeyboardCallback, IInvoke
     {
-        private readonly List<RegFunctionGroupKeyboard> GlobalList = new List<RegFunctionGroupKeyboard>();
-        private readonly LowLevlHook _lowlevlhook;
         private readonly IKeyboardHandler _keyboardHandler;
+        private readonly List<RegFunctionGroupKeyboard> GlobalList = new List<RegFunctionGroupKeyboard>();
+        private readonly LowLevlKeyHook _lowlevlhook;
         private readonly Dictionary<VKeys[], Func<Task>> FunctionsCallback = new Dictionary<VKeys[], Func<Task>>(new VKeysEqualityComparer());
+        private readonly object _lockObject = new object();
 
-        public CallbackFunctionKeyboard(IKeyboardHandler keyboardHandler, LowLevlHook lowLevlHook)
+        public CallbackFunctionKeyboard(IKeyboardHandler keyboardHandler, LowLevlKeyHook lowLevlHook)
         {
             _keyboardHandler = keyboardHandler;
             _lowlevlhook = lowLevlHook;
@@ -52,7 +54,6 @@ namespace FVH.Background.Input
             {
                 foreach (RegFunctionGroupKeyboard item in queryStrong)
                 {
-
                     IEnumerable<VKeys> r0 = item.KeyCombination.Except(pressedKeys);//Заглушка?
                     bool r1 = item.KeyCombination.Except(pressedKeys).Any();
 
@@ -104,12 +105,12 @@ namespace FVH.Background.Input
             }
         }
 
-        public Task InvokeFunctions(IEnumerable<IRegFunction> toTaskInvoke) //todo порверить и возможно перерабоать логику обработки исключений
+        public Task InvokeFunctions(IEnumerable<IRegFunction> toTaskInvoke) //todo проверить и возможно перерабоать логику обработки исключений
         {
             if (toTaskInvoke.Any() is false) throw new InvalidOperationException("The collection cannot be empty");
             Task.Run(() => Parallel.Invoke(toTaskInvoke.Select(x => new Action(async () =>
             {
-                Task invokeTask = x.CallBackTask.Invoke();
+                Task invokeTask = x.CallbackTask.Invoke();
                 if (invokeTask.IsCompleted is true)
                 {
                     try
@@ -140,75 +141,55 @@ namespace FVH.Background.Input
 
         private async Task<VKeys?> PreKeys(IEnumerable<VKeys> keys)
         {
-            if (_lowlevlhook is null) throw new NullReferenceException(nameof(LowLevlHook));
-            VKeys? res = null;
+            if (_lowlevlhook is null) throw new NullReferenceException(nameof(LowLevlKeyHook));
 
-            bool ret = default;
-
-            _ = Task.Run(() =>
-              {
-
-                  _lowlevlhook.KeyDown += CheckKey;
-
-                  void CheckKey(VKeys key, LowLevlHook.SettingHook setting)
-                  {
-                      if (_lowlevlhook is null) throw new NullReferenceException(nameof(LowLevlHook));
-                      VKeys? chekKey = null;
-                      if (key is VKeys.VK_LCONTROL || key is VKeys.VK_RCONTROL) // Заглушки из за разности между RawInput(не рапознает правый левый) и хуком, так как предположительно нужно менять исходную библиотеку.
-                      {
-                          chekKey = VKeys.VK_CONTROL;
-                      }
-                      else if (key is VKeys.VK_LMENU || key is VKeys.VK_RMENU)
-                      {
-                          chekKey = VKeys.VK_MENU;
-                      }
-                      else if (key is VKeys.VK_LSHIFT || key is VKeys.VK_RSHIFT)
-                      {
-                          chekKey = VKeys.VK_SHIFT;
-                      }
-                      else
-                      {
-                          chekKey = key;
-                      }
-                      if (chekKey.HasValue is false) throw new InvalidOperationException();
-                      bool res1 = keys.Contains(chekKey.Value);
-
-                      Debug.WriteLine($"{keys.First()} - {chekKey.Value}");
-                      if (keys.Contains(chekKey.Value))
-                      {
-                          res = chekKey;
-                          setting.Break = true;
-                          _lowlevlhook.KeyDown -= CheckKey;
-                          ret = true;
-                      }
-                      else
-                      {
-                          _lowlevlhook.KeyDown -= CheckKey;
-                          ret = true;
-                      }
-                  }
-              });
-
-            for (int i = 0; i < 1000; i++)
+            return await Task.Run<VKeys?>(() =>
             {
-                if (ret is true) break;
-                await Task.Delay(10);
-            }
-            return res;
+                VKeys? res = null;
+                _lowlevlhook.KeyDownEvent += CkeckKey;
+                bool complete = false;
+                void CkeckKey(object? _, LowLevlKeyHook.EventKeyLowLevlHook e)
+                {
+                    if (_lowlevlhook is null) throw new NullReferenceException(nameof(LowLevlKeyHook));
+                    VKeys? chekKey = null;
+
+                    chekKey = e.Key switch
+                    {
+                        VKeys.VK_LCONTROL or VKeys.VK_RCONTROL => (VKeys?)VKeys.VK_CONTROL,
+                        VKeys.VK_LMENU or VKeys.VK_RMENU => (VKeys?)VKeys.VK_MENU,
+                        VKeys.VK_LSHIFT or VKeys.VK_RSHIFT => (VKeys?)VKeys.VK_SHIFT,
+                        _ => (VKeys?)e.Key,
+                    };
+                    if (chekKey.HasValue is false) throw new InvalidOperationException();
+                 
+                    Debug.WriteLine($"{keys.First()} - {chekKey.Value}");
+                    if (keys.Contains(chekKey.Value))
+                    {
+                        res = chekKey;
+                        e.Break = true;
+                        _lowlevlhook.KeyDownEvent -= CkeckKey;
+                        complete = true;
+                    }
+                    else
+                    {
+                        _lowlevlhook.KeyDownEvent -= CkeckKey;
+                        complete = true;
+                    }
+                }
+                if (System.Threading.SpinWait.SpinUntil(() => complete is true, TimeSpan.FromMilliseconds(950)) is not true) throw new TimeoutException(nameof(CkeckKey));
+
+                return res;
+            });
         }
-
-
-        private int GoupCount = 0;
-        private readonly object _lockMedthod = new object();
         public Task AddCallBackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null)
         {
-            lock (_lockMedthod)
+            lock (_lockObject)
             {
                 RegFunctionGroupKeyboard? queryCotainGroup = GlobalList.SingleOrDefault(x => x.KeyCombination.SequenceEqual(keyCombo));
                 if (queryCotainGroup is not null) queryCotainGroup.ListOfRegisteredFunctions.Add(new RegFunction(callbackTask, identifier));
                 else
                 {
-                    RegFunctionGroupKeyboard newGroupF = new RegFunctionGroupKeyboard(++GoupCount, keyCombo, new List<IRegFunction>());
+                    RegFunctionGroupKeyboard newGroupF = new RegFunctionGroupKeyboard(keyCombo, new List<IRegFunction>());
                     newGroupF.ListOfRegisteredFunctions.Add(new RegFunction(callbackTask, identifier));
                     GlobalList.Add(newGroupF);
                 }
@@ -218,7 +199,7 @@ namespace FVH.Background.Input
         }
         public Task<bool> DeleteATaskByAnIdentifier(object identifier)
         {
-            lock (_lockMedthod)
+            lock (_lockObject)
             {
                 if (identifier is null) return Task.FromResult(false);
                 IRegFunction? queryF = null;
@@ -241,7 +222,7 @@ namespace FVH.Background.Input
         }
         public Task<bool> DeleteAGroupByKeyСombination(VKeys[] keyCombo)
         {
-            lock (_lockMedthod)
+            lock (_lockObject)
             {
                 if (keyCombo.Length is 0) return Task.FromResult(false);
                 RegFunctionGroupKeyboard? queyResult = GlobalList.SingleOrDefault(x => x.KeyCombination == keyCombo);
@@ -250,10 +231,7 @@ namespace FVH.Background.Input
                 return Task.FromResult(true);
             }
         }
-
         public List<RegFunctionGroupKeyboard> ReturnGroupRegFunctions() => GlobalList.ToList();
-
         public Task<bool> ContainsKeyComibantion(VKeys[] keyCombo) => Task.FromResult(GlobalList.SingleOrDefault(x => x.KeyCombination == keyCombo) is not null);
     }
-
 }

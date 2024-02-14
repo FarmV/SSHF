@@ -33,7 +33,7 @@ namespace FVH.Background.Input
         private readonly Action<RawInputKeyboardData> _callbackEventKeyboardData;
         private readonly Action<RawInputMouseData> _callbackEventMouseData;
         private volatile HwndSource? _proxyInputHandlerWindow;
-        private LowLevlHook? _lowLevlHook;
+        private LowLevlKeyHook? _lowLevelHook;
         private Thread? _winThread;
 
         public Input() : this(null, HandlersInput.Keyboard | HandlersInput.Mouse) { }
@@ -56,7 +56,7 @@ namespace FVH.Background.Input
             if (isDispose is true) return;
 
             _proxyInputHandlerWindow?.Dispatcher?.InvokeShutdown();
-            _lowLevlHook?.Dispose();
+            _lowLevelHook?.Dispose();
             isDispose = true;
             GC.SuppressFinalize(this);
         }
@@ -65,7 +65,7 @@ namespace FVH.Background.Input
             if (isDispose is true) return;
             try
             {
-                _lowLevlHook?.Dispose();
+                _lowLevelHook?.Dispose();
                 _proxyInputHandlerWindow?.Dispose();
             }
             catch { }
@@ -91,12 +91,11 @@ namespace FVH.Background.Input
         /// <br>Cсылка на класс, реализующий интерфейс <see cref="IKeyboardCallback"/>.</br>
         ///</returns>
         public IKeyboardCallback GetKeyboardCallbackFunction() => _callbackFunction is IKeyboardCallback CallBack ? CallBack : throw new NullReferenceException(nameof(_callbackFunction));
-        private static TimeSpan TimeoutInitialization => TimeSpan.FromSeconds(10);
         private Task Initialization()
         {
             if (_isInitialized is true) throw new InvalidOperationException($"The object({nameof(Input)}) cannot be re-initialized");
 
-            Task InitThreadAndSetWindowsHanlder = Task.Run(() =>
+            Task InitThreadAndSetWindowsHandler = Task.Run(() =>
             {
                 _winThread = new Thread(() =>
                 {
@@ -108,44 +107,51 @@ namespace FVH.Background.Input
 
                     Dispatcher.Run();
                 })
-                { Name = "Inupt Handler" };
+                { Name = "Input Handler" };
                 _winThread.SetApartmentState(ApartmentState.STA);
                 _winThread.Start();
             });
 
-            Task waitforWidnowDispather = Task.Run(async () =>
+            Task waitForDispatcherValidation = Task.Run(async () =>
             {
                 Dispatcher? winDispatcher = Dispatcher.FromThread(_winThread);
 
-                while (winDispatcher is null)
+                if (SpinWait.SpinUntil(() =>
                 {
                     winDispatcher = Dispatcher.FromThread(_winThread);
-                }
+                    return winDispatcher is not null;
+                }, TimeSpan.FromMilliseconds(500)) is false) throw new NullReferenceException($"Failed to get window Dispatcher - {nameof(winDispatcher)} is null");
 
-                bool TimeoutInitDispathcer = false;
-                System.Threading.Timer Timer = new System.Threading.Timer((_) => TimeoutInitDispathcer = true);
-                Timer.Change(TimeoutInitialization, Timeout.InfiniteTimeSpan);
+                /// <summary>
+                /// Ранее была проблема, которое выражалось в том, что полученный объект Dispatcher был в не валидном состоянии.
+                /// это проявляясь в том, что вызов Invoke() был бесконечным (вроде), а await InvokeAsync() возвращал 
+                /// ошибку TaskCanceledException, по которой я решил определять валидное состояние. Как только объект 
+                /// принимал валидное состояние функция завершалось успешно. Мне не известны иные способы ожидания валидности данного объекта.
+                /// И хотя проблема, сейчас не наблюдается, пусть проверка останется.
+                /// </summary>
+                bool isTimeoutInitializationDispatcher = false;
+                System.Threading.Timer timeoutTimer = new System.Threading.Timer((_) => isTimeoutInitializationDispatcher = true);
+                timeoutTimer.Change(TimeSpan.FromSeconds(4), Timeout.InfiniteTimeSpan);
                 while (true)
                 {
                     try
                     {
-                        if (TimeoutInitDispathcer is true) throw new InvalidOperationException(nameof(TimeoutInitDispathcer));
+                        if (isTimeoutInitializationDispatcher is true) throw new TimeoutException(nameof(waitForDispatcherValidation));
                         Task taskWinInit = await winDispatcher.InvokeAsync(async () => await Task.Delay(1)).Task;
-                        Timer.Dispose();
+                        timeoutTimer.Dispose();
                         break;
                     }
                     catch (System.Threading.Tasks.TaskCanceledException) { }
                 }
             });
 
-            Task subscribeWindowtoRawInput = new Task(() =>
+            Task subscribeWindowToRawInput = new Task(async () =>
             {
                 if (_proxyInputHandlerWindow is null) throw new NullReferenceException("The window could not initialize");
 
                 IntPtr HandleWindow = _proxyInputHandlerWindow.Handle;
-                List<(HidUsageAndPage InputType, RawInputDeviceFlags Mode, nint hWndTarget)> queryTypeList = new();
-                RawInputDeviceRegistration[] devices1 = new RawInputDeviceRegistration[2];
-                _proxyInputHandlerWindow.Dispatcher.Invoke(() => // синхронно?
+                List<(HidUsageAndPage InputType, RawInputDeviceFlags Mode, nint hWndTarget)> queryTypeList = [];
+                await _proxyInputHandlerWindow.Dispatcher.InvokeAsync(() =>
                 {
                     switch (_initInput)
                     {
@@ -167,38 +173,33 @@ namespace FVH.Background.Input
 
                     nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
                     {
-                        switch (msg)
+                        if (msg is WM_INPUT)
                         {
-                            case WM_INPUT:
+                            if (RawInputData.FromHandle(lParam) is RawInputData data)
+                            {
+                                switch (data)
                                 {
-                                    if (RawInputData.FromHandle(lParam) is RawInputData data)
-                                    {
-                                        switch (data)
-                                        {
-                                            case RawInputKeyboardData keyboardData:
-                                                _callbackEventKeyboardData.Invoke(keyboardData);
-                                                break;
+                                    case RawInputKeyboardData keyboardData:
+                                        _callbackEventKeyboardData.Invoke(keyboardData);
+                                        break;
 
-                                            case RawInputMouseData mouseData:
-                                                _callbackEventMouseData.Invoke(mouseData);
-                                                break;
-                                        }
-                                    }
+                                    case RawInputMouseData mouseData:
+                                        _callbackEventMouseData.Invoke(mouseData);
+                                        break;
                                 }
-                                break;
+                            }
                         }
                         return hwnd;
                     }
 
-                    _lowLevlHook = new LowLevlHook(); // он должен быть создан потоком владецем окна?
-                    _lowLevlHook.InstallHook();
-                    _callbackFunction = new CallbackFunctionKeyboard(_keyboardHandler, _lowLevlHook);
+                    _lowLevelHook = new LowLevlKeyHook(); // владецем окна
+                    _lowLevelHook.InstallHook();
+                    _callbackFunction = new CallbackFunctionKeyboard(_keyboardHandler, _lowLevelHook);
                 }, DispatcherPriority.Render);
-
             });
-            Task.WaitAll(InitThreadAndSetWindowsHanlder, waitforWidnowDispather);
-            subscribeWindowtoRawInput.Start();
-            subscribeWindowtoRawInput.Wait();
+            Task.WaitAll(InitThreadAndSetWindowsHandler, waitForDispatcherValidation);
+            subscribeWindowToRawInput.Start();
+            subscribeWindowToRawInput.Wait();
             _isInitialized = true;
             return Task.CompletedTask;
         }
