@@ -43,7 +43,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
             _setImage = setImage;
             RefreshWindowInvoke = ReactiveCommand.CreateFromTask(WindowUpdate, this.WhenAnyValue(x => x.BlockRefresh, (bool blockRefresh) => blockRefresh is false));
             StopWindowUpdater = ReactiveCommand.CreateFromTask(StopUpdateWindow);
-            SetNewImage = ReactiveCommand.CreateFromTask(SetNewBackgoundImage);
+            SetNewImage = ReactiveCommand.CreateFromTask(SetNewBackgroundImage);
             SwithBlockRefreshWindow = ReactiveCommand.Create(SwitchBlockRefresh);
             HideWindow = ReactiveCommand.Create(Hide);
             ShowWindow = ReactiveCommand.Create(Show);
@@ -115,11 +115,11 @@ namespace SSHF.ViewModels.MainWindowViewModel
             if (_windowPositionUpdater.IsUpdateWindow is false) return;
             _isCancellingUpdate = true;
             _updateWindowCancellationToken.Cancel();
-            await Task.Run(() => { if (System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, TimeSpan.FromMilliseconds(300)) is not true) throw new TimeoutException(); });
+            await Task.Run(() => { if (System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, TimeSpan.FromSeconds(1)) is not true) throw new TimeoutException(); });
             _updateWindowCancellationToken = new CancellationTokenSource();
             _isCancellingUpdate = false;
         }
-        private async Task SetNewBackgoundImage()
+        private async Task SetNewBackgroundImage()
         {
             if (await _imageProvider.GetImageFromClipboard() is not ImageSource image) return;
             DpiSacaleMonitor dpi = _dpiCorrector.GetCurretDPI();
@@ -133,7 +133,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private async Task DragMove()
         {
             if (_windowPositionUpdater.IsUpdateWindow is true) return;
-            await _windowPositionUpdater.DargMove();
+            await _windowPositionUpdater.DragMove();
         }
         private void DropWindowImage(object ev)
         {

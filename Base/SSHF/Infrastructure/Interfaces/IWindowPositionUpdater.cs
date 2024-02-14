@@ -7,7 +7,7 @@ namespace SSHF.Infrastructure.Interfaces
     {
         bool IsUpdateWindow { get; }
         Task UpdateWindowPos(CancellationToken token);
-        Task DargMove();
+        Task DragMove();
     }
 }
 

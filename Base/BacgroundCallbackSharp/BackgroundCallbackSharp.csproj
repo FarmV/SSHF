@@ -7,10 +7,12 @@
     <Nullable>enable</Nullable>
     <OutputType>Library</OutputType>
     <UseWPF>True</UseWPF>
-
-	<AssemblyVersion>0.0.2.0</AssemblyVersion>
-	<PackageVersion>0.0.2</PackageVersion>
 	<AllowUnsafeBlocks>True</AllowUnsafeBlocks>	  
+	  
+	<Version>0.0.3.0</Version>
+	<Copyright>https://github.com/FarmV</Copyright>
+	<Product>Handler background input</Product>
+	<Description>Handler background input</Description>
   </PropertyGroup>
 
   <ItemGroup>
