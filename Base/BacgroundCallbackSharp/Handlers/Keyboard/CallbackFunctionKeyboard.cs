@@ -12,11 +12,11 @@ namespace FVH.Background.Input
     {
         private readonly IKeyboardHandler _keyboardHandler;
         private readonly List<RegFunctionGroupKeyboard> GlobalList = new List<RegFunctionGroupKeyboard>();
-        private readonly LowLevlKeyHook _lowLevelHook;
+        private readonly LowLevelKeyHook _lowLevelHook;
         private readonly Dictionary<VKeys[], Func<Task>> FunctionsCallback = new Dictionary<VKeys[], Func<Task>>(new VKeysEqualityComparer());
         private readonly object _lockObject = new object();
 
-        public CallbackFunctionKeyboard(IKeyboardHandler keyboardHandler, LowLevlKeyHook lowLevelHook)
+        public CallbackFunctionKeyboard(IKeyboardHandler keyboardHandler, LowLevelKeyHook lowLevelHook)
         {
             _keyboardHandler = keyboardHandler;
             _lowLevelHook = lowLevelHook;
@@ -112,14 +112,14 @@ namespace FVH.Background.Input
         }
         private async Task<VKeys?> PreKeys(IEnumerable<VKeys> keys)
         {
-            if (_lowLevelHook is null) throw new NullReferenceException(nameof(LowLevlKeyHook));
+            if (_lowLevelHook is null) throw new NullReferenceException(nameof(LowLevelKeyHook));
             
             VKeys? res = null;
             bool complete = false;
             
-            void CheckKeyCallback(object? _, LowLevlKeyHook.EventKeyLowLevlHook e)
+            void CheckKeyCallback(object? _, LowLevelKeyHook.EventKeyLowLevelHook e)
             {
-                if (_lowLevelHook is null) throw new NullReferenceException(nameof(LowLevlKeyHook));
+                if (_lowLevelHook is null) throw new NullReferenceException(nameof(LowLevelKeyHook));
                 VKeys? checkKey = null;
 
                 checkKey = e.Key switch

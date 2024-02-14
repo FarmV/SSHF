@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FVH.Background.Input
 {
-    internal partial class LowLevlKeyHook
+    internal partial class LowLevelKeyHook
     {
         [DllImport("user32")]
         private static extern nint SetWindowsHookEx(int idHook, KeyboardHookHandler lpfn, nint hMod, uint dwThreadId);

@@ -5,22 +5,22 @@ using System.Runtime.InteropServices;
 
 namespace FVH.Background.Input
 {
-    internal partial class LowLevlKeyHook : CriticalFinalizerObject, IDisposable
+    internal partial class LowLevelKeyHook : CriticalFinalizerObject, IDisposable
     {
-        internal event EventHandler<EventKeyLowLevlHook>? KeyDownEvent;
-        internal event EventHandler<EventKeyLowLevlHook>? KeyUpEvent;
+        internal event EventHandler<EventKeyLowLevelHook>? KeyDownEvent;
+        internal event EventHandler<EventKeyLowLevelHook>? KeyUpEvent;
         /// <summary>
-        /// Поддержка по умолчанию для колбеков есть только для WH_KEYBOARD_LL и WH_MOUSE_LL
+        /// Поддержка по умолчанию для обратных вызовов есть только для WH_KEYBOARD_LL и WH_MOUSE_LL
         /// </summary>
         private const uint dwThreadIdAllInTheSameDesktop = 0;
         private const int WH_KEYBOARD_LL = 13;
         private bool _disposed = false;
         private nint _hookID = nint.Zero;
         private delegate nint KeyboardHookHandler(int nCode, WMEvent wParam, TagKBDLLHOOKSTRUCT lParam);
-        private EventKeyLowLevlHook? _eventDownLastKey;
-        private EventKeyLowLevlHook? _eventUpLastKey;
+        private EventKeyLowLevelHook? _eventDownLastKey;
+        private EventKeyLowLevelHook? _eventUpLastKey;
         private KeyboardHookHandler? hookHandler;
-        public LowLevlKeyHook() { }
+        public LowLevelKeyHook() { }
         public void Dispose()
         {
             if (_disposed is true) return;
@@ -28,7 +28,7 @@ namespace FVH.Background.Input
             _disposed = true;
             GC.SuppressFinalize(this);
         }
-        ~LowLevlKeyHook()
+        ~LowLevelKeyHook()
         {
             try
             {
@@ -70,7 +70,7 @@ namespace FVH.Background.Input
                
                 if (wParam is WMEvent.WM_KEYDOWN || wParam is WMEvent.WM_SYSKEYDOWN)
                 {                    
-                    _eventDownLastKey = new EventKeyLowLevlHook(lParam.Vkcode);
+                    _eventDownLastKey = new EventKeyLowLevelHook(lParam.VKCode);
                     KeyDownEvent?.Invoke(this, _eventDownLastKey);
                     if (_eventDownLastKey.Break is true)
                     {
@@ -84,7 +84,7 @@ namespace FVH.Background.Input
                 {
                     if (KeyUpEvent is null) CallNextHookEx(_hookID, nCode, wParam, lParam);
 
-                    _eventUpLastKey = new EventKeyLowLevlHook(lParam.Vkcode);
+                    _eventUpLastKey = new EventKeyLowLevelHook(lParam.VKCode);
 
                     KeyUpEvent?.Invoke(this, _eventUpLastKey);
                     _eventUpLastKey = null;

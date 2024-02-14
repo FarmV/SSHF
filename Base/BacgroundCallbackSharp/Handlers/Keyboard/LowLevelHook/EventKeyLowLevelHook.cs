@@ -2,9 +2,9 @@
 
 namespace FVH.Background.Input
 {
-    internal partial class LowLevlKeyHook
+    internal partial class LowLevelKeyHook
     {
-        internal class EventKeyLowLevlHook(VKeys key, bool breakKey = false)
+        internal class EventKeyLowLevelHook(VKeys key, bool breakKey = false)
         {
             internal VKeys Key { get; init; } = key;
             /// <summary>

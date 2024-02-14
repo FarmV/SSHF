@@ -1,6 +1,6 @@
 ﻿namespace FVH.Background.Input
 {
-    internal partial class LowLevlKeyHook
+    internal partial class LowLevelKeyHook
     {
         private enum WMEvent : uint
         {

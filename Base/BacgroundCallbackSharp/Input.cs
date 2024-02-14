@@ -33,7 +33,7 @@ namespace FVH.Background.Input
         private readonly Action<RawInputKeyboardData> _callbackEventKeyboardData;
         private readonly Action<RawInputMouseData> _callbackEventMouseData;
         private volatile HwndSource? _proxyInputHandlerWindow;
-        private LowLevlKeyHook? _lowLevelHook;
+        private LowLevelKeyHook? _lowLevelHook;
         private Thread? _winThread;
 
         public Input() : this(null, HandlersInput.Keyboard | HandlersInput.Mouse) { }
@@ -192,7 +192,7 @@ namespace FVH.Background.Input
                         return hwnd;
                     }
 
-                    _lowLevelHook = new LowLevlKeyHook(); // владецем окна
+                    _lowLevelHook = new LowLevelKeyHook(); // владецем окна
                     _lowLevelHook.InstallHook();
                     _callbackFunction = new CallbackFunctionKeyboard(_keyboardHandler, _lowLevelHook);
                 }, DispatcherPriority.Render);
