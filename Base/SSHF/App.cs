@@ -20,7 +20,7 @@ namespace SSHF
         internal static bool DesignerMode = true;
         private const string MutexNameSingleInstance = "FVH.SSHF.SingleProgramInstance";
         private const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
-        private const int _errorCreatemutex = -100501;
+        private const int _errorCreateMutex = -100501;
         private readonly IHost _host;
         private IServiceProvider _serviceProvider;
         private readonly CancellationTokenSource _tokenShutdownHost;
@@ -31,20 +31,20 @@ namespace SSHF
             _host = host;
             _serviceProvider = _host.Services;
         }
-        private Dependencie GetDependencie<Dependencie>() where Dependencie : notnull => _serviceProvider.GetRequiredService<Dependencie>();
+        private Dependency GetDependency<Dependency>() where Dependency : notnull => _serviceProvider.GetRequiredService<Dependency>();
         internal static StreamResourceInfo GetResource(Uri uriResource) => System.Windows.Application.GetResourceStream(uriResource);
         [STAThread]
         private static void Main(string[] args)
         {
             bool mutexWasCreated = false;
             try { _mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out mutexWasCreated); }
-            catch { Environment.Exit(_errorCreatemutex); }
-            if (mutexWasCreated is false) Environment.Exit(_errorCreatemutex);
+            catch { Environment.Exit(_errorCreateMutex); }
+            if (mutexWasCreated is false) Environment.Exit(_errorCreateMutex);
 
             Thread.CurrentThread.Name = "FVH Main Thread";
 
             if (SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == nint.Zero) // чтобы окно при вставке изображения из буфера обмена сохраняло пропорции и не масштабировалось
-            { // return 2147508241 вероятно возращаймое значение не корректно, SetThreadDpiAwarenessContext должен возращать nint, из перечислеия DPI_AWARENESS_CONTEXT прошлого состояния потока
+            { // return 2147508241 вероятно возвращаемое значение не корректно, SetThreadDpiAwarenessContext должен возращать nint, из перечислеия DPI_AWARENESS_CONTEXT прошлого состояния потока
                 string error = Marshal.GetLastPInvokeErrorMessage();
                 throw new InvalidOperationException(error);
             }
@@ -63,7 +63,7 @@ namespace SSHF
             System.Windows.Application.Current.Exit += (_, _) => app.Shutdown();
             await app._host.StartAsync();
         }
-        private void RegShortcuts() => GetDependencie<ShortcutsProvider>().RegisterShortcuts();
+        private void RegShortcuts() => GetDependency<ShortcutsProvider>().RegisterShortcuts();
         [LibraryImport("user32", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.I4)]
         private static partial int SetThreadDpiAwarenessContext(nint dpiContext);
