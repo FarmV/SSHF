@@ -1,10 +1,11 @@
-﻿using FVH.Background.Input.Infrastructure;
-using FVH.Background.Input.Infrastructure.Interfaces;
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Threading;
+
+using FVH.Background.Input.Infrastructure;
+using FVH.Background.Input.Infrastructure.Interfaces;
 
 namespace FVH.Background.Input
 {
@@ -55,10 +56,8 @@ namespace FVH.Background.Input
             {
                 foreach(RegFunctionGroupKeyboard item in queryStrong)
                 {
-                    // IEnumerable<VKeys> r0 = item.KeyCombination.Except(pressedKeys); //Заглушка?
                     bool isForceStrongCombination = item.KeyCombination.Except(pressedKeys).Any() is false;
 
-                    // bool r1 = item.KeyCombination.Except(pressedKeys).Any(); // todo плавающая ошибка null 
                     if(isForceStrongCombination is true)
                     {
                         await InvokeFunctions(item.ListOfRegisteredFunctions);
@@ -113,29 +112,34 @@ namespace FVH.Background.Input
         {
             if(toTaskInvoke.Any() is false) throw new InvalidOperationException("The collection cannot be empty");
 
+            static async Task StartOrRunTask(Func<Task> taskFunc)
+            {
+                Task task = taskFunc.Invoke();
+                if(task.Status == TaskStatus.Created)
+                {
+                    task.Start();
+                    await task;
+                }
+            }
+
+            System.Windows.Threading.Dispatcher? dispatcher = null;
             try
             {
-                System.Windows.Threading.Dispatcher dispatcher = System.Windows.Application.Current.Dispatcher;
-
-                await dispatcher.InvokeAsync(() =>
-                {
-                    Task task = Task.WhenAll(toTaskInvoke.AsParallel().Select(func => func.CallbackTask.Invoke()));
-                    task.ContinueWith(t =>
-                    {
-                        t.Wait();
-                    }, TaskScheduler.FromCurrentSynchronizationContext());
-                });
-                return;
+                dispatcher = System.Windows.Application.Current.Dispatcher;
             }
-            catch
+            catch { dispatcher = null; }
+
+            if(dispatcher is not null) await Task.WhenAll(toTaskInvoke.Select(x => x.CallbackTask).Select(func => dispatcher.InvokeAsync(() => StartOrRunTask(func)).Task));
+            else
             {
-                await Task.WhenAll(toTaskInvoke.AsParallel().Select(func => func.CallbackTask.Invoke()));
+                if(Dispatcher.FromThread(Thread.CurrentThread) is not Dispatcher inputHandlerDispatcher) throw new NullReferenceException(nameof(inputHandlerDispatcher));
+             
+                await Task.WhenAll(toTaskInvoke.Select(x => x.CallbackTask).Select(func => inputHandlerDispatcher.InvokeAsync(() => StartOrRunTask(func)).Task));
             }
         }
         private async Task<VKeys?> PreKeys(IEnumerable<VKeys> keys)
         {
-            if(_lowLevelHook is null)
-                throw new NullReferenceException(nameof(LowLevelKeyHook));
+            if(_lowLevelHook is null) throw new NullReferenceException(nameof(LowLevelKeyHook));
 
             VKeys? res = null;
             bool complete = false;
@@ -185,8 +189,7 @@ namespace FVH.Background.Input
             lock(_lockObject)
             {
                 RegFunctionGroupKeyboard? queryContainGroup = GlobalList.SingleOrDefault(x => x.KeyCombination.SequenceEqual(keyCombo));
-                if(queryContainGroup is not null)
-                    queryContainGroup.ListOfRegisteredFunctions.Add(new RegFunction(callbackTask, identifier));
+                if(queryContainGroup is not null) queryContainGroup.ListOfRegisteredFunctions.Add(new RegFunction(callbackTask, identifier));
                 else
                 {
                     RegFunctionGroupKeyboard newGroupF = new RegFunctionGroupKeyboard(keyCombo, new List<IRegFunction>());
@@ -201,20 +204,17 @@ namespace FVH.Background.Input
         {
             lock(_lockObject)
             {
-                if(identifier is null)
-                    return Task.FromResult(false);
+                if(identifier is null) return Task.FromResult(false);
                 IRegFunction? queryF = null;
                 RegFunctionGroupKeyboard? queryResult = GlobalList.SingleOrDefault(x =>
                 {
                     queryF = x.ListOfRegisteredFunctions.SingleOrDefault(x => x.Identifier is not null && x.Identifier.Equals(identifier));
                     return queryF is not null;
                 });
-                if(queryResult is null)
-                    return Task.FromResult(false);
+                if(queryResult is null) return Task.FromResult(false);
                 else
                 {
-                    if(queryResult.ListOfRegisteredFunctions.Remove(queryF ?? throw new NullReferenceException(nameof(queryF))) is not true)
-                        throw new InvalidOperationException();
+                    if(queryResult.ListOfRegisteredFunctions.Remove(queryF ?? throw new NullReferenceException(nameof(queryF))) is not true) throw new InvalidOperationException();
                     else
                     {
                         GlobalList.Where(x => x.ListOfRegisteredFunctions.Any() is not true).ToList().ForEach(x => GlobalList.Remove(x));
@@ -227,13 +227,10 @@ namespace FVH.Background.Input
         {
             lock(_lockObject)
             {
-                if(keyCombo.Length is 0)
-                    return Task.FromResult(false);
+                if(keyCombo.Length is 0) return Task.FromResult(false);
                 RegFunctionGroupKeyboard? queryResult = GlobalList.SingleOrDefault(x => x.KeyCombination == keyCombo);
-                if(queryResult is null)
-                    return Task.FromResult(false);
-                if(GlobalList.Remove(queryResult) is not true)
-                    throw new InvalidOperationException();
+                if(queryResult is null) return Task.FromResult(false);
+                if(GlobalList.Remove(queryResult) is not true) throw new InvalidOperationException();
                 return Task.FromResult(true);
             }
         }
