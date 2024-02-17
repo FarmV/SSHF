@@ -104,8 +104,8 @@ namespace SSHF
             }
             private static TraiIcon CreateAnIconInTheNotificationArea()
             {
-                TraiIcon traiIcon = new TraiIcon(App.GetResource(Resource.AppIcon).Stream);
-                return traiIcon;
+                TraiIcon trayIcon = new TraiIcon(App.GetResource(Resource.AppIcon).Stream);
+                return trayIcon;
             }
             private static Input CreateHadnlerInput(Dispatcher? uiDispatcher = null)
             {
