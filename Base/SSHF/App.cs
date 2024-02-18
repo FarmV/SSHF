@@ -20,7 +20,7 @@ namespace FVH.SSHF
         internal static bool DesignerMode = true;
         private const string MutexNameSingleInstance = "FVH.SSHF.SingleProgramInstance";
         private const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
-        private const int _errorCreateMutex = -100501;
+        private const int _errorCreateMutex = 100501;
         private readonly IHost _host;
         private IServiceProvider _serviceProvider;
         private readonly CancellationTokenSource _tokenShutdownHost;
