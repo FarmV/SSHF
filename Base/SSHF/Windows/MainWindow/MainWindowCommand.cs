@@ -13,41 +13,47 @@ namespace FVH.SSHF.ViewModels.MainWindowViewModel
     {
         private readonly System.Windows.Window _window;
         private bool _isExecutePresentNewImage = false;
+        private Shortcuts[]? _shortcuts;
+
         internal MainWindowCommand(System.Windows.Window window, MainWindowViewModel mainWindowView)
         {
             _window = window;
-            MainWindowViewModel = mainWindowView;        
+            MainWindowViewModel = mainWindowView;
+            SetNewShortcuts(GetDefaultShortcuts());
         }
+        internal void SetNewShortcuts(Shortcuts[] shortcuts) => _shortcuts = shortcuts;
+        internal Shortcuts[] GetDefaultShortcuts() =>
+        [
+         new Shortcuts(
+         [
+             VKeys.VK_LWIN,
+             VKeys.VK_SHIFT,
+             VKeys.VK_KEY_A
+         ],
+         new Func<Task>(PresentNewImage), nameof(PresentNewImage)),
+
+         new Shortcuts(
+         [
+             VKeys.VK_CONTROL,
+             VKeys.VK_CAPITAL
+         ],
+         new Func<Task>(SwitchBlockRefreshWindow), nameof(SwitchBlockRefreshWindow)),
+
+         new Shortcuts(
+         [
+             VKeys.VK_CONTROL
+         ],
+         new Func<Task>(StopRefreshWindow), nameof(StopRefreshWindow)),
+
+         new Shortcuts(
+         [
+             VKeys.VK_SCROLL
+         ],
+         new Func<Task>(InvokeMsScreenClip), nameof(InvokeMsScreenClip)),
+        ];
+
         public MainWindowViewModel MainWindowViewModel { get; }
-        public IEnumerable<Shortcuts> GetShortcuts() => new Shortcuts[]
-        {
-            new Shortcuts(
-            [
-                VKeys.VK_LWIN,
-                VKeys.VK_SHIFT,
-                VKeys.VK_KEY_A
-            ],
-            new Func<Task>(PresentNewImage), nameof(PresentNewImage)),
-
-            new Shortcuts(
-            [
-                VKeys.VK_CONTROL,
-                VKeys.VK_CAPITAL
-            ],
-            new Func<Task>(SwitchBlockRefreshWindow), nameof(SwitchBlockRefreshWindow)),
-
-            new Shortcuts(
-            [
-                VKeys.VK_CONTROL
-            ],
-            new Func<Task>(StopRefreshWindow), nameof(StopRefreshWindow)),
-
-            new Shortcuts(
-            [
-                VKeys.VK_SCROLL
-            ],
-            new Func<Task>(InvokeMsScreenClip), nameof(InvokeMsScreenClip)),
-        };
+        public IEnumerable<Shortcuts> GetShortcuts() => _shortcuts ?? throw new NullReferenceException(nameof(_shortcuts));
         public async Task PresentNewImage()
         {
             if(_isExecutePresentNewImage is true) return;

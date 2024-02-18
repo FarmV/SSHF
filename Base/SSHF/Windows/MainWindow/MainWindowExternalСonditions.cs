@@ -16,11 +16,9 @@ namespace FVH.SSHF.Windows.MainWindow
     {
         private readonly MainWindowViewModel _mainWindowViewModel;
         private readonly IKeyboardHandler _keyboardHandler;
-        //  private readonly System.Windows.Window _window;
         public MainWindowExternalConditions(MainWindowViewModel mainWindowViewModel, IKeyboardHandler keyboardHandler)
         {
             _mainWindowViewModel = mainWindowViewModel;
-            //  _window = window;
             _keyboardHandler = keyboardHandler;
             Subscribe();
         }

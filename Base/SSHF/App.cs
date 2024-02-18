@@ -34,7 +34,7 @@ namespace FVH.SSHF
         private Dependency GetDependency<Dependency>() where Dependency : notnull => _serviceProvider.GetRequiredService<Dependency>();
         internal static StreamResourceInfo GetResource(Uri uriResource) => System.Windows.Application.GetResourceStream(uriResource);
         [STAThread]
-        private static void Main(string[] args)
+        private static void Main(string[]? args)
         {
             bool mutexWasCreated = false;
             try { _mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out mutexWasCreated); }
@@ -53,11 +53,11 @@ namespace FVH.SSHF
             application.Startup += async (_, _) => await Start(args).ConfigureAwait(false);
             application.Run();
         }
-        private static async Task Start(string[] args)
+        private static async Task Start(string[]? args)
         {
             DesignerMode = false;
 
-            App app = new App(BasicDependencies.ConfigureDependencies(Thread.CurrentThread));
+            App app = new App(BasicDependencies.ConfigureDependencies(Thread.CurrentThread, args));
             app._serviceProvider = app._host.Services;
             app.RegShortcuts();
             System.Windows.Application.Current.Exit += (_, _) => app.Shutdown();

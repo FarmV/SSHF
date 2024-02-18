@@ -17,6 +17,10 @@ using FVH.SSHF.Infrastructure.TrayIconManagment;
 using FVH.SSHF.ViewModels;
 using FVH.SSHF.ViewModels.MainWindowViewModel;
 using FVH.SSHF.Windows.MainWindow;
+using System.Linq;
+using DynamicData;
+using WinRT;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 
@@ -91,12 +95,22 @@ namespace FVH.SSHF
                      )
                     );
 
+                    if(args is not null)
+                    {
+                        if(args.SingleOrDefault(x => x == "--SCR_NotBR") is not null)
+                        {
+                            MainWindowCommand mainWindowCommand = container.BuildServiceProvider().GetRequiredService<MainWindowCommand>();
+                            Shortcuts[] defaultShortcuts = mainWindowCommand.GetDefaultShortcuts();
+                            mainWindowCommand.SetNewShortcuts(defaultShortcuts.Where(x => x != defaultShortcuts.Single(x => x.KeyCombo[0] == VKeys.VK_SCROLL)).ToArray());
+                        }
+                    }
+
                     container.AddSingleton<ShortcutsProvider>
                     (
                      CreateShortcutsManager
                      (
                       container.BuildServiceProvider().GetRequiredService<Input>().GetKeyboardCallbackFunction(),
-                      [ container.BuildServiceProvider().GetRequiredService<MainWindowCommand>() ]
+                      [container.BuildServiceProvider().GetRequiredService<MainWindowCommand>()]
                      )
                     );
                 });
