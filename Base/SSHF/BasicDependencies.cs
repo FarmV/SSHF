@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
@@ -14,13 +15,8 @@ using FVH.Background.Input.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure.TrayIconManagment;
-using FVH.SSHF.ViewModels;
 using FVH.SSHF.ViewModels.MainWindowViewModel;
 using FVH.SSHF.Windows.MainWindow;
-using System.Linq;
-using DynamicData;
-using WinRT;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 
