@@ -194,7 +194,10 @@ namespace FVH.Background.Input
 
                     _lowLevelHook = new LowLevelKeyHook();
                     _lowLevelHook.InstallHook();
-                    _callbackFunction = new CallbackFunctionKeyboard(_keyboardHandler, _lowLevelHook);
+
+                    CallbackFunctionKeyboard callbackFunctionKeyboard = new CallbackFunctionKeyboard(_keyboardHandler, _lowLevelHook);
+                    _callbackFunction = callbackFunctionKeyboard;
+
                 }, DispatcherPriority.Render);
             });
             Task.WaitAll(InitThreadAndSetWindowsHandler, waitForDispatcherValidation);

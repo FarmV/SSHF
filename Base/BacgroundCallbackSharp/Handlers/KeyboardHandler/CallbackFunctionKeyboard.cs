@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 
+
 using FVH.Background.Input.Infrastructure;
 using FVH.Background.Input.Infrastructure.Interfaces;
 
@@ -16,14 +17,36 @@ namespace FVH.Background.Input
         private readonly LowLevelKeyHook _lowLevelHook;
         private readonly Dictionary<VKeys[], Func<Task>> FunctionsCallback = new Dictionary<VKeys[], Func<Task>>(new VKeysEqualityComparer());
         private readonly object _lockObject = new object();
+        private RegFunctionGroupKeyboard[] _breakKey;
 
         public CallbackFunctionKeyboard(IKeyboardHandler keyboardHandler, LowLevelKeyHook lowLevelHook)
         {
             _keyboardHandler = keyboardHandler;
             _lowLevelHook = lowLevelHook;
-            _keyboardHandler.KeyPressEvent += KeyboardHandler_KeyPressEvent;
+            _keyboardHandler.KeyPressEvent += RawKeyDownEvent;
+
+            _breakKey = GlobalList.Where(x => x.KeyCombination.Length is 1).ToArray();
+
+            _lowLevelHook.KeyDownEvent += LowLevelKeyDownEvent;
         }
-        private async void KeyboardHandler_KeyPressEvent(object? sender, IKeysNotifier e)
+        private void CalculateSingleKeys() => _breakKey = GlobalList.Where(x => x.KeyCombination.Length is 1).ToArray();
+        private void LowLevelKeyDownEvent(object? sender, LowLevelKeyHook.EventKeyLowLevelHook e)
+        {
+            if(_breakKey.Length == 0) return;
+
+            VKeys currentKey = e.Key;
+
+            foreach(RegFunctionGroupKeyboard item in _breakKey)
+            {
+                if(item.KeyCombination[0] == currentKey)
+                {
+                    e.Break = true;
+                    _ = InvokeFunctions(item.ListOfRegisteredFunctions);
+                    break;
+                }
+            }
+        }
+        private async void RawKeyDownEvent(object? sender, IKeysNotifier e)
         {
             VKeys[] pressedKeys = e.Keys;
             async Task<bool> InvokeOneKey(VKeys key)
@@ -133,7 +156,7 @@ namespace FVH.Background.Input
             else
             {
                 if(Dispatcher.FromThread(Thread.CurrentThread) is not Dispatcher inputHandlerDispatcher) throw new NullReferenceException(nameof(inputHandlerDispatcher));
-             
+
                 await Task.WhenAll(toTaskInvoke.Select(x => x.CallbackTask).Select(func => inputHandlerDispatcher.InvokeAsync(() => StartOrRunTask(func)).Task));
             }
         }
@@ -196,7 +219,7 @@ namespace FVH.Background.Input
                     newGroupF.ListOfRegisteredFunctions.Add(new RegFunction(callbackTask, identifier));
                     GlobalList.Add(newGroupF);
                 }
-
+                CalculateSingleKeys();
                 return Task.CompletedTask;
             }
         }
@@ -215,11 +238,10 @@ namespace FVH.Background.Input
                 else
                 {
                     if(queryResult.ListOfRegisteredFunctions.Remove(queryF ?? throw new NullReferenceException(nameof(queryF))) is not true) throw new InvalidOperationException();
-                    else
-                    {
-                        GlobalList.Where(x => x.ListOfRegisteredFunctions.Any() is not true).ToList().ForEach(x => GlobalList.Remove(x));
-                        return Task.FromResult(true);
-                    }
+
+                    GlobalList.Where(x => x.ListOfRegisteredFunctions.Any() is not true).ToList().ForEach(x => GlobalList.Remove(x));
+                    CalculateSingleKeys();
+                    return Task.FromResult(true);
                 }
             }
         }
@@ -231,6 +253,7 @@ namespace FVH.Background.Input
                 RegFunctionGroupKeyboard? queryResult = GlobalList.SingleOrDefault(x => x.KeyCombination == keyCombo);
                 if(queryResult is null) return Task.FromResult(false);
                 if(GlobalList.Remove(queryResult) is not true) throw new InvalidOperationException();
+                CalculateSingleKeys();
                 return Task.FromResult(true);
             }
         }

@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 
+using FVH.Background.Input.Infrastructure.Interfaces;
+
 namespace FVH.Background.Input
 {
     internal partial class LowLevelKeyHook : CriticalFinalizerObject, IDisposable
