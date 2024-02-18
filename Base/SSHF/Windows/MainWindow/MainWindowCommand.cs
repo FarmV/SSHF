@@ -2,13 +2,9 @@
 using System.Collections.Generic;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Input;
 
-using ReactiveUI;
-
-using FVH.Background.Input;
 using FVH.Background.Input.Infrastructure.Interfaces;
+
 using FVH.SSHF.Infrastructure.Interfaces;
 
 namespace FVH.SSHF.ViewModels.MainWindowViewModel

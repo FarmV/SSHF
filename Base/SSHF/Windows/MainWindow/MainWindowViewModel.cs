@@ -124,7 +124,7 @@ namespace FVH.SSHF.ViewModels.MainWindowViewModel
         private async Task SetNewBackgroundImage()
         {
             if(await _imageProvider.GetImageFromClipboard() is not ImageSource image) return;
-            DpiSacaleMonitor dpi = _dpiCorrector.GetCurretDPI();
+            DpiSacaleMonitor dpi = _dpiCorrector.GetCurrentDPI();
             Height = image.Height / dpi.DpiScaleY;
             Width = image.Width / dpi.DpiScaleX;
             BackgroundImage = image;

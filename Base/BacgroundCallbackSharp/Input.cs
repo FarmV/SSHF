@@ -18,7 +18,7 @@ namespace FVH.Background.Input
     {
         /// <summary>
         /// Примечание: WS_POPUP в Windows API обычно представлен как 32-битное значение (Int32),
-        /// но для ясности и соответствия документации используетcя тип long (Int64).
+        /// но для ясности и соответствия документации используется тип long (Int64).
         /// При приведении значения к типу int происходит потеря старших битов, но это безопасно,
         /// так как младшие 32 бита достаточны для представления стиля окна WS_POPUP.
         /// </summary>
@@ -47,7 +47,7 @@ namespace FVH.Background.Input
             _callbackEventKeyboardData = new Action<RawInputKeyboardData>((x) => _keyboardHandler.HandlerKeyboard(x));
             _callbackEventMouseData = new Action<RawInputMouseData>((x) => _mouseHandler.HandlerMouse(x));
 
-            Task waitForInitialization = Task.Run(async () => await Initialization());
+            Task waitForInitialization = Task.Run(Initialization);
             waitForInitialization.Wait();
             this._initInput = initInputHandle;
         }
@@ -74,21 +74,21 @@ namespace FVH.Background.Input
         /// <br><see langword="En"/></br>
         /// <br>Reference to the class that implements the <see cref="IKeyboardHandler"/>.</br>
         /// <br><see langword="Ru"/></br>
-        /// <br>Cсылка на класс, реализующий интерфейс <see cref="IKeyboardHandler"/>.</br>
+        /// <br>Ссылка на класс, реализующий интерфейс <see cref="IKeyboardHandler"/>.</br>
         ///</returns>      
         public IKeyboardHandler GetKeyboardHandler() => _keyboardHandler;
         ///<returns>
         /// <br><see langword="En"/></br>
         /// <br>Reference to the class that implements the <see cref="IMouseHandler"/>.</br>
         /// <br><see langword="Ru"/></br>
-        /// <br>Cсылка на класс, реализующий интерфейс <see cref="IMouseHandler"/>.</br>
+        /// <br>Ссылка на класс, реализующий интерфейс <see cref="IMouseHandler"/>.</br>
         ///</returns>
         public IMouseHandler GetMouseHandler() => _mouseHandler;
         ///<returns>
         /// <br><see langword="En"/></br>
         /// <br>Reference to the class that implements the <see cref="IKeyboardCallback"/>.</br>
         /// <br><see langword="Ru"/></br>
-        /// <br>Cсылка на класс, реализующий интерфейс <see cref="IKeyboardCallback"/>.</br>
+        /// <br>Ссылка на класс, реализующий интерфейс <see cref="IKeyboardCallback"/>.</br>
         ///</returns>
         public IKeyboardCallback GetKeyboardCallbackFunction() => _callbackFunction is IKeyboardCallback CallBack ? CallBack : throw new NullReferenceException(nameof(_callbackFunction));
         private Task Initialization()
@@ -192,7 +192,7 @@ namespace FVH.Background.Input
                         return hwnd;
                     }
 
-                    _lowLevelHook = new LowLevelKeyHook(); // владецем окна
+                    _lowLevelHook = new LowLevelKeyHook();
                     _lowLevelHook.InstallHook();
                     _callbackFunction = new CallbackFunctionKeyboard(_keyboardHandler, _lowLevelHook);
                 }, DispatcherPriority.Render);

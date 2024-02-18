@@ -14,7 +14,7 @@ namespace FVH.SSHF.Infrastructure
         private readonly Window _window = window;
         private readonly Dispatcher _dispatcher = dispatcher;
 
-        public DpiSacaleMonitor GetCurretDPI() => _dispatcher.Invoke(() =>
+        public DpiSacaleMonitor GetCurrentDPI() => _dispatcher.Invoke(() =>
         {
             DpiScale dpi = VisualTreeHelper.GetDpi(_window);
             return new DpiSacaleMonitor(dpi.DpiScaleX, dpi.DpiScaleY);
