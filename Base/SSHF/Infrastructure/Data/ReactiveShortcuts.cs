@@ -1,10 +1,11 @@
-﻿using FVH.Background.Input.Infrastructure.Interfaces;
-using ReactiveUI;
-
-using System;
+﻿using System;
 using System.Threading.Tasks;
 
-namespace SSHF
+using ReactiveUI;
+
+using FVH.Background.Input.Infrastructure.Interfaces;
+
+namespace FVH.SSHF
 {
     public class Shortcuts(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier) : ReactiveUI.ReactiveObject
     {

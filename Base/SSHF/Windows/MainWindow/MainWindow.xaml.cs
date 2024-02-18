@@ -5,9 +5,9 @@ using System.Windows.Interop;
 
 using ReactiveUI;
 
-using SSHF.ViewModels.MainWindowViewModel;
+using FVH.SSHF.ViewModels.MainWindowViewModel;
 
-namespace SSHF
+namespace FVH.SSHF
 {
     public partial class MainWindow : MahApps.Metro.Controls.MetroWindow, IViewFor<MainWindowViewModel>
     {

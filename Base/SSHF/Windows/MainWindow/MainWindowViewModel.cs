@@ -8,10 +8,10 @@ using System.Reactive;
 
 using ReactiveUI;
 
-using SSHF.Infrastructure;
-using SSHF.Infrastructure.Interfaces;
+using FVH.SSHF.Infrastructure;
+using FVH.SSHF.Infrastructure.Interfaces;
 
-namespace SSHF.ViewModels.MainWindowViewModel
+namespace FVH.SSHF.ViewModels.MainWindowViewModel
 {
     public partial class MainWindowViewModel : ReactiveObject
     {
@@ -33,7 +33,7 @@ namespace SSHF.ViewModels.MainWindowViewModel
         public MainWindowViewModel()
 #pragma warning restore CS8618
         {
-            if (App.DesignerMode is not true) throw new InvalidOperationException("Empty class constructor for designer only");
+            if(App.DesignerMode is not true) throw new InvalidOperationException("Empty class constructor for designer only");
         }
         public MainWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, DpiCorrector dpiCorrector, WPFDropImageFile setImage)
         {
@@ -44,20 +44,22 @@ namespace SSHF.ViewModels.MainWindowViewModel
             RefreshWindowInvoke = ReactiveCommand.CreateFromTask(WindowUpdate, this.WhenAnyValue(x => x.BlockRefresh, (bool blockRefresh) => blockRefresh is false));
             StopWindowUpdater = ReactiveCommand.CreateFromTask(StopUpdateWindow);
             SetNewImage = ReactiveCommand.CreateFromTask(SetNewBackgroundImage);
-            SwithBlockRefreshWindow = ReactiveCommand.Create(SwitchBlockRefresh);
+            SwitchBlockRefreshWindow = ReactiveCommand.Create(SwitchBlockRefresh);
             HideWindow = ReactiveCommand.Create(Hide);
             ShowWindow = ReactiveCommand.Create(Show);
             DragMoveWindow = ReactiveCommand.CreateFromTask(DragMove, this.WhenAnyValue(x => x.DragMoveCondition));
             DropImage = ReactiveCommand.Create<object>(DropWindowImage, this.WhenAnyValue(x => x.DropCondition));
+            MsScreenClipInvoke = ReactiveCommand.Create(InvokeMsScreenClip);
         }
         public ReactiveCommand<Unit, Unit> RefreshWindowInvoke { get; private init; }
         public ReactiveCommand<Unit, Unit> StopWindowUpdater { get; private init; }
         public ReactiveCommand<Unit, Unit> SetNewImage { get; private init; }
-        public ReactiveCommand<Unit, Unit> SwithBlockRefreshWindow { get; private init; }
+        public ReactiveCommand<Unit, Unit> SwitchBlockRefreshWindow { get; private init; }
         public ReactiveCommand<Unit, Unit> HideWindow { get; private init; }
         public ReactiveCommand<Unit, Unit> ShowWindow { get; private init; }
         public ReactiveCommand<Unit, Unit> DragMoveWindow { get; private init; }
         public ReactiveCommand<object, Unit> DropImage { get; private init; }
+        public ReactiveCommand<Unit, Unit> MsScreenClipInvoke { get; private init; }
         public bool DropCondition
         {
             get => _dropCondition;
@@ -101,27 +103,27 @@ namespace SSHF.ViewModels.MainWindowViewModel
         {
             await Task.Factory.StartNew(async () =>
             {
-                if (_windowPositionUpdater.IsUpdateWindow is true) return;
-                if (_isCancellingUpdate is true) return;
+                if(_windowPositionUpdater.IsUpdateWindow is true) return;
+                if(_isCancellingUpdate is true) return;
                 else
                 {
-                    if (_updateWindowCancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
+                    if(_updateWindowCancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
                     await _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token);
                 }
             }).ConfigureAwait(false);
         }
         private async Task StopUpdateWindow()
         {
-            if (_windowPositionUpdater.IsUpdateWindow is false) return;
+            if(_windowPositionUpdater.IsUpdateWindow is false) return;
             _isCancellingUpdate = true;
             _updateWindowCancellationToken.Cancel();
-            await Task.Run(() => { if (System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, TimeSpan.FromSeconds(1)) is not true) throw new TimeoutException(); });
+            await Task.Run(() => { if(System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, TimeSpan.FromSeconds(1)) is not true) throw new TimeoutException(); });
             _updateWindowCancellationToken = new CancellationTokenSource();
             _isCancellingUpdate = false;
         }
         private async Task SetNewBackgroundImage()
         {
-            if (await _imageProvider.GetImageFromClipboard() is not ImageSource image) return;
+            if(await _imageProvider.GetImageFromClipboard() is not ImageSource image) return;
             DpiSacaleMonitor dpi = _dpiCorrector.GetCurretDPI();
             Height = image.Height / dpi.DpiScaleY;
             Width = image.Width / dpi.DpiScaleX;
@@ -132,16 +134,18 @@ namespace SSHF.ViewModels.MainWindowViewModel
         private void Show() => VisibleCondition = Visibility.Visible;
         private async Task DragMove()
         {
-            if (_windowPositionUpdater.IsUpdateWindow is true) return;
+            if(_windowPositionUpdater.IsUpdateWindow is true) return;
             await _windowPositionUpdater.DragMove();
         }
         private void DropWindowImage(object ev)
         {
-            if (BackgroundImage is not ImageSource img) return;
-            if (_windowPositionUpdater.IsUpdateWindow is true) return;
-            if (Keyboard.IsKeyDown(Key.LeftCtrl) is not true) return; //todo обдумать
+            if(BackgroundImage is not ImageSource img) return;
+            if(_windowPositionUpdater.IsUpdateWindow is true) return;
+            if(Keyboard.IsKeyDown(Key.LeftCtrl) is not true) return;           
+            if(Mouse.LeftButton is not MouseButtonState.Pressed) return;
             _setImage.SaveImageFromDrop(ev, img);
         }
-      // private static Uri GetUriApp(string resourcePath) => new Uri(string.Format("pack://application:,,,/{0};component/{1}", Assembly.GetExecutingAssembly().GetName().Name, resourcePath));
+        private void InvokeMsScreenClip() => MsScreenClip.Invoke();
+        // private static Uri GetUriApp(string resourcePath) => new Uri(string.Format("pack://application:,,,/{0};component/{1}", Assembly.GetExecutingAssembly().GetName().Name, resourcePath));
     }
 }

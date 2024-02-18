@@ -1,14 +1,12 @@
-﻿using DynamicData;
-using FVH.Background.Input.Infrastructure.Interfaces;
-using SSHF.Infrastructure.Interfaces;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Drawing.Printing;
 using System.Linq;
-using System.Text;
 
-namespace SSHF.Infrastructure
+using FVH.Background.Input.Infrastructure.Interfaces;
+
+using FVH.SSHF.Infrastructure.Interfaces;
+
+namespace FVH.SSHF.Infrastructure
 {
     internal class ShortcutsProvider(IKeyboardCallback keyboardCallback, IEnumerable<IInvokeShortcuts> listFunc)
     {

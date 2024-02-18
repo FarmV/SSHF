@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SSHF.Infrastructure
+namespace FVH.SSHF.Infrastructure
 {
     internal static class MsScreenClip
     {

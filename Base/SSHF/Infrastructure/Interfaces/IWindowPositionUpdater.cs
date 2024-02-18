@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace SSHF.Infrastructure.Interfaces
+namespace FVH.SSHF.Infrastructure.Interfaces
 {
     public interface IWindowPositionUpdater
     {

@@ -7,7 +7,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 
-namespace SSHF.Infrastructure
+namespace FVH.SSHF.Infrastructure
 {
     public class DpiCorrector(Window window, Dispatcher dispatcher)
     {

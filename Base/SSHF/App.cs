@@ -9,11 +9,11 @@ using Microsoft.Extensions.Hosting;
 
 using FVH.Background.Input;
 
-using SSHF.Infrastructure;
-using SSHF.Infrastructure.TrayIconManagment;
+using FVH.SSHF.Infrastructure;
+using FVH.SSHF.Infrastructure.TrayIconManagment;
 
 
-namespace SSHF
+namespace FVH.SSHF
 {
     internal partial class App
     {

@@ -1,15 +1,15 @@
 ﻿<mah:MetroWindow    
     x:Name="Fast"
-    x:Class="SSHF.MainWindow"
+    x:Class="FVH.SSHF.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
     mc:Ignorable="d"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:vm="clr-namespace:SSHF.ViewModels.MainWindowViewModel"
+    xmlns:vm="clr-namespace:FVH.SSHF.ViewModels.MainWindowViewModel"
     xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
   
-    xmlns:converter ="clr-namespace:SSHF.Infrastructure.Converters"   
+    xmlns:converter ="clr-namespace:FVH.SSHF.Infrastructure.Converters"   
     xmlns:actions="clr-namespace:MahApps.Metro.Actions;assembly=MahApps.Metro"
     xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:sys="clr-namespace:System;assembly=mscorlib"

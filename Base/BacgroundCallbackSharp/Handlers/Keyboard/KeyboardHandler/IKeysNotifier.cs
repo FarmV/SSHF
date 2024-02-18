@@ -2,7 +2,7 @@
 
 namespace FVH.Background.Input
 {
-    public interface IKeysNotificator
+    public interface IKeysNotifier
     {
         VKeys[] Keys { get; }
     }

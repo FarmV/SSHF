@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 
-namespace SSHF.Infrastructure.TrayIconManagment
+namespace FVH.SSHF.Infrastructure.TrayIconManagment
 {
     internal partial class DPIIconHandler : IDisposable
     {

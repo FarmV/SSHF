@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using System.Reactive.Concurrency;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace SSHF.Infrastructure.Converters
+namespace FVH.SSHF.Infrastructure.Converters
 {
     public class ConverterImageDPIViewport : IValueConverter
     {

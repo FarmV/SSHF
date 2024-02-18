@@ -1,10 +1,10 @@
-﻿using SSHF.Infrastructure.Interfaces;
+﻿using FVH.SSHF.Infrastructure.Interfaces;
 
 using System;
 using System.Threading.Tasks;
 using System.Windows.Media;
 
-namespace SSHF.Infrastructure
+namespace FVH.SSHF.Infrastructure
 {
     internal class ImageProvider : IGetImage
     {

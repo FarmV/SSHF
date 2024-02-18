@@ -1,4 +1,4 @@
-﻿namespace SSHF.Infrastructure
+﻿namespace FVH.SSHF.Infrastructure
 {
     public readonly struct DpiSacaleMonitor(double dpiScaleX, double dpiScaleY)
     {

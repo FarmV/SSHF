@@ -2,7 +2,7 @@
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace SSHF.Infrastructure
+namespace FVH.SSHF.Infrastructure
 {
     internal static class ImageFromFile
     {

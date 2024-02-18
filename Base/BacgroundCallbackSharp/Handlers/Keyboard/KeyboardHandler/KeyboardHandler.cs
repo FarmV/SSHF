@@ -10,8 +10,8 @@ namespace FVH.Background.Input
     internal class KeyboardHandler : IKeyboardHandler
     {
         public List<VKeys> PressedKeys => _isPressedKeys.ToList();
-        public event EventHandler<IKeysNotificator>? KeyPressEvent;
-        public event EventHandler<IKeysNotificator>? KeyUpPressEvent;
+        public event EventHandler<IKeysNotifier>? KeyPressEvent;
+        public event EventHandler<IKeysNotifier>? KeyUpPressEvent;
 
         private const int TimerTimeout = 500;
         private readonly List<VKeys> _isPressedKeys = new List<VKeys>();

@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
 
-namespace SSHF.Infrastructure.TrayIconManagment
+namespace FVH.SSHF.Infrastructure.TrayIconManagment
 {
     internal partial class DpiHandler : IDisposable
     {

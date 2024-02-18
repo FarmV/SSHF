@@ -23,7 +23,7 @@ namespace FVH.Background.Input
             _lowLevelHook = lowLevelHook;
             _keyboardHandler.KeyPressEvent += KeyboardHandler_KeyPressEvent;
         }
-        private async void KeyboardHandler_KeyPressEvent(object? sender, IKeysNotificator e)
+        private async void KeyboardHandler_KeyPressEvent(object? sender, IKeysNotifier e)
         {
             VKeys[] pressedKeys = e.Keys;
             async Task<bool> InvokeOneKey(VKeys key)

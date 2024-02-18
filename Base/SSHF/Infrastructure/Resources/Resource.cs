@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Resources;
-using SSHF.Infrastructure.Resources;
+using FVH.SSHF.Infrastructure.Resources;
 
-namespace SSHF.Infrastructure
+namespace FVH.SSHF.Infrastructure
 {
     internal static class Resource
     {

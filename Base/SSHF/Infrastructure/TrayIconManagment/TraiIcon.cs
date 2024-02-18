@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reactive;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 
-namespace SSHF.Infrastructure.TrayIconManagment
+namespace FVH.SSHF.Infrastructure.TrayIconManagment
 {
     internal class TraiIcon : IDisposable
     {
