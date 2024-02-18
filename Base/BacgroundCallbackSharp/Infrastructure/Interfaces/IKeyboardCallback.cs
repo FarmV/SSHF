@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FVH.Background.Input
+namespace FVH.Background.Input.Infrastructure.Interfaces
 {
     /// <summary>
     /// <br><see langword="En"/></br>
@@ -27,8 +27,8 @@ namespace FVH.Background.Input
         /// <br>Комбинация клавиш.</br>
         /// </param>
         public Task AddCallBackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null);
-        public Task<bool> DeleteATaskByAnIdentifier(object identifier); //todo удалить null и добавить удаление по группе, возможно метод по полной полной очистке?
-        public Task<bool> ContainsKeyComibantion(VKeys[] keyCombo);
+        public Task<bool> DeleteTaskByAnIdentifier(object identifier); //todo удалить null и добавить удаление по группе, возможно метод по полной полной очистке?
+        public Task<bool> ContainsKeyCombination(VKeys[] keyCombo);
         public List<RegFunctionGroupKeyboard> ReturnGroupRegFunctions();
     }
 }

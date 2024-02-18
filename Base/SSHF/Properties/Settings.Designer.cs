@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SSHF.Properties {
+namespace FVH.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

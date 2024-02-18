@@ -1,10 +1,4 @@
-﻿using ControlzEx.Standard;
-
-using ReactiveUI;
-
-using SSHF.Infrastructure.Interfaces;
-
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -13,12 +7,16 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 
+using ReactiveUI;
+using ControlzEx.Standard;
 
-namespace SSHF.Infrastructure
+using FVH.SSHF.Infrastructure.Interfaces;
+
+
+namespace FVH.SSHF.Infrastructure
 {
     internal partial class Win32WPFWindowPositionUpdater : ReactiveUI.ReactiveObject, IWindowPositionUpdater
     {
-        private readonly Window _window;
         private const int IGNORE_SIZE_WINDOW = -1;
         private const int HWND_TOP = 0;
         private const int OFFSET_CURSOR = 30;
@@ -28,6 +26,7 @@ namespace SSHF.Infrastructure
         private nint _handleWindow;
         private bool _isUpdateWindow;
         private Point _lastPontCursor = default;
+        private readonly Window _window;
         public Win32WPFWindowPositionUpdater(Window window)
         {
             _window = window;
@@ -41,19 +40,19 @@ namespace SSHF.Infrastructure
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             static bool CheckAndIgnoreWindowTopPosition(ref WINDOWPOS newWindowPos)
             {
-                if (newWindowPos.y is 0)
+                if(newWindowPos.y is 0)
                 {
                     newWindowPos.flags |= SWP.NOMOVE;
                     return true;
                 }
                 else { return false; }
             }
-            if (msg is WM_WINDOWPOSCHANGING)
+            if(msg is WM_WINDOWPOSCHANGING)
             {
-                if (Mouse.LeftButton is not MouseButtonState.Pressed)
+                if(Mouse.LeftButton is not MouseButtonState.Pressed)
                 {
                     WINDOWPOS wp = Marshal.PtrToStructure<WINDOWPOS>(lParam);
-                    if (CheckAndIgnoreWindowTopPosition(ref wp) is not true) return nint.Zero;
+                    if(CheckAndIgnoreWindowTopPosition(ref wp) is not true) return nint.Zero;
                     Marshal.StructureToPtr(wp, lParam, false);
                 }
             }
@@ -66,44 +65,44 @@ namespace SSHF.Infrastructure
             private set => this.RaiseAndSetIfChanged(ref _isUpdateWindow, value);
         }
         public Task UpdateWindowPos(CancellationToken token) => UpdateWindowPositionRelativeToCursor(token);
-        public async Task DargMove() => await _window.Dispatcher.InvokeAsync(() =>
+        public async Task DragMove() => await _window.Dispatcher.InvokeAsync(() =>
         {
-            if (_isUpdateWindow is true) throw new InvalidOperationException($"The window drag operation cannot be invoked while the window is being updated. Check {nameof(IsUpdateWindow)} property");
+            if(_isUpdateWindow is true) throw new InvalidOperationException($"The window drag operation cannot be invoked while the window is being updated. Check {nameof(IsUpdateWindow)} property");
 
             IsUpdateWindow = true;
-            if (Mouse.LeftButton is MouseButtonState.Pressed) _window.DragMove();
+            if(Mouse.LeftButton is MouseButtonState.Pressed) _window.DragMove();
             IsUpdateWindow = false;
         });
-        private async Task UpdateWindowPositionRelativeToCursor(CancellationToken сancelToken)
+        private async Task UpdateWindowPositionRelativeToCursor(CancellationToken cancelToken)
         {
-            if (сancelToken.IsCancellationRequested is true) return;
-            if (_isUpdateWindow is true) throw new InvalidOperationException($"The window refresh operation cannot be invoked while the window is being refreshed. Check {nameof(IsUpdateWindow)} property");
-            if (Win32TimePeriod.TimeBeginPeriod(Win32TimePeriod.MinimumTimerResolution) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to set the timer range");
+            if(cancelToken.IsCancellationRequested is true) return;
+            if(_isUpdateWindow is true) throw new InvalidOperationException($"The window refresh operation cannot be invoked while the window is being refreshed. Check {nameof(IsUpdateWindow)} property");
+            if(Win32TimePeriod.TimeBeginPeriod(Win32TimePeriod.MinimumTimerResolution) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to set the timer range");
             try
             {
                 IsUpdateWindow = true;
 
-                while (сancelToken.IsCancellationRequested is not true)
+                while(cancelToken.IsCancellationRequested is not true)
                 {
-                    if (сancelToken.IsCancellationRequested is true) return;
+                    if(cancelToken.IsCancellationRequested is true) return;
                     Point currentPointCursor = Win32Cursor.GetCursorPosition();
-                    if (_lastPontCursor == default || _lastPontCursor != currentPointCursor)
+                    if(_lastPontCursor == default || _lastPontCursor != currentPointCursor)
                     {
                         await _window.Dispatcher.InvokeAsync(() =>
                         {
-                            if (Thread.CurrentThread.Priority is ThreadPriority.Normal) Thread.CurrentThread.Priority = ThreadPriority.Highest;
+                            if(Thread.CurrentThread.Priority is ThreadPriority.Normal) Thread.CurrentThread.Priority = ThreadPriority.Highest;
                             SetWindowPos(_handleWindow, HWND_TOP, Convert.ToInt32(currentPointCursor.X - OFFSET_CURSOR), Convert.ToInt32(currentPointCursor.Y - OFFSET_CURSOR),
                                 IGNORE_SIZE_WINDOW, IGNORE_SIZE_WINDOW, NOT_MESSAGE_WM_WINDOWPOSCHANGING | SWP_NOSIZE);
-                        }, System.Windows.Threading.DispatcherPriority.Render, сancelToken);
+                        }, System.Windows.Threading.DispatcherPriority.Render, CancellationToken.None);
                     }
                 }
-                if (Win32TimePeriod.TimeEndPeriod(Win32TimePeriod.MinimumTimerResolution) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to change the timer range");
+                if(Win32TimePeriod.TimeEndPeriod(Win32TimePeriod.MinimumTimerResolution) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to change the timer range");
             }
             finally
             {
                 await _window.Dispatcher.InvokeAsync(() =>
                 {
-                    if (Thread.CurrentThread.Priority is ThreadPriority.Highest) Thread.CurrentThread.Priority = ThreadPriority.Normal;
+                    if(Thread.CurrentThread.Priority is ThreadPriority.Highest) Thread.CurrentThread.Priority = ThreadPriority.Normal;
                 }, System.Windows.Threading.DispatcherPriority.Render, CancellationToken.None);
 
                 IsUpdateWindow = false;

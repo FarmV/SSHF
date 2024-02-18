@@ -1,109 +1,85 @@
 ﻿using System;
-using System.Windows;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using ReactiveUI;
-using System.Reactive;
-using FVH.Background.Input;
 using System.Reactive.Linq;
-using System.Linq;
-using SSHF.Infrastructure.Interfaces;
+using System.Threading.Tasks;
 
-namespace SSHF.ViewModels.MainWindowViewModel
+using FVH.Background.Input.Infrastructure.Interfaces;
+
+using FVH.SSHF.Infrastructure.Interfaces;
+
+namespace FVH.SSHF.ViewModels.MainWindowViewModel
 {
     internal class MainWindowCommand : IInvokeShortcuts
     {
         private readonly System.Windows.Window _window;
-        private IKeyboardHandler _keyboardHandler;
-        private bool _executePresentNewImage = false;
-        public MainWindowViewModel MainWindowViewModel { get; }
-        public IEnumerable<Shortcuts> GetShortcuts() => new Shortcuts[]
-        {
-            new Shortcuts(
-            [
-                VKeys.VK_LWIN,
-                VKeys.VK_SHIFT,
-                VKeys.VK_KEY_A
-            ],
-            new Func<Task>(PresentNewImage), nameof(MainWindowCommand.PresentNewImage)),
+        private bool _isExecutePresentNewImage = false;
+        private Shortcuts[]? _shortcuts;
 
-            new Shortcuts(
-            [
-                VKeys.VK_CONTROL,
-                VKeys.VK_CAPITAL
-            ],
-            new Func<Task>(SwithBlockRefreshWindow), nameof(MainWindowCommand.SwithBlockRefreshWindow)),
-
-            new Shortcuts(
-            [
-                VKeys.VK_CONTROL
-            ],
-            new Func<Task>(StopRefreshWindow), nameof(MainWindowCommand.StopRefreshWindow))
-        };
-        public MainWindowCommand(System.Windows.Window window, MainWindowViewModel mainWindowView, IKeyboardHandler keyboardHandler)
+        internal MainWindowCommand(System.Windows.Window window, MainWindowViewModel mainWindowView)
         {
             _window = window;
             MainWindowViewModel = mainWindowView;
-            _keyboardHandler = keyboardHandler;
-
-            IObservable<VKeys[]> keyPressObservable = Observable.FromEventPattern(
-                                 (EventHandler<IKeysNotificator> handler) => keyboardHandler.KeyPressEvent += handler,
-                                 (EventHandler<IKeysNotificator> handler) => keyboardHandler.KeyPressEvent -= handler).Select(x => x.EventArgs.Keys);
-
-
-            IObservable<VKeys[]> keyUPObservable = Observable.FromEventPattern(
-                                 (EventHandler<IKeysNotificator> handler) => keyboardHandler.KeyUpPressEvent += handler,
-                                 (EventHandler<IKeysNotificator> handler) => keyboardHandler.KeyUpPressEvent -= handler).Select(x => x.EventArgs.Keys);
-
-            keyPressObservable.ObserveOn(RxApp.MainThreadScheduler).SubscribeOn(RxApp.MainThreadScheduler).Subscribe(x =>
-            {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    if (Keyboard.IsKeyUp(Key.LeftCtrl) is false)
-                    {
-                        this.MainWindowViewModel.DragMoveCondition = false;
-                        MainWindowViewModel.DropCondition = true;
-                    }
-                });
-            });
-            keyUPObservable.ObserveOn(RxApp.MainThreadScheduler).Subscribe(x => // todo разобратся почему приходит пустой эвент
-            {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    if (this.MainWindowViewModel.VisibleCondition == Visibility.Hidden) return;
-                    if (Keyboard.IsKeyUp(Key.LeftCtrl) is true)
-                    {
-                        this.MainWindowViewModel.DragMoveCondition = true;
-                        MainWindowViewModel.DropCondition = false;
-                    }
-                });
-            });
-
+            SetNewShortcuts(GetDefaultShortcuts());
         }
-        public async Task SwithBlockRefreshWindow() => await Application.Current.Dispatcher.InvokeAsync(async () => await MainWindowViewModel.SwithBlockRefreshWindow.Execute().FirstAsync());
+        internal void SetNewShortcuts(Shortcuts[] shortcuts) => _shortcuts = shortcuts;
+        internal Shortcuts[] GetDefaultShortcuts() =>
+        [
+         new Shortcuts(
+         [
+             VKeys.VK_LWIN,
+             VKeys.VK_SHIFT,
+             VKeys.VK_KEY_A
+         ],
+         new Func<Task>(PresentNewImage), nameof(PresentNewImage)),
+
+         new Shortcuts(
+         [
+             VKeys.VK_CONTROL,
+             VKeys.VK_CAPITAL
+         ],
+         new Func<Task>(SwitchBlockRefreshWindow), nameof(SwitchBlockRefreshWindow)),
+
+         new Shortcuts(
+         [
+             VKeys.VK_CONTROL
+         ],
+         new Func<Task>(StopRefreshWindow), nameof(StopRefreshWindow)),
+
+         new Shortcuts(
+         [
+             VKeys.VK_SCROLL
+         ],
+         new Func<Task>(InvokeMsScreenClip), nameof(InvokeMsScreenClip)),
+        ];
+
+        public MainWindowViewModel MainWindowViewModel { get; }
+        public IEnumerable<Shortcuts> GetShortcuts() => _shortcuts ?? throw new NullReferenceException(nameof(_shortcuts));
         public async Task PresentNewImage()
         {
-            if (_executePresentNewImage is true) return;
+            if(_isExecutePresentNewImage is true) return;
             try
             {
-                _executePresentNewImage = true;
-                await Application.Current.Dispatcher.InvokeAsync(async () =>
-                {
-                    await MainWindowViewModel.SetNewImage.Execute().FirstAsync();
-                    await MainWindowViewModel.ShowWindow.Execute().FirstAsync();
+                _isExecutePresentNewImage = true;
 
-                    _ = await this.MainWindowViewModel.RefreshWindowInvoke.CanExecute.FirstAsync() is true ? await MainWindowViewModel.RefreshWindowInvoke.Execute().FirstAsync() : Unit.Default;
-                }).Task.ConfigureAwait(false);
+                await _window.Dispatcher.InvokeAsync(SetNewImage);
+                await _window.Dispatcher.InvokeAsync(ShowWindow);
+
+                if(await CanExecuteRefreshWindowInvoke() is true) await _window.Dispatcher.InvokeAsync(RefreshWindowInvoke).Task.ConfigureAwait(false);
             }
-            finally { _executePresentNewImage = false; }
+            finally { _isExecutePresentNewImage = false; }
         }
-        public async Task StopRefreshWindow()
-        {
-            if (MainWindowViewModel.WindowPositionUpdater.IsUpdateWindow is true)
-            {
-                await Application.Current.Dispatcher.InvokeAsync(async () => await MainWindowViewModel.StopWindowUpdater.Execute().FirstAsync());
-            }
-        }
+        private async Task SetNewImage() => await MainWindowViewModel.SetNewImage.Execute().FirstAsync();
+        private async Task ShowWindow() => await MainWindowViewModel.ShowWindow.Execute().FirstAsync();
+        private async Task<bool> CanExecuteRefreshWindowInvoke() => await MainWindowViewModel.RefreshWindowInvoke.CanExecute.FirstAsync();
+        private async Task RefreshWindowInvoke() => await MainWindowViewModel.RefreshWindowInvoke.Execute().FirstAsync();
+
+        public async Task SwitchBlockRefreshWindow() => await _window.Dispatcher.InvokeAsync(BlockRefreshWindowSwitch);
+        private async Task BlockRefreshWindowSwitch() => await MainWindowViewModel.SwitchBlockRefreshWindow.Execute().FirstAsync();
+
+        public async Task StopRefreshWindow() { if(MainWindowViewModel.WindowPositionUpdater.IsUpdateWindow is true) await _window.Dispatcher.InvokeAsync(RefreshWindowStop); }
+        private async Task RefreshWindowStop() => await MainWindowViewModel.StopWindowUpdater.Execute().FirstAsync();
+
+        public async Task InvokeMsScreenClip() => await _window.Dispatcher.InvokeAsync(MsScreenClipInvoke);
+        private async Task MsScreenClipInvoke() => await MainWindowViewModel.MsScreenClipInvoke.Execute().FirstAsync();
     }
 }

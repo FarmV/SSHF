@@ -1,38 +1,22 @@
-﻿using Linearstar.Windows.RawInput.Native;
+﻿using System.Diagnostics;
+
+using Linearstar.Windows.RawInput.Native;
 using Linearstar.Windows.RawInput;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-using FVH.Background.Input;
-using System.Diagnostics;
+using FVH.Background.Input.Infrastructure.Interfaces;
 
 namespace FVH.Background.Input
 {
-    public interface IKeysNotificator
-    {
-        VKeys[] Keys { get; }
-    }
-
-    public class DataKeysNotificator : IKeysNotificator
-    {
-        public DataKeysNotificator(VKeys[] keys) { Keys = keys; }
-
-        public VKeys[] Keys { get; }
-    }
     internal class KeyboardHandler : IKeyboardHandler
     {
         public List<VKeys> PressedKeys => _isPressedKeys.ToList();
-        private readonly List<VKeys> _isPressedKeys = new List<VKeys>();
+        public event EventHandler<IKeysNotifier>? KeyPressEvent;
+        public event EventHandler<IKeysNotifier>? KeyUpPressEvent;
 
-        public event EventHandler<IKeysNotificator>? KeyPressEvent;
-        public event EventHandler<IKeysNotificator>? KeyUpPressEvent;
-
-        readonly Timer Cleartimer;
         private const int TimerTimeout = 500;
+        private readonly List<VKeys> _isPressedKeys = new List<VKeys>();
+        private readonly Timer Cleartimer;
+
         public KeyboardHandler()
         {
             Cleartimer = new Timer(new TimerCallback((_) =>

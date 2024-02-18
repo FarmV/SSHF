@@ -1,8 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace SSHF.Infrastructure
+namespace FVH.SSHF.Infrastructure
 {
-
     internal partial class Win32TimePeriod
     {
         internal const uint TIMERR_NOERROR = 0;
@@ -16,5 +15,4 @@ namespace SSHF.Infrastructure
         [return: MarshalAs(UnmanagedType.U4)]
         internal static partial uint TimeEndPeriod(uint uMilliseconds);
     }
-
 }

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SSHF.Infrastructure.Interfaces
+namespace FVH.SSHF.Infrastructure.Interfaces
 {
     public interface IInvokeShortcuts
     {

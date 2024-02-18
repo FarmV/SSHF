@@ -7,18 +7,14 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 
-namespace SSHF.Infrastructure
+namespace FVH.SSHF.Infrastructure
 {
-    public class DpiCorrector
+    public class DpiCorrector(Window window, Dispatcher dispatcher)
     {
-        private readonly Window _window;
-        private readonly Dispatcher _dispatcher;
-        public DpiCorrector(Window window, Dispatcher dispatcher)
-        {
-            _window = window;
-            _dispatcher = dispatcher;
-        }
-        public DpiSacaleMonitor GetCurretDPI() => _dispatcher.Invoke(() =>
+        private readonly Window _window = window;
+        private readonly Dispatcher _dispatcher = dispatcher;
+
+        public DpiSacaleMonitor GetCurrentDPI() => _dispatcher.Invoke(() =>
         {
             DpiScale dpi = VisualTreeHelper.GetDpi(_window);
             return new DpiSacaleMonitor(dpi.DpiScaleX, dpi.DpiScaleY);

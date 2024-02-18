@@ -1,27 +1,19 @@
-﻿using DynamicData;
-
-using FVH.Background.Input;
-
-using SSHF.Infrastructure.Interfaces;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Drawing.Printing;
 using System.Linq;
-using System.Text;
 
-namespace SSHF.Infrastructure
+using FVH.Background.Input.Infrastructure.Interfaces;
+
+using FVH.SSHF.Infrastructure.Interfaces;
+
+namespace FVH.SSHF.Infrastructure
 {
-    internal class ShortcutsProvider
+    internal class ShortcutsProvider(IKeyboardCallback keyboardCallback, IEnumerable<IInvokeShortcuts> listFunc)
     {
-        private readonly IEnumerable<IInvokeShortcuts> _listFunc;
-        private readonly IKeyboardCallback _keyboardCallback;
+        private readonly IEnumerable<IInvokeShortcuts> _listFunc = listFunc;
+        private readonly IKeyboardCallback _keyboardCallback = keyboardCallback;
         private bool _isInit = false;
-        public ShortcutsProvider(IKeyboardCallback keyboardCallback, IEnumerable<IInvokeShortcuts> listFunc)
-        {
-            _keyboardCallback = keyboardCallback;
-            _listFunc = listFunc;
-        }
+
         public void RegisterShortcuts()
         {
             if (_isInit is true) throw new InvalidOperationException();

@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using System.Windows;
 
-namespace SSHF.Infrastructure
+namespace FVH.SSHF.Infrastructure
 {
     internal partial class Win32Cursor
     {

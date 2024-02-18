@@ -1,5 +1,4 @@
-﻿using FVH.Background.Input;
-using Linearstar.Windows.RawInput;
+﻿using Linearstar.Windows.RawInput;
 
 using System;
 using System.Collections.Generic;
@@ -7,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FVH.Background.Input
+namespace FVH.Background.Input.Infrastructure.Interfaces
 {
 
 
@@ -32,14 +31,14 @@ namespace FVH.Background.Input
         /// <br><see langword="Ru"/></br>
         /// <br>При нажатии клавиши возвращается вся коллекция клавиш, нажатых на клавиатуре.</br>
         /// </summary>
-        public event EventHandler<IKeysNotificator>? KeyPressEvent;
+        public event EventHandler<IKeysNotifier>? KeyPressEvent;
         /// <summary>
         /// <br><see langword="En"/></br>
         /// <br>Releasing a key returns the entire collection of keys pressed on the keyboard.</br>
         /// <br><see langword="Ru"/></br>
         /// <br>При отпускании клавиши возвращается вся коллекция клавиш, нажатых на клавиатуре.</br>
         /// </summary>
-        public event EventHandler<IKeysNotificator>? KeyUpPressEvent;
+        public event EventHandler<IKeysNotifier>? KeyUpPressEvent;
 
         /// <summary>
         /// <br><see langword="En"/></br>

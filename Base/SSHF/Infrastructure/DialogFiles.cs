@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 using Microsoft.Win32;
 
-namespace SSHF.Infrastructure
+namespace FVH.SSHF.Infrastructure
 {
     internal static class DialogFiles
     {
@@ -18,7 +18,6 @@ namespace SSHF.Infrastructure
                 Title = Title,
                 Filter = Filter,
             };
-
 
             if (fileDialog.ShowDialog() is not true)
             {

@@ -5,29 +5,26 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 
-namespace SSHF.Infrastructure
+namespace FVH.SSHF.Infrastructure
 {
     public class WPFDropImageFile : IDisposable
     {
         private readonly Window _window;
-        private readonly Dispatcher _dispatcher;
         private string _fileTmpPath = string.Empty;
         private DataObject _dropData;
         private Timer? _clearTmpTimer;
         private BitmapSource? _previousImage;
+        public WPFDropImageFile(Window window)
+        {
+            _window = window;
+            _dropData = new DataObject();
+        }
         public void Dispose()
         {
             ClearTmpFile();
             _clearTmpTimer?.Dispose();
             GC.SuppressFinalize(this);
-        }
-        public WPFDropImageFile(Window window, Dispatcher dispatcher)
-        {
-            _window = window;
-            _dispatcher = dispatcher;
-            _dropData = new DataObject();
         }
         public void SaveImageFromDrop(object ev, ImageSource image)
         {

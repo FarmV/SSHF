@@ -1,14 +1,9 @@
-﻿namespace SSHF.Infrastructure
+﻿namespace FVH.SSHF.Infrastructure
 {
-    public readonly struct DpiSacaleMonitor
+    public readonly struct DpiSacaleMonitor(double dpiScaleX, double dpiScaleY)
     {
-        public DpiSacaleMonitor(double dpiScaleX, double dpiScaleY)
-        {
-            DpiScaleX = dpiScaleX;
-            DpiScaleY = dpiScaleY;
-        }
-        public double DpiScaleX { get; }
-        public double DpiScaleY { get; }
+        public double DpiScaleX { get; } = dpiScaleX;
+        public double DpiScaleY { get; } = dpiScaleY;
     }
 }
 

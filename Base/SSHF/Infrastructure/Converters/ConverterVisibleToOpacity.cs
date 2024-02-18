@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 
-namespace SSHF.Infrastructure.Converters
+namespace FVH.SSHF.Infrastructure.Converters
 {
     class ConverterVisibleToOpacity : IValueConverter
     {
