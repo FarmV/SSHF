@@ -44,7 +44,7 @@ namespace FVH.SSHF
             Thread.CurrentThread.Name = "FVH Main Thread";
 
             if (SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == nint.Zero) // чтобы окно при вставке изображения из буфера обмена сохраняло пропорции и не масштабировалось
-            { // return 2147508241 вероятно возвращаемое значение не корректно, SetThreadDpiAwarenessContext должен возращать nint, из перечислеия DPI_AWARENESS_CONTEXT прошлого состояния потока
+            { // return 2147508241 вероятно возвращаемое значение не корректно, SetThreadDpiAwarenessContext должен возвращать nint, из перечисления DPI_AWARENESS_CONTEXT прошлого состояния потока
                 string error = Marshal.GetLastPInvokeErrorMessage();
                 throw new InvalidOperationException(error);
             }
