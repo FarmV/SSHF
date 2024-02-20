@@ -13,18 +13,10 @@
 		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
 		<Product>Screenshot Helper by FarmV</Product>
 		<Description>Screenshot Helper by FarmV</Description>
-		<Version>0.0.6</Version>
+		<Version>0.0.7</Version>
 		<Copyright>https://github.com/FarmV/SSHF</Copyright>
 		<ApplicationIcon>Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
 		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <DebugType>embedded</DebugType>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <DebugType>embedded</DebugType>
 	</PropertyGroup>
 	
 	<ItemGroup>
