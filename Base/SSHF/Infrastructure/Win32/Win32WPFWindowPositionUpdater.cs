@@ -11,19 +11,26 @@ using ReactiveUI;
 using ControlzEx.Standard;
 
 using FVH.SSHF.Infrastructure.Interfaces;
+using System.Diagnostics;
+using FVH.SSHF.ViewModels.MainWindowViewModel;
+using System.Reactive.Linq;
+using System.Windows.Threading;
 
 
 namespace FVH.SSHF.Infrastructure
 {
     internal partial class Win32WPFWindowPositionUpdater : ReactiveUI.ReactiveObject, IWindowPositionUpdater
     {
+        private const nint HWND_TOP = 0;
+        private const nint HWND_TOPMOST = -1;
+        private const nint HWND_NOTOPMOST = -2;
         private const int IGNORE_SIZE_WINDOW = -1;
-        private const int HWND_TOP = 0;
+        private const int SWP_NOMOVE = 0x0002;
         private const int OFFSET_CURSOR = 30;
         private const int NOT_MESSAGE_WM_WINDOWPOSCHANGING = 0x0400;
         private const int SWP_NOSIZE = 0x0001;
         private const int WM_WINDOWPOSCHANGING = 0x0046;
-        private nint _handleWindow;
+        private readonly nint _handleWindow;
         private bool _isUpdateWindow;
         private Point _lastPontCursor = default;
         private readonly Window _window;
@@ -73,14 +80,19 @@ namespace FVH.SSHF.Infrastructure
             if(Mouse.LeftButton is MouseButtonState.Pressed) _window.DragMove();
             IsUpdateWindow = false;
         });
+        private bool t1 = false;
         private async Task UpdateWindowPositionRelativeToCursor(CancellationToken cancelToken)
         {
+            MainWindowViewModel model = await _window.Dispatcher.InvokeAsync(() => model = ((IViewFor<MainWindowViewModel>)_window).ViewModel ?? throw new NullReferenceException("model = MainWindowViewModel is null"));
+
             if(cancelToken.IsCancellationRequested is true) return;
             if(_isUpdateWindow is true) throw new InvalidOperationException($"The window refresh operation cannot be invoked while the window is being refreshed. Check {nameof(IsUpdateWindow)} property");
             if(Win32TimePeriod.TimeBeginPeriod(Win32TimePeriod.MinimumTimerResolution) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to set the timer range");
             try
             {
                 IsUpdateWindow = true;
+
+                nint lastMSHandle = nint.Zero;
 
                 while(cancelToken.IsCancellationRequested is not true)
                 {
@@ -91,9 +103,24 @@ namespace FVH.SSHF.Infrastructure
                         await _window.Dispatcher.InvokeAsync(() =>
                         {
                             if(Thread.CurrentThread.Priority is ThreadPriority.Normal) Thread.CurrentThread.Priority = ThreadPriority.Highest;
-                            SetWindowPos(_handleWindow, HWND_TOP, Convert.ToInt32(currentPointCursor.X - OFFSET_CURSOR), Convert.ToInt32(currentPointCursor.Y - OFFSET_CURSOR),
+
+                            if(MsScreenClip.IsEnableProcessHost())
+                            {
+                                Thread.Sleep(400); // Задержка для того чтобы на скриншоте осталось окно 
+                                model.HideWindow.Execute().Wait();
+                                return;
+                            }                   
+                            else
+                            {
+                                if(model.VisibleCondition is Visibility.Hidden) model.ShowWindow.Execute().Wait();
+
+                                SetWindowPos(_handleWindow, HWND_TOP, Convert.ToInt32(currentPointCursor.X - OFFSET_CURSOR), Convert.ToInt32(currentPointCursor.Y - OFFSET_CURSOR),
                                 IGNORE_SIZE_WINDOW, IGNORE_SIZE_WINDOW, NOT_MESSAGE_WM_WINDOWPOSCHANGING | SWP_NOSIZE);
+                            }
+
                         }, System.Windows.Threading.DispatcherPriority.Render, CancellationToken.None);
+
+                        // await _window.Dispatcher.InvokeAsync(abc);
                     }
                 }
                 if(Win32TimePeriod.TimeEndPeriod(Win32TimePeriod.MinimumTimerResolution) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to change the timer range");
@@ -110,7 +137,7 @@ namespace FVH.SSHF.Infrastructure
         }
         [LibraryImport("user32")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        private static partial bool SetWindowPos(nint handle, int handle2, int x, int y, int cx, int cy, int flag);
+        private static partial bool SetWindowPos(nint handle, nint handle2, int x, int y, int cx, int cy, int flag);
     }
 }
 

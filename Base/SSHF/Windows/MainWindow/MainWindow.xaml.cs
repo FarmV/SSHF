@@ -28,8 +28,8 @@ namespace FVH.SSHF
             NativeHelper.SetWindowLongPtrW(hWnd, GWL_EXSTYLE, new IntPtr(NativeHelper.GetWindowLongPtrW(hWnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE));
         }
         /// <summary>
-        /// Заглушка - Изменения свойста Visibility деактивирует привязку к размерам окна.
-        /// Решение устанвоить приязку после изменение Visibility и не изменять это свойсто. Реализовать сокрытие окна через opacity.
+        /// Заглушка - Изменения свойства Visibility деактивирует привязку к размерам окна.
+        /// Решение установить привязку после изменение Visibility и не изменять это свойство. Реализовать сокрытие окна через opacity.
         /// </summary>
         private void SetBindingSizePostSwithVisible()
         {
@@ -42,7 +42,7 @@ namespace FVH.SSHF
                  vm => vm.Width,
                  w => w.GridContent.Width);
 
-            // Не понятно нужно ли биндить размеры самого окна. При SizeToContent = WidthAndHeight размер окна фактически больше на пару пикселей чем целевой Gird (Стуктура населодвания фактически отличается в "MahApps.Metro.Controls.MetroWindow", ежели это было бы прямое наследование от "System.Windows.Window").
+            // Не понятно нужно ли биндить размеры самого окна. При SizeToContent = WidthAndHeight размер окна фактически больше на пару пикселей чем целевой Gird (Структура наследования фактически отличается в "MahApps.Metro.Controls.MetroWindow", ежели это было бы прямое наследование от "System.Windows.Window").
             this.OneWayBind(
                  this.ViewModel,
                  vm => vm.Height,
@@ -69,10 +69,10 @@ namespace FVH.SSHF
         }
         private static partial class NativeHelper
         {
-            [LibraryImport("user32")]
-            internal static partial IntPtr SetWindowLongPtrW(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-            [LibraryImport("user32")]
-            internal static partial IntPtr GetWindowLongPtrW(IntPtr hWnd, int nIndex);
+            [DllImport("user32")]
+            internal static extern nint SetWindowLongPtrW(nint hWnd, int nIndex, nint dwNewLong);
+            [DllImport("user32")]
+            internal static extern nint GetWindowLongPtrW(nint hWnd, int nIndex);
         }
     }
 }
