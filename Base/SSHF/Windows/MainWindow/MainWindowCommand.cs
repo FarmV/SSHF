@@ -32,6 +32,14 @@ namespace FVH.SSHF.ViewModels.MainWindowViewModel
          ],
          new Func<Task>(PresentNewImage), nameof(PresentNewImage)),
 
+        new Shortcuts(
+         [
+             VKeys.VK_LWIN,
+             VKeys.VK_SHIFT,
+             VKeys.VK_KEY_S
+         ],
+         new Func<Task>(InvokeMsScreenClip), nameof(InvokeMsScreenClip)),
+
          new Shortcuts(
          [
              VKeys.VK_CONTROL,
@@ -49,7 +57,7 @@ namespace FVH.SSHF.ViewModels.MainWindowViewModel
          [
              VKeys.VK_SCROLL
          ],
-         new Func<Task>(InvokeMsScreenClip), nameof(InvokeMsScreenClip)),
+         new Func<Task>(InvokeMsScreenClip),$"SCROLL_{nameof(InvokeMsScreenClip)}"),
         ];
 
         public MainWindowViewModel MainWindowViewModel { get; }

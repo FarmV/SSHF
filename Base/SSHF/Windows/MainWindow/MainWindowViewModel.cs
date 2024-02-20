@@ -10,6 +10,7 @@ using ReactiveUI;
 
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
+using System.Reactive.Linq;
 
 namespace FVH.SSHF.ViewModels.MainWindowViewModel
 {
@@ -110,11 +111,11 @@ namespace FVH.SSHF.ViewModels.MainWindowViewModel
                     if(_updateWindowCancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
                     await _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token);
                 }
-            }).ConfigureAwait(false);
+            });
         }
         private async Task StopUpdateWindow()
         {
-            if(_windowPositionUpdater.IsUpdateWindow is false) return;
+            if(_windowPositionUpdater.IsUpdateWindow is false || _isCancellingUpdate is true) return;
             _isCancellingUpdate = true;
             _updateWindowCancellationToken.Cancel();
             await Task.Run(() => { if(System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, TimeSpan.FromSeconds(1)) is not true) throw new TimeoutException(); });
@@ -131,7 +132,11 @@ namespace FVH.SSHF.ViewModels.MainWindowViewModel
         }
         private void SwitchBlockRefresh() => BlockRefresh = !BlockRefresh;
         private void Hide() => VisibleCondition = Visibility.Hidden;
-        private void Show() => VisibleCondition = Visibility.Visible;
+        private void Show()
+        {
+            if(MsScreenClip.IsEnableProcessHost() is true) return;
+            VisibleCondition = Visibility.Visible;
+        }
         private async Task DragMove()
         {
             if(_windowPositionUpdater.IsUpdateWindow is true) return;
@@ -145,7 +150,12 @@ namespace FVH.SSHF.ViewModels.MainWindowViewModel
             if(Mouse.LeftButton is not MouseButtonState.Pressed) return;
             _setImage.SaveImageFromDrop(ev, img);
         }
-        private void InvokeMsScreenClip() => MsScreenClip.Invoke();
+        private void InvokeMsScreenClip() 
+        { 
+           MsScreenClip.Invoke();
+           Thread.Sleep(400); // Чтобы окно оставалось в скриншоте, но убралось и не мешало композиции
+           HideWindow.Execute().Wait();
+        } 
         // private static Uri GetUriApp(string resourcePath) => new Uri(string.Format("pack://application:,,,/{0};component/{1}", Assembly.GetExecutingAssembly().GetName().Name, resourcePath));
     }
 }
