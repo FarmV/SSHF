@@ -17,6 +17,7 @@ using FVH.SSHF.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure.TrayIconManagment;
 using FVH.SSHF.ViewModels.MainWindowViewModel;
 using FVH.SSHF.Windows.MainWindow;
+using System.Reactive.Disposables;
 
 
 
@@ -24,9 +25,20 @@ namespace FVH.SSHF
 {
     internal partial class App
     {
-        private static class BasicDependencies
+        private class BasicDependencies : IDisposable
         {
-            internal static IHost ConfigureDependencies(Thread uiThread, string[]? args = null) => Host.CreateDefaultBuilder(args).ConfigureAppConfiguration((_, configuration) =>
+            private readonly CompositeDisposable _compositeDisposable = new CompositeDisposable();
+
+            public BasicDependencies() { }
+
+            public void Dispose()
+            {
+                if(_compositeDisposable.IsDisposed is true) return;
+                _compositeDisposable.Dispose();
+                GC.SuppressFinalize(this);
+            }
+
+            internal IHost ConfigureDependencies(Thread uiThread, string[]? args = null) => Host.CreateDefaultBuilder(args).ConfigureAppConfiguration((_, configuration) =>
             { configuration.Sources.Clear(); }).ConfigureServices((_, container) =>
             {
                 Dispatcher uiDispatcher = GetWPFUIDispatcher(uiThread);
@@ -37,16 +49,20 @@ namespace FVH.SSHF
 
                     container.AddSingleton<Dispatcher>(uiDispatcher);
 
-                    container.AddSingleton<Input>(CreateHandlerInput(uiDispatcher));
+                    Input input = CreateHandlerInput(uiDispatcher);
+                    _compositeDisposable.Add(input);
+
+                    container.AddSingleton<Input>(input);
 
                     container.AddSingleton<IGetImage>(CreateImageProvider());
 
                     container.AddSingleton<MainWindow>(CreateMainWindow(uiDispatcher));
 
-                    container.AddSingleton<WPFDropImageFile>
-                    (
-                     new WPFDropImageFile(container.BuildServiceProvider().GetRequiredService<MainWindow>())
-                    );
+                    WPFDropImageFile wpfDropImageFile = new WPFDropImageFile(container.BuildServiceProvider().GetRequiredService<MainWindow>());
+                    _compositeDisposable.Add(wpfDropImageFile);
+
+                    container.AddSingleton<WPFDropImageFile>(wpfDropImageFile);
+                 
 
                     container.AddSingleton<MainWindowViewModel>
                     (
@@ -71,7 +87,10 @@ namespace FVH.SSHF
                      container.BuildServiceProvider().GetRequiredService<MainWindowViewModel>()
                     );
 
-                    container.AddSingleton<TraiIcon>(CreateAnIconInTheNotificationArea());
+                    TrayIcon trayIcon = CreateAnIconInTheNotificationArea();
+                    _compositeDisposable.Add(trayIcon);
+
+                    container.AddSingleton<TrayIcon>(trayIcon);
 
                     container.AddSingleton<MainWindowExternalConditions>
                     (
@@ -135,9 +154,9 @@ namespace FVH.SSHF
 
                 return mainWindow;
             }
-            private static TraiIcon CreateAnIconInTheNotificationArea()
+            private static TrayIcon CreateAnIconInTheNotificationArea()
             {
-                TraiIcon trayIcon = new TraiIcon(App.GetResource(Resource.AppIcon).Stream);
+                TrayIcon trayIcon = new TrayIcon(App.GetResource(Resource.AppIcon).Stream);
                 return trayIcon;
             }
             private static Input CreateHandlerInput(Dispatcher? uiDispatcher = null)
@@ -151,6 +170,7 @@ namespace FVH.SSHF
             private static ShortcutsProvider CreateShortcutsManager(IKeyboardCallback keyboardCallback, IEnumerable<IInvokeShortcuts> listFunc) => new ShortcutsProvider(keyboardCallback, listFunc);
             private static MainWindowCommand CreateMainWindowCommand(Window window, MainWindowViewModel viewModel) => new MainWindowCommand(window, viewModel);
             private static MainWindowExternalConditions CreateMainWindowExternalConditions(MainWindowViewModel mainWindowViewModel, IKeyboardHandler keyboardHandler) => new MainWindowExternalConditions(mainWindowViewModel, keyboardHandler);
+           
         }
     }
 }
