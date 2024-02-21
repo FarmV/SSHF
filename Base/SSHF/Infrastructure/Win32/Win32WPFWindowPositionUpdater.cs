@@ -80,7 +80,6 @@ namespace FVH.SSHF.Infrastructure
             if(Mouse.LeftButton is MouseButtonState.Pressed) _window.DragMove();
             IsUpdateWindow = false;
         });
-        private bool t1 = false;
         private async Task UpdateWindowPositionRelativeToCursor(CancellationToken cancelToken)
         {
             MainWindowViewModel model = await _window.Dispatcher.InvokeAsync(() => model = ((IViewFor<MainWindowViewModel>)_window).ViewModel ?? throw new NullReferenceException("model = MainWindowViewModel is null"));
@@ -120,7 +119,6 @@ namespace FVH.SSHF.Infrastructure
 
                         }, System.Windows.Threading.DispatcherPriority.Render, CancellationToken.None);
 
-                        // await _window.Dispatcher.InvokeAsync(abc);
                     }
                 }
                 if(Win32TimePeriod.TimeEndPeriod(Win32TimePeriod.MinimumTimerResolution) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to change the timer range");
