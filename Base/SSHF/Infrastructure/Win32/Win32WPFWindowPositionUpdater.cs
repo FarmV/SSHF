@@ -22,10 +22,7 @@ namespace FVH.SSHF.Infrastructure
     internal partial class Win32WPFWindowPositionUpdater : ReactiveUI.ReactiveObject, IWindowPositionUpdater
     {
         private const nint HWND_TOP = 0;
-        private const nint HWND_TOPMOST = -1;
-        private const nint HWND_NOTOPMOST = -2;
         private const int IGNORE_SIZE_WINDOW = -1;
-        private const int SWP_NOMOVE = 0x0002;
         private const int OFFSET_CURSOR = 30;
         private const int NOT_MESSAGE_WM_WINDOWPOSCHANGING = 0x0400;
         private const int SWP_NOSIZE = 0x0001;
