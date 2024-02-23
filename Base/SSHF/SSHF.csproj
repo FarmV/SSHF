@@ -13,7 +13,7 @@
 		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
 		<Product>Screenshot Helper by FarmV</Product>
 		<Description>Screenshot Helper by FarmV</Description>
-		<Version>0.0.7</Version>
+		<Version>0.0.7.1</Version>
 		<Copyright>https://github.com/FarmV/SSHF</Copyright>
 		<ApplicationIcon>Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
 		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>

@@ -6,13 +6,13 @@ using System.Windows.Forms;
 
 namespace FVH.SSHF.Infrastructure.TrayIconManagment
 {
-    internal class TraiIcon : IDisposable
+    internal class TrayIcon : IDisposable
     {
         private bool _disposed;
         private bool _blockRepeatInvokeMessageBox = false;
         private readonly DPIIconHandler _dpiCorrector;
         private NotifyIcon _taskbarIcon;
-        public TraiIcon(Stream resourceIcon, int[]? sizesIcon = null)
+        public TrayIcon(Stream resourceIcon, int[]? sizesIcon = null)
         {
             _dpiCorrector = new DPIIconHandler(resourceIcon, sizesIcon);
             _taskbarIcon = new NotifyIcon

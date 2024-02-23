@@ -22,10 +22,7 @@ namespace FVH.SSHF.Infrastructure
     internal partial class Win32WPFWindowPositionUpdater : ReactiveUI.ReactiveObject, IWindowPositionUpdater
     {
         private const nint HWND_TOP = 0;
-        private const nint HWND_TOPMOST = -1;
-        private const nint HWND_NOTOPMOST = -2;
         private const int IGNORE_SIZE_WINDOW = -1;
-        private const int SWP_NOMOVE = 0x0002;
         private const int OFFSET_CURSOR = 30;
         private const int NOT_MESSAGE_WM_WINDOWPOSCHANGING = 0x0400;
         private const int SWP_NOSIZE = 0x0001;
@@ -80,7 +77,6 @@ namespace FVH.SSHF.Infrastructure
             if(Mouse.LeftButton is MouseButtonState.Pressed) _window.DragMove();
             IsUpdateWindow = false;
         });
-        private bool t1 = false;
         private async Task UpdateWindowPositionRelativeToCursor(CancellationToken cancelToken)
         {
             MainWindowViewModel model = await _window.Dispatcher.InvokeAsync(() => model = ((IViewFor<MainWindowViewModel>)_window).ViewModel ?? throw new NullReferenceException("model = MainWindowViewModel is null"));
@@ -119,8 +115,6 @@ namespace FVH.SSHF.Infrastructure
                             }
 
                         }, System.Windows.Threading.DispatcherPriority.Render, CancellationToken.None);
-
-                        // await _window.Dispatcher.InvokeAsync(abc);
                     }
                 }
                 if(Win32TimePeriod.TimeEndPeriod(Win32TimePeriod.MinimumTimerResolution) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to change the timer range");
