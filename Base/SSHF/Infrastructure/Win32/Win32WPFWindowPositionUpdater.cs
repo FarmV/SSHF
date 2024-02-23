@@ -115,7 +115,6 @@ namespace FVH.SSHF.Infrastructure
                             }
 
                         }, System.Windows.Threading.DispatcherPriority.Render, CancellationToken.None);
-
                     }
                 }
                 if(Win32TimePeriod.TimeEndPeriod(Win32TimePeriod.MinimumTimerResolution) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to change the timer range");
