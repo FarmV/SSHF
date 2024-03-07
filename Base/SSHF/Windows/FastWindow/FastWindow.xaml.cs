@@ -9,13 +9,13 @@ using FVH.SSHF.ViewModels.MainWindowViewModel;
 
 namespace FVH.SSHF
 {
-    public partial class MainWindow : MahApps.Metro.Controls.MetroWindow, IViewFor<MainWindowViewModel>
+    public partial class FastWindow : MahApps.Metro.Controls.MetroWindow, IViewFor<FastWindowViewModel>
     {
-        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel), typeof(MainWindowViewModel), typeof(MainWindow));
+        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel), typeof(FastWindowViewModel), typeof(FastWindow));
         private readonly int GWL_EXSTYLE = -20;
         private readonly long WS_EX_TOOLWINDOW = 0x00000080;
         private readonly long WS_EX_NOACTIVATE = 0x08000000L;
-        public MainWindow()
+        public FastWindow()
         {
             InitializeComponent();
             this.Title = "Fast Window";
@@ -57,14 +57,14 @@ namespace FVH.SSHF
             get => ViewModel;
             set
             {
-                if (value is not MainWindowViewModel vm) throw new InvalidOperationException($"ViewModel is not {nameof(MainWindowViewModel)}");
+                if (value is not FastWindowViewModel vm) throw new InvalidOperationException($"ViewModel is not {nameof(FastWindowViewModel)}");
                 ViewModel = vm;
                 SetBindingSizePostSwithVisible();
             }
         }
-        public MainWindowViewModel? ViewModel
+        public FastWindowViewModel? ViewModel
         {
-            get => (MainWindowViewModel)GetValue(ViewModelProperty);
+            get => (FastWindowViewModel)GetValue(ViewModelProperty);
             set => SetValue(ViewModelProperty, value);
         }
         private static partial class NativeHelper

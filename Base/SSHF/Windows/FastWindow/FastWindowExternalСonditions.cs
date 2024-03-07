@@ -14,9 +14,9 @@ namespace FVH.SSHF.Windows.MainWindow
 {
     internal class MainWindowExternalConditions
     {
-        private readonly MainWindowViewModel _mainWindowViewModel;
+        private readonly FastWindowViewModel _mainWindowViewModel;
         private readonly IKeyboardHandler _keyboardHandler;
-        public MainWindowExternalConditions(MainWindowViewModel mainWindowViewModel, IKeyboardHandler keyboardHandler)
+        public MainWindowExternalConditions(FastWindowViewModel mainWindowViewModel, IKeyboardHandler keyboardHandler)
         {
             _mainWindowViewModel = mainWindowViewModel;
             _keyboardHandler = keyboardHandler;

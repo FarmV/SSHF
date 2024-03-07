@@ -14,7 +14,7 @@ using System.Reactive.Linq;
 
 namespace FVH.SSHF.ViewModels.MainWindowViewModel
 {
-    public partial class MainWindowViewModel : ReactiveObject
+    public partial class FastWindowViewModel : ReactiveObject
     {
         private readonly IGetImage _imageProvider;
         private readonly IWindowPositionUpdater _windowPositionUpdater;
@@ -31,12 +31,12 @@ namespace FVH.SSHF.ViewModels.MainWindowViewModel
         private double _height = 0;
 
 #pragma warning disable CS8618 // Empty class constructor for designer only
-        public MainWindowViewModel()
+        public FastWindowViewModel()
 #pragma warning restore CS8618
         {
             if(App.DesignerMode is not true) throw new InvalidOperationException("Empty class constructor for designer only");
         }
-        public MainWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, DpiCorrector dpiCorrector, WPFDropImageFile setImage)
+        public FastWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, DpiCorrector dpiCorrector, WPFDropImageFile setImage)
         {
             _imageProvider = imageProvider;
             _windowPositionUpdater = windowPositionUpdater;

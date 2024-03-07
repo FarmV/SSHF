@@ -9,13 +9,13 @@ using FVH.SSHF.Infrastructure.Interfaces;
 
 namespace FVH.SSHF.ViewModels.MainWindowViewModel
 {
-    internal class MainWindowCommand : IInvokeShortcuts
+    internal class FastWindowCommand : IInvokeShortcuts
     {
         private readonly System.Windows.Window _window;
         private bool _isExecutePresentNewImage = false;
         private Shortcuts[]? _shortcuts;
 
-        internal MainWindowCommand(System.Windows.Window window, MainWindowViewModel mainWindowView)
+        internal FastWindowCommand(System.Windows.Window window, FastWindowViewModel mainWindowView)
         {
             _window = window;
             MainWindowViewModel = mainWindowView;
@@ -60,7 +60,7 @@ namespace FVH.SSHF.ViewModels.MainWindowViewModel
          new Func<Task>(InvokeMsScreenClip),$"SCROLL_{nameof(InvokeMsScreenClip)}"),
         ];
 
-        public MainWindowViewModel MainWindowViewModel { get; }
+        public FastWindowViewModel MainWindowViewModel { get; }
         public IEnumerable<Shortcuts> GetShortcuts() => _shortcuts ?? throw new NullReferenceException(nameof(_shortcuts));
         public async Task PresentNewImage()
         {

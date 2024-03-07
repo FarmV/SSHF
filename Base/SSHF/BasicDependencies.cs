@@ -56,25 +56,25 @@ namespace FVH.SSHF
 
                     container.AddSingleton<IGetImage>(CreateImageProvider());
 
-                    container.AddSingleton<MainWindow>(CreateMainWindow(uiDispatcher));
+                    container.AddSingleton<FastWindow>(CreateMainWindow(uiDispatcher));
 
-                    WPFDropImageFile wpfDropImageFile = new WPFDropImageFile(container.BuildServiceProvider().GetRequiredService<MainWindow>());
+                    WPFDropImageFile wpfDropImageFile = new WPFDropImageFile(container.BuildServiceProvider().GetRequiredService<FastWindow>());
                     _compositeDisposable.Add(wpfDropImageFile);
 
                     container.AddSingleton<WPFDropImageFile>(wpfDropImageFile);
                  
 
-                    container.AddSingleton<MainWindowViewModel>
+                    container.AddSingleton<FastWindowViewModel>
                     (
                      CreateMainWindowViewModel
                      (
                         imageProvider: CreateImageProvider(),
                         windowPositionUpdater: CreatePositionUpdaterWin32WPF
                         (
-                         window: container.BuildServiceProvider().GetRequiredService<MainWindow>()),
+                         window: container.BuildServiceProvider().GetRequiredService<FastWindow>()),
                          corrector: new DpiCorrector
                          (
-                          window: container.BuildServiceProvider().GetRequiredService<MainWindow>(),
+                          window: container.BuildServiceProvider().GetRequiredService<FastWindow>(),
                           dispatcher: container.BuildServiceProvider().GetRequiredService<Dispatcher>()
                          ),
                         setImage: container.BuildServiceProvider().GetRequiredService<WPFDropImageFile>()
@@ -83,8 +83,8 @@ namespace FVH.SSHF
 
                     SetDataContextMainWindow
                     (
-                     container.BuildServiceProvider().GetRequiredService<MainWindow>(),
-                     container.BuildServiceProvider().GetRequiredService<MainWindowViewModel>()
+                     container.BuildServiceProvider().GetRequiredService<FastWindow>(),
+                     container.BuildServiceProvider().GetRequiredService<FastWindowViewModel>()
                     );
 
                     TrayIcon trayIcon = CreateAnIconInTheNotificationArea();
@@ -96,17 +96,17 @@ namespace FVH.SSHF
                     (
                      CreateMainWindowExternalConditions
                      (
-                      container.BuildServiceProvider().GetRequiredService<MainWindowViewModel>(),
+                      container.BuildServiceProvider().GetRequiredService<FastWindowViewModel>(),
                       container.BuildServiceProvider().GetRequiredService<Input>().GetKeyboardHandler()
                      )
                     );
 
-                    container.AddSingleton<MainWindowCommand>
+                    container.AddSingleton<FastWindowCommand>
                     (
                      CreateMainWindowCommand
                      (
-                      container.BuildServiceProvider().GetRequiredService<MainWindow>(),
-                      container.BuildServiceProvider().GetRequiredService<MainWindowViewModel>()
+                      container.BuildServiceProvider().GetRequiredService<FastWindow>(),
+                      container.BuildServiceProvider().GetRequiredService<FastWindowViewModel>()
                      )
                     );
 
@@ -114,7 +114,7 @@ namespace FVH.SSHF
                     {
                         if(args.SingleOrDefault(x => x == "--SCR_NotBR") is not null)
                         {
-                            MainWindowCommand mainWindowCommand = container.BuildServiceProvider().GetRequiredService<MainWindowCommand>();
+                            FastWindowCommand mainWindowCommand = container.BuildServiceProvider().GetRequiredService<FastWindowCommand>();
                             Shortcuts[] defaultShortcuts = mainWindowCommand.GetDefaultShortcuts();
                             mainWindowCommand.SetNewShortcuts(defaultShortcuts.Where(x => x != defaultShortcuts.Single(x => x.KeyCombo[0] == VKeys.VK_SCROLL)).ToArray());
                         }
@@ -125,7 +125,7 @@ namespace FVH.SSHF
                      CreateShortcutsManager
                      (
                       container.BuildServiceProvider().GetRequiredService<Input>().GetKeyboardCallbackFunction(),
-                      [container.BuildServiceProvider().GetRequiredService<MainWindowCommand>()]
+                      [container.BuildServiceProvider().GetRequiredService<FastWindowCommand>()]
                      )
                     );
                 });
@@ -133,21 +133,21 @@ namespace FVH.SSHF
             private static Dispatcher GetWPFUIDispatcher(Thread uiThread) => Dispatcher.FromThread(uiThread) is not Dispatcher uiDispatcher ? throw new InvalidOperationException() : uiDispatcher;
             private static IWindowPositionUpdater CreatePositionUpdaterWin32WPF(Window window) => new Win32WPFWindowPositionUpdater(window);
             private static IGetImage CreateImageProvider() => new ImageProvider();
-            private static MainWindowViewModel CreateMainWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, DpiCorrector corrector, WPFDropImageFile setImage) =>
-                           new MainWindowViewModel(imageProvider, windowPositionUpdater, corrector, setImage);
-            private static void SetDataContextMainWindow(Window window, MainWindowViewModel mainWindowViewModel)
+            private static FastWindowViewModel CreateMainWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, DpiCorrector corrector, WPFDropImageFile setImage) =>
+                           new FastWindowViewModel(imageProvider, windowPositionUpdater, corrector, setImage);
+            private static void SetDataContextMainWindow(Window window, FastWindowViewModel mainWindowViewModel)
             {
                 window.DataContext = mainWindowViewModel;
                 ((IViewFor)window).ViewModel = mainWindowViewModel;
             }
-            private static MainWindow CreateMainWindow(Dispatcher? uiDispatcher = null)
+            private static FastWindow CreateMainWindow(Dispatcher? uiDispatcher = null)
             {
                 uiDispatcher ??= System.Windows.Application.Current.Dispatcher;
 
-                MainWindow? mainWindow = null;
+                FastWindow? mainWindow = null;
                 uiDispatcher.Invoke(() =>
                 {
-                    mainWindow = new MainWindow();
+                    mainWindow = new FastWindow();
                     mainWindow.Show();
                 });
                 if(mainWindow is null) throw new NullReferenceException();
@@ -168,8 +168,8 @@ namespace FVH.SSHF
                 return inputHandler ?? throw new NullReferenceException();
             }
             private static ShortcutsProvider CreateShortcutsManager(IKeyboardCallback keyboardCallback, IEnumerable<IInvokeShortcuts> listFunc) => new ShortcutsProvider(keyboardCallback, listFunc);
-            private static MainWindowCommand CreateMainWindowCommand(Window window, MainWindowViewModel viewModel) => new MainWindowCommand(window, viewModel);
-            private static MainWindowExternalConditions CreateMainWindowExternalConditions(MainWindowViewModel mainWindowViewModel, IKeyboardHandler keyboardHandler) => new MainWindowExternalConditions(mainWindowViewModel, keyboardHandler);
+            private static FastWindowCommand CreateMainWindowCommand(Window window, FastWindowViewModel viewModel) => new FastWindowCommand(window, viewModel);
+            private static MainWindowExternalConditions CreateMainWindowExternalConditions(FastWindowViewModel mainWindowViewModel, IKeyboardHandler keyboardHandler) => new MainWindowExternalConditions(mainWindowViewModel, keyboardHandler);
            
         }
     }
