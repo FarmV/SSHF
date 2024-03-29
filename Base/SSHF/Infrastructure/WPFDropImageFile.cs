@@ -11,6 +11,7 @@ namespace FVH.SSHF.Infrastructure
     public class WPFDropImageFile : IDisposable
     {
         private readonly Window _window;
+        internal bool IsDisposed = false;
         private string _fileTmpPath = string.Empty;
         private DataObject _dropData;
         private Timer? _clearTmpTimer;
@@ -22,6 +23,8 @@ namespace FVH.SSHF.Infrastructure
         }
         public void Dispose()
         {
+            if(IsDisposed) return;
+            IsDisposed = true;
             ClearTmpFile();
             _clearTmpTimer?.Dispose();
             GC.SuppressFinalize(this);
