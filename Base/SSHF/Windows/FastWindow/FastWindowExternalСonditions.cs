@@ -10,13 +10,13 @@ using FVH.Background.Input.Infrastructure.Interfaces;
 
 using FVH.SSHF.ViewModels.MainWindowViewModel;
 
-namespace FVH.SSHF.Windows.MainWindow
+namespace FVH.SSHF.Windows.FastWindow
 {
-    internal class MainWindowExternalConditions
+    internal class FastWindowExternalConditions
     {
         private readonly FastWindowViewModel _mainWindowViewModel;
         private readonly IKeyboardHandler _keyboardHandler;
-        public MainWindowExternalConditions(FastWindowViewModel mainWindowViewModel, IKeyboardHandler keyboardHandler)
+        public FastWindowExternalConditions(FastWindowViewModel mainWindowViewModel, IKeyboardHandler keyboardHandler)
         {
             _mainWindowViewModel = mainWindowViewModel;
             _keyboardHandler = keyboardHandler;

@@ -18,7 +18,7 @@ namespace FVH.SSHF.ViewModels.MainWindowViewModel
     {
         private readonly IGetImage _imageProvider;
         private readonly IWindowPositionUpdater _windowPositionUpdater;
-        private readonly DpiCorrector _dpiCorrector;
+        private readonly WPFDpiCorrector _dpiCorrector;
         private readonly WPFDropImageFile _setImage;
         private Visibility _visibleCondition = Visibility.Hidden;
         private ImageSource? _imageBackground;
@@ -36,7 +36,7 @@ namespace FVH.SSHF.ViewModels.MainWindowViewModel
         {
             if(App.DesignerMode is not true) throw new InvalidOperationException("Empty class constructor for designer only");
         }
-        public FastWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, DpiCorrector dpiCorrector, WPFDropImageFile setImage)
+        public FastWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, WPFDpiCorrector dpiCorrector, WPFDropImageFile setImage)
         {
             _imageProvider = imageProvider;
             _windowPositionUpdater = windowPositionUpdater;
