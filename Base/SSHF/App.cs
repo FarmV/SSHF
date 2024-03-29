@@ -13,6 +13,7 @@ using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.TrayIconManagment;
 using System.Windows;
 using System.Reactive.Disposables;
+using System.Windows.Threading;
 
 
 namespace FVH.SSHF
@@ -48,36 +49,43 @@ namespace FVH.SSHF
             /// Возвращаемое значение 2147508241 вероятно не корректно. SetThreadDpiAwarenessContext предполагает возврат nint, 
             /// из перечисления DPI_AWARENESS_CONTEXT прошлого состояния потока.
             /// </summary>
-            if(SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == nint.Zero) 
-            { 
+            if(SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == nint.Zero)
+            {
                 string error = Marshal.GetLastPInvokeErrorMessage();
                 throw new InvalidOperationException(error);
             }
 
             System.Windows.Application application = new System.Windows.Application();
-            application.Startup += (_,_) => Start(args);
+            application.Startup += (_, _) => Start(args);
             application.Run();
             return _applicationExitCode;
         }
-        private static void Start(string[]? args)
+        private static async void Start(string[]? args)
         {
-            DesignerMode = false;
+            Thread uiThread = Thread.CurrentThread;
+            await Task.Factory.StartNew(() =>
+            {
+                DesignerMode = false;
 
-            BasicDependencies basicDependencies = new BasicDependencies();
-            IHost dependencies = basicDependencies.ConfigureDependencies(Thread.CurrentThread, args);
+                BasicDependencies basicDependencies = new BasicDependencies();
+                IHost dependencies = basicDependencies.ConfigureDependencies(uiThread, args);
 
-            App app = new App(dependencies, basicDependencies);
-            app._serviceProvider = app._host.Services;
-            app.RegShortcuts();
-            System.Windows.Application.Current.Exit += app.Shutdown;
-            app._host.Start();
+                App app = new App(dependencies, basicDependencies);
+                app._serviceProvider = app._host.Services;
+                app.RegShortcuts();
+                Dispatcher.FromThread(uiThread).Invoke(() =>
+                {
+                    System.Windows.Application.Current.Exit += app.Shutdown;
+                });
+                app._host.Start();
+            });
         }
         private void Shutdown(object _, ExitEventArgs e)
         {
             _applicationExitCode = e.ApplicationExitCode;
             _basicDependencies.Dispose();
-            _mutexSingleInstance?.Dispose();
             _host.Dispose();
+            _mutexSingleInstance?.Dispose();
         }
         private static bool CreateMutexForSingleProgram()
         {
