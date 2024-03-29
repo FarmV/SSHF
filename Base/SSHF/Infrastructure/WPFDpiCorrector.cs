@@ -9,7 +9,7 @@ using System.Windows.Threading;
 
 namespace FVH.SSHF.Infrastructure
 {
-    public class DpiCorrector(Window window, Dispatcher dispatcher)
+    public class WPFDpiCorrector(Window window, Dispatcher dispatcher)
     {
         private readonly Window _window = window;
         private readonly Dispatcher _dispatcher = dispatcher;

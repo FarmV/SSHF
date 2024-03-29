@@ -12,7 +12,7 @@ using ControlzEx.Standard;
 
 using FVH.SSHF.Infrastructure.Interfaces;
 using System.Diagnostics;
-using FVH.SSHF.ViewModels.MainWindowViewModel;
+using FVH.SSHF.ViewModels.FastWindowViewModel;
 using System.Reactive.Linq;
 using System.Windows.Threading;
 
@@ -79,7 +79,7 @@ namespace FVH.SSHF.Infrastructure
         });
         private async Task UpdateWindowPositionRelativeToCursor(CancellationToken cancelToken)
         {
-            FastWindowViewModel model = await _window.Dispatcher.InvokeAsync(() => model = ((IViewFor<FastWindowViewModel>)_window).ViewModel ?? throw new NullReferenceException("model = MainWindowViewModel is null"));
+            NotificationWindowViewModel model = await _window.Dispatcher.InvokeAsync(() => model = ((IViewFor<NotificationWindowViewModel>)_window).ViewModel ?? throw new NullReferenceException("model = MainWindowViewModel is null"));
 
             if(cancelToken.IsCancellationRequested is true) return;
             if(_isUpdateWindow is true) throw new InvalidOperationException($"The window refresh operation cannot be invoked while the window is being refreshed. Check {nameof(IsUpdateWindow)} property");
