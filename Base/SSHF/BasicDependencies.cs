@@ -15,10 +15,7 @@ using FVH.Background.Input.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure.TrayIconManagment;
-using FVH.SSHF.ViewModels.FastWindowViewModel;
-using FVH.SSHF.Windows.MainWindow;
 using System.Reactive.Disposables;
-
 
 
 namespace FVH.SSHF

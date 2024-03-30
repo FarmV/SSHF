@@ -8,9 +8,8 @@ using ReactiveUI;
 using FVH.Background.Input;
 using FVH.Background.Input.Infrastructure.Interfaces;
 
-using FVH.SSHF.ViewModels.MainWindowViewModel;
 
-namespace FVH.SSHF.Windows.FastWindow
+namespace FVH.SSHF.FastWindowArea
 {
     internal class FastWindowExternalConditions
     {

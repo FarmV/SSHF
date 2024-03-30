@@ -5,32 +5,31 @@ using System.Windows.Interop;
 
 using ReactiveUI;
 
-
-namespace FVH.SSHF.FastWindowArea
+namespace FVH.SSHF.NotificationWindowArea
 {
-    public partial class FastWindow : MahApps.Metro.Controls.MetroWindow, IViewFor<FastWindowViewModel>
+    public partial class NotificationWindow : MahApps.Metro.Controls.MetroWindow, IViewFor<NotificationWindowViewModel>
     {
-        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel), typeof(FastWindowViewModel), typeof(FastWindow));
-        private readonly int GWL_EXSTYLE = -20;
-        private readonly long WS_EX_TOOLWINDOW = 0x00000080;
-        private readonly long WS_EX_NOACTIVATE = 0x08000000L;
-        public FastWindow()
+        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel), typeof(NotificationWindowViewModel), typeof(NotificationWindow));
+        private const long WS_EX_TOOLWINDOW = 0x00000080;
+        private const long WS_EX_NOACTIVATE = 0x08000000L;
+        private const int GWL_EXSTYLE = -20;
+        public NotificationWindow()
         {
             InitializeComponent();
-            this.Title = "Fast Window";
+            this.Title = "Notification Window";
 
             HideAltTabWindow();
         }
         private void HideAltTabWindow()
         {
-            IntPtr hWnd = new WindowInteropHelper(this).EnsureHandle();
-            NativeHelper.SetWindowLongPtrW(hWnd, GWL_EXSTYLE, new IntPtr(NativeHelper.GetWindowLongPtrW(hWnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE));
+            nint handleWindow = new WindowInteropHelper(this).EnsureHandle();
+            NativeHelper.SetWindowLongPtrW(handleWindow, GWL_EXSTYLE, new nint(NativeHelper.GetWindowLongPtrW(handleWindow, GWL_EXSTYLE) | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE));
         }
         /// <summary>
         /// Заглушка - Изменения свойства Visibility деактивирует привязку к размерам окна.
         /// Решение установить привязку после изменение Visibility и не изменять это свойство. Реализовать сокрытие окна через opacity.
         /// </summary>
-        private void SetBindingSizePostSwithVisible()
+        private void SetBindingSizePostSwitchVisible() // todo Вроде нужно освободить ресурсы привязок чтобы объект мог быть собран сборщиком мусора
         {
             this.OneWayBind(
                  this.ViewModel,
@@ -56,14 +55,14 @@ namespace FVH.SSHF.FastWindowArea
             get => ViewModel;
             set
             {
-                if (value is not FastWindowViewModel vm) throw new InvalidOperationException($"ViewModel is not {nameof(FastWindowViewModel)}");
+                if (value is not NotificationWindowViewModel vm) throw new InvalidOperationException($"ViewModel is not {nameof(NotificationWindowViewModel)}");
                 ViewModel = vm;
-                SetBindingSizePostSwithVisible();
+                SetBindingSizePostSwitchVisible();
             }
         }
-        public FastWindowViewModel? ViewModel
+        public NotificationWindowViewModel? ViewModel
         {
-            get => (FastWindowViewModel)GetValue(ViewModelProperty);
+            get => (NotificationWindowViewModel)GetValue(ViewModelProperty);
             set => SetValue(ViewModelProperty, value);
         }
         private static partial class NativeHelper

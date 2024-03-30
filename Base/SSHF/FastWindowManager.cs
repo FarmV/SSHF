@@ -10,8 +10,8 @@ using FVH.Background.Input.Infrastructure.Interfaces;
 
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
-using FVH.SSHF.Windows.MainWindow;
-using FVH.SSHF.ViewModels.FastWindowViewModel;
+using FVH.SSHF.FastWindowArea;
+using FVH.SSHF.NotificationWindowArea;
 
 namespace FVH.SSHF
 {
@@ -79,9 +79,9 @@ namespace FVH.SSHF
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
 
-            Task<(FastWindow, NotificationWindowViewModel, FastWindowViewModelDependencies)> task = _dispatcher.Invoke(_windowCreator.CreateFastWindowAsync);
+            Task<(FastWindow, FastWindowViewModel, FastWindowViewModelDependencies)> task = _dispatcher.Invoke(_windowCreator.CreateFastWindowAsync);
 
-            (FastWindow FastWindow, NotificationWindowViewModel FastWindowViewModel, FastWindowViewModelDependencies FastWindowViewModelDependencies) fastWindow = await task;
+            (FastWindow FastWindow, FastWindowViewModel FastWindowViewModel, FastWindowViewModelDependencies FastWindowViewModelDependencies) fastWindow = await task;
 
             //(FastWindow FastWindow, FastWindowViewModel FastWindowViewModel, FastWindowViewModelDependencies FastWindowViewModelDependencies) fastWindow =
             //await await _dispatcher.InvokeAsync(_windowCreator.CreateFastWindowAsync).Task;
@@ -106,7 +106,7 @@ namespace FVH.SSHF
              VKeys.VK_SHIFT,
              VKeys.VK_KEY_A
          ],
-         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.PresentNewImageAsync(), nameof(_activeFastWindow.FastWindowCommand.PresentNewImageAsync)),
+         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.PresentNewImage(), nameof(_activeFastWindow.FastWindowCommand.PresentNewImage)),
 
          new Shortcuts(
          [
@@ -114,26 +114,26 @@ namespace FVH.SSHF
              VKeys.VK_SHIFT,
              VKeys.VK_KEY_S
          ],
-         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.InvokeMsScreenClipAsync(), nameof(_activeFastWindow.FastWindowCommand.InvokeMsScreenClipAsync)),
+         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.InvokeMsScreenClip(), nameof(_activeFastWindow.FastWindowCommand.InvokeMsScreenClip)),
 
          new Shortcuts(
          [
              VKeys.VK_CONTROL,
              VKeys.VK_CAPITAL
          ],
-         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.SwitchBlockRefreshWindowAsync(), nameof(_activeFastWindow.FastWindowCommand.SwitchBlockRefreshWindowAsync)),
+         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.SwitchBlockRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.SwitchBlockRefreshWindow)),
 
          new Shortcuts(
          [
              VKeys.VK_CONTROL
          ],
-         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.StopRefreshWindowAsync(), nameof(_activeFastWindow.FastWindowCommand.StopRefreshWindowAsync)),
+         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.StopRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.StopRefreshWindow) ),
 
          new Shortcuts(
          [
              VKeys.VK_SCROLL
          ],
-         new Func<Task>(_activeFastWindow!.FastWindowCommand.InvokeMsScreenClipAsync),$"SCROLL_{nameof(_activeFastWindow.FastWindowCommand.InvokeMsScreenClipAsync)}"),
+         new Func<Task>(_activeFastWindow!.FastWindowCommand.InvokeMsScreenClip),$"SCROLL_{nameof(_activeFastWindow.FastWindowCommand.InvokeMsScreenClip)}"),
 
          new Shortcuts(
          [
@@ -200,7 +200,7 @@ namespace FVH.SSHF
             _dispatcher = UiDispatcher;
             _getFastWindowViewModelDependencies = fastWindowViewModelDependencies;
         }
-        internal async Task<(FastWindow, NotificationWindowViewModel, FastWindowViewModelDependencies)> CreateFastWindowAsync()
+        internal async Task<(FastWindow, FastWindowViewModel, FastWindowViewModelDependencies)> CreateFastWindowAsync()
         {
             FastWindow window = await _dispatcher.InvokeAsync(() => new FastWindow());
             await _dispatcher.InvokeAsync(window.Show);
@@ -210,7 +210,7 @@ namespace FVH.SSHF
             fastWindowViewModelDependencies.SetImage = new WPFDropImageFile(window);
             fastWindowViewModelDependencies.IWindowPositionUpdater = new Win32WPFWindowPositionUpdater(window);
 
-            NotificationWindowViewModel viewModel = await _dispatcher.InvokeAsync(() => CreateViewModelFastWindow(fastWindowViewModelDependencies));
+            FastWindowViewModel viewModel = await _dispatcher.InvokeAsync(() => CreateViewModelFastWindow(fastWindowViewModelDependencies));
             await _dispatcher.InvokeAsync(() =>
             {
                 window.DataContext = viewModel;
@@ -218,10 +218,10 @@ namespace FVH.SSHF
             });
             return (window, viewModel, fastWindowViewModelDependencies);
         }
-        private NotificationWindowViewModel CreateViewModelFastWindow(FastWindowViewModelDependencies fastWindowViewModelDependencies) =>
+        private FastWindowViewModel CreateViewModelFastWindow(FastWindowViewModelDependencies fastWindowViewModelDependencies) =>
         _dispatcher.Invoke
         (() =>
-         new NotificationWindowViewModel
+         new FastWindowViewModel
          (
           fastWindowViewModelDependencies.IGetImage,
           fastWindowViewModelDependencies.IWindowPositionUpdater!,

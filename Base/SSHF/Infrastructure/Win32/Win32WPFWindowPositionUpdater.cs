@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Diagnostics;
+using System.Windows.Threading;
+using System.Reactive.Linq;
 
 using ReactiveUI;
 using ControlzEx.Standard;
 
 using FVH.SSHF.Infrastructure.Interfaces;
-using System.Diagnostics;
-using FVH.SSHF.ViewModels.FastWindowViewModel;
-using System.Reactive.Linq;
-using System.Windows.Threading;
+using FVH.SSHF.FastWindowArea;
 
 
 namespace FVH.SSHF.Infrastructure
@@ -79,7 +79,7 @@ namespace FVH.SSHF.Infrastructure
         });
         private async Task UpdateWindowPositionRelativeToCursor(CancellationToken cancelToken)
         {
-            NotificationWindowViewModel model = await _window.Dispatcher.InvokeAsync(() => model = ((IViewFor<NotificationWindowViewModel>)_window).ViewModel ?? throw new NullReferenceException("model = MainWindowViewModel is null"));
+            FastWindowViewModel model = await _window.Dispatcher.InvokeAsync(() => model = ((IViewFor<FastWindowViewModel>)_window).ViewModel ?? throw new NullReferenceException("model = MainWindowViewModel is null"));
 
             if(cancelToken.IsCancellationRequested is true) return;
             if(_isUpdateWindow is true) throw new InvalidOperationException($"The window refresh operation cannot be invoked while the window is being refreshed. Check {nameof(IsUpdateWindow)} property");

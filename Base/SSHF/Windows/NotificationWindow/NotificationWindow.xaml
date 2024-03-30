@@ -1,41 +1,43 @@
 ﻿<mah:MetroWindow    
-    xmlns = "http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x = "http://schemas.microsoft.com/winfx/2006/xaml" 
-    xmlns:d = "http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc = "http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable = "d"
-    xmlns:diag = "clr-namespace:System.Diagnostics;assembly=WindowsBase"
-    xmlns:sys = "clr-namespace:System;assembly=mscorlib"
+    x:Name="Fast"
+    x:Class="FVH.SSHF.NotificationWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+    mc:Ignorable="d"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:FVH.SSHF.ViewModels.FastWindowViewModel"
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+  
+    xmlns:converter ="clr-namespace:FVH.SSHF.Infrastructure.Converters"   
+    xmlns:actions="clr-namespace:MahApps.Metro.Actions;assembly=MahApps.Metro"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:rxui="clr-namespace:System.Reactive;assembly=System.Reactive"
+    xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
     
-    xmlns:mah = "http://metro.mahapps.com/winfx/xaml/controls"
-    xmlns:rxui = "clr-namespace:System.Reactive;assembly=System.Reactive"
-    xmlns:i = "http://schemas.microsoft.com/xaml/behaviors"    
-    xmlns:actions = "clr-namespace:MahApps.Metro.Actions;assembly=MahApps.Metro"
-          
-    x:Name ="Fast"
-    x:Class = "FVH.SSHF.FastWindowArea.FastWindow"    
-    xmlns:vm = "clr-namespace:FVH.SSHF.FastWindowArea"
-    xmlns:converter = "clr-namespace:FVH.SSHF.Infrastructure.Converters"   
-    
-    d:DataContext="{d:DesignInstance Type = vm:FastWindowViewModel, IsDesignTimeCreatable = True}"
-                
-    Visibility="Visible"
-    WindowStyle="None"      
     AllowsTransparency="True"
+    WindowStyle="None"      
     Topmost="True" 
-    SizeToContent="Manual"   
-    ResizeMode="NoResize"
 
     ShowInTaskbar="False"    
     ShowTitleBar="False"
     ShowMinButton="False"
     ShowCloseButton="False"
     ShowMaxRestoreButton="False"
-    NonActiveBorderBrush="Transparent"   
+    NonActiveBorderBrush="Transparent"
+ 
+    
+    ResizeMode="NoResize"
+    d:DataContext="{d:DesignInstance Type=vm:NotificationWindowViewModel, IsDesignTimeCreatable=True}"
+    Visibility="Visible"
+       
+    SizeToContent="Manual"   
+
    >
     <Window.Resources>
-        <converter:ConverterImageDPIViewport x:Key="KeyConverterImageDPIViewport"/>
-        <converter:ConverterVisibleToOpacity x:Key="KeyConverterVisibleToOpacity"/>
+        <converter:ConverterImageDPIViewport x:Key="ConDPIViewport"/>
+        <converter:ConverterVisibleToOpacity x:Key="ConVisToOP"/>
     </Window.Resources>
 
 
@@ -74,12 +76,12 @@
                 <Setter Property="Background">
                     <Setter.Value>
                         <Binding 
-                             Path="BackgroundImage" Converter="{StaticResource KeyConverterImageDPIViewport}"/>
+                             Path="BackgroundImage" Converter="{StaticResource ConDPIViewport}"/>
                     </Setter.Value>
                 </Setter>
                 <Setter Property="Opacity">
                     <Setter.Value>
-                        <Binding Path="VisibleCondition" Converter="{StaticResource KeyConverterVisibleToOpacity}"/>
+                        <Binding Path="VisibleCondition" Converter="{StaticResource ConVisToOP}"/>
                     </Setter.Value>
                 </Setter>
             </Style>

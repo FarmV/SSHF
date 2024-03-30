@@ -7,7 +7,7 @@ using FVH.Background.Input.Infrastructure.Interfaces;
 
 using FVH.SSHF.Infrastructure.Interfaces;
 
-namespace FVH.SSHF.ViewModels.MainWindowViewModel
+namespace FVH.SSHF.FastWindowArea
 {
     internal class FastWindowCommand : IInvokeShortcuts
     {

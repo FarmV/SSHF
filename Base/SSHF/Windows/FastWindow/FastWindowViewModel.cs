@@ -12,7 +12,7 @@ using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
 using System.Reactive.Linq;
 
-namespace FVH.SSHF.ViewModels.MainWindowViewModel
+namespace FVH.SSHF.FastWindowArea
 {
     public partial class FastWindowViewModel : ReactiveObject
     {
