@@ -1,90 +1,124 @@
-﻿<mah:MetroWindow    
-    xmlns = "http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x = "http://schemas.microsoft.com/winfx/2006/xaml" 
-    xmlns:d = "http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc = "http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable = "d"
-    xmlns:diag = "clr-namespace:System.Diagnostics;assembly=WindowsBase"
-    xmlns:sys = "clr-namespace:System;assembly=mscorlib"
+﻿<packageNamespaceMahApps:MetroWindow    
+    xmlns                                     = "http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x                                   = "http://schemas.microsoft.com/winfx/2006/xaml" 
+    xmlns:d                                   = "http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc                                  = "http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable                              = "d"
+    xmlns:diag                                = "clr-namespace:System.Diagnostics;assembly=WindowsBase"
+    xmlns:sys                                 = "clr-namespace:System;assembly=mscorlib"
+                                              
+    xmlns:packageNamespaceMahApps             = "http://metro.mahapps.com/winfx/xaml/controls"
+    xmlns:packageNamespaceRXUI                = "clr-namespace:System.Reactive;assembly=System.Reactive"
+    xmlns:packageNamespaceBehaviors           = "http://schemas.microsoft.com/xaml/behaviors"    
+    xmlns:packageNamespaceMahAppsMetroActions = "clr-namespace:MahApps.Metro.Actions;assembly=MahApps.Metro"    
+                                              
+    x:Name                                    = "Fast"
+    x:Class                                   = "FVH.SSHF.FastWindowArea.FastWindow"    
+    xmlns:namespaceFastWindowArea             = "clr-namespace:FVH.SSHF.FastWindowArea"
+    xmlns:namespaceConverters                 = "clr-namespace:FVH.SSHF.Infrastructure.Converters"   
     
-    xmlns:mah = "http://metro.mahapps.com/winfx/xaml/controls"
-    xmlns:rxui = "clr-namespace:System.Reactive;assembly=System.Reactive"
-    xmlns:i = "http://schemas.microsoft.com/xaml/behaviors"    
-    xmlns:actions = "clr-namespace:MahApps.Metro.Actions;assembly=MahApps.Metro"
-          
-    x:Name ="Fast"
-    x:Class = "FVH.SSHF.FastWindowArea.FastWindow"    
-    xmlns:vm = "clr-namespace:FVH.SSHF.FastWindowArea"
-    xmlns:converter = "clr-namespace:FVH.SSHF.Infrastructure.Converters"   
-    
-    d:DataContext="{d:DesignInstance Type = vm:FastWindowViewModel, IsDesignTimeCreatable = True}"
+    d:DataContext = "{ d:DesignInstance Type = namespaceFastWindowArea:FastWindowViewModel, IsDesignTimeCreatable = True }"
                 
-    Visibility="Visible"
-    WindowStyle="None"      
-    AllowsTransparency="True"
-    Topmost="True" 
-    SizeToContent="Manual"   
-    ResizeMode="NoResize"
+    Visibility           = "Visible"
+    WindowStyle          = "None"      
+    AllowsTransparency   = "True"
+    Topmost              = "True" 
+    SizeToContent        = "Manual"   
+    ResizeMode           = "NoResize"
 
-    ShowInTaskbar="False"    
-    ShowTitleBar="False"
-    ShowMinButton="False"
-    ShowCloseButton="False"
-    ShowMaxRestoreButton="False"
-    NonActiveBorderBrush="Transparent"   
+    ShowInTaskbar        = "False"    
+    ShowTitleBar         = "False"
+    ShowMinButton        = "False"
+    ShowCloseButton      = "False"
+    ShowMaxRestoreButton = "False"
+    NonActiveBorderBrush = "Transparent"   
    >
+
     <Window.Resources>
-        <converter:ConverterImageDPIViewport x:Key="KeyConverterImageDPIViewport"/>
-        <converter:ConverterVisibleToOpacity x:Key="KeyConverterVisibleToOpacity"/>
+        <namespaceConverters:ConverterImageDPIViewport x:Key="KeyConverterImageDPIViewport"/>
+        <namespaceConverters:ConverterVisibleToOpacity x:Key="KeyConverterVisibleToOpacity"/>
     </Window.Resources>
 
+    <packageNamespaceBehaviors:Interaction.Triggers>
 
-    <i:Interaction.Triggers>
+        <packageNamespaceBehaviors:EventTrigger EventName="PreviewMouseDoubleClick" >
 
-        <i:EventTrigger EventName="PreviewMouseDoubleClick">
-            <i:InvokeCommandAction Command="{Binding HideWindow}" 
-                         CommandParameter="{x:Static rxui:Unit.Default}"/>
-        </i:EventTrigger>
+            <packageNamespaceBehaviors:InvokeCommandAction 
+                Command = "{ Binding HideWindow }" 
+                CommandParameter = "{ x:Static packageNamespaceRXUI:Unit.Default }"
+            ></packageNamespaceBehaviors:InvokeCommandAction>
 
-    </i:Interaction.Triggers>
+        </packageNamespaceBehaviors:EventTrigger>
 
-    <Grid x:Name="GridContent">
-        
-        <i:Interaction.Triggers>
+    </packageNamespaceBehaviors:Interaction.Triggers>
 
-            <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
-                <i:InvokeCommandAction Command="{Binding StopWindowUpdater}" 
-                                   CommandParameter="{x:Static rxui:Unit.Default}"/>
-            </i:EventTrigger>
-         
-            <i:EventTrigger EventName="MouseLeftButtonDown">
-                <i:InvokeCommandAction Command="{Binding DragMoveWindow}" 
-                                   CommandParameter="{x:Static rxui:Unit.Default}"/>
-            </i:EventTrigger>
+    <Grid x:Name="GridContent" >
 
-            <i:EventTrigger EventName="PreviewMouseMove">
-                <i:InvokeCommandAction Command="{Binding DropImage}"                                  
-                                   PassEventArgsToCommand="True"/>
-            </i:EventTrigger>
+        <packageNamespaceBehaviors:Interaction.Triggers>
 
-        </i:Interaction.Triggers>
-            
+            <packageNamespaceBehaviors:EventTrigger EventName="PreviewMouseLeftButtonDown" >
+
+                <packageNamespaceBehaviors:InvokeCommandAction 
+                    Command = "{ Binding StopWindowUpdater }" 
+                    CommandParameter = "{ x:Static packageNamespaceRXUI:Unit.Default }"
+                ></packageNamespaceBehaviors:InvokeCommandAction>
+
+            </packageNamespaceBehaviors:EventTrigger>
+
+            <packageNamespaceBehaviors:EventTrigger EventName = "MouseLeftButtonDown" >
+
+                <packageNamespaceBehaviors:InvokeCommandAction 
+                    Command = "{ Binding DragMoveWindow }" 
+                    CommandParameter = "{ x:Static packageNamespaceRXUI:Unit.Default }"
+                ></packageNamespaceBehaviors:InvokeCommandAction>
+
+            </packageNamespaceBehaviors:EventTrigger>
+
+            <packageNamespaceBehaviors:EventTrigger EventName="PreviewMouseMove" >
+
+                <packageNamespaceBehaviors:InvokeCommandAction 
+                    Command="{ Binding DropImage }"                                  
+                    PassEventArgsToCommand="True"
+                ></packageNamespaceBehaviors:InvokeCommandAction>
+
+            </packageNamespaceBehaviors:EventTrigger>
+
+        </packageNamespaceBehaviors:Interaction.Triggers>
+
         <Grid.Style>
-            <Style TargetType="{x:Type Grid}">
-                <Setter Property="Background">
+
+            <Style TargetType="{ x:Type Grid }" >
+
+                <Setter Property="Background" >
+
                     <Setter.Value>
+
                         <Binding 
-                             Path="BackgroundImage" Converter="{StaticResource KeyConverterImageDPIViewport}"/>
+                             Path = "BackgroundImage" 
+                             Converter = "{ StaticResource KeyConverterImageDPIViewport }"
+                        ></Binding>
+
                     </Setter.Value>
+
                 </Setter>
-                <Setter Property="Opacity">
+
+                <Setter Property="Opacity" >
+
                     <Setter.Value>
-                        <Binding Path="VisibleCondition" Converter="{StaticResource KeyConverterVisibleToOpacity}"/>
+
+                        <Binding 
+                            Path = "VisibleCondition" 
+                            Converter = "{ StaticResource KeyConverterVisibleToOpacity }"
+                        ></Binding>
+
                     </Setter.Value>
+
                 </Setter>
+
             </Style>
+
         </Grid.Style>
-            
+
     </Grid>
-  
-</mah:MetroWindow>
+
+</packageNamespaceMahApps:MetroWindow>
