@@ -12,7 +12,7 @@
     xmlns:packageNamespaceBehaviors           = "http://schemas.microsoft.com/xaml/behaviors"    
     xmlns:packageNamespaceMahAppsMetroActions = "clr-namespace:MahApps.Metro.Actions;assembly=MahApps.Metro"    
                                               
-    x:Name                                    = "Fast"
+    x:Name                                    = "NotificationWindow"
     x:Class                                   = "FVH.SSHF.NotificationWindowArea.NotificationWindow"    
     xmlns:namespaceNotificationWindowArea     = "clr-namespace:FVH.SSHF.NotificationWindowArea"
     xmlns:namespaceConverters                 = "clr-namespace:FVH.SSHF.Infrastructure.Converters" 
@@ -33,7 +33,7 @@
     ShowMaxRestoreButton = "False"
     NonActiveBorderBrush = "Transparent"
     
-    
+    Title="123"
     
     designTime:DataContext = "{ designTime:DesignInstance Type = namespaceNotificationWindowArea:NotificationWindowViewModel, IsDesignTimeCreatable = True }"
    >

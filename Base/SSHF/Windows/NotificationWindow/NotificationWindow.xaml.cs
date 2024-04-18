@@ -17,7 +17,8 @@ namespace FVH.SSHF.NotificationWindowArea
         public NotificationWindow()
         {
             InitializeComponent();
-            this.Title = "Notification Window";
+
+            
 
             HideAltTabWindow();
         }
@@ -58,7 +59,7 @@ namespace FVH.SSHF.NotificationWindowArea
             {
                 if (value is not NotificationWindowViewModel vm) throw new InvalidOperationException($"ViewModel is not {nameof(NotificationWindowViewModel)}");
                 ViewModel = vm;
-                SetBindingSizePostSwitchVisible();
+               // SetBindingSizePostSwitchVisible();
             }
         }
         public NotificationWindowViewModel? ViewModel

@@ -13,7 +13,7 @@ using ReactiveUI;
 
 namespace FVH.SSHF.NotificationWindowArea
 {
-    internal class NotificationWindowViewModel : ReactiveObject
+    public class NotificationWindowViewModel : ReactiveObject
     {
 		private Size _monitorResolution;
         private Grid? _gridContent;
