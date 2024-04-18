@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 
-namespace FVH.SSHF.Infrastructure.TrayIconManagment
+namespace FVH.SSHF.Infrastructure.TrayIconManagement
 {
     internal partial class DPIIconHandler : IDisposable
     {
@@ -26,7 +26,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagment
         [LibraryImport("user32", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.I4)]
         private static partial int GetSystemMetricsForDpi(int nIndex, uint dpi); // Просто пересчитывает те же самые, закэшированные метрики, только только с учётом DPI
-        public Icon GetDefaultStartProccesIconDPI()
+        public Icon GetDefaultStartProcessIconDPI()
         {
             Icon returnIcon = new Icon(_iconAppResource);
             _iconAppResource.Position = 0;

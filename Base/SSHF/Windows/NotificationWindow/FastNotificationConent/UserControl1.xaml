@@ -1,0 +1,68 @@
+﻿<Grid
+     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+     xmlns:designTime="http://schemas.microsoft.com/expression/blend/2008" 
+     mc:Ignorable="designTime" 
+    
+    
+     xmlns:system="clr-namespace:System;assembly=mscorlib"
+    
+     x:Name="This"
+     x:Class="FVH.SSHF.Windows.UserControl1"
+     xmlns:local="clr-namespace:FVH.SSHF.Windows"
+     
+     Background="{x:Null}"
+    
+     designTime:DesignHeight="450" 
+     designTime:DesignWidth="800"
+     >
+
+    <Grid.Resources>
+        
+        <Style x:Key="GeneralTextBloclStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="10"></Setter>
+            <Setter Property="FontFamily" Value="Verdana"></Setter>
+            <Setter Property="FontWeight" Value="Bold"></Setter>
+            <Setter Property="Foreground" Value="Orange"></Setter>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"></Setter>
+            <Setter Property="TextWrapping" Value="Wrap"></Setter>
+        </Style>
+        
+    </Grid.Resources>
+    <designTime:Grid.Background>
+        <designTime:SolidColorBrush Color="Gray"/>
+    </designTime:Grid.Background>
+
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition x:Name="С1" Width="20*" />
+        <!-- 20% ширины экрана -->
+        <ColumnDefinition Width="80*" />
+        <!-- 80% ширины экрана -->
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+        <RowDefinition x:Name="B1" Height="10*" />
+        <!-- 10% высоты экрана -->
+        <RowDefinition Height="90*" />
+        <!-- 90% высоты экрана -->
+    </Grid.RowDefinitions>
+
+    <Viewbox>
+        <TextBlock  
+            MaxHeight="{Binding ElementName=B1, Path=ActualHeight}" 
+            MaxWidth="{Binding ElementName=С1, Path=ActualWidth}"
+            Style="{StaticResource GeneralTextBloclStyle}"
+            Text="{Binding ElementName=This, Path=NumberActiveWindow}"
+            
+            MinHeight="10"
+            MinWidth="10"
+            TextAlignment="Center"     
+            
+            designTime:Text="1"
+            >
+    
+        </TextBlock>
+    </Viewbox>
+
+
+</Grid>

@@ -4,7 +4,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
 
-namespace FVH.SSHF.Infrastructure.TrayIconManagment
+namespace FVH.SSHF.Infrastructure.TrayIconManagement
 {
     internal class TrayIcon : IDisposable
     {
@@ -17,7 +17,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagment
             _dpiCorrector = new DPIIconHandler(resourceIcon, sizesIcon);
             _taskbarIcon = new NotifyIcon
             {
-                Icon = _dpiCorrector.GetDefaultStartProccesIconDPI(),
+                Icon = _dpiCorrector.GetDefaultStartProcessIconDPI(),
                 Visible = true
             };
             _dpiCorrector.ActualSizeIcon += ActualSizeIconLogic;
@@ -29,7 +29,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagment
             _blockRepeatInvokeMessageBox = true;
             if (System.Windows.MessageBox.Show("Закрыть приложение?", "Запрос SSHF", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) is MessageBoxResult.Yes)
             {
-                System.Windows.Application.Current.Dispatcher.Invoke(() => { System.Windows.Application.Current.Shutdown(); });
+                System.Windows.Application.Current.Dispatcher.Invoke(System.Windows.Application.Current.Shutdown);
                 return;
             }
             _blockRepeatInvokeMessageBox = false;
@@ -46,7 +46,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagment
             _taskbarIcon.MouseDown -= TaskbarIcon_MouseDown;
             _taskbarIcon.Visible = false;
             _taskbarIcon.Dispose();
-            Thread.Sleep(450); // NotifyIcon.Dispose Возвращает управление раньше чем фактически освободит ресурысы.
+            Thread.Sleep(450); // NotifyIcon.Dispose() Возвращает управление раньше, чем фактически освободит ресурсы.
             _taskbarIcon = new NotifyIcon
             {
                 Icon = newSizeIcon,

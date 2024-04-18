@@ -26,6 +26,18 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 	  <DebugType>embedded</DebugType>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <AdditionalFiles Remove="SSHFManifest" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Windows\NotificationWindow\NotificationWindow.xaml.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="Windows\NotificationWindow\NotificationWindow.xaml.cs" />
+	</ItemGroup>
 	
 	<ItemGroup>
 		<PackageReference Include="MahApps.Metro" Version="2.4.10" />

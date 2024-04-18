@@ -10,7 +10,7 @@ using Microsoft.Extensions.Hosting;
 using FVH.Background.Input;
 
 using FVH.SSHF.Infrastructure;
-using FVH.SSHF.Infrastructure.TrayIconManagment;
+using FVH.SSHF.Infrastructure.TrayIconManagement;
 using System.Windows;
 using System.Reactive.Disposables;
 using System.Windows.Threading;

@@ -13,6 +13,7 @@ namespace FVH.SSHF.NotificationWindowArea
         private const long WS_EX_TOOLWINDOW = 0x00000080;
         private const long WS_EX_NOACTIVATE = 0x08000000L;
         private const int GWL_EXSTYLE = -20;
+
         public NotificationWindow()
         {
             InitializeComponent();
@@ -27,29 +28,29 @@ namespace FVH.SSHF.NotificationWindowArea
         }
         /// <summary>
         /// Заглушка - Изменения свойства Visibility деактивирует привязку к размерам окна.
-        /// Решение установить привязку после изменение Visibility и не изменять это свойство. Реализовать сокрытие окна через opacity.
+        /// Решение установить привязку после изменение Visibility и не изменять это свойство.Реализовать сокрытие окна через opacity.
         /// </summary>
-        private void SetBindingSizePostSwitchVisible() // todo Вроде нужно освободить ресурсы привязок чтобы объект мог быть собран сборщиком мусора
-        {
-            this.OneWayBind(
-                 this.ViewModel,
-                 vm => vm.Height,
-                 w => w.GridContent.Height);
-            this.OneWayBind(
-                 this.ViewModel,
-                 vm => vm.Width,
-                 w => w.GridContent.Width);
+        //private void SetBindingSizePostSwitchVisible() // todo Вроде нужно освободить ресурсы привязок чтобы объект мог быть собран сборщиком мусора
+        //{
+        //    this.OneWayBind(
+        //         this.ViewModel,
+        //         vm => vm.Height,
+        //         w => w.GridContent.Height);
+        //    this.OneWayBind(
+        //         this.ViewModel,
+        //         vm => vm.Width,
+        //         w => w.GridContent.Width);
 
-            // Не понятно нужно ли биндить размеры самого окна. При SizeToContent = WidthAndHeight размер окна фактически больше на пару пикселей чем целевой Gird (Структура наследования фактически отличается в "MahApps.Metro.Controls.MetroWindow", ежели это было бы прямое наследование от "System.Windows.Window").
-            this.OneWayBind(
-                 this.ViewModel,
-                 vm => vm.Height,
-                 w => w.Height);
-            this.OneWayBind(
-                 this.ViewModel,
-                 vm => vm.Width,
-                 w => w.Width);
-        }
+        //    Не понятно нужно ли биндить размеры самого окна. При SizeToContent = WidthAndHeight размер окна фактически больше на пару пикселей чем целевой Gird(Структура наследования фактически отличается в "MahApps.Metro.Controls.MetroWindow", ежели это было бы прямое наследование от "System.Windows.Window").
+        //    this.OneWayBind(
+        //         this.ViewModel,
+        //         vm => vm.Height,
+        //         w => w.Height);
+        //    this.OneWayBind(
+        //         this.ViewModel,
+        //         vm => vm.Width,
+        //         w => w.Width);
+        //}
         object? IViewFor.ViewModel
         {
             get => ViewModel;
