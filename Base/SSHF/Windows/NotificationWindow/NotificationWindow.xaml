@@ -12,12 +12,14 @@
     xmlns:packageNamespaceBehaviors           = "http://schemas.microsoft.com/xaml/behaviors"    
     xmlns:packageNamespaceMahAppsMetroActions = "clr-namespace:MahApps.Metro.Actions;assembly=MahApps.Metro"    
                                               
+    x:Name  = "Notification"
     x:Class                                   = "FVH.SSHF.NotificationWindowArea.NotificationWindow"    
     xmlns:namespaceNotificationWindowArea     = "clr-namespace:FVH.SSHF.NotificationWindowArea"
     xmlns:namespaceConverters                 = "clr-namespace:FVH.SSHF.Infrastructure.Converters" 
     xmlns:namespaceWidnows                    = "clr-namespace:FVH.SSHF.Windows"
     
                 
+    Title                ="Notification"
     Visibility           = "Visible"
     WindowStyle          = "None"      
     AllowsTransparency   = "True"
@@ -32,11 +34,12 @@
     ShowMaxRestoreButton = "False"
     NonActiveBorderBrush = "Transparent"
     
-    Title="123"
+    Height="{Binding MonitorResolution.Height}"
+    Width="{Binding MonitorResolution.Width}"
     
-    designTime:DataContext = "{ designTime:DesignInstance Type = namespaceNotificationWindowArea:NotificationWindowViewModel, IsDesignTimeCreatable = True }"
+    designTime:DataContext = "{ designTime:DesignInstance Type = namespaceNotificationWindowArea:NotificationWindowViewModel, IsDesignTimeCreatable = True }"    
    >
-    <!--x:Name                                    = "Notification"-->
+
 
     <Window.Resources>
         <namespaceConverters:ConverterImageDPIViewport x:Key="KeyConverterImageDPIViewport"/>
