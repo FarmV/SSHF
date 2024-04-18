@@ -12,7 +12,7 @@
     xmlns:packageNamespaceBehaviors           = "http://schemas.microsoft.com/xaml/behaviors"    
     xmlns:packageNamespaceMahAppsMetroActions = "clr-namespace:MahApps.Metro.Actions;assembly=MahApps.Metro"    
                                               
-    x:Name  = "Notification"
+    x:Name                                    = "Notification"
     x:Class                                   = "FVH.SSHF.NotificationWindowArea.NotificationWindow"    
     xmlns:namespaceNotificationWindowArea     = "clr-namespace:FVH.SSHF.NotificationWindowArea"
     xmlns:namespaceConverters                 = "clr-namespace:FVH.SSHF.Infrastructure.Converters" 
