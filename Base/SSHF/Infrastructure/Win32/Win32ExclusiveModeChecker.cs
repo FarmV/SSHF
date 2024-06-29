@@ -10,7 +10,7 @@ using HRESULT = Windows.Win32.Foundation.HRESULT;
 
 namespace FVH.SSHF.Infrastructure
 {
-    internal class ExclusiveModeChecker()
+    internal class Win32ExclusiveModeChecker()
     {
         internal static Guid CLSID_DirectDraw7 = new Guid("3C305196-50DB-11D3-9CFE-00C04FD930C5");
         internal static Guid IID_IDirectDraw7 = new Guid("15E65EC0-3B9C-11D2-B92F-00609797EA5B");
