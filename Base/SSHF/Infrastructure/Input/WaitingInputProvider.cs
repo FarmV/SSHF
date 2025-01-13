@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -46,50 +47,43 @@ namespace FVH.SSHF.Infrastructure.Input
             IsDisposeInput.OnCompleted();
             IsDisposeInput.Dispose();
             _isDisposed = true;
-        }
-        private void InputRequestChecker(bool IsDisposeInput)
+        }       
+        private void InputRequestChecker(bool isDisposeInput)
         {
             IKeyboardCallback? keyboardCallback;
 
-            void RegisterGlobalShortcuts()
+            void RegisterGlobalShortcuts() =>            
+            Task.Run(async () => 
+            (await _subjectListGlobalShortcuts.FirstAsync()).ToList().ForEach((IBehaviorSubjectGlobalShortcuts iGlobalShortcutBehaviorSubject) =>
             {
-                Task task1 = Task.Run(async () =>
-                {
-                    IEnumerable<IBehaviorSubjectGlobalShortcuts> r = await _subjectListGlobalShortcuts.FirstAsync();
-                    foreach(IBehaviorSubjectGlobalShortcuts item in r)
-                    {
-                        BehaviorSubject<IEnumerable<KeyboardShortcut>> shortcutsAsObservable = item.GetShortcutsAsObservable();
-                        IEnumerable<KeyboardShortcut> keyboardShortcutList = shortcutsAsObservable.FirstAsync().Wait();
-                        foreach(KeyboardShortcut keyboardShortcut in keyboardShortcutList)
-                        {
-                            keyboardCallback.AddCallBackTask(keyboardShortcut.KeyCombo, keyboardShortcut.CallbackTask, keyboardShortcut.Identifier ?? keyboardShortcut.CallbackTask.Method.Name).Wait();
-                        }
-                    }
-                });
-                task1.Wait();
-            }
-            switch(IsDisposeInput)
+                BehaviorSubject<IEnumerable<KeyboardShortcut>> shortcutsAsObservable = iGlobalShortcutBehaviorSubject.GetShortcutsAsObservable();
+                IEnumerable<KeyboardShortcut> keyboardShortcutList = shortcutsAsObservable.FirstAsync().Wait();
+                keyboardShortcutList.ToList().ForEach((KeyboardShortcut keyboardShortcut) =>
+                keyboardCallback.AddCallBackTask(keyboardShortcut.KeyCombo, keyboardShortcut.CallbackTask, keyboardShortcut.Identifier ?? keyboardShortcut.CallbackTask.Method.Name).Wait());
+            })).Wait();
+            
+            switch(isDisposeInput)
             {
                 case false:
-                _input?.Dispose();
-                _input = new Background.Input.Input();
-
-                _IsDisposeInternalInput = false;
-                keyboardCallback = _input.GetKeyboardCallbackFunction();
-
-                CurrentInstanceIKeyboardHandlerOrDefault.OnNext(_input.GetKeyboardHandler());
-
-                RegisterGlobalShortcuts();
-
-                this.IsDisposeInput.OnNext(_IsDisposeInternalInput);
-                break;
+                   _input?.Dispose();
+                   _input = new Background.Input.Input();
+                   
+                   _IsDisposeInternalInput = false;
+                   keyboardCallback = _input.GetKeyboardCallbackFunction();
+                   
+                   CurrentInstanceIKeyboardHandlerOrDefault.OnNext(_input.GetKeyboardHandler());
+                   
+                   RegisterGlobalShortcuts();
+                   
+                   this.IsDisposeInput.OnNext(_IsDisposeInternalInput);
+                   break;
                 case true:
-                _input?.Dispose();
-                _input = null;
-
-                _IsDisposeInternalInput = true;
-                CurrentInstanceIKeyboardHandlerOrDefault.OnNext(null);
-                this.IsDisposeInput.OnNext(_IsDisposeInternalInput);
+                   _input?.Dispose();
+                   _input = null;
+                   
+                   _IsDisposeInternalInput = true;
+                   CurrentInstanceIKeyboardHandlerOrDefault.OnNext(null);
+                   this.IsDisposeInput.OnNext(_IsDisposeInternalInput);
                 break;
             }
         }
