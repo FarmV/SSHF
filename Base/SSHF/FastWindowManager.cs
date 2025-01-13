@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Windows.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Windows.Forms;
 
 using ReactiveUI;
+using System.Reactive.Subjects;
 
 using FVH.Background.Input.Infrastructure.Interfaces;
 
@@ -15,39 +17,77 @@ using FVH.SSHF.NotificationWindowArea;
 
 namespace FVH.SSHF
 {
-    internal class FastWindowManager : IInvokeShortcuts, IDisposable
+    internal struct ShortcutsFunction
     {
-        internal bool IsInitialize = false;
-        internal bool BlockInput = false;
-        private readonly Dispatcher _dispatcher;
-        private readonly FastWindowCreator _windowCreator;
-        private readonly IKeyboardHandler _keyboardHandler;
-        private readonly Dictionary<int, OneFastWindow> _fastWindows;
+        internal string NameFunction;
+        internal VKeys[] Shortcut;
+    }
+    internal partial class FastWindowManager : IBehaviorSubjectGlobalShortcuts, IDisposable
+    {
         private int _currentIndexFastWindow = 0;
         private bool IsDisposed = false;
+        private readonly Dispatcher _dispatcher;
+        private readonly FastWindowCreator _windowCreator;
+        private readonly Dictionary<int, OneFastWindow> _fastWindows;
+        private readonly BehaviorSubject<IEnumerable<KeyboardShortcut>> _currentStatusShortcutsFastWindow;
         private OneFastWindow? _firstFastWindow;
         private OneFastWindow? _activeFastWindow;
-        private Shortcuts[]? _shortcuts;
+        private KeyboardShortcut[]? _currentShortcutsFastWindow;
+        private readonly BehaviorSubject<IKeyboardHandler?> _keyboardHandler;
 
-        internal FastWindowManager(Dispatcher dispatcher, Func<FastWindowViewModelDependencies> getFastWindowViewModelDependencies, IKeyboardHandler keyboardHandler)
+        internal bool IsInitialize = false;
+        internal bool BlockInput = false;
+        internal FastWindowManager
+        (
+            Dispatcher dispatcher,
+            Func<FastWindowViewModelDependencies> getFastWindowViewModelDependencies,
+            BehaviorSubject<IKeyboardHandler?> keyboardHandler
+        )
         {
             _dispatcher = dispatcher;
             _fastWindows = new Dictionary<int, OneFastWindow>();
             _keyboardHandler = keyboardHandler;
             _windowCreator = new FastWindowCreator(dispatcher, getFastWindowViewModelDependencies);
-        }
-        internal void Initialize()
-        {
-            if(IsInitialize is true) throw new InvalidOperationException("The object is already initialized");
-            IsInitialize = true;
-            var task = CreateFastWindowAsync();
 
-            OneFastWindow firstFastWindow = task.Result;
+            _currentStatusShortcutsFastWindow = new BehaviorSubject<IEnumerable<KeyboardShortcut>>(GetDefaultShortcuts());
+        }
+        internal void SetNewShortcuts(ShortcutsFunction[] shortcutsFunction)
+        {
+            void SetNewShortcut(ShortcutsFunction shortcutFunction)
+            {
+                KeyboardShortcut[] arrayShortcuts = _currentShortcutsFastWindow;
+                KeyboardShortcut? singleElement = arrayShortcuts.Single((KeyboardShortcut shortcut) =>
+                {
+                    ArgumentNullException.ThrowIfNull(shortcut.Identifier);
+                    return shortcut.Identifier.ToString() == shortcutFunction.NameFunction;
+                });
+                singleElement.KeyCombo = shortcutFunction.Shortcut;
+            }
+            
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
+            if(IsInitialize is not true) throw new InvalidOperationException("IsInitialize is false");
+            if(_currentShortcutsFastWindow is null) throw new NullReferenceException("_currentShortcutsFastWindow is null");
+
+            Array.ForEach(shortcutsFunction, (ShortcutsFunction shortcut) =>
+            {
+                ArgumentException.ThrowIfNullOrWhiteSpace(shortcut.NameFunction);
+                ArgumentNullException.ThrowIfNull(shortcut.Shortcut);                            
+            });
+            Array.ForEach(shortcutsFunction, SetNewShortcut);
+
+            _currentStatusShortcutsFastWindow.OnNext(_currentShortcutsFastWindow);
+        }
+        internal async Task CreateMainWindow()
+        {
+            if(IsInitialize is true) throw new InvalidOperationException("Object already initialized created");
+            IsInitialize = true; 
+
+            OneFastWindow firstFastWindow = await CreateFastWindowAsync();
 
             _firstFastWindow = firstFastWindow;
             _activeFastWindow = firstFastWindow;
 
-            _shortcuts = GetDefaultShortcuts();
+            _currentShortcutsFastWindow = GetDefaultShortcuts();
         }
         public void Dispose()
         {
@@ -57,13 +97,16 @@ namespace FVH.SSHF
             _fastWindows.Clear();
             GC.SuppressFinalize(this);
         }
-
-        public IEnumerable<Shortcuts> GetShortcuts()
+        BehaviorSubject<IEnumerable<KeyboardShortcut>> IBehaviorSubjectGlobalShortcuts.GetShortcutsAsObservable()
+        {
+            return _currentStatusShortcutsFastWindow;
+        }
+        public IEnumerable<KeyboardShortcut> GetShortcuts()
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
             if(IsInitialize is false) throw new InvalidOperationException("The object must be initialized");
             ArgumentNullException.ThrowIfNull(_activeFastWindow);
-            return _shortcuts!;
+            return _currentShortcutsFastWindow!;
         }
         private Task DisposeActiveFastWindowAsync()
         {
@@ -74,7 +117,6 @@ namespace FVH.SSHF
             _currentIndexFastWindow--;
             return Task.CompletedTask;
         }
-
         private async Task<OneFastWindow> CreateFastWindowAsync()
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
@@ -97,58 +139,59 @@ namespace FVH.SSHF
 
             return oneFastWindow;
         }
-        internal void SetNewShortcuts(Shortcuts[] shortcuts) => _shortcuts = shortcuts;
-        internal Shortcuts[] GetDefaultShortcuts() =>
-        [
-         new Shortcuts(
-         [
-             VKeys.VK_LWIN,
-             VKeys.VK_SHIFT,
-             VKeys.VK_KEY_A
-         ],
-         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.PresentNewImage(), nameof(_activeFastWindow.FastWindowCommand.PresentNewImage)),
+        internal void SetNewShortcuts(KeyboardShortcut[] shortcuts) => _currentShortcutsFastWindow = shortcuts;
+        internal KeyboardShortcut[] GetDefaultShortcuts() =>
+        [   
+            new KeyboardShortcut(
+            [
+                VKeys.VK_LWIN,
+                VKeys.VK_SHIFT,
+                VKeys.VK_KEY_A
+            ],
+            () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.PresentNewImage(), nameof(_activeFastWindow.FastWindowCommand.PresentNewImage)),
+            
+            new KeyboardShortcut(
+            [
+                VKeys.VK_LWIN,
+                VKeys.VK_SHIFT,
+                VKeys.VK_KEY_S
+            ],
+            () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.InvokeMsScreenClip(), nameof(_activeFastWindow.FastWindowCommand.InvokeMsScreenClip)),
+            
+            new KeyboardShortcut(
+            [
+                VKeys.VK_CONTROL,
+                VKeys.VK_CAPITAL
+            ],
+            () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.SwitchBlockRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.SwitchBlockRefreshWindow)),
+            
+            new KeyboardShortcut(
+            [
+                VKeys.VK_CONTROL
+            ],
+            () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.StopRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.StopRefreshWindow)),
 
-         new Shortcuts(
-         [
-             VKeys.VK_LWIN,
-             VKeys.VK_SHIFT,
-             VKeys.VK_KEY_S
-         ],
-         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.InvokeMsScreenClip(), nameof(_activeFastWindow.FastWindowCommand.InvokeMsScreenClip)),
+            new KeyboardShortcut(
+            [
+                VKeys.VK_SCROLL
+            ],
+            () => _activeFastWindow!.FastWindowCommand.InvokeMsScreenClip(), $"SCROLL_{nameof(_activeFastWindow.FastWindowCommand.InvokeMsScreenClip)}"),
 
-         new Shortcuts(
-         [
-             VKeys.VK_CONTROL,
-             VKeys.VK_CAPITAL
-         ],
-         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.SwitchBlockRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.SwitchBlockRefreshWindow)),
+            new KeyboardShortcut(
+            [
+                VKeys.VK_LWIN,
+                VKeys.VK_SHIFT,
+                VKeys.VK_ADD
+            ],
+            () => BlockInput is true ? Task.CompletedTask : CreateWindowAsync(), nameof(CreateWindowAsync)),
 
-         new Shortcuts(
-         [
-             VKeys.VK_CONTROL
-         ],
-         () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.StopRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.StopRefreshWindow) ),
-
-         new Shortcuts(
-         [
-             VKeys.VK_SCROLL
-         ],
-         new Func<Task>(_activeFastWindow!.FastWindowCommand.InvokeMsScreenClip),$"SCROLL_{nameof(_activeFastWindow.FastWindowCommand.InvokeMsScreenClip)}"),
-
-         new Shortcuts(
-         [
-             VKeys.VK_LWIN,
-             VKeys.VK_SHIFT,
-             VKeys.VK_ADD
-         ],
-         new Func<Task>(() =>BlockInput is true ? Task.CompletedTask : CreateWindowAsync()), nameof(CreateWindowAsync)),
-         new Shortcuts(
-         [
-             VKeys.VK_LWIN,
-             VKeys.VK_SHIFT,
-             VKeys.VK_SUBTRACT
-         ],
-         new Func<Task>(()=> BlockInput is true ? Task.CompletedTask : DisposeActiveWindowAsync()), nameof(DisposeActiveWindowAsync)),
+            new KeyboardShortcut(
+            [
+                VKeys.VK_LWIN,
+                VKeys.VK_SHIFT,
+                VKeys.VK_SUBTRACT
+            ],
+            () => BlockInput is true ? Task.CompletedTask : DisposeActiveWindowAsync(), nameof(DisposeActiveWindowAsync))
         ];
         internal async Task CreateWindowAsync()
         {
@@ -165,11 +208,18 @@ namespace FVH.SSHF
             _activeFastWindow = _fastWindows[_currentIndexFastWindow];
             BlockInput = false;
         }
+
     }
     internal class OneFastWindow : IDisposable
     {
         internal bool IsDisposed = false;
-        internal OneFastWindow(FastWindow fastWindow, FastWindowViewModelDependencies fastWindowViewModelDependencies, FastWindowExternalConditions mainWindowExternalConditions, FastWindowCommand fastWindowCommand)
+        internal OneFastWindow
+        (
+            FastWindow fastWindow,
+            FastWindowViewModelDependencies fastWindowViewModelDependencies,
+            FastWindowExternalConditions mainWindowExternalConditions,
+            FastWindowCommand fastWindowCommand
+        )
         {
             FastWindow = fastWindow;
             FastWindowViewModelDependencies = fastWindowViewModelDependencies;
@@ -202,7 +252,10 @@ namespace FVH.SSHF
         }
         internal async Task<(FastWindow, FastWindowViewModel, FastWindowViewModelDependencies)> CreateFastWindowAsync()
         {
-            FastWindow window = await _dispatcher.InvokeAsync(() => new FastWindow());
+            FastWindow window = await _dispatcher.InvokeAsync(() => 
+            {
+              return  new FastWindow();
+            });
             await _dispatcher.InvokeAsync(window.Show);
             FastWindowViewModelDependencies fastWindowViewModelDependencies = _getFastWindowViewModelDependencies.Invoke();
 

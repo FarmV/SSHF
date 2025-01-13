@@ -145,13 +145,15 @@ namespace FVH.Background.Input
                 }
             });
 
-            Task subscribeWindowToRawInput = new Task(async () =>
+
+
+            Task subscribeWindowToRawInput = new Task(() =>
             {
                 if (_proxyInputHandlerWindow is null) throw new NullReferenceException("The window could not initialize");
 
                 IntPtr HandleWindow = _proxyInputHandlerWindow.Handle;
                 List<(HidUsageAndPage InputType, RawInputDeviceFlags Mode, nint hWndTarget)> queryTypeList = [];
-                await _proxyInputHandlerWindow.Dispatcher.InvokeAsync(() =>
+                _proxyInputHandlerWindow.Dispatcher.Invoke(() =>
                 {
                     switch (_initInput)
                     {
@@ -201,10 +203,11 @@ namespace FVH.Background.Input
                 }, DispatcherPriority.Render);
             });
             Task.WaitAll(InitThreadAndSetWindowsHandler, waitForDispatcherValidation);
+    
             subscribeWindowToRawInput.Start();
             subscribeWindowToRawInput.Wait();
             _isInitialized = true;
-            return Task.CompletedTask;
+            return Task.CompletedTask;      
         }
     }
 }

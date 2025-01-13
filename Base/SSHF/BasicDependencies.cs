@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
+using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReactiveUI;
+using System.Reactive.Disposables;
 
 using FVH.Background.Input;
 using FVH.Background.Input.Infrastructure.Interfaces;
@@ -15,171 +17,105 @@ using FVH.Background.Input.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure.TrayIconManagement;
-using System.Reactive.Disposables;
-
+using System.Reactive.Subjects;
+using System.Reactive.Linq;
+using System.Diagnostics;
+using System.ComponentModel;
+using System.Xml.Linq;
+using WinRT;
+using FVH.SSHF.Infrastructure.Input;
+using FVH.SSHF.Infrastructure.Win32;
 
 namespace FVH.SSHF
 {
     internal partial class App
     {
-        private class BasicDependencies : IDisposable
+        private class BasicDependencies 
         {
-            private readonly CompositeDisposable _compositeDisposable = new CompositeDisposable();
+            internal BasicDependencies() { }
 
-            public BasicDependencies() { }
-
-            public void Dispose()
+            internal static Task<IHost> ConfigureDependencies(Thread uiThread, string[]? args = null) 
             {
-                if(_compositeDisposable.IsDisposed is true) return;
-                _compositeDisposable.Dispose();
-                GC.SuppressFinalize(this);
-            }
+                Dispatcher uiDispatcher = Dispatcher.FromThread(uiThread) is not Dispatcher dispatcher ? throw new InvalidOperationException() : dispatcher;
 
-            internal IHost ConfigureDependencies(Thread uiThread, string[]? args = null) => Host.CreateDefaultBuilder(args).ConfigureAppConfiguration((_, configuration) =>
-            { configuration.Sources.Clear(); }).ConfigureServices((_, container) =>
-            {
-                Dispatcher uiDispatcher = GetWPFUiDispatcher(uiThread);
+                Win32MMCSS win32MMCSS = new Win32MMCSS(uiDispatcher);
 
-                uiDispatcher.Invoke(() => RxApp.MainThreadScheduler = System.Reactive.Concurrency.CurrentThreadScheduler.Instance);
+                AggregatorInputConditions aggregatorInputCondition = new AggregatorInputConditions();
+                BehaviorSubject<bool> requestCompleteAppStartedDisposeInput = new BehaviorSubject<bool>(true);
+                BehaviorSubject<bool> requestExternalDisposeInput = new BehaviorSubject<bool>(false);
+                Win32ObserverExclusiveMode requestExclusiveModeDisposeInput = new Win32ObserverExclusiveMode(uiDispatcher);
+                IObservable<bool> combineConditionsDisposeInput = requestExternalDisposeInput.CombineLatest(requestCompleteAppStartedDisposeInput, (bool AppStarted, bool disposeInput) => AppStarted || disposeInput);
 
-                Input input = uiDispatcher.Invoke(() => CreateHandlerInput(uiDispatcher));
-                _compositeDisposable.Add(input);
+                aggregatorInputCondition.AddIObservable(requestExclusiveModeDisposeInput.ExcusiveMode);
+                aggregatorInputCondition.AddIObservable(combineConditionsDisposeInput);
+             
+                IGetImage iGetImage = new ImageProvider();
+   
+                BehaviorSubject<IKeyboardHandler?> keyboardHandlerObservableSubject = new BehaviorSubject<IKeyboardHandler?>(null);
 
-                IGetImage imageProvider = uiDispatcher.Invoke(CreateImageProvider);
-
-                FastWindowManager fastWindowManager = uiDispatcher.Invoke(() => new FastWindowManager(uiDispatcher, () => CreateFastWindowViewModelDependencies(imageProvider), input.GetKeyboardHandler()));
-                _compositeDisposable.Add(fastWindowManager);
-
-                fastWindowManager.Initialize();
-
-                TrayIcon trayIcon = uiDispatcher.Invoke(() => CreateAnIconInTheNotificationArea());
-                _compositeDisposable.Add(trayIcon);
-               
-
-
-                if(args is not null)
+                FastWindowManager fastWindowManager = uiDispatcher.Invoke(
+                () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(iGetImage), keyboardHandlerObservableSubject));
+                if(args?.Length > 0)
                 {
                     if(args.SingleOrDefault(x => x == "--SCR_NotBR") is not null)
                     {
-                        FastWindowManager fastWindowCommandManager = container.BuildServiceProvider().GetRequiredService<FastWindowManager>();
-                        Shortcuts[] defaultShortcuts = fastWindowCommandManager.GetDefaultShortcuts();
-                        fastWindowCommandManager.SetNewShortcuts(defaultShortcuts.Where(x => x != defaultShortcuts.Single(x => x.KeyCombo[0] == VKeys.VK_SCROLL)).ToArray());
+                        KeyboardShortcut[] defaultShortcuts = fastWindowManager.GetDefaultShortcuts();
+                        fastWindowManager.SetNewShortcuts(defaultShortcuts.Where(x => x != defaultShortcuts.Single(x => x.KeyCombo[0] == VKeys.VK_SCROLL)).ToArray());
                     }
                 }
+          
+                BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>> listIInvokeShortcutsBehaviorSubject = new BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>([fastWindowManager]);
 
-                container.AddSingleton<ShortcutsProvider>
-                (
-                 CreateShortcutsManager
-                 (
-                  input.GetKeyboardCallbackFunction(),
-                  [fastWindowManager]
-                 )
-                );
+                WaitingInputProvider waitingInput = new WaitingInputProvider(aggregatorInputCondition.InputConditionsBehaviorSubject, listIInvokeShortcutsBehaviorSubject);
+                waitingInput.CurrentInstanceIKeyboardHandlerOrDefault.Subscribe(keyboardHandlerObservableSubject.OnNext);
+        
+                TrayIcon trayIcon = CreateAnIconInTheNotificationArea(uiDispatcher);
 
-//                uiDispatcher.Invoke(() =>
-//                {
-//                    RxApp.MainThreadScheduler = System.Reactive.Concurrency.CurrentThreadScheduler.Instance;
+                IHost host = Host.CreateDefaultBuilder(args).ConfigureAppConfiguration((_, configuration) =>
+                { configuration.Sources.Clear(); }).ConfigureServices((__, container) =>
+                {
+                    container.AddSingleton<Win32MMCSS>(win32MMCSS);
+                    container.AddSingleton<Dispatcher>(uiDispatcher);
+                    container.AddSingleton<AggregatorInputConditions>(aggregatorInputCondition);
+                    container.AddSingleton<IGetImage>(iGetImage);
+                    container.AddSingleton<FastWindowManager>(fastWindowManager);
+                    container.AddSingleton<WaitingInputProvider>(waitingInput);
+                    container.AddSingleton<TrayIcon>(trayIcon);
+                }).Build();
 
-//                    container.AddSingleton<Dispatcher>(uiDispatcher);
+                CompositeDisposable disposablesDependencies =
+                [
+                    win32MMCSS,
+                    aggregatorInputCondition,
+                    requestExclusiveModeDisposeInput,
+                    fastWindowManager,
+                    waitingInput,
+                    trayIcon,
+                ];
 
-//                    Input input = CreateHandlerInput(uiDispatcher);
-//                    _compositeDisposable.Add(input);
-
-//                    container.AddSingleton<Input>(input);
-
-//                    container.AddSingleton<IGetImage>(CreateImageProvider());
-
-//                    container.AddSingleton<FastWindowManager>
-//                    (
-//                     CreateFastWindowManager
-//                     (
-//                      container.BuildServiceProvider().GetRequiredService<Dispatcher>(),
-//                      () => CreateFastWindowViewModelDependencies
-//                            (
-//                             container.BuildServiceProvider().GetRequiredService<IGetImage>(),
-//                             container.BuildServiceProvider().GetRequiredService<IWindowPositionUpdater>()
-//                            ),
-//                      input.GetKeyboardHandler()
-//                     )
-//                    );
-
-//                    _compositeDisposable.Add(container.BuildServiceProvider().GetRequiredService<FastWindowManager>());                 
-           
-//                    container.AddSingleton<TrayIcon>(CreateAnIconInTheNotificationArea());
-//                    _compositeDisposable.Add(container.BuildServiceProvider().GetRequiredService<TrayIcon>());
-
-//                    if(args is not null)
-//                    {
-//                        if(args.SingleOrDefault(x => x == "--SCR_NotBR") is not null)
-//                        {
-//                            FastWindowManager fastWindowCommandManager = container.BuildServiceProvider().GetRequiredService<FastWindowManager>();
-//                            Shortcuts[] defaultShortcuts = fastWindowCommandManager.GetDefaultShortcuts();
-//                            fastWindowCommandManager.SetNewShortcuts(defaultShortcuts.Where(x => x != defaultShortcuts.Single(x => x.KeyCombo[0] == VKeys.VK_SCROLL)).ToArray());
-//                        }
-//                    }
-
-//                    FastWindowManager fastWindowManager = container.BuildServiceProvider().GetRequiredService<FastWindowManager>();
-
-//                    System.Threading.Tasks.Task _ = fastWindowManager.Initialize();
-
-
-//#if DEBUG
-//                    System.Diagnostics.Debugger.Break();
-//#endif
-
-//                    container.AddSingleton<ShortcutsProvider>
-//                    (
-//                     CreateShortcutsManager
-//                     (
-//                      container.BuildServiceProvider().GetRequiredService<Input>().GetKeyboardCallbackFunction(),
-//                      [container.BuildServiceProvider().GetRequiredService<FastWindowManager>()]
-//                     )
-//                    );
-//                });
-            }).Build();
-            private static Dispatcher GetWPFUiDispatcher(Thread uiThread) => Dispatcher.FromThread(uiThread) is not Dispatcher uiDispatcher ? throw new InvalidOperationException() : uiDispatcher;
-          //  private static IWindowPositionUpdater CreatePositionUpdaterWin32WPF(Window window) => new Win32WPFWindowPositionUpdater(window);
-            private static IGetImage CreateImageProvider() => new ImageProvider();
-            private static TrayIcon CreateAnIconInTheNotificationArea()
-            {
-                TrayIcon trayIcon = new TrayIcon(App.GetResource(Resource.AppIcon).Stream);
-                return trayIcon;
+                CancellationTokenRegistration? tokenApplicationStartedCallback = null;
+                tokenApplicationStartedCallback = 
+                host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStarted.Register(() =>
+                {
+                    requestCompleteAppStartedDisposeInput.OnNext(false);
+                    tokenApplicationStartedCallback?.Dispose();
+                    requestCompleteAppStartedDisposeInput.OnCompleted();
+                    requestCompleteAppStartedDisposeInput.Dispose();
+                });
+                CancellationTokenRegistration? tokenApplicationApplicationStopped = null;
+                tokenApplicationApplicationStopped =
+                host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping.Register(() =>
+                {
+                    disposablesDependencies.Dispose();
+                    tokenApplicationApplicationStopped?.Dispose();
+                });  
+                
+                return Task.FromResult(host);
             }
-            private static Input CreateHandlerInput(Dispatcher uiDispatcher)
-            {
-                Input inputHandler = uiDispatcher.Invoke(() =>  new Input());
-                ArgumentNullException.ThrowIfNull(inputHandler, nameof(inputHandler));
-                return inputHandler;
-            }
-            private static ShortcutsProvider CreateShortcutsManager(IKeyboardCallback keyboardCallback, IEnumerable<IInvokeShortcuts> listFunc) => new ShortcutsProvider(keyboardCallback, listFunc);
-            private static FastWindowViewModelDependencies CreateFastWindowViewModelDependencies(IGetImage imageProvider) => new FastWindowViewModelDependencies(imageProvider);
-            private static FastWindowManager CreateFastWindowManager(Dispatcher dispatcher, Func<FastWindowViewModelDependencies> fastWindowViewModelDependencies, IKeyboardHandler keyboardHandler) => new FastWindowManager(dispatcher, fastWindowViewModelDependencies, keyboardHandler);
-            //private static FastWindowViewModel CreateMainWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, DpiCorrector corrector, WPFDropImageFile setImage) =>
-            //               new FastWindowViewModel(imageProvider, windowPositionUpdater, corrector, setImage);
-            //private static void SetDataContextMainWindow(Window window, FastWindowViewModel mainWindowViewModel)
-            //{
-            //    window.DataContext = mainWindowViewModel;
-            //    ((IViewFor)window).ViewModel = mainWindowViewModel;
-            //}
-            //private static FastWindow CreateMainWindow(Dispatcher? uiDispatcher = null)
-            //{
-            //    uiDispatcher ??= System.Windows.Application.Current.Dispatcher;
-
-            //    FastWindow? mainWindow = null;
-            //    uiDispatcher.Invoke(() =>
-            //    {
-            //        mainWindow = new FastWindow();
-            //        mainWindow.Show();
-            //    });
-            //    if(mainWindow is null) throw new NullReferenceException();
-
-            //    return mainWindow;
-            //}
-      //      private static FastWindowCommand CreateMainWindowCommand(Window window, FastWindowViewModel viewModel) => new FastWindowCommand(window, viewModel);
-      //      private static FastWindowExternalConditions CreateMainWindowExternalConditions(FastWindowViewModel mainWindowViewModel, IKeyboardHandler keyboardHandler) => new FastWindowExternalConditions(mainWindowViewModel, keyboardHandler);
 
 
-
+            private static TrayIcon CreateAnIconInTheNotificationArea(Dispatcher uiDispatcher) => uiDispatcher.Invoke(() => _ = new TrayIcon(App.GetResource(Resource.AppIcon).Stream));
+            private static FastWindowViewModelDependencies CreateFastWindowViewModelDependencies(IGetImage imageProvider) => _ = new FastWindowViewModelDependencies(imageProvider);
         }
     }
 }

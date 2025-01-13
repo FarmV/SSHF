@@ -15,6 +15,7 @@ using ControlzEx.Standard;
 
 using FVH.SSHF.Infrastructure.Interfaces;
 using FVH.SSHF.FastWindowArea;
+using FVH.SSHF.Infrastructure.Win32;
 
 
 namespace FVH.SSHF.Infrastructure
@@ -84,8 +85,11 @@ namespace FVH.SSHF.Infrastructure
             if(cancelToken.IsCancellationRequested is true) return;
             if(_isUpdateWindow is true) throw new InvalidOperationException($"The window refresh operation cannot be invoked while the window is being refreshed. Check {nameof(IsUpdateWindow)} property");
             if(Win32TimePeriod.TimeBeginPeriod(Win32TimePeriod.MinimumTimerResolution) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to set the timer range");
+            Win32MMCSS mmcss = App.GetDEBUG!.GetDEBUGDependency<Win32MMCSS>();
             try
             {
+                _ = mmcss.SetMaxCPUPriority();
+
                 IsUpdateWindow = true;
 
                 nint lastMSHandle = nint.Zero;
@@ -124,6 +128,7 @@ namespace FVH.SSHF.Infrastructure
                 await _window.Dispatcher.InvokeAsync(() =>
                 {
                     if(Thread.CurrentThread.Priority is ThreadPriority.Highest) Thread.CurrentThread.Priority = ThreadPriority.Normal;
+                    if(mmcss.IsMaxCPUPriority is not false) _ = mmcss.SetNormalCPUPriority();
                 }, System.Windows.Threading.DispatcherPriority.Render, CancellationToken.None);
 
                 IsUpdateWindow = false;

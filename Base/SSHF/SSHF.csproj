@@ -1,55 +1,52 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
+	<PropertyGroup Label="Application Base">
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
-		<RootNamespace>FVH.SSHF</RootNamespace>
-		<Nullable>enable</Nullable>
+		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+		<PlatformTarget>x64</PlatformTarget>		
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
-		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
+		
+	<PropertyGroup Label="Application">
 		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+		<DebugType>embedded</DebugType>
+		<ApplicationIcon>Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
+		
+		<Version>0.0.7.1</Version>		
 		<Product>Screenshot Helper by FarmV</Product>
 		<Description>Screenshot Helper by FarmV</Description>
-		<Version>0.0.7.1</Version>
 		<Copyright>https://github.com/FarmV/SSHF</Copyright>
-		<ApplicationIcon>Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
-		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
 	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <DebugType>embedded</DebugType>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <DebugType>embedded</DebugType>
-	</PropertyGroup>
-
-	<ItemGroup>
-	  <AdditionalFiles Remove="SSHFManifest" />
-	</ItemGroup>
 	
-	<ItemGroup>
+	<PropertyGroup Label="IDE Settings">		
+		<RootNamespace>FVH.SSHF</RootNamespace>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<NoWarn>$(NoWarn);IDE0200</NoWarn>
+	</PropertyGroup>
+		
+	<ItemGroup Label="Nuget Dependencies">
+		<PackageReference Include="ReactiveUI" Version="20.1.63" />
+		<PackageReference Include="ReactiveUI.Events.WPF" Version="15.1.1" />
 		<PackageReference Include="MahApps.Metro" Version="2.4.10" />
-		<PackageReference Include="MahApps.Metro.IconPacks" Version="4.11.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+		<PackageReference Include="MahApps.Metro.IconPacks" Version="5.1.0" />
+		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+		<PackageReference Include="ReactiveUI.WPF" Version="20.1.63" />
+		<PackageReference Include="System.Drawing.Common" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.106">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
-		<PackageReference Include="ReactiveUI" Version="19.5.41" />
-		<PackageReference Include="ReactiveUI.Events.WPF" Version="15.1.1" />
-		<PackageReference Include="System.Drawing.Common" Version="8.0.1" />
 	</ItemGroup>
 	
-	<ItemGroup>
-	  <ProjectReference Include="..\BacgroundCallbackSharp\BackgroundCallbackSharp.csproj" />
+	<ItemGroup Label="Other Dependencies">
+	    <ProjectReference Include="..\BacgroundCallbackSharp\BackgroundCallbackSharp.csproj" />
 	</ItemGroup>
-
-	<ItemGroup>
+	
+	<ItemGroup Label="Included ressources">
 		<Resource Include="Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Resource>

@@ -2,47 +2,61 @@
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Resources;
+using System.Windows.Threading;
+using System.Diagnostics;
 
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
-using FVH.Background.Input;
-
-using FVH.SSHF.Infrastructure;
-using FVH.SSHF.Infrastructure.TrayIconManagement;
-using System.Windows;
-using System.Reactive.Disposables;
-using System.Windows.Threading;
-
-
+using ReactiveUI;
+    
 namespace FVH.SSHF
 {
     internal partial class App
     {
-        internal static bool DesignerMode = true;
         private const string MutexNameSingleInstance = "FVH.SSHF.SingleProgramInstance";
+        private const string UIThreadName = "FVH Main Thread";
         private const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
-        private const int _errorCreateMutex = 100501;
+        private const int _errorCreateMutex = 100_001;
         private static int _applicationExitCode = 0;
-        private readonly IHost _host;
-        private IServiceProvider _serviceProvider;
         private static Mutex? _mutexSingleInstance;
-        private readonly BasicDependencies _basicDependencies;
-        private App(IHost host, BasicDependencies basicDependencies)
+        private readonly IHost _program;
+        private readonly IServiceProvider _serviceProvider;
+
+        internal static bool DesignerMode = true;
+     #if DEBUG
+        internal static TraceSwitch Trace;        
+        internal static App? GetDEBUG { get; private set; }
+        static App() => Trace = new TraceSwitch("Debug", "Debugging only") { Level = TraceLevel.Verbose };
+     #endif
+        private App(IHost program)
         {
-            _host = host;
-            _basicDependencies = basicDependencies;
-            _serviceProvider = _host.Services;
+            _program = program;
+            _serviceProvider = _program.Services;
+         #if DEBUG
+            GetDEBUG = this;
+         #endif
         }
-        private Dependency GetDependency<Dependency>() where Dependency : notnull => _serviceProvider.GetRequiredService<Dependency>();
+     #if DEBUG
+        internal Dependency GetDEBUGDependency<Dependency>() where Dependency : notnull => _serviceProvider.GetRequiredService<Dependency>();
+     #endif
         internal static StreamResourceInfo GetResource(Uri uriResource) => System.Windows.Application.GetResourceStream(uriResource);
         [STAThread]
         private static int Main(string[]? args)
-        {
-            if(CreateMutexForSingleProgram() is false) return _errorCreateMutex;
+        {           
+            if(CreateMutexForSingleProgram() is false) return  _errorCreateMutex;
 
-            Thread.CurrentThread.Name = "FVH Main Thread";
+            Thread.CurrentThread.Name = UIThreadName;
+
+            System.Windows.Application application = new System.Windows.Application();
+            application.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+            Dispatcher dispatcher = Dispatcher.FromThread(Thread.CurrentThread);
+            dispatcher.Invoke(() => RxApp.MainThreadScheduler = DispatcherScheduler.Current);
 
             /// <summary>
             /// Чтобы окно при вставке изображения из буфера обмена сохраняло пропорции и не масштабировалось. 
@@ -54,37 +68,38 @@ namespace FVH.SSHF
                 string error = Marshal.GetLastPInvokeErrorMessage();
                 throw new InvalidOperationException(error);
             }
+         
+            IDisposable? disposableSubscribeStartup = null;
+            disposableSubscribeStartup = application.Events().Startup.SelectMany(_ = Observable.FromAsync(actionAsync: async () => 
+            await dispatcher.InvokeAsync<Task>(async () => await Start(args)).Task.Unwrap())).ObserveOn(RxApp.MainThreadScheduler).
+            Subscribe(onNext: _ => disposableSubscribeStartup?.Dispose(), onError: ex => throw ex);
+          
+            _ = application.Run();
 
-            System.Windows.Application application = new System.Windows.Application();
-            application.Startup += (_, _) => Start(args);
-            application.Run();
             return _applicationExitCode;
         }
-        private static async void Start(string[]? args)
-        {
+        private static async Task Start(string[]? args)
+        {       
             Thread uiThread = Thread.CurrentThread;
-            await Task.Factory.StartNew(() =>
-            {
-                DesignerMode = false;
 
-                BasicDependencies basicDependencies = new BasicDependencies();
-                IHost dependencies = basicDependencies.ConfigureDependencies(uiThread, args);
+            async Task StartAsync()
+            {              
+                IHost thisProgram = await BasicDependencies.ConfigureDependencies(uiThread, args).ConfigureAwait(false);
 
-                App app = new App(dependencies, basicDependencies);
-                app._serviceProvider = app._host.Services;
-                app.RegShortcuts();
-                Dispatcher.FromThread(uiThread).Invoke(() =>
-                {
-                    System.Windows.Application.Current.Exit += app.Shutdown;
-                });
-                app._host.Start();
-            });
+                App app = new App(thisProgram);
+   
+                Dispatcher.FromThread(uiThread).Invoke(() => System.Windows.Application.Current.Exit += app.Shutdown);
+
+                await thisProgram.Services.GetRequiredService<FastWindowManager>().CreateMainWindow().ConfigureAwait(false);
+                await app._program.StartAsync().ConfigureAwait(false);
+            }
+
+            await Task.Run(StartAsync).ConfigureAwait(false);         
         }
         private void Shutdown(object _, ExitEventArgs e)
         {
-            _applicationExitCode = e.ApplicationExitCode;
-            _basicDependencies.Dispose();
-            _host.Dispose();
+            _applicationExitCode = e.ApplicationExitCode;            
+            _program.StopAsync().GetAwaiter().GetResult();          
             _mutexSingleInstance?.Dispose();
         }
         private static bool CreateMutexForSingleProgram()
@@ -94,8 +109,7 @@ namespace FVH.SSHF
             catch { return false; }
             if(mutexWasCreated is false) return false;
             return true;
-        }
-        private void RegShortcuts() => GetDependency<ShortcutsProvider>().RegisterShortcuts();
+        }      
         [LibraryImport("user32", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.I4)]
         private static partial int SetThreadDpiAwarenessContext(nint dpiContext);

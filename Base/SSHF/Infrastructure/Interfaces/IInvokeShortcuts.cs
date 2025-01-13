@@ -1,9 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Reactive.Subjects;
+
+using FVH.SSHF.Infrastructure.Interfaces;
 
 namespace FVH.SSHF.Infrastructure.Interfaces
 {
-    public interface IInvokeShortcuts
+    //public interface IInvokeShortcuts
+    //{
+    //    IEnumerable<Shortcuts> GetShortcuts();
+    //}
+
+    public interface IBehaviorSubjectGlobalShortcuts
     {
-        IEnumerable<Shortcuts> GetShortcuts();
+        BehaviorSubject<IEnumerable<FVH.SSHF.KeyboardShortcut>> GetShortcutsAsObservable();
     }
 }
+
+
+

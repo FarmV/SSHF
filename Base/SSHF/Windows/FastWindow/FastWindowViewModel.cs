@@ -100,19 +100,17 @@ namespace FVH.SSHF.FastWindowArea
             get => _visibleCondition;
             set => this.RaiseAndSetIfChanged(ref _visibleCondition, value);
         }
-        private async Task WindowUpdate()
+        private Task WindowUpdate() =>       
+        Task.Run(async () =>
         {
-            await Task.Factory.StartNew(async () =>
-            {
-                if(_windowPositionUpdater.IsUpdateWindow is true) return;
-                if(_isCancellingUpdate is true) return;
-                else
-                {
-                    if(_updateWindowCancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
-                    await _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token);
-                }
-            });
-        }
+           if(_windowPositionUpdater.IsUpdateWindow is true) return;
+           if(_isCancellingUpdate is true) return;
+           else
+           {
+               if(_updateWindowCancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
+               await _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token);
+           }
+        });       
         private async Task StopUpdateWindow()
         {
             if(_windowPositionUpdater.IsUpdateWindow is false || _isCancellingUpdate is true) return;

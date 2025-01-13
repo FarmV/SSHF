@@ -68,10 +68,12 @@ namespace FVH.SSHF.FastWindowArea
         }
         private static partial class NativeHelper
         {
-            [DllImport("user32")]
-            internal static extern nint SetWindowLongPtrW(nint hWnd, int nIndex, nint dwNewLong);
-            [DllImport("user32")]
-            internal static extern nint GetWindowLongPtrW(nint hWnd, int nIndex);
+            [LibraryImport("user32")]
+            [return:MarshalAs(UnmanagedType.SysInt)]
+            internal static partial nint SetWindowLongPtrW(nint hWnd, int nIndex, nint dwNewLong);
+            [LibraryImport("user32")]
+            [return: MarshalAs(UnmanagedType.SysInt)]
+            internal static partial nint GetWindowLongPtrW(nint hWnd, int nIndex);
         }
     }
 }

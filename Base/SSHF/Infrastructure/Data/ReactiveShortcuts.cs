@@ -7,7 +7,7 @@ using FVH.Background.Input.Infrastructure.Interfaces;
 
 namespace FVH.SSHF
 {
-    public class Shortcuts(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier) : ReactiveUI.ReactiveObject
+    public class KeyboardShortcut(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier) : ReactiveUI.ReactiveObject
     {
         private VKeys[] _keyCombo = keyCombo;
         public VKeys[] KeyCombo
