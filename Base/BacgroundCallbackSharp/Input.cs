@@ -53,11 +53,14 @@ namespace FVH.Background.Input
         }
         public void Dispose()
         {
-            if (isDispose is true) return;
-
-            _proxyInputHandlerWindow?.Dispatcher?.InvokeShutdown();
-            _lowLevelHook?.Dispose();
-            isDispose = true;
+            if(isDispose is true) return;
+            _proxyInputHandlerWindow?.Dispatcher.Invoke(() =>
+            {
+                _proxyInputHandlerWindow.Dispose();
+                _lowLevelHook?.Dispose();
+                _proxyInputHandlerWindow?.Dispatcher?.InvokeShutdown();
+                _v2?.Dispose();
+            });
             GC.SuppressFinalize(this);
         }
         ~Input()
@@ -91,6 +94,8 @@ namespace FVH.Background.Input
         /// <br>Ссылка на класс, реализующий интерфейс <see cref="IKeyboardCallback"/>.</br>
         ///</returns>
         public IKeyboardCallback GetKeyboardCallbackFunction() => _callbackFunction is IKeyboardCallback CallBack ? CallBack : throw new NullReferenceException(nameof(_callbackFunction));
+
+        private Win32MMCSSv2? _v2;
         private Task Initialization()
         {
             if (_isInitialized is true) throw new InvalidOperationException($"The object({nameof(Input)}) cannot be re-initialized");
@@ -99,6 +104,7 @@ namespace FVH.Background.Input
             {
                 _winThread = new Thread(() =>
                 {
+                    Thread.CurrentThread.Priority = ThreadPriority.Highest;
                     HwndSourceParameters configInitWindow = new HwndSourceParameters($"InputHandler-{Path.GetRandomFileName}", 0, 0)
                     {
                         WindowStyle = unchecked((int)WS_POPUP)
@@ -115,6 +121,9 @@ namespace FVH.Background.Input
             Task waitForDispatcherValidation = Task.Run(async () =>
             {
                 Dispatcher? winDispatcher = Dispatcher.FromThread(_winThread);
+                _v2 = new Win32MMCSSv2(winDispatcher);
+
+                if(_v2.SetMaxCPUPriority() is false) throw new InvalidOperationException();
 
                 if (SpinWait.SpinUntil(() =>
                 {

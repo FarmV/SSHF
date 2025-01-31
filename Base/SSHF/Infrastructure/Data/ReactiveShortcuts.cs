@@ -1,25 +1,28 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-using ReactiveUI;
+
 
 using FVH.Background.Input.Infrastructure.Interfaces;
 
+using R3;
+
 namespace FVH.SSHF
 {
-    public class KeyboardShortcut(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier) : ReactiveUI.ReactiveObject
+    public class KeyboardShortcut 
     {
-        private VKeys[] _keyCombo = keyCombo;
-        public VKeys[] KeyCombo
+        public KeyboardShortcut(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier)
         {
-            get => _keyCombo;
-            set => this.RaiseAndSetIfChanged(ref _keyCombo, value);
+            KeyCombo.Value = keyCombo;
+            CallbackTask = callbackTask;
+            Identifier = identifier;
         }
+        public readonly BindableReactiveProperty<VKeys[]> KeyCombo = new BindableReactiveProperty<VKeys[]>([]);
         public Func<Task> CallbackTask
         {
             get;
             set;
-        } = callbackTask;
-        public object? Identifier { get; set; } = identifier;
+        }
+        public object? Identifier { get; set; }
     }
 }

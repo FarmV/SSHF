@@ -51,10 +51,17 @@ namespace FVH.SSHF.Infrastructure
                     }
                     else
                     {
-                        BitmapSource res = Clipboard.GetImage();
-                        RenderOptions.SetBitmapScalingMode(res, BitmapScalingMode.NearestNeighbor);
-                        res.Freeze();
-                        returnImage = res;
+                        try
+                        {
+                            BitmapSource res = Clipboard.GetImage();
+                            RenderOptions.SetBitmapScalingMode(res, BitmapScalingMode.NearestNeighbor);
+                            res.Freeze();
+                            returnImage = res;
+                        }
+                        catch
+                        {
+                            //todo добавить логирование
+                        }
                     }
                 }
             });

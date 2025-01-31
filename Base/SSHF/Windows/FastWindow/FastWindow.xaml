@@ -8,16 +8,17 @@
     xmlns:sys                                 = "clr-namespace:System;assembly=mscorlib"
                                               
     xmlns:packageNamespaceMahApps             = "http://metro.mahapps.com/winfx/xaml/controls"
-    xmlns:packageNamespaceRXUI                = "clr-namespace:System.Reactive;assembly=System.Reactive"
     xmlns:packageNamespaceBehaviors           = "http://schemas.microsoft.com/xaml/behaviors"    
     xmlns:packageNamespaceMahAppsMetroActions = "clr-namespace:MahApps.Metro.Actions;assembly=MahApps.Metro"    
+    xmlns:packageNamespaceR3                  = "clr-namespace:R3;assembly=R3"    
                                               
     x:Name                                    = "Fast"
     x:Class                                   = "FVH.SSHF.FastWindowArea.FastWindow"    
     xmlns:namespaceFastWindowArea             = "clr-namespace:FVH.SSHF.FastWindowArea"
     xmlns:namespaceConverters                 = "clr-namespace:FVH.SSHF.Infrastructure.Converters"   
     
-    d:DataContext = "{ d:DesignInstance Type = namespaceFastWindowArea:FastWindowViewModel, IsDesignTimeCreatable = True }"
+   
+    d:DataContext = "{ d:DesignInstance Type = namespaceFastWindowArea:FastWindowViewModel,  IsDesignTimeCreatable = True }"
                 
     Visibility           = "Visible"
     WindowStyle          = "None"      
@@ -32,6 +33,7 @@
     ShowCloseButton      = "False"
     ShowMaxRestoreButton = "False"
     NonActiveBorderBrush = "Transparent"   
+    
    >
 
     <Window.Resources>
@@ -45,7 +47,6 @@
 
             <packageNamespaceBehaviors:InvokeCommandAction 
                 Command = "{ Binding HideWindow }" 
-                CommandParameter = "{ x:Static packageNamespaceRXUI:Unit.Default }"
             ></packageNamespaceBehaviors:InvokeCommandAction>
 
         </packageNamespaceBehaviors:EventTrigger>
@@ -58,9 +59,8 @@
 
             <packageNamespaceBehaviors:EventTrigger EventName="PreviewMouseLeftButtonDown" >
 
-                <packageNamespaceBehaviors:InvokeCommandAction 
+                <packageNamespaceBehaviors:InvokeCommandAction                     
                     Command = "{ Binding StopWindowUpdater }" 
-                    CommandParameter = "{ x:Static packageNamespaceRXUI:Unit.Default }"
                 ></packageNamespaceBehaviors:InvokeCommandAction>
 
             </packageNamespaceBehaviors:EventTrigger>
@@ -69,7 +69,6 @@
 
                 <packageNamespaceBehaviors:InvokeCommandAction 
                     Command = "{ Binding DragMoveWindow }" 
-                    CommandParameter = "{ x:Static packageNamespaceRXUI:Unit.Default }"
                 ></packageNamespaceBehaviors:InvokeCommandAction>
 
             </packageNamespaceBehaviors:EventTrigger>
@@ -93,8 +92,9 @@
 
                     <Setter.Value>
 
-                        <Binding 
-                             Path = "BackgroundImage" 
+                        <Binding                              
+                             Path = "BackgroundImage.Value"
+                             UpdateSourceTrigger="PropertyChanged"
                              Converter = "{ StaticResource KeyConverterImageDPIViewport }"
                         ></Binding>
 
@@ -107,7 +107,7 @@
                     <Setter.Value>
 
                         <Binding 
-                            Path = "VisibleCondition" 
+                            Path = "VisibleCondition.Value" 
                             Converter = "{ StaticResource KeyConverterVisibleToOpacity }"
                         ></Binding>
 

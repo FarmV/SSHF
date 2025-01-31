@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using ReactiveUI;
-using System.Reactive.Disposables;
+
+
 
 using FVH.Background.Input;
 using FVH.Background.Input.Infrastructure.Interfaces;
@@ -17,14 +17,14 @@ using FVH.Background.Input.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure.TrayIconManagement;
-using System.Reactive.Subjects;
-using System.Reactive.Linq;
+
 using System.Diagnostics;
 using System.ComponentModel;
 using System.Xml.Linq;
 using WinRT;
 using FVH.SSHF.Infrastructure.Input;
 using FVH.SSHF.Infrastructure.Win32;
+using R3;
 
 namespace FVH.SSHF
 {
@@ -41,32 +41,38 @@ namespace FVH.SSHF
                 Win32MMCSS win32MMCSS = new Win32MMCSS(uiDispatcher);
 
                 AggregatorInputConditions aggregatorInputCondition = new AggregatorInputConditions();
-                BehaviorSubject<bool> requestCompleteAppStartedDisposeInput = new BehaviorSubject<bool>(true);
-                BehaviorSubject<bool> requestExternalDisposeInput = new BehaviorSubject<bool>(false);
+                R3.BehaviorSubject<bool> requestCompleteAppStartedDisposeInput = new R3.BehaviorSubject<bool>(true);
+                R3.BehaviorSubject<bool> requestExternalDisposeInput = new R3.BehaviorSubject<bool>(false);
                 Win32ObserverExclusiveMode requestExclusiveModeDisposeInput = new Win32ObserverExclusiveMode(uiDispatcher);
-                IObservable<bool> combineConditionsDisposeInput = requestExternalDisposeInput.CombineLatest(requestCompleteAppStartedDisposeInput, (bool AppStarted, bool disposeInput) => AppStarted || disposeInput);
+                Observable<bool> combineConditionsDisposeInput = requestExternalDisposeInput.CombineLatest(requestCompleteAppStartedDisposeInput, (bool AppStarted, bool disposeInput) => AppStarted || disposeInput);
 
                 aggregatorInputCondition.AddIObservable(requestExclusiveModeDisposeInput.ExcusiveMode);
                 aggregatorInputCondition.AddIObservable(combineConditionsDisposeInput);
              
                 IGetImage iGetImage = new ImageProvider();
-   
-                BehaviorSubject<IKeyboardHandler?> keyboardHandlerObservableSubject = new BehaviorSubject<IKeyboardHandler?>(null);
+
+                R3.BehaviorSubject<IKeyboardHandler?> keyboardHandlerObservableSubject = new R3.BehaviorSubject<IKeyboardHandler?>(null);
+
+                R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>? listIInvokeShortcutsBehaviorSubject = null;
+                Func<BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> delegateListIInvokeShortcutsBehaviorSubject = 
+                   new Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>>(() => listIInvokeShortcutsBehaviorSubject!);
+
+                WaitingInputProvider? waitingInput = new WaitingInputProvider(aggregatorInputCondition.InputConditionsBehaviorSubject, delegateListIInvokeShortcutsBehaviorSubject);
 
                 FastWindowManager fastWindowManager = uiDispatcher.Invoke(
-                () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(iGetImage), keyboardHandlerObservableSubject));
+                () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(iGetImage), keyboardHandlerObservableSubject, waitingInput));
                 if(args?.Length > 0)
                 {
                     if(args.SingleOrDefault(x => x == "--SCR_NotBR") is not null)
                     {
                         KeyboardShortcut[] defaultShortcuts = fastWindowManager.GetDefaultShortcuts();
-                        fastWindowManager.SetNewShortcuts(defaultShortcuts.Where(x => x != defaultShortcuts.Single(x => x.KeyCombo[0] == VKeys.VK_SCROLL)).ToArray());
+                        fastWindowManager.SetNewShortcuts(defaultShortcuts.Where(x => x != defaultShortcuts.Single(x => x.KeyCombo.CurrentValue[0] == VKeys.VK_SCROLL)).ToArray());
                     }
                 }
           
-                BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>> listIInvokeShortcutsBehaviorSubject = new BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>([fastWindowManager]);
+                listIInvokeShortcutsBehaviorSubject = new BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>([fastWindowManager]);
 
-                WaitingInputProvider waitingInput = new WaitingInputProvider(aggregatorInputCondition.InputConditionsBehaviorSubject, listIInvokeShortcutsBehaviorSubject);
+             //   waitingInput = new WaitingInputProvider(aggregatorInputCondition.InputConditionsBehaviorSubject, listIInvokeShortcutsBehaviorSubject);
                 waitingInput.CurrentInstanceIKeyboardHandlerOrDefault.Subscribe(keyboardHandlerObservableSubject.OnNext);
         
                 TrayIcon trayIcon = CreateAnIconInTheNotificationArea(uiDispatcher);
@@ -81,6 +87,8 @@ namespace FVH.SSHF
                     container.AddSingleton<FastWindowManager>(fastWindowManager);
                     container.AddSingleton<WaitingInputProvider>(waitingInput);
                     container.AddSingleton<TrayIcon>(trayIcon);
+
+                    container.AddSingleton<Win32ObserverExclusiveMode>(requestExclusiveModeDisposeInput);
                 }).Build();
 
                 CompositeDisposable disposablesDependencies =
@@ -108,8 +116,10 @@ namespace FVH.SSHF
                 {
                     disposablesDependencies.Dispose();
                     tokenApplicationApplicationStopped?.Dispose();
-                });  
-                
+                });
+
+                requestExclusiveModeDisposeInput.RegisterShellHook();
+
                 return Task.FromResult(host);
             }
 

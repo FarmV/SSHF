@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Input;
-using System.Reactive.Linq;
-
-using ReactiveUI;
 
 using FVH.Background.Input;
 using FVH.Background.Input.Infrastructure.Interfaces;
-using System.Reactive.Disposables;
-using System.Reactive.Subjects;
+
+using R3;
 
 
 namespace FVH.SSHF.FastWindowArea
@@ -17,12 +14,12 @@ namespace FVH.SSHF.FastWindowArea
     {
         private bool _isDispose = false;
         private readonly FastWindowViewModel _mainWindowViewModel;
-        private readonly CompositeDisposable _disposables;
+        private readonly R3.CompositeDisposable _disposables;
         private readonly IDisposable? _keyboardHandlerSubscription;
-        internal FastWindowExternalConditions(FastWindowViewModel mainWindowViewModel, BehaviorSubject<IKeyboardHandler?> keyboardHandler) //todo Позаботится об отписках
+        internal FastWindowExternalConditions(FastWindowViewModel mainWindowViewModel, R3.BehaviorSubject<IKeyboardHandler?> keyboardHandler) //todo Позаботится об отписках
         {
             _mainWindowViewModel = mainWindowViewModel;
-            _disposables = new CompositeDisposable();
+            _disposables = new R3.CompositeDisposable();
 
             _keyboardHandlerSubscription = keyboardHandler.Subscribe((IKeyboardHandler? iKeyboardHandler) => Subscribe(iKeyboardHandler));       
         }
@@ -38,32 +35,34 @@ namespace FVH.SSHF.FastWindowArea
             switch(keyboardHandler)
             {
                 case not null:
-                    IObservable<VKeys[]> keyPressObservable = Observable.FromEventPattern(
+                    R3.Observable<VKeys[]> keyPressObservable = R3.Observable.FromEventHandler(
                                         (EventHandler<IKeysNotifier> handler) => keyboardHandler.KeyPressEvent += handler,
-                                        (EventHandler<IKeysNotifier> handler) => keyboardHandler.KeyPressEvent -= handler).Select(x => x.EventArgs.Keys);
-                    
-                    IObservable<VKeys[]> keyUPObservable = Observable.FromEventPattern(
+                                        (EventHandler<IKeysNotifier> handler) => keyboardHandler.KeyPressEvent -= handler).Select(x => x.e.Keys);
+
+                 
+
+                    R3.Observable<VKeys[]> keyUPObservable = R3.Observable.FromEventHandler(
                                          (EventHandler<IKeysNotifier> handler) => keyboardHandler.KeyUpPressEvent += handler,
-                                         (EventHandler<IKeysNotifier> handler) => keyboardHandler.KeyUpPressEvent -= handler).Select(x => x.EventArgs.Keys);
+                                         (EventHandler<IKeysNotifier> handler) => keyboardHandler.KeyUpPressEvent -= handler).Select(x => x.e.Keys);
                     
-                    IDisposable keyPressSubscribe = keyPressObservable.ObserveOn(RxApp.MainThreadScheduler).SubscribeOn(RxApp.MainThreadScheduler).Subscribe(x =>
-                    {
-                        if(Keyboard.IsKeyUp(Key.LeftCtrl) is false)
-                        {
-                            _mainWindowViewModel.DragMoveCondition = false;
-                            _mainWindowViewModel.DropCondition = true;
-                        }
-                    });
+                    IDisposable keyPressSubscribe = keyPressObservable.ObserveOn(ObservableSystem.DefaultTimeProvider).Subscribe(x =>
+                       {
+                           if(Keyboard.IsKeyUp(Key.LeftCtrl) is false)
+                           {
+                               _mainWindowViewModel.SetDragMoveCondition(false);
+                               _mainWindowViewModel.SetDropCondition(true);
+                           }
+                       });
                     
-                    IDisposable keyUPSubscribe = keyUPObservable.ObserveOn(RxApp.MainThreadScheduler).Subscribe(x =>
-                    {
-                        if(_mainWindowViewModel.VisibleCondition == Visibility.Hidden) return;
-                        if(Keyboard.IsKeyUp(Key.LeftCtrl) is true)
-                        {
-                            _mainWindowViewModel.DragMoveCondition = true;
-                            _mainWindowViewModel.DropCondition = false;
-                        }
-                    });
+                       IDisposable keyUPSubscribe = keyUPObservable.ObserveOn(ObservableSystem.DefaultTimeProvider).Subscribe(x =>
+                       {
+                           if(_mainWindowViewModel.VisibleCondition.CurrentValue == Visibility.Hidden) return;
+                           if(Keyboard.IsKeyUp(Key.LeftCtrl) is true)
+                           {
+                               _mainWindowViewModel.SetDragMoveCondition(true);     
+                               _mainWindowViewModel.SetDropCondition(false);
+                           }
+                       });
                     _disposables.Add(keyPressSubscribe);
                     _disposables.Add(keyUPSubscribe);
                 break;

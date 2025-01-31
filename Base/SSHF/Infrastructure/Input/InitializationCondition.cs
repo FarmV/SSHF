@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
+
 
 
 namespace FVH.SSHF.Infrastructure.Input
@@ -8,13 +7,11 @@ namespace FVH.SSHF.Infrastructure.Input
     internal class InitializationCondition
     {
         private bool _isComplete = false;
-        private readonly BehaviorSubject<bool> _initializationCompleteBehaviorSubject;
+        private readonly R3.BehaviorSubject<bool> InitializationsCompleteBehaviorSubject;
 
-        internal readonly IObservable<bool> _initializationComplete;
         internal InitializationCondition()
         {
-            _initializationCompleteBehaviorSubject = new BehaviorSubject<bool>(false);
-            _initializationComplete = _initializationCompleteBehaviorSubject.AsObservable();
+            InitializationsCompleteBehaviorSubject = new R3.BehaviorSubject<bool>(false);
         }
         internal void InitializationComplete()
         {
@@ -22,9 +19,9 @@ namespace FVH.SSHF.Infrastructure.Input
 
             _isComplete = true;
 
-            _initializationCompleteBehaviorSubject.OnNext(_isComplete);
-            _initializationCompleteBehaviorSubject.OnCompleted();
-            _initializationCompleteBehaviorSubject.Dispose();
+            InitializationsCompleteBehaviorSubject.OnNext(_isComplete);
+            InitializationsCompleteBehaviorSubject.OnCompleted(R3.Result.Success);
+            InitializationsCompleteBehaviorSubject.Dispose();
         }
     }
 }

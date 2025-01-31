@@ -151,7 +151,9 @@ namespace FVH.Background.Input
                 dispatcher = System.Windows.Application.Current.Dispatcher;
             }
             catch { dispatcher = null; }
-
+#if DEBUG
+            Debug.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fffff")} ===============================> InvokeFunctions");
+#endif
             if(dispatcher is not null) await Task.WhenAll(toTaskInvoke.Select(x => x.CallbackTask).Select(func => dispatcher.InvokeAsync(() => StartOrRunTask(func)).Task));
             else
             {
@@ -182,8 +184,9 @@ namespace FVH.Background.Input
                 };
                 if(checkKey.HasValue is false)
                     throw new InvalidOperationException();
-
+#if DEBUG
                 Debug.WriteLine($"{keys.First()} - {checkKey.Value}");
+#endif
                 if(keys.Contains(checkKey.Value))
                 {
                     res = checkKey;
@@ -202,7 +205,9 @@ namespace FVH.Background.Input
                 _lowLevelHook.KeyDownEvent += CheckKeyCallback;
                 if(System.Threading.SpinWait.SpinUntil(() => complete is true, TimeSpan.FromMilliseconds(950)) is not true)
                 {
+#if DEBUG
                     Debug.WriteLine($"Warning Timeout {CheckKeyCallback}");
+#endif
                 }
                 return res;
             });

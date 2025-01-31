@@ -1,17 +1,23 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Windows.Controls.Ribbon;
 using System.Windows.Threading;
 
 using Windows.Win32;
 using Windows.Win32.Graphics.DirectDraw;
 
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+
 using HRESULT = Windows.Win32.Foundation.HRESULT;
 namespace FVH.SSHF.Infrastructure.Win32
 {
-    internal class Win32ExclusiveModeChecker : IDisposable
+    internal partial class Win32ExclusiveModeChecker : IDisposable
     {
-        private static Guid CLSID_DirectDraw7 = new Guid("3C305196-50DB-11D3-9CFE-00C04FD930C5");
-        private static Guid IID_IDirectDraw7 = new Guid("15E65EC0-3B9C-11D2-B92F-00609797EA5B");
+        private static readonly Guid CLSID_DirectDraw7 = new Guid("3C305196-50DB-11D3-9CFE-00C04FD930C5");
+        private static readonly Guid IID_IDirectDraw7 = new Guid("15E65EC0-3B9C-11D2-B92F-00609797EA5B");
         private const int DD_OK = 0;
         private const int DDERR_EXCLUSIVEMODEALREADYSET = unchecked((int)0x88760245);
         private bool _isDispose = false;
@@ -34,7 +40,35 @@ namespace FVH.SSHF.Infrastructure.Win32
             GC.SuppressFinalize(this);
         }
         ~Win32ExclusiveModeChecker() { if(_isDispose is true) return; Dispose(); }
-        internal bool CheckExclusiveMode(Dispatcher staDispatcher) => staDispatcher.Invoke(() => _idd7.TestCooperativeLevel() == DDERR_EXCLUSIVEMODEALREADYSET);
+        internal bool CheckExclusiveMode(Dispatcher staDispatcher) => staDispatcher.Invoke(() =>
+        {
+            bool isExclusiveMode = _idd7.TestCooperativeLevel() == DDERR_EXCLUSIVEMODEALREADYSET;
+
+            if(isExclusiveMode is true)
+            {
+#if DEBUG
+                Debug.WriteLine($"{DateTime.Now.ToString("mm:ss.ffffff")}========D3DKMTCheckExclusiveOwnership=>{D3DKMTCheckExclusiveOwnership()}====");
+                // var r2 =  App.GetDEBUG.GetDEBUGDependency<Win32MMCSS>();
+                //// if(SetThreadPriority(GetCurrentThread(),15) is not true) throw new InvalidOperationException();
+                ////_ = SetThreadPriority(GetCurrentThread(), 0);
+                //App.GetDEBUG.GetDEBUGDependency<Win32MMCSS>().SetMaxCPUPriority();
+                Debug.WriteLine($"{DateTime.Now.ToString("mm:ss.ffffff")}");
+                App.Stopwatch.Restart();
+#endif
+
+            }
+            return isExclusiveMode;
+        });
+        [DllImport("Kernel32")]
+        private static extern bool SetThreadPriority(nint hThread, int nPriority);
+        [DllImport("kernel32")]
+        private static extern nint GetCurrentThread();  
+
+        [LibraryImport("Gdi32")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool D3DKMTCheckExclusiveOwnership();
     }
+
+   
 }
 

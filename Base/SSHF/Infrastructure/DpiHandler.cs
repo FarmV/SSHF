@@ -19,7 +19,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
         private const long WS_POPUP = 0x80000000L;
         private const int WM_DPICHANGED = 0x02E0;
         private nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new nint(-4);
-        private Thread? threadHendlerDPI;
+        private Thread? _threadHandlerDPI;
         private volatile HwndSource? _proxyInputHandlerWindow = null;
         public event EventHandler<DpiScale>? DPIChange;
         private bool _disposed = false;
@@ -30,7 +30,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
         private static partial int SetThreadDpiAwarenessContext(nint dpiContext);
         private void Init()
         {
-            threadHendlerDPI = new Thread(() =>
+            _threadHandlerDPI = new Thread(() =>
             {
                 if (SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == nint.Zero) // return 2147508241 вероятно возращаймое значение не корректно SetThreadDpiAwarenessContext должен возращать nint, из перечислеия DPI_AWARENESS_CONTEXT прошлого состояния потока
                 {
@@ -46,14 +46,14 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
                 Dispatcher.Run();
             })
             { Name = "Dpi Handler" };
-            threadHendlerDPI.SetApartmentState(ApartmentState.STA);
-            threadHendlerDPI.Start();
+            _threadHandlerDPI.SetApartmentState(ApartmentState.STA);
+            _threadHandlerDPI.Start();
 
 
-            if (SpinWait.SpinUntil(() => Dispatcher.FromThread(threadHendlerDPI) is not null &&
+            if (SpinWait.SpinUntil(() => Dispatcher.FromThread(_threadHandlerDPI) is not null &&
             _proxyInputHandlerWindow is not null, TimeSpan.FromMilliseconds(300)) is false) throw new InvalidOperationException("Dispatcher is null or _proxyInputHandlerWindow null");
 
-            Dispatcher dispatcherDPIWindowHendler = Dispatcher.FromThread(threadHendlerDPI);
+            Dispatcher dispatcherDPIWindowHendler = Dispatcher.FromThread(_threadHandlerDPI);
 
             dispatcherDPIWindowHendler.Invoke(() =>
             {
@@ -77,7 +77,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
         public void Dispose()
         {
             if (_disposed is true) return;
-            Dispatcher.FromThread(threadHendlerDPI)?.Invoke(() => { Dispatcher.FromThread(threadHendlerDPI)?.InvokeShutdown(); });
+            Dispatcher.FromThread(_threadHandlerDPI)?.Invoke(() => { Dispatcher.FromThread(_threadHandlerDPI)?.InvokeShutdown(); });
             _disposed = true;
             GC.SuppressFinalize(this);
         }

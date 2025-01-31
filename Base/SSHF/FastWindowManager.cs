@@ -5,15 +5,15 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Windows.Forms;
 
-using ReactiveUI;
-using System.Reactive.Subjects;
-
 using FVH.Background.Input.Infrastructure.Interfaces;
 
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
 using FVH.SSHF.FastWindowArea;
-using FVH.SSHF.NotificationWindowArea;
+using FVH.SSHF.Infrastructure.Input;
+using System.Threading;
+using System.Diagnostics;
+using R3;
 
 namespace FVH.SSHF
 {
@@ -29,11 +29,12 @@ namespace FVH.SSHF
         private readonly Dispatcher _dispatcher;
         private readonly FastWindowCreator _windowCreator;
         private readonly Dictionary<int, OneFastWindow> _fastWindows;
-        private readonly BehaviorSubject<IEnumerable<KeyboardShortcut>> _currentStatusShortcutsFastWindow;
+        private readonly R3.BehaviorSubject<IEnumerable<KeyboardShortcut>> _currentStatusShortcutsFastWindow;
         private OneFastWindow? _firstFastWindow;
         private OneFastWindow? _activeFastWindow;
         private KeyboardShortcut[]? _currentShortcutsFastWindow;
-        private readonly BehaviorSubject<IKeyboardHandler?> _keyboardHandler;
+        private readonly R3.BehaviorSubject<IKeyboardHandler?> _keyboardHandler;
+        private readonly WaitingInputProvider _waitingInputProvider;
 
         internal bool IsInitialize = false;
         internal bool BlockInput = false;
@@ -41,7 +42,8 @@ namespace FVH.SSHF
         (
             Dispatcher dispatcher,
             Func<FastWindowViewModelDependencies> getFastWindowViewModelDependencies,
-            BehaviorSubject<IKeyboardHandler?> keyboardHandler
+            R3.BehaviorSubject<IKeyboardHandler?> keyboardHandler,
+            WaitingInputProvider waitingInputProvider
         )
         {
             _dispatcher = dispatcher;
@@ -49,7 +51,25 @@ namespace FVH.SSHF
             _keyboardHandler = keyboardHandler;
             _windowCreator = new FastWindowCreator(dispatcher, getFastWindowViewModelDependencies);
 
-            _currentStatusShortcutsFastWindow = new BehaviorSubject<IEnumerable<KeyboardShortcut>>(GetDefaultShortcuts());
+            _currentStatusShortcutsFastWindow = new R3.BehaviorSubject<IEnumerable<KeyboardShortcut>>(GetDefaultShortcuts());
+
+            _waitingInputProvider = waitingInputProvider;
+
+            _waitingInputProvider.IsDisposeInput.ObserveOnThreadPool().Subscribe(onNext: IfInputDispose);
+        }
+        public void Dispose()
+        {
+            if(IsDisposed is true) return;
+            IsDisposed = true;
+            Array.ForEach(_fastWindows.Select(value => value.Value).ToArray(), oneFastWindow => oneFastWindow.Dispose());
+            _fastWindows.Clear();
+        }
+        private void IfInputDispose(bool disposeInput)
+        {
+            if(disposeInput is false) return;
+            if(_activeFastWindow?.FastWindowViewModelDependencies?.IWindowPositionUpdater?.IsUpdateWindow is true) _activeFastWindow?.FastWindowCommand.StopRefreshWindow().Wait();
+            
+            if(_activeFastWindow?.FastWindowCommand.MainWindowViewModel.VisibleCondition.Value == System.Windows.Visibility.Visible) _activeFastWindow?.FastWindowCommand.HideWindow().Wait();
         }
         internal void SetNewShortcuts(ShortcutsFunction[] shortcutsFunction)
         {
@@ -61,7 +81,7 @@ namespace FVH.SSHF
                     ArgumentNullException.ThrowIfNull(shortcut.Identifier);
                     return shortcut.Identifier.ToString() == shortcutFunction.NameFunction;
                 });
-                singleElement.KeyCombo = shortcutFunction.Shortcut;
+                singleElement.KeyCombo.Value = shortcutFunction.Shortcut;
             }
             
             ObjectDisposedException.ThrowIf(IsDisposed, this);
@@ -89,18 +109,8 @@ namespace FVH.SSHF
 
             _currentShortcutsFastWindow = GetDefaultShortcuts();
         }
-        public void Dispose()
-        {
-            if(IsDisposed is true) return;
-            IsDisposed = true;
-            Array.ForEach(_fastWindows.Select(x => x.Value).ToArray(), x => x.Dispose());
-            _fastWindows.Clear();
-            GC.SuppressFinalize(this);
-        }
-        BehaviorSubject<IEnumerable<KeyboardShortcut>> IBehaviorSubjectGlobalShortcuts.GetShortcutsAsObservable()
-        {
-            return _currentStatusShortcutsFastWindow;
-        }
+        public R3.BehaviorSubject<IEnumerable<KeyboardShortcut>> GetShortcutsAsObservable() => _currentStatusShortcutsFastWindow;
+        
         public IEnumerable<KeyboardShortcut> GetShortcuts()
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
@@ -266,8 +276,9 @@ namespace FVH.SSHF
             FastWindowViewModel viewModel = await _dispatcher.InvokeAsync(() => CreateViewModelFastWindow(fastWindowViewModelDependencies));
             await _dispatcher.InvokeAsync(() =>
             {
+                //window.Show();
                 window.DataContext = viewModel;
-                ((IViewFor)window).ViewModel = viewModel; // не забывать приводить к интерфейсу для активации привязок
+                window.ViewModel = viewModel;
             });
             return (window, viewModel, fastWindowViewModelDependencies);
         }

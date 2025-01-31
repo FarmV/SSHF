@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reactive.Linq;
-using System.Reactive.Threading.Tasks;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 using FVH.Background.Input.Infrastructure.Interfaces;
 
 using FVH.SSHF.Infrastructure.Interfaces;
 
+
+
 namespace FVH.SSHF.FastWindowArea
 {
-    internal class FastWindowCommand 
+    internal class FastWindowCommand
     {
         private readonly System.Windows.Window _window;
         private bool _isExecutePresentNewImage = false;
@@ -64,33 +65,60 @@ namespace FVH.SSHF.FastWindowArea
         public IEnumerable<KeyboardShortcut> GetShortcuts() => _shortcuts ?? throw new NullReferenceException(nameof(_shortcuts));
         public async Task PresentNewImage()
         {
-            async Task SetNewImage() =>
-            _ = await _window.Dispatcher.InvokeAsync(() => MainWindowViewModel.SetNewImage.Execute().ToTask()).Task.Unwrap();
-            async Task ShowWindow() =>
-            _ = await _window.Dispatcher.InvokeAsync(() => MainWindowViewModel.ShowWindow.Execute().ToTask()).Task.Unwrap();
-            async Task<bool> CanExecuteRefreshWindowInvoke() => await MainWindowViewModel.RefreshWindowInvoke.CanExecute.FirstAsync();       
-            async Task RefreshWindowInvoke() => 
-            _ = await _window.Dispatcher.InvokeAsync(() => MainWindowViewModel.RefreshWindowInvoke.Execute().ToTask()).Task.Unwrap();
-
+            Task SetNewImage()
+            {
+                if(MainWindowViewModel.SetNewImage.CanExecute() is false) return Task.CompletedTask;
+                MainWindowViewModel.SetNewImage.Execute(R3.Unit.Default);
+                return Task.CompletedTask;          
+            }
+            Task ShowWindow()
+            {
+                if(MainWindowViewModel.ShowWindow.CanExecute() is false) return Task.CompletedTask;
+                MainWindowViewModel.ShowWindow.Execute(R3.Unit.Default);
+                return Task.CompletedTask;
+            }
+            Task RefreshWindowInvoke()
+            {
+                
+                if(MainWindowViewModel.RefreshWindowInvoke.CanExecute() is false) return Task.CompletedTask;
+                MainWindowViewModel.RefreshWindowInvoke.Execute(R3.Unit.Default);
+                return Task.CompletedTask;
+            }
             if(_isExecutePresentNewImage is true) return;
             try
             {
                 _isExecutePresentNewImage = true;
 
-                await _window.Dispatcher.InvokeAsync(SetNewImage).Task.Unwrap();
-                await _window.Dispatcher.InvokeAsync(ShowWindow).Task.Unwrap();
+                await SetNewImage().ConfigureAwait(false);
+                await ShowWindow().ConfigureAwait(false);
 
-                if(await CanExecuteRefreshWindowInvoke() is true) await _window.Dispatcher.InvokeAsync(RefreshWindowInvoke).Task.Unwrap();
+                await RefreshWindowInvoke().ConfigureAwait(false);
             }
-            finally { _isExecutePresentNewImage = false; }
+            finally { Volatile.Write(ref _isExecutePresentNewImage, false); }
         }
-        public async Task SwitchBlockRefreshWindow() => 
-        _ = await _window.Dispatcher.InvokeAsync(() => MainWindowViewModel.SwitchBlockRefreshWindow.Execute().ToTask()).Task.Unwrap();
-        public async Task StopRefreshWindow() => 
-        _ = MainWindowViewModel.WindowPositionUpdater.IsUpdateWindow ?
-        await _window.Dispatcher.InvokeAsync(() => MainWindowViewModel.StopWindowUpdater.Execute().ToTask()).Task.Unwrap() : 
-        await Task.FromResult(System.Reactive.Unit.Default);
-        public async Task InvokeMsScreenClip() => 
-        _ = await _window.Dispatcher.InvokeAsync(() => MainWindowViewModel.MsScreenClipInvoke.Execute().ToTask()).Task.Unwrap();         
+        public Task SwitchBlockRefreshWindow()
+        {
+            if(MainWindowViewModel.SwitchBlockRefreshWindow.CanExecute() is false) return Task.CompletedTask;
+            MainWindowViewModel.SwitchBlockRefreshWindow.Execute(R3.Unit.Default);
+            return Task.CompletedTask;
+        }
+        public Task StopRefreshWindow()
+        {
+            if(MainWindowViewModel.StopWindowUpdater.CanExecute() is false) return Task.CompletedTask;
+            MainWindowViewModel.StopWindowUpdater.Execute(R3.Unit.Default);
+            return Task.CompletedTask;            
+        }
+        public Task InvokeMsScreenClip()
+        {
+            if(MainWindowViewModel.MsScreenClipInvoke.CanExecute() is false) return Task.CompletedTask;
+            MainWindowViewModel.MsScreenClipInvoke.Execute(R3.Unit.Default);
+            return Task.CompletedTask;
+        }
+        public Task HideWindow()
+        {
+            if(MainWindowViewModel.HideWindow.CanExecute() is false) return Task.CompletedTask;
+            MainWindowViewModel.HideWindow.Execute(R3.Unit.Default);
+            return Task.CompletedTask; 
+        }        
     }
 }

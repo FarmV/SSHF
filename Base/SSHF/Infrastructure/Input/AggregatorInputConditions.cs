@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
+using System.Threading.Tasks;
+using System.Windows.Threading;
+
+using R3;
 
 
 namespace FVH.SSHF.Infrastructure.Input
@@ -11,15 +12,17 @@ namespace FVH.SSHF.Infrastructure.Input
     internal class AggregatorInputConditions : IDisposable
     {
         private bool _isDisposed = false;
-        private readonly Dictionary<IObservable<bool>, (bool? CurretStatus, IDisposable ObservableDispose)> _currentObservableConditions;
-        internal readonly BehaviorSubject<bool> InputConditionsBehaviorSubject;
+        private readonly Dictionary<R3.Observable<bool>, (bool? CurretStatus, IDisposable ObservableDispose)> _currentObservableConditions;
+        internal readonly R3.BehaviorSubject<bool> InputConditionsBehaviorSubject;
         internal AggregatorInputConditions()
         {
-            _currentObservableConditions = new Dictionary<IObservable<bool>, (bool?, IDisposable)>();
-            InputConditionsBehaviorSubject = new BehaviorSubject<bool>(false);
+            _currentObservableConditions = new Dictionary<R3.Observable<bool>, (bool?, IDisposable)>();
+            InputConditionsBehaviorSubject = new R3.BehaviorSubject<bool>(false);
         }
-        private void OnNextCondition(IObservable<bool> currentObservable, bool nextCondition)
+        private void OnNextCondition(R3.Observable<bool> currentObservable, bool nextCondition)
         {
+            bool? previousState = _currentObservableConditions[currentObservable].CurretStatus;
+
             _currentObservableConditions[currentObservable] = (nextCondition, _currentObservableConditions[currentObservable].ObservableDispose);
 
             if(nextCondition is true)
@@ -27,25 +30,40 @@ namespace FVH.SSHF.Infrastructure.Input
                 if(InputConditionsBehaviorSubject.Value is false) InputConditionsBehaviorSubject.OnNext(true);
                 return;
             }
-            bool anyTrue = _currentObservableConditions.Any(item => item.Value.CurretStatus is true);
-            if(InputConditionsBehaviorSubject.Value != anyTrue) InputConditionsBehaviorSubject.OnNext(anyTrue);
+
+            if(previousState is true)
+            {
+                bool anyTrue = _currentObservableConditions.Any(item => item.Value.CurretStatus is true);
+                if(InputConditionsBehaviorSubject.Value != anyTrue) 
+                {
+                    InputConditionsBehaviorSubject.OnNext(anyTrue);
+
+                }
+            }
         }
-        internal void AddIObservable(IObservable<bool> conditionObservable)
+        internal void AddIObservable(R3.Observable<bool> conditionObservable)
         {
             ObjectDisposedException.ThrowIf(_isDisposed, this);
 
-            _currentObservableConditions.Add(conditionObservable, (null, Disposable.Empty));
+            _currentObservableConditions.Add(conditionObservable, (null, R3.Disposable.Empty));
 
-            IDisposable subscription = conditionObservable.ObserveOn(System.Reactive.Concurrency.TaskPoolScheduler.Default).Subscribe
-            (
-                onNext: (condition) => OnNextCondition(conditionObservable, condition),
-                onError: (ex) => Release(conditionObservable, ex),
-                onCompleted: () => Release(conditionObservable)
-            );
+            TaskCompletionSource tcs = new TaskCompletionSource();
+            bool lastValue = false;
+            IDisposable subscription = conditionObservable.SubscribeOnThreadPool().ObserveOnThreadPool().Subscribe(onNext: (bool condition) =>
+              {
+                  lastValue = condition;
+                  OnNextCondition(conditionObservable, condition);
+                  tcs.TrySetResult();
+              }, onCompleted: (Result r) =>
+              {
+                  Release(conditionObservable);
+                  tcs.TrySetResult();
+              });
+            tcs.Task.Wait();
 
-            _currentObservableConditions[conditionObservable] = (null, subscription);
+            _currentObservableConditions[conditionObservable] = (lastValue, subscription);
         }
-        private void Release(IObservable<bool> observable, Exception? _ = null)
+        private void Release(R3.Observable<bool> observable, Exception? _ = null)
         {
             _currentObservableConditions[observable].ObservableDispose.Dispose();
             _currentObservableConditions.Remove(observable);

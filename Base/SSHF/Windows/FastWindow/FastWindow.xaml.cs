@@ -1,70 +1,91 @@
 ﻿using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
 
-using ReactiveUI;
+using R3;
+
 
 
 namespace FVH.SSHF.FastWindowArea
 {
-    public partial class FastWindow : MahApps.Metro.Controls.MetroWindow, IViewFor<FastWindowViewModel>
+    public partial class FastWindow : MahApps.Metro.Controls.MetroWindow 
     {
         public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel), typeof(FastWindowViewModel), typeof(FastWindow));
         private readonly int GWL_EXSTYLE = -20;
         private readonly long WS_EX_TOOLWINDOW = 0x00000080;
         private readonly long WS_EX_NOACTIVATE = 0x08000000L;
+        private IDisposable? _bind;
         public FastWindow()
         {
             InitializeComponent();
             this.Title = "Fast Window";
 
             HideAltTabWindow();
+
+            this.Visibility = Visibility.Visible;
         }
         private void HideAltTabWindow()
         {
             IntPtr hWnd = new WindowInteropHelper(this).EnsureHandle();
             NativeHelper.SetWindowLongPtrW(hWnd, GWL_EXSTYLE, new IntPtr(NativeHelper.GetWindowLongPtrW(hWnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE));
         }
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            _bind?.Dispose();
+        }
         /// <summary>
         /// Заглушка - Изменения свойства Visibility деактивирует привязку к размерам окна.
         /// Решение установить привязку после изменение Visibility и не изменять это свойство. Реализовать сокрытие окна через opacity.
         /// </summary>
-        private void SetBindingSizePostSwithVisible()
+        private void SetBindingSizePostSwitchVisible()
         {
-            this.OneWayBind(
-                 this.ViewModel,
-                 vm => vm.Height,
-                 w => w.GridContent.Height);
-            this.OneWayBind(
-                 this.ViewModel,
-                 vm => vm.Width,
-                 w => w.GridContent.Width);
-
-            // Не понятно нужно ли биндить размеры самого окна. При SizeToContent = WidthAndHeight размер окна фактически больше на пару пикселей чем целевой Gird (Структура наследования фактически отличается в "MahApps.Metro.Controls.MetroWindow", ежели это было бы прямое наследование от "System.Windows.Window").
-            this.OneWayBind(
-                 this.ViewModel,
-                 vm => vm.Height,
-                 w => w.Height);
-            this.OneWayBind(
-                 this.ViewModel,
-                 vm => vm.Width,
-                 w => w.Width);
-        }
-        object? IViewFor.ViewModel
-        {
-            get => ViewModel;
-            set
+            IDisposable d1 = this.ViewModel!.Height.Subscribe(onNext: newHeight =>
             {
-                if (value is not FastWindowViewModel vm) throw new InvalidOperationException($"ViewModel is not {nameof(FastWindowViewModel)}");
-                ViewModel = vm;
-                SetBindingSizePostSwithVisible();
+                GridContent.Height = newHeight;
+            });
+            IDisposable d2 = this.ViewModel!.Width.Subscribe(onNext: newHeight => GridContent.Width = newHeight);
+            IDisposable d3 = this.ViewModel!.Height.Subscribe(onNext: newHeight => this.Height = newHeight);
+            IDisposable d4 = this.ViewModel!.Width.Subscribe(onNext: newHeight => this.Width = newHeight);
+
+
+            ImageBrush? ABBC(ImageSource? imageSource)
+            {
+                if(imageSource is null) return null;
+                ImageBrush brush = new ImageBrush(imageSource)
+                {
+                    Stretch = Stretch.Uniform,
+                    ViewportUnits = BrushMappingMode.Absolute
+                };
+                DpiScale dpiScale = VisualTreeHelper.GetDpi(Application.Current.MainWindow);
+                brush.Viewport = new Rect(0, 0, imageSource.Width / dpiScale.DpiScaleX, imageSource.Height / dpiScale.DpiScaleY);
+                return brush;
             }
+
+           // IDisposable d5 = this.ViewModel!.BackgroundImage.Subscribe(onNext: nextImage => this.GridContent.Background = ABBC(nextImage));
+
+
+
+
+
+            _bind = R3.Disposable.Combine(d1, d2, d3, d4);
         }
         public FastWindowViewModel? ViewModel
         {
             get => (FastWindowViewModel)GetValue(ViewModelProperty);
-            set => SetValue(ViewModelProperty, value);
+            set
+            {
+                SetValue(ViewModelProperty, value);
+                if(_bind is not null)
+                {
+                    _bind.Dispose();
+                    _bind = null;
+                }
+                SetBindingSizePostSwitchVisible();
+            }
         }
         private static partial class NativeHelper
         {
