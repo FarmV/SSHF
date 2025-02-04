@@ -2,29 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Windows;
 using System.Windows.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using R3;
 
-
-
-using FVH.Background.Input;
 using FVH.Background.Input.Infrastructure.Interfaces;
 
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure.TrayIconManagement;
-
-using System.Diagnostics;
-using System.ComponentModel;
-using System.Xml.Linq;
-using WinRT;
 using FVH.SSHF.Infrastructure.Input;
 using FVH.SSHF.Infrastructure.Win32;
-using R3;
+using FVH.SSHF.FastWindowArea;
+
 
 namespace FVH.SSHF
 {
@@ -34,7 +27,7 @@ namespace FVH.SSHF
         {
             internal BasicDependencies() { }
 
-            internal static Task<IHost> ConfigureDependencies(Thread uiThread, string[]? args = null) 
+            internal static ValueTask<IHost> ConfigureDependencies(Thread uiThread, string[]? args = null) 
             {
                 Dispatcher uiDispatcher = Dispatcher.FromThread(uiThread) is not Dispatcher dispatcher ? throw new InvalidOperationException() : dispatcher;
 
@@ -72,7 +65,6 @@ namespace FVH.SSHF
           
                 listIInvokeShortcutsBehaviorSubject = new BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>([fastWindowManager]);
 
-             //   waitingInput = new WaitingInputProvider(aggregatorInputCondition.InputConditionsBehaviorSubject, listIInvokeShortcutsBehaviorSubject);
                 waitingInput.CurrentInstanceIKeyboardHandlerOrDefault.Subscribe(keyboardHandlerObservableSubject.OnNext);
         
                 TrayIcon trayIcon = CreateAnIconInTheNotificationArea(uiDispatcher);
@@ -105,10 +97,15 @@ namespace FVH.SSHF
                 tokenApplicationStartedCallback = 
                 host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStarted.Register(() =>
                 {
+                    fastWindowManager.CreateMainWindow().Wait();
+
                     requestCompleteAppStartedDisposeInput.OnNext(false);
-                    tokenApplicationStartedCallback?.Dispose();
                     requestCompleteAppStartedDisposeInput.OnCompleted();
                     requestCompleteAppStartedDisposeInput.Dispose();
+
+                    requestExclusiveModeDisposeInput.RegisterShellHook();
+
+                    tokenApplicationStartedCallback?.Dispose();
                 });
                 CancellationTokenRegistration? tokenApplicationApplicationStopped = null;
                 tokenApplicationApplicationStopped =
@@ -118,11 +115,8 @@ namespace FVH.SSHF
                     tokenApplicationApplicationStopped?.Dispose();
                 });
 
-                requestExclusiveModeDisposeInput.RegisterShellHook();
-
-                return Task.FromResult(host);
+                return ValueTask.FromResult(host);
             }
-
 
             private static TrayIcon CreateAnIconInTheNotificationArea(Dispatcher uiDispatcher) => uiDispatcher.Invoke(() => _ = new TrayIcon(App.GetResource(Resource.AppIcon).Stream));
             private static FastWindowViewModelDependencies CreateFastWindowViewModelDependencies(IGetImage imageProvider) => _ = new FastWindowViewModelDependencies(imageProvider);

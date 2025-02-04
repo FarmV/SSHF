@@ -1,4 +1,6 @@
-﻿using System;
+﻿
+
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -8,9 +10,9 @@ using System.Windows.Media;
 using R3;
 
 
-
 namespace FVH.SSHF.FastWindowArea
 {
+
     public partial class FastWindow : MahApps.Metro.Controls.MetroWindow 
     {
         public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel), typeof(FastWindowViewModel), typeof(FastWindow));
@@ -23,9 +25,12 @@ namespace FVH.SSHF.FastWindowArea
             InitializeComponent();
             this.Title = "Fast Window";
 
+  
             HideAltTabWindow();
 
-            this.Visibility = Visibility.Visible;
+#if OneFastWindowNotTopMost
+            this.Topmost = false;
+#endif
         }
         private void HideAltTabWindow()
         {
@@ -50,26 +55,6 @@ namespace FVH.SSHF.FastWindowArea
             IDisposable d2 = this.ViewModel!.Width.Subscribe(onNext: newHeight => GridContent.Width = newHeight);
             IDisposable d3 = this.ViewModel!.Height.Subscribe(onNext: newHeight => this.Height = newHeight);
             IDisposable d4 = this.ViewModel!.Width.Subscribe(onNext: newHeight => this.Width = newHeight);
-
-
-            ImageBrush? ABBC(ImageSource? imageSource)
-            {
-                if(imageSource is null) return null;
-                ImageBrush brush = new ImageBrush(imageSource)
-                {
-                    Stretch = Stretch.Uniform,
-                    ViewportUnits = BrushMappingMode.Absolute
-                };
-                DpiScale dpiScale = VisualTreeHelper.GetDpi(Application.Current.MainWindow);
-                brush.Viewport = new Rect(0, 0, imageSource.Width / dpiScale.DpiScaleX, imageSource.Height / dpiScale.DpiScaleY);
-                return brush;
-            }
-
-           // IDisposable d5 = this.ViewModel!.BackgroundImage.Subscribe(onNext: nextImage => this.GridContent.Background = ABBC(nextImage));
-
-
-
-
 
             _bind = R3.Disposable.Combine(d1, d2, d3, d4);
         }

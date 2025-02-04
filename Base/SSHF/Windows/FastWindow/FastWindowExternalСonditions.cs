@@ -56,7 +56,14 @@ namespace FVH.SSHF.FastWindowArea
                     
                        IDisposable keyUPSubscribe = keyUPObservable.ObserveOn(ObservableSystem.DefaultTimeProvider).Subscribe(x =>
                        {
-                           if(_mainWindowViewModel.VisibleCondition.CurrentValue == Visibility.Hidden) return;
+                           if(_mainWindowViewModel.VisibleCondition.CurrentValue == Visibility.Hidden)
+                           {
+                               bool IsReturn = true;
+#if OneFastWindowNotTopMost
+                               IsReturn = false;
+#endif
+                               if(IsReturn is true) return;                                                                                          
+                           }
                            if(Keyboard.IsKeyUp(Key.LeftCtrl) is true)
                            {
                                _mainWindowViewModel.SetDragMoveCondition(true);     

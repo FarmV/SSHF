@@ -59,7 +59,7 @@ namespace FVH.Background.Input
                 _proxyInputHandlerWindow.Dispose();
                 _lowLevelHook?.Dispose();
                 _proxyInputHandlerWindow?.Dispatcher?.InvokeShutdown();
-                _v2?.Dispose();
+              //  _v2?.Dispose();
             });
             GC.SuppressFinalize(this);
         }
@@ -123,7 +123,7 @@ namespace FVH.Background.Input
                 Dispatcher? winDispatcher = Dispatcher.FromThread(_winThread);
                 _v2 = new Win32MMCSSv2(winDispatcher);
 
-                if(_v2.SetMaxCPUPriority() is false) throw new InvalidOperationException();
+              //  if(_v2.SetMaxCPUPriority() is false) throw new InvalidOperationException();
 
                 if (SpinWait.SpinUntil(() =>
                 {

@@ -5,13 +5,9 @@ using System.Windows.Input;
 using System.Threading;
 using System.Windows.Media;
 
-
-
-
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
 using R3;
-using System.ComponentModel;
 using System.Windows.Threading;
 
 
@@ -34,9 +30,6 @@ namespace FVH.SSHF.FastWindowArea
         private readonly BindableReactiveProperty<double> _height = new BindableReactiveProperty<double>(0);
         private readonly BindableReactiveProperty<Visibility> _visibleCondition = new BindableReactiveProperty<Visibility>(Visibility.Hidden);
 
-        // private readonly BindableReactiveProperty<Visibility> _visibleCondition = new BindableReactiveProperty<Visibility>(Visibility.Hidden);
-        //public BindableReactiveProperty<ImageSource?> BackgroundImage { get; } = new BindableReactiveProperty<ImageSource?>();
-
 #pragma warning disable CS8618 // Empty class constructor for designer only
         public FastWindowViewModel()
 #pragma warning restore CS8618
@@ -52,31 +45,26 @@ namespace FVH.SSHF.FastWindowArea
 
             RefreshWindowInvoke = new R3.ReactiveCommand(executeAsync: async (_, _) => 
             {
-                if(BlockRefresh.Value is true) return;
+                if(BlockRefresh.CurrentValue is true) return;
                 await WindowUpdate();
-            }, AwaitOperation.Drop);
+            }, AwaitOperation.Parallel);
             StopWindowUpdater = new R3.ReactiveCommand(executeAsync: async (_, _) => await StopUpdateWindow(), AwaitOperation.Drop);
             SetNewImage = new R3.ReactiveCommand(executeAsync: async (_, _) => await SetNewBackgroundImage(), AwaitOperation.Drop);
             SwitchBlockRefreshWindow = new ReactiveCommand((_) => SwitchBlockRefresh());
-            HideWindow = new R3.ReactiveCommand(executeAsync: async (_,_) => await Hide(), AwaitOperation.Drop);
+            HideWindow = new R3.ReactiveCommand(executeAsync: async (_,_) => await Hide().ConfigureAwait(false), AwaitOperation.Drop);
             ShowWindow = new R3.ReactiveCommand((_) => Show());
             DragMoveWindow = new R3.ReactiveCommand(executeAsync: async (_, _) =>
             {
-                if(DragMoveCondition.Value is false) return;
-                await DragMove();
+                if(DragMoveCondition.CurrentValue is false) return;
+                await DragMove().ConfigureAwait(false);
             }, AwaitOperation.Drop);
-            DropImage = new ReactiveCommand<object, R3.Unit>((data) =>
+            DropImage = new ReactiveCommand<object>((object data) =>
             {
-                if(DropCondition.Value is false) return R3.Unit.Default;
-                DropWindowImage(data);
-                return R3.Unit.Default;
+                if(DropCondition.Value is false) return;
+                DropWindowImage(data);   
             });                      
-            MsScreenClipInvoke = new ReactiveCommand(executeAsync: async (_, _) => await InvokeMsScreenClip(), AwaitOperation.Drop);            
+            MsScreenClipInvoke = new ReactiveCommand(executeAsync: async (_, _) => await InvokeMsScreenClip(), AwaitOperation.Drop);
         }
-
-        BindableReactiveProperty<ImageSource?>  _rp3 = new BindableReactiveProperty<ImageSource?>();
-        BindableReactiveProperty<ImageSource?> _rp4 => _rp3;
-
         public R3.ReactiveCommand RefreshWindowInvoke { get; private init; }
         public R3.ReactiveCommand StopWindowUpdater { get; private init; }
         public R3.ReactiveCommand SetNewImage { get; private init; }
@@ -84,76 +72,39 @@ namespace FVH.SSHF.FastWindowArea
         public R3.ReactiveCommand HideWindow { get; private init; }
         public R3.ReactiveCommand ShowWindow { get; private init; }
         public R3.ReactiveCommand DragMoveWindow { get; private init; }
-        public R3.ReactiveCommand<object, R3.Unit> DropImage { get; private init; }
+        public R3.ReactiveCommand<object> DropImage { get; private init; }
         public R3.ReactiveCommand MsScreenClipInvoke { get; private init; }
-
         public BindableReactiveProperty<bool> DropCondition => _dropCondition;
         public void SetDropCondition(bool newCondition)
         {
-            if(_dropCondition.Value == newCondition) return;
-            _dropCondition.Value = newCondition;
+            if(_dropCondition.CurrentValue == newCondition) return;
+            if(Application.Current.Dispatcher.CheckAccess() is true) _dropCondition.Value = newCondition; 
+            else Application.Current.Dispatcher.Invoke(() => _dropCondition.Value = newCondition);
         }
-        //public bool DropCondition
-        //{
-        //    get => _dropCondition;
-        //    set => this.RaiseAndSetIfChanged(ref _dropCondition, value);
-        //}
-        public IWindowPositionUpdater WindowPositionUpdater => _windowPositionUpdater;
-        
+        public IWindowPositionUpdater WindowPositionUpdater => _windowPositionUpdater;       
         public BindableReactiveProperty<bool> BlockRefresh => _blockRefresh;
-        //public bool BlockRefresh
-        //{
-        //    get => _blockRefresh;
-        //    private set => this.RaiseAndSetIfChanged(ref _blockRefresh, value);
-        //}
-
-        public BindableReactiveProperty<ImageSource?> BackgroundImage => _imageBackground;
-
-        //public ImageSource? BackgroundImage
-        //{
-        //    get => _imageBackground;
-        //    private set => this.RaiseAndSetIfChanged(ref _imageBackground, value);
-        //}       
+        public BindableReactiveProperty<ImageSource?> BackgroundImage => _imageBackground;     
         public BindableReactiveProperty<double> Height => _height;
-        //public double Height
-        //{
-        //    get => _height;
-        //    set => this.RaiseAndSetIfChanged(ref _height, value);
-        //}
         public BindableReactiveProperty<double> Width => _width;
-        //public double Width
-        //{
-        //    get => _width;
-        //    private set => this.RaiseAndSetIfChanged(ref _width, value);
-        //}
         public BindableReactiveProperty<bool> DragMoveCondition => _dragMoveCondition;
         public void SetDragMoveCondition(bool newCondition)
         {
-            if(_dragMoveCondition.Value == newCondition) return;
-            _dragMoveCondition.Value = newCondition;
+            if(_dragMoveCondition.CurrentValue == newCondition) return;
+            if(Application.Current.Dispatcher.CheckAccess() is true) _dragMoveCondition.Value = newCondition;
+            else Application.Current.Dispatcher.Invoke(() => _dragMoveCondition.Value = newCondition);
         }
-        //public bool DragMoveCondition
-        //{
-        //    get => _dragMoveCondition;
-        //    set => this.RaiseAndSetIfChanged(ref _dragMoveCondition, value);
-        //}
-        public BindableReactiveProperty<Visibility> VisibleCondition => _visibleCondition;
-        //public Visibility VisibleCondition
-        //{
-        //    get => _visibleCondition;
-        //    set => this.RaiseAndSetIfChanged(ref _visibleCondition, value);
-        //}
-        private Task WindowUpdate() =>       
-        Task.Run(async () =>
+        public BindableReactiveProperty<Visibility> VisibleCondition => _visibleCondition;       
+        private async Task WindowUpdate()
         {
-           if(_windowPositionUpdater.IsUpdateWindow is true) return;
-           if(_isCancellingUpdate is true) return;
-           else
-           {
-               if(_updateWindowCancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
-               await _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token);
-           }
-        });       
+            if(_windowPositionUpdater.IsUpdateWindow is true) return;
+            if(_isCancellingUpdate is true) return;
+            else
+            {
+                if(_updateWindowCancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
+                if(Application.Current.Dispatcher.CheckAccess() is true) await Task.Run(async () => await _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token)).ConfigureAwait(false);
+                else await _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token);
+            }           
+        }
         private async Task StopUpdateWindow()
         {
             if(_windowPositionUpdater.IsUpdateWindow is false || _isCancellingUpdate is true) return;
@@ -161,15 +112,16 @@ namespace FVH.SSHF.FastWindowArea
             _updateWindowCancellationToken.Cancel();
             await Task.Run(() => 
             {
-                if(System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, TimeSpan.FromSeconds(1.4D)) is not true) 
+                TimeSpan timeout = TimeSpan.FromSeconds(10);
+                if(System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, timeout) is not true) 
                 {
-                    //var test = new TimeoutException();
-                    //test.HelpLink =
-                    throw new TimeoutException($"{nameof(StopUpdateWindow)}");
+                    string msEx = $"Safety timeout {nameof(StopUpdateWindow)}";
+                    AppHelper.DebugExceptionFormat(ref msEx, new System.Diagnostics.StackTrace());
+                    throw new TimeoutException(msEx);
                 }; 
             });
             _updateWindowCancellationToken = new CancellationTokenSource();
-            _isCancellingUpdate = false;
+            _isCancellingUpdate = false;          
         }
         private async Task SetNewBackgroundImage()
         {
@@ -180,9 +132,9 @@ namespace FVH.SSHF.FastWindowArea
             double width = image.Width / dpi.DpiScaleX;
             ImageSource currentImage = image;
 
-             _height.Value = height;
-             _width.Value = width;
-            _imageBackground.Value = currentImage;
+            if(_height.Value != height) _height.Value = height;
+            if(_width.Value != width) _width.Value = width;
+            if(_imageBackground.Value != currentImage) _imageBackground.Value = currentImage;
         }
         private void SwitchBlockRefresh() => _blockRefresh.Value = !BlockRefresh.Value;
         private async Task Hide()
@@ -194,13 +146,54 @@ namespace FVH.SSHF.FastWindowArea
         private void Show()
         {
             if(MsScreenClip.IsEnableProcessHost() is true) return;
-            VisibleCondition.Value = Visibility.Visible;
+            if(Application.Current.Dispatcher.CheckAccess() is true) VisibleCondition.Value = Visibility.Visible;
+            else Application.Current.Dispatcher.Invoke(() => VisibleCondition.Value = Visibility.Visible);            
         }
         private Task DragMove()
         {
-            if(_windowPositionUpdater.IsUpdateWindow is true) return Task.CompletedTask;
-            _windowPositionUpdater.DragMove().Wait();
-            return Task.CompletedTask;
+           return   _windowPositionUpdater.DragMove();
+           // bool IsUpdateWindow = _windowPositionUpdater.IsUpdateWindow;
+
+            //switch(IsUpdateWindow)
+            //{
+            //    case false:
+            //    return _windowPositionUpdater.DragMove();
+            //    case true:
+
+            //    MouseButtonEventArgs mouseEvent = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+            //    {
+            //        RoutedEvent = UIElement.PreviewMouseLeftButtonDownEvent,
+            //    };
+            //    ((UIElement)_window.Content).RaiseEvent(mouseEvent);
+            //    break;
+            //}
+
+
+
+            //   return _windowPositionUpdater.DragMove();
+            //switch(IsUpdateWindow)
+            //{
+            //    case false:
+            //    return _windowPositionUpdater.DragMove();
+            //    case true:
+            //    TimeSpan timeout = TimeSpan.FromMilliseconds(20);
+            //    App.Stopwatch.Restart();
+            //    if(System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is true, timeout) is true)
+            //    {
+            //        App.Stopwatch.Stop();
+            //        var r = App.Stopwatch.ElapsedTicks;
+
+            //        return Task.CompletedTask;
+            //    }
+            //    return _windowPositionUpdater.DragMove();
+            //}
+
+            //await Task.Run(() =>
+            //{
+            //   // if(IsUpdateWindow is true) return Task.CompletedTask; 
+            //   // return _windowPositionUpdater.DragMove();
+            //}).ConfigureAwait(false);
+
         }
         private void DropWindowImage(object ev)
         {

@@ -6,18 +6,14 @@ using System.Windows;
 using System.Windows.Resources;
 using System.Windows.Threading;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using FVH.SSHF.Infrastructure.Win32;
-using FVH.Background.Input.Infrastructure.Interfaces;
-using Windows.Win32;
-using System.Runtime.Intrinsics.X86;
-using System.Runtime.CompilerServices;
-using System.Collections.Generic;
 using R3;
 
+using FVH.SSHF.Infrastructure.Win32;
+using FVH.SSHF.FastWindowArea;
 
 namespace FVH.SSHF
 {
@@ -27,8 +23,8 @@ namespace FVH.SSHF
         internal const string UIThreadName = "FVH Main Thread";
         private const string MutexNameSingleInstance = "FVH.SSHF.SingleProgramInstance";
         private const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
-        private const int _errorUnhandled = 100_001;
-        private const int _errorCreateMutex = 100_002;
+        private const int ERROR_UNHANDLED = 100_001;
+        private const int ERROR_CREATE_MUTEX = 100_002;
         private const int ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
         private static int _applicationExitCode = 0;
         private static Mutex? _mutexSingleInstance;
@@ -56,13 +52,14 @@ namespace FVH.SSHF
 #endif
         internal static StreamResourceInfo GetResource(Uri uriResource) => System.Windows.Application.GetResourceStream(uriResource);
 
-        /// <summary>
-        /// <see cref="Main"/>      
-        /// </summary>
         [STAThread]
-        private static int Main(string[]? args)
+        private static void Main(string[]? args)
         {          
-            if(CreateMutexForSingleProgram() is false) return _errorCreateMutex;
+            if(CreateMutexForSingleProgram() is false)
+            {
+                Environment.ExitCode = ERROR_CREATE_MUTEX;
+                return;
+            }
             
             _ = Native.SetPriorityClass(Native.GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
 
@@ -73,17 +70,14 @@ namespace FVH.SSHF
 
             application.ShutdownMode = ShutdownMode.OnExplicitShutdown;
          
-            WpfProviderInitializer.SetDefaultObservableSystem(EmergencyAppTermination, DispatcherPriority.Render, dispatcher);
+            WpfProviderInitializer.SetDefaultObservableSystem(EmergencyAppTermination, DispatcherPriority.Send, dispatcher);
            
+
             application.DispatcherUnhandledException += (object _, DispatcherUnhandledExceptionEventArgs ev) => { ev.Handled = true; EmergencyAppTermination(ev.Exception); };
+            AppDomain.CurrentDomain.UnhandledException += (_,e) => EmergencyAppTermination((Exception)e.ExceptionObject);
+
            
             _ = Thread.CurrentThread.InThreadUITimeCriticalSection(); //инициализация статического конструктора
-
-
-            //string mes = string.Empty;
-            //AppNativeHelper.DebugExceptionFormat(ref mes, new StackTrace(true));
-            //TimeoutException test = new TimeoutException(mes);
-
 
             /// <summary>
             /// Чтобы окно при вставке изображения из буфера обмена сохраняло пропорции и не масштабировалось. 
@@ -110,12 +104,11 @@ namespace FVH.SSHF
                 disposableSubscribeStartup?.Dispose();
             });
 
-
-
             _ = application.Run();
 
-            return _applicationExitCode;
+            Environment.ExitCode = _applicationExitCode;
         }
+
 
         private static async Task Start(string[]? args)
         {       
@@ -128,8 +121,7 @@ namespace FVH.SSHF
                 App app = new App(thisProgram);
 
                 Dispatcher.FromThread(uiThread).Invoke(() => System.Windows.Application.Current.Exit += app.Shutdown);
-
-                await thisProgram.Services.GetRequiredService<FastWindowManager>().CreateMainWindow().ConfigureAwait(false);
+           
                 await app._program.StartAsync().ConfigureAwait(false);
             }
 
@@ -143,15 +135,17 @@ namespace FVH.SSHF
         }
         internal static void EmergencyAppTermination(Exception ex)
         {
+            _applicationExitCode = ERROR_UNHANDLED;
+            Application.Current.Shutdown(ERROR_UNHANDLED);
 #if DEBUG
-            if(System.Diagnostics.Debugger.IsAttached)
-            {
-                string exMessage = ex.Message;
-                string? stackTrace = ex.StackTrace;
-                System.Diagnostics.Debugger.Break();
-            }
+            Debug.WriteLine($"{Environment.NewLine}{ex.StackTrace}");
+            Type typeEx = ex.GetType();
+
+            Debug.WriteLine($"{Environment.NewLine}{typeEx.FullName}");
+            Debug.WriteLine(ex.Message);
+
+           //Environment.Exit(ERROR_UNHANDLED);
 #endif
-            Application.Current.Shutdown(_errorUnhandled);
         }
         private static bool CreateMutexForSingleProgram()
         {
@@ -183,19 +177,20 @@ namespace FVH.SSHF
             internal static partial nint GetCurrentThread();
         }
     }
-    internal static partial class AppNativeHelper
+    internal static partial class AppHelper
     {
-        private static readonly Win32MMCSS myVar;
-        private static Win32MMCSS Win32MMCSS => myVar;
-        static AppNativeHelper()
+        private static readonly Win32MMCSS win32MMCSS;
+        private static Win32MMCSS Win32MMCSS => win32MMCSS;
+        static AppHelper()
         {
             if(Thread.CurrentThread.Name is not App.UIThreadName) throw new InvalidOperationException();
-            myVar = new Win32MMCSS(Dispatcher.FromThread(Thread.CurrentThread));
+            win32MMCSS = new Win32MMCSS(Dispatcher.FromThread(Thread.CurrentThread));
         }
         internal static bool InThreadUITimeCriticalSection(this Thread _) => Win32MMCSS.InTimeCriticalSection;
         internal static bool StartTimeCriticalSectionUI(this Thread _) => Win32MMCSS.StartTimeCriticalSectionUI();
         internal static bool StopTimeCriticalSectionUI(this Thread _) => Win32MMCSS.StopTimeCriticalSectionUI();
         [Conditional("DEBUG")]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void DebugExceptionFormat(ref string messageEx, StackTrace stackTrace,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0)
@@ -207,8 +202,12 @@ namespace FVH.SSHF
 
             if(messageEx == string.Empty) messageEx = "Отсутствует";
 
-            string str = $"{Environment.NewLine}{Environment.NewLine}Тип: {declaringType?.FullName}{Environment.NewLine}Метод: {method}{Environment.NewLine}Строка: {lineNumber}{Environment.NewLine}Отступ: {frame?.GetFileColumnNumber()}{Environment.NewLine}Файл: {filePath}{Environment.NewLine}Сообщение: {messageEx}";
+            string str = $"{Environment.NewLine}Сообщение: {messageEx}{Environment.NewLine}{Environment.NewLine}Тип: {declaringType?.FullName}{Environment.NewLine}Метод: {method}{Environment.NewLine}Строка: {lineNumber}{Environment.NewLine}Отступ: {frame?.GetFileColumnNumber()}{Environment.NewLine}Файл: {filePath}{Environment.NewLine}";
             messageEx = str;
+
+            //string message = "It's test message";
+            //AppNativeHelper.DebugExceptionFormat(ref message, new StackTrace());
+            //TimeoutException Test = new TimeoutException(message); FormatEx
         }
     }
 }

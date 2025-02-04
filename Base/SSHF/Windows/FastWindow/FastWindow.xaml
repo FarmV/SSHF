@@ -16,8 +16,7 @@
     x:Class                                   = "FVH.SSHF.FastWindowArea.FastWindow"    
     xmlns:namespaceFastWindowArea             = "clr-namespace:FVH.SSHF.FastWindowArea"
     xmlns:namespaceConverters                 = "clr-namespace:FVH.SSHF.Infrastructure.Converters"   
-    
-   
+     
     d:DataContext = "{ d:DesignInstance Type = namespaceFastWindowArea:FastWindowViewModel,  IsDesignTimeCreatable = True }"
                 
     Visibility           = "Visible"
@@ -75,7 +74,7 @@
 
             <packageNamespaceBehaviors:EventTrigger EventName="PreviewMouseMove" >
 
-                <packageNamespaceBehaviors:InvokeCommandAction 
+                <packageNamespaceBehaviors:InvokeCommandAction                   
                     Command="{ Binding DropImage }"                                  
                     PassEventArgsToCommand="True"
                 ></packageNamespaceBehaviors:InvokeCommandAction>

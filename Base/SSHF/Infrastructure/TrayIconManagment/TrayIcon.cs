@@ -27,6 +27,10 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
         {
             if (_blockRepeatInvokeMessageBox is true) return;
             _blockRepeatInvokeMessageBox = true;
+
+            //App.GetDEBUG<>
+
+
             if (System.Windows.MessageBox.Show("Закрыть приложение?", "Запрос SSHF", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) is MessageBoxResult.Yes)
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(System.Windows.Application.Current.Shutdown);
