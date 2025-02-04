@@ -1,0 +1,180 @@
+﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Windows.Interop;
+using System.Windows.Threading;
+
+using R3;
+
+using Windows.Win32.Foundation;
+
+
+namespace FVH.SSHF.Infrastructure.Win32
+{
+    internal partial class Win32ObserverExclusiveMode : IDisposable
+    {
+        private bool _isDispose = false;
+        private const long WS_POPUP = 0x80000000L;
+        private const int _errorCodeRegisterWindowMessage = 0;
+        private bool _isExcusiveMode = false;
+        private readonly uint WM_SHELLHOOKMESSAGE;
+        private HwndSource _proxyInputHandlerWindow;
+        internal Win32ExclusiveModeChecker _exclusiveModeChecker;
+        internal readonly R3.BehaviorSubject<bool> ExcusiveMode;
+        internal Win32ObserverExclusiveMode(Dispatcher UIDispatcher)
+        {
+            UIDispatcher.Invoke(() =>
+            {
+                HwndSourceParameters configInitWindow = new HwndSourceParameters(name: $"ShellMessageExclusiveModeHandler-{Path.GetRandomFileName}", width: 0, height: 0)
+                {
+                    WindowStyle = unchecked((int)WS_POPUP)
+                };
+                _proxyInputHandlerWindow = new HwndSource(configInitWindow);
+                _exclusiveModeChecker = new Win32ExclusiveModeChecker(); // Важно чтобы владельцем объекта был поток UI, COM должен владеть 1 поток
+            });
+
+            WM_SHELLHOOKMESSAGE = RegisterWindowMessageW("SHELLHOOK");
+            if(WM_SHELLHOOKMESSAGE is _errorCodeRegisterWindowMessage) throw new Win32Exception();
+            ExcusiveMode = new R3.BehaviorSubject<bool>(false);
+
+
+            ArgumentNullException.ThrowIfNull(_proxyInputHandlerWindow);
+            ArgumentNullException.ThrowIfNull(_exclusiveModeChecker);
+        }
+        public void Dispose()
+        {
+            if(_isDispose) return;
+            _isDispose = true;
+            bool resultDeregisterShellHookWindow = DeregisterShellHookWindow(new HWND(_proxyInputHandlerWindow.Handle));
+#if DEBUG
+            #region DEBUG
+            if(App.Trace.Level is not TraceLevel.Off)
+            {
+                if(resultDeregisterShellHookWindow is false)
+                {
+                    if(App.Trace.Level >= TraceLevel.Error) Debug.WriteLine(
+                    message: $"{nameof(resultDeregisterShellHookWindow)}, TraceLevel - {TraceLevel.Error} => {nameof(resultDeregisterShellHookWindow)} = {resultDeregisterShellHookWindow}",
+                    category: $"{typeof(Win32ObserverExclusiveMode)}.{nameof(Dispose)}");
+                }
+                else
+                {
+
+                    if(App.Trace.Level >= TraceLevel.Info) Debug.WriteLine(
+                    message: $"{nameof(resultDeregisterShellHookWindow)}, TraceLevel - {TraceLevel.Info} => {nameof(resultDeregisterShellHookWindow)} = {resultDeregisterShellHookWindow}",
+                    category: $"{typeof(Win32ObserverExclusiveMode)}.{nameof(Dispose)}");
+                }
+            }
+            #endregion
+#endif
+            _proxyInputHandlerWindow?.RemoveHook(ShellHookMessageWorker);
+            _proxyInputHandlerWindow?.Dispose();
+            ExcusiveMode.OnCompleted(Result.Success);
+            ExcusiveMode.Dispose();
+            _exclusiveModeChecker.Dispose();
+        }
+        private bool GetCurrentStatusExcusiveMode() => _exclusiveModeChecker.CheckExclusiveMode(_proxyInputHandlerWindow.Dispatcher);
+        private void CheckAndSetStateExcusiveMode()
+        {
+            bool isExcusiveMode = false;
+            if(ExcusiveMode.Value == false)
+            {
+                TimeSpan empiricalTimeoutSpinWait = TimeSpan.FromMilliseconds(25); // Необходимо выполнить прокрутки в N-ое время. Предполагаемая задержка между получение фокуса окна и установкой режима
+                SpinWait.SpinUntil(() =>
+                {
+                    isExcusiveMode = GetCurrentStatusExcusiveMode();
+                    return isExcusiveMode is true;
+                }, empiricalTimeoutSpinWait);
+            }
+            else
+            {
+                isExcusiveMode = GetCurrentStatusExcusiveMode();
+            }
+            _isExcusiveMode = isExcusiveMode;
+            ExcusiveMode.OnNext(_isExcusiveMode);
+        }
+        internal void RegisterShellHook() =>
+        _proxyInputHandlerWindow.Dispatcher.Invoke(() =>
+        {
+           _proxyInputHandlerWindow.AddHook(ShellHookMessageWorker);
+            HWND hwnd = new HWND(_proxyInputHandlerWindow.Handle);
+            bool res = RegisterShellHookWindow(hwnd);
+            if(res is false) throw new Win32Exception();
+        });
+        private nint ShellHookMessageWorker(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
+        {
+            if((uint)msg == WM_SHELLHOOKMESSAGE && wParam == (nint)HSHELL.REDRAW)
+            {
+                if(ExcusiveMode.Value == true)
+                {
+                    CheckAndSetStateExcusiveMode();   // todo логирование?         
+                }
+            }
+            if((uint)msg == WM_SHELLHOOKMESSAGE && wParam == (nint)HSHELL.RUDEAPPACTIVATED && lParam != 0)
+            {                                            
+#if DEBUG
+                #region DEBUG
+                if(App.Trace.Level is not TraceLevel.Off)
+                {
+                    string wParamHSHELL;
+                    void DebugPrint(TraceLevel level) =>
+                    Debug.WriteLine
+                    (
+                       message: $"{nameof(WM_SHELLHOOKMESSAGE).Trim('_')}, TraceLevel - {level} => {nameof(wParam)} = {wParamHSHELL}, {nameof(lParam)} = {lParam}",
+                       category: $"{typeof(Win32ObserverExclusiveMode)}.{nameof(ShellHookMessageWorker)}"
+                    );
+                    if(Enum.TryParse(wParam.ToString(), out HSHELL result))
+                    {
+                        wParamHSHELL = result.ToString();
+                        if(Enum.IsDefined(result) is false) wParamHSHELL = $"{wParam} - Unknown";
+                    }
+                    else
+                    {
+                        wParamHSHELL = $"{wParam} - Unknown";
+                        if(App.Trace.Level >= TraceLevel.Error) DebugPrint(TraceLevel.Error);
+                    }
+                    if(App.Trace.Level >= TraceLevel.Warning && wParamHSHELL.Contains("Unknown")) DebugPrint(TraceLevel.Warning);
+                    if(App.Trace.Level >= TraceLevel.Info) DebugPrint(TraceLevel.Info);
+                }
+                #endregion
+#endif          
+                if(Thread.CurrentThread.InThreadUITimeCriticalSection() is false) Thread.CurrentThread.StartTimeCriticalSectionUI();
+                CheckAndSetStateExcusiveMode();
+
+            }
+            return hwnd;
+        }
+        [DllImport("user32")]
+        private static extern bool RegisterShellHookWindow(HWND hwnd);
+        [DllImport("user32")]
+        private static extern bool DeregisterShellHookWindow(HWND hwnd);
+        /// <summary>
+        /// Если сообщение успешно зарегистрировано, возвращаемое значение - идентификатор сообщения в диапазоне от 0xC000(49152) до 0xFFFF(65535).
+        /// При неудачном выполнении функции возвращаемое значение равно нулю.
+        /// </summary>
+        [LibraryImport("user32")]
+        private static partial uint RegisterWindowMessageW([MarshalAs(UnmanagedType.LPWStr)]string lpString);
+        /// <summary>
+        /// See description<see href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registershellhookwindow"> link HSHELL</see>.
+        /// </summary>
+        private enum HSHELL : uint
+        {
+            GETMINRECT = 5U,
+            WINDOWACTIVATED = 4U,
+            RUDEAPPACTIVATED = 32772U,
+            WINDOWREPLACING = 14U,
+            WINDOWREPLACED = 13U,
+            WINDOWCREATED = 1U,
+            WINDOWDESTROYED = 2U,
+            ACTIVATESHELLWINDOW = 3U,
+            TASKMAN = 7U,
+            REDRAW = 6U,
+            FLASH = 32774U,
+            ENDTASK = 10U,
+            APPCOMMAND = 12U,
+            MONITORCHANGED = 16U
+        }
+    }
+}
