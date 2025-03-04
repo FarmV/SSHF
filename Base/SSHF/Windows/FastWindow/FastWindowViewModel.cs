@@ -149,52 +149,8 @@ namespace FVH.SSHF.FastWindowArea
             if(Application.Current.Dispatcher.CheckAccess() is true) VisibleCondition.Value = Visibility.Visible;
             else Application.Current.Dispatcher.Invoke(() => VisibleCondition.Value = Visibility.Visible);            
         }
-        private Task DragMove()
-        {
-           return   _windowPositionUpdater.DragMove();
-           // bool IsUpdateWindow = _windowPositionUpdater.IsUpdateWindow;
-
-            //switch(IsUpdateWindow)
-            //{
-            //    case false:
-            //    return _windowPositionUpdater.DragMove();
-            //    case true:
-
-            //    MouseButtonEventArgs mouseEvent = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
-            //    {
-            //        RoutedEvent = UIElement.PreviewMouseLeftButtonDownEvent,
-            //    };
-            //    ((UIElement)_window.Content).RaiseEvent(mouseEvent);
-            //    break;
-            //}
-
-
-
-            //   return _windowPositionUpdater.DragMove();
-            //switch(IsUpdateWindow)
-            //{
-            //    case false:
-            //    return _windowPositionUpdater.DragMove();
-            //    case true:
-            //    TimeSpan timeout = TimeSpan.FromMilliseconds(20);
-            //    App.Stopwatch.Restart();
-            //    if(System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is true, timeout) is true)
-            //    {
-            //        App.Stopwatch.Stop();
-            //        var r = App.Stopwatch.ElapsedTicks;
-
-            //        return Task.CompletedTask;
-            //    }
-            //    return _windowPositionUpdater.DragMove();
-            //}
-
-            //await Task.Run(() =>
-            //{
-            //   // if(IsUpdateWindow is true) return Task.CompletedTask; 
-            //   // return _windowPositionUpdater.DragMove();
-            //}).ConfigureAwait(false);
-
-        }
+        private Task DragMove() => _windowPositionUpdater.DragMove();
+        
         private void DropWindowImage(object ev)
         {
             if(_imageBackground.Value is not ImageSource img) return;
