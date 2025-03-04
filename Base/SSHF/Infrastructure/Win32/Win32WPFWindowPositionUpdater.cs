@@ -122,7 +122,7 @@ namespace FVH.SSHF.Infrastructure
             {
                 FastWindowViewModel model = _window.Dispatcher.Invoke(() =>
                 {
-                    if(Thread.CurrentThread.InThreadUITimeCriticalSection() is false) Thread.CurrentThread.StartTimeCriticalSectionUI();
+                    if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is false) Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread();
                     return model =((FastWindow)_window).ViewModel ?? throw new NullReferenceException("model = MainWindowViewModel is null");
                 });
 
@@ -169,13 +169,13 @@ namespace FVH.SSHF.Infrastructure
                 {
                     if(_window.Dispatcher.CheckAccess() is true)
                     {
-                        if(Thread.CurrentThread.InThreadUITimeCriticalSection() is true) Thread.CurrentThread.StopTimeCriticalSectionUI();
+                        if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is true) Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread();
                     }
                     else
                     {
                         _window.Dispatcher.Invoke(() =>
                         {
-                            if(Thread.CurrentThread.InThreadUITimeCriticalSection() is true) Thread.CurrentThread.StopTimeCriticalSectionUI();
+                            if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is true) Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread();
                         });
                     }
                     IsUpdateWindow = false;

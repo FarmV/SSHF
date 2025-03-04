@@ -16,7 +16,7 @@ namespace FVH.SSHF.Infrastructure.Win32
         private const int AVRT_PRIORITY_HIGH = 1;
         private nint _threadAssociateTaskWindows = nint.Zero;
         private bool _isDispose = false;
-        private bool _inTimeCriticalSection = false;
+        private volatile bool _inTimeCriticalSection = false;
         private readonly Dispatcher _dispatcher;
         public Win32MMCSS(Dispatcher uiDispatcher) 
         { 
@@ -29,7 +29,7 @@ namespace FVH.SSHF.Infrastructure.Win32
             _ = StopTimeCriticalSectionUI();
             _threadAssociateTaskWindows = default;
         }
-        public bool InTimeCriticalSection { get => _inTimeCriticalSection; }
+        public bool InTimeCriticalSection => _inTimeCriticalSection;
         internal bool StartTimeCriticalSectionUI()
         {
             ObjectDisposedException.ThrowIf(_isDispose, this);

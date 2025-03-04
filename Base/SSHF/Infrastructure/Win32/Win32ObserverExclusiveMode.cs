@@ -9,6 +9,7 @@ using System.Windows.Threading;
 
 using R3;
 
+using Windows.Win32;
 using Windows.Win32.Foundation;
 
 
@@ -92,7 +93,12 @@ namespace FVH.SSHF.Infrastructure.Win32
             {
                 isExcusiveMode = GetCurrentStatusExcusiveMode();
             }
+
             _isExcusiveMode = isExcusiveMode;
+            if(_isExcusiveMode is true)
+            {
+              if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is false) Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread();
+            }
             ExcusiveMode.OnNext(_isExcusiveMode);
         }
         internal void RegisterShellHook() =>
@@ -105,45 +111,115 @@ namespace FVH.SSHF.Infrastructure.Win32
         });
         private nint ShellHookMessageWorker(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
         {
-            if((uint)msg == WM_SHELLHOOKMESSAGE && wParam == (nint)HSHELL.REDRAW)
-            {
-                if(ExcusiveMode.Value == true)
-                {
-                    CheckAndSetStateExcusiveMode();   // todo логирование?         
-                }
-            }
-            if((uint)msg == WM_SHELLHOOKMESSAGE && wParam == (nint)HSHELL.RUDEAPPACTIVATED && lParam != 0)
-            {                                            
-#if DEBUG
-                #region DEBUG
-                if(App.Trace.Level is not TraceLevel.Off)
-                {
-                    string wParamHSHELL;
-                    void DebugPrint(TraceLevel level) =>
-                    Debug.WriteLine
-                    (
-                       message: $"{nameof(WM_SHELLHOOKMESSAGE).Trim('_')}, TraceLevel - {level} => {nameof(wParam)} = {wParamHSHELL}, {nameof(lParam)} = {lParam}",
-                       category: $"{typeof(Win32ObserverExclusiveMode)}.{nameof(ShellHookMessageWorker)}"
-                    );
-                    if(Enum.TryParse(wParam.ToString(), out HSHELL result))
-                    {
-                        wParamHSHELL = result.ToString();
-                        if(Enum.IsDefined(result) is false) wParamHSHELL = $"{wParam} - Unknown";
-                    }
-                    else
-                    {
-                        wParamHSHELL = $"{wParam} - Unknown";
-                        if(App.Trace.Level >= TraceLevel.Error) DebugPrint(TraceLevel.Error);
-                    }
-                    if(App.Trace.Level >= TraceLevel.Warning && wParamHSHELL.Contains("Unknown")) DebugPrint(TraceLevel.Warning);
-                    if(App.Trace.Level >= TraceLevel.Info) DebugPrint(TraceLevel.Info);
-                }
-                #endregion
-#endif          
-                if(Thread.CurrentThread.InThreadUITimeCriticalSection() is false) Thread.CurrentThread.StartTimeCriticalSectionUI();
-                CheckAndSetStateExcusiveMode();
+            //todo логирование и отладка
 
+            if(((uint)msg == WM_SHELLHOOKMESSAGE) is true)
+            {
+                HSHELL typeMessage = (HSHELL)wParam;
+                switch(typeMessage)
+                {
+                    case HSHELL.GETMINRECT:
+                    break;
+                    case HSHELL.WINDOWACTIVATED:
+                    break;
+                    case HSHELL.RUDEAPPACTIVATED:
+                         if(lParam == 0) break;
+                         CheckAndSetStateExcusiveMode();
+                    break;
+                    case HSHELL.WINDOWREPLACING:
+                    break;
+                    case HSHELL.WINDOWREPLACED:
+                    break;
+                    case HSHELL.WINDOWCREATED:
+                    break;
+                    case HSHELL.WINDOWDESTROYED:
+                         CheckAndSetStateExcusiveMode();
+                    break;
+                    case HSHELL.ACTIVATESHELLWINDOW:
+                    break;
+                    case HSHELL.TASKMAN:
+                    break;
+                    case HSHELL.REDRAW:                    
+                    break;
+                    case HSHELL.FLASH:
+                    break;
+                    case HSHELL.ENDTASK:
+                    break;
+                    case HSHELL.APPCOMMAND:
+                    break;
+                    case HSHELL.MONITORCHANGED:
+                         CheckAndSetStateExcusiveMode();
+                    break;
+                    case HSHELL.LANGUAGE:
+                    break;
+                    case HSHELL.SYSMENU:
+                    break;
+                    case HSHELL.ACCESSIBILITYSTATE:
+                    break;
+                    case HSHELL.APPCOMMAND_DELETE:
+                         CheckAndSetStateExcusiveMode();
+                    break;
+                    case HSHELL.APPCOMMAND_DWM_FLIP3D:
+                         CheckAndSetStateExcusiveMode();
+                    break;
+                    default:
+#if DEBUG
+                    System.Diagnostics.Debugger.Break();
+#endif
+                    break;
+                }
             }
+
+
+            //if(isWM_SHELLHOOKMESSAGE && wParam == (nint)HSHELL.REDRAW)
+            //{
+            //    if(ExcusiveMode.Value == true)
+            //    {
+            //        CheckAndSetStateExcusiveMode();   // todo логирование?         
+            //    }
+            //}
+//            else if(isWM_SHELLHOOKMESSAGE && wParam == (nint)HSHELL.RUDEAPPACTIVATED && lParam != 0)
+//            {
+//#if DEBUG
+//                #region DEBUG
+//                if(App.Trace.Level is not TraceLevel.Off)
+//                {
+//                    string wParamHSHELL;
+//                    void DebugPrint(TraceLevel level) =>
+//                    Debug.WriteLine
+//                    (
+//                       message: $"{nameof(WM_SHELLHOOKMESSAGE).Trim('_')}, TraceLevel - {level} => {nameof(wParam)} = {wParamHSHELL}, {nameof(lParam)} = {lParam}",
+//                       category: $"{typeof(Win32ObserverExclusiveMode)}.{nameof(ShellHookMessageWorker)}"
+//                    );
+//                    if(Enum.TryParse(wParam.ToString(), out HSHELL result))
+//                    {
+//                        wParamHSHELL = result.ToString();
+//                        if(Enum.IsDefined(result) is false) wParamHSHELL = $"{wParam} - Unknown";
+//                    }
+//                    else
+//                    {
+//                        wParamHSHELL = $"{wParam} - Unknown";
+//                        if(App.Trace.Level >= TraceLevel.Error) DebugPrint(TraceLevel.Error);
+//                    }
+//                    if(App.Trace.Level >= TraceLevel.Warning && wParamHSHELL.Contains("Unknown")) DebugPrint(TraceLevel.Warning);
+//                    if(App.Trace.Level >= TraceLevel.Info) DebugPrint(TraceLevel.Info);
+//                }
+//                #endregion
+//#endif          
+//                if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is false) Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread();
+//                CheckAndSetStateExcusiveMode();
+
+//            }
+//            else if(isWM_SHELLHOOKMESSAGE)
+//            {
+
+//            }
+
+            //var res = (uint)msg == WM_SHELLHOOKMESSAGE;
+            //Debug.Write($"msg is WM_SHELLHOOKMESSAGE = {res}");
+            //if(res is false) Debug.Write($" {(uint)msg}{Environment.NewLine}");
+            //else Debug.Write($" msg is number: {(HSHELL)wParam}{Environment.NewLine}");
+
             return hwnd;
         }
         [DllImport("user32")]
@@ -174,7 +250,12 @@ namespace FVH.SSHF.Infrastructure.Win32
             FLASH = 32774U,
             ENDTASK = 10U,
             APPCOMMAND = 12U,
-            MONITORCHANGED = 16U
+            MONITORCHANGED = 16U,
+            LANGUAGE = 8U, 
+            SYSMENU = 9U, 
+            ACCESSIBILITYSTATE = 11U,
+            APPCOMMAND_DELETE = 53U,  // Происходит при появлении окна системного выбора окон => ALT + TAB, WIN + TAB
+            APPCOMMAND_DWM_FLIP3D = 54U // Происходит при закрытии окна системного выбора окон => ALT + TAB, WIN + TAB
         }
     }
 }

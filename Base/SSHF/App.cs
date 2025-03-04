@@ -77,7 +77,7 @@ namespace FVH.SSHF
             AppDomain.CurrentDomain.UnhandledException += (_,e) => EmergencyAppTermination((Exception)e.ExceptionObject);
 
            
-            _ = Thread.CurrentThread.InThreadUITimeCriticalSection(); //инициализация статического конструктора
+            _ = Thread.CurrentThread.InUIThreadTimeCriticalSection(); //инициализация статического конструктора
 
             /// <summary>
             /// Чтобы окно при вставке изображения из буфера обмена сохраняло пропорции и не масштабировалось. 
@@ -143,8 +143,6 @@ namespace FVH.SSHF
 
             Debug.WriteLine($"{Environment.NewLine}{typeEx.FullName}");
             Debug.WriteLine(ex.Message);
-
-           //Environment.Exit(ERROR_UNHANDLED);
 #endif
         }
         private static bool CreateMutexForSingleProgram()
@@ -186,9 +184,26 @@ namespace FVH.SSHF
             if(Thread.CurrentThread.Name is not App.UIThreadName) throw new InvalidOperationException();
             win32MMCSS = new Win32MMCSS(Dispatcher.FromThread(Thread.CurrentThread));
         }
-        internal static bool InThreadUITimeCriticalSection(this Thread _) => Win32MMCSS.InTimeCriticalSection;
-        internal static bool StartTimeCriticalSectionUI(this Thread _) => Win32MMCSS.StartTimeCriticalSectionUI();
-        internal static bool StopTimeCriticalSectionUI(this Thread _) => Win32MMCSS.StopTimeCriticalSectionUI();
+        internal static bool InUIThreadTimeCriticalSection(this Thread _) => Win32MMCSS.InTimeCriticalSection;
+        internal static bool InUIThreadTimeCriticalSection(this SynchronizationContext? _) => Win32MMCSS.InTimeCriticalSection;
+        internal static bool StartUITimeCriticalSectionThrowIfNotUIThread(this Thread _) => Win32MMCSS.StartTimeCriticalSectionUI();
+        internal static bool StopUITimeCriticalSectionThrowIfNotUIThread(this Thread _) => Win32MMCSS.StopTimeCriticalSectionUI();
+
+        internal static bool StartSafeUITimeCriticalSection(this SynchronizationContext? _)
+        {
+            bool res = false;
+            if(System.Windows.Application.Current.Dispatcher.CheckAccess() is false) res = System.Windows.Application.Current.Dispatcher.Invoke(() => Win32MMCSS.StartTimeCriticalSectionUI());
+            else res = Win32MMCSS.StartTimeCriticalSectionUI();
+            return res;
+        }
+        internal static bool StopSafeUITimeCriticalSection(this SynchronizationContext? _)
+        {
+            bool res = false;
+            if(System.Windows.Application.Current.Dispatcher.CheckAccess() is false) res = System.Windows.Application.Current.Dispatcher.Invoke(() => Win32MMCSS.StopTimeCriticalSectionUI());
+            else res = Win32MMCSS.StopTimeCriticalSectionUI();
+            return res;
+        }
+
         [Conditional("DEBUG")]
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void DebugExceptionFormat(ref string messageEx, StackTrace stackTrace,
@@ -198,7 +213,7 @@ namespace FVH.SSHF
             StackFrame? frame = stackTrace.FrameCount > 0 ? stackTrace.GetFrame(0) : null;
             System.Reflection.MethodBase? method = frame?.GetMethod();
             Type? declaringType = method?.DeclaringType;
-            frame?.GetFileColumnNumber();
+            _ = frame?.GetFileColumnNumber();
 
             if(messageEx == string.Empty) messageEx = "Отсутствует";
 
@@ -210,7 +225,4 @@ namespace FVH.SSHF
             //TimeoutException Test = new TimeoutException(message); FormatEx
         }
     }
-}
-    
-
-
+}   

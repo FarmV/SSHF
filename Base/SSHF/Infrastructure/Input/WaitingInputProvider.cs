@@ -95,7 +95,7 @@ namespace FVH.SSHF.Infrastructure.Input
 #if DEBUG
                 Debug.WriteLine($"{App.Stopwatch.ElapsedMilliseconds}");
 #endif
-                if(Thread.CurrentThread.InThreadUITimeCriticalSection() is true) Thread.CurrentThread.StopTimeCriticalSectionUI();
+                if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is true) Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread();
                    _input = null;
                    _IsDisposeInternalInput = true;
                    CurrentInstanceIKeyboardHandlerOrDefault.OnNext(null);
