@@ -29,7 +29,7 @@ namespace FVH.SSHF.FastWindowArea
             new KeyboardShortcut(
             [
                 VKeys.VK_LWIN,
-                VKeys.VK_SHIFT,
+                VKeys.VK_LSHIFT,
                 VKeys.VK_KEY_A
             ],
             new Func<Task>(PresentNewImage), nameof(PresentNewImage)),
@@ -37,21 +37,21 @@ namespace FVH.SSHF.FastWindowArea
             new KeyboardShortcut(
             [
                 VKeys.VK_LWIN,
-                VKeys.VK_SHIFT,
+                VKeys.VK_LSHIFT,
                 VKeys.VK_KEY_S
             ],
             new Func<Task>(InvokeMsScreenClip), nameof(InvokeMsScreenClip)),
 
             new KeyboardShortcut(
             [
-                VKeys.VK_CONTROL,
+                VKeys.VK_LCONTROL,
                 VKeys.VK_CAPITAL
             ],
             new Func<Task>(SwitchBlockRefreshWindow), nameof(SwitchBlockRefreshWindow)),
 
             new KeyboardShortcut(
             [
-                VKeys.VK_CONTROL
+                VKeys.VK_LCONTROL
             ],
             new Func<Task>(StopRefreshWindow), nameof(StopRefreshWindow)),
 

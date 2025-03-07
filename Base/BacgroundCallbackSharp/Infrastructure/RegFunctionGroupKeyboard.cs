@@ -10,13 +10,13 @@ namespace FVH.Background.Input.Infrastructure
 {
     public class RegFunctionGroupKeyboard
     {
-        internal RegFunctionGroupKeyboard(VKeys[] keyCombination, List<IRegFunction> listOfRegisteredFunctions)
+        internal RegFunctionGroupKeyboard(VKeys[] keyCombination, List<RegFunction> listOfRegisteredFunctions)
         {
            
             ListOfRegisteredFunctions = listOfRegisteredFunctions;
             KeyCombination = keyCombination;
         }
         public VKeys[] KeyCombination { get; }
-        public List<IRegFunction> ListOfRegisteredFunctions { get; }     
+        public List<RegFunction> ListOfRegisteredFunctions { get; }     
     }
 }

@@ -1,7 +1,12 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.ConstrainedExecution;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 
@@ -10,209 +15,37 @@ using FVH.Background.Input.Infrastructure.Interfaces;
 
 namespace FVH.Background.Input
 {
-    internal class CallbackFunctionKeyboard : IKeyboardCallback, IInvoke
+    internal partial class CallbackFunctionKeyboard : IDisposable
     {
-        private readonly IKeyboardHandler _keyboardHandler;
+        private bool _isDispose = false;
         private readonly List<RegFunctionGroupKeyboard> GlobalList = new List<RegFunctionGroupKeyboard>();
-        private readonly LowLevelKeyHook _lowLevelHook;
-        private readonly Dictionary<VKeys[], Func<Task>> FunctionsCallback = new Dictionary<VKeys[], Func<Task>>(new VKeysEqualityComparer());
         private readonly object _lockObject = new object();
-        private RegFunctionGroupKeyboard[] _breakKey;
-
-        public CallbackFunctionKeyboard(IKeyboardHandler keyboardHandler, LowLevelKeyHook lowLevelHook)
+        private readonly LowLevelKeyboard _lowLevelHook;
+        private readonly Dispatcher _toCallbackDispatcher;
+        private readonly HashSet<VKeys> _currentPressLogicKeys = new HashSet<VKeys>();
+        internal event EventHandler<KeyboardEventArgs>? NotifyKeyboardEvent;
+        public CallbackFunctionKeyboard(Dispatcher toCallbackDispatcher)
         {
-            _keyboardHandler = keyboardHandler;
-            _lowLevelHook = lowLevelHook;
-            _keyboardHandler.KeyPressEvent += RawKeyDownEvent;
+            _toCallbackDispatcher = toCallbackDispatcher;
 
-            _breakKey = GlobalList.Where(x => x.KeyCombination.Length is 1).ToArray();
+            _lowLevelHook = new LowLevelKeyboard();
 
-            _lowLevelHook.KeyDownEvent += LowLevelKeyDownEvent;
+            _lowLevelHook.KeyboardEventHandler += LowLevelHookKeyboardEventHandler;
         }
-        private void CalculateSingleKeys() => _breakKey = GlobalList.Where(x => x.KeyCombination.Length is 1).ToArray();
-        private void LowLevelKeyDownEvent(object? sender, LowLevelKeyHook.EventKeyLowLevelHook e)
+        internal void InstallHook() => _lowLevelHook.InstallHook();
+        internal void UninstallHook()
         {
-            if(_breakKey.Length == 0) return;
-
-            VKeys currentKey = e.Key;
-
-            foreach(RegFunctionGroupKeyboard item in _breakKey)
-            {
-                if(item.KeyCombination[0] == currentKey)
-                {
-                    e.Break = true;
-                    _ = InvokeFunctions(item.ListOfRegisteredFunctions);
-                    break;
-                }
-            }
+            _lowLevelHook.UninstallHook();
+            _currentPressLogicKeys.Clear();
         }
-        private async void RawKeyDownEvent(object? sender, IKeysNotifier e)
+        public void Dispose()
         {
-            VKeys[] pressedKeys = e.Keys;
-            async Task<bool> InvokeOneKey(VKeys key)
-            {
-                RegFunctionGroupKeyboard? qR = GlobalList.SingleOrDefault(x => x.KeyCombination.Length == 1 & x.KeyCombination[0] == key);
-                if(qR is null) return false;
-                else
-                {
-                    await InvokeFunctions(qR.ListOfRegisteredFunctions);
-                    return true;
-                }
-            }
-            if(pressedKeys.Length is 0) return;
-            if(pressedKeys.Length is 1)
-            {
-                await InvokeOneKey(e.Keys[0]);
-                return;
-            }
-            static IEnumerable<VKeys> GetDifference(IEnumerable<VKeys> a, IEnumerable<VKeys> b)
-            {
-                List<VKeys> difCollection = new List<VKeys>(a);
-                b.ToList().ForEach(x => difCollection.Remove(x));
-                return difCollection;
-            }
-            IEnumerable<RegFunctionGroupKeyboard> queryPreviewNotDuplicate = GlobalList.Where(x => x.KeyCombination.Length == pressedKeys.Length + 1).Where(x => x.KeyCombination.Except(pressedKeys).Count() is 1);
-            IEnumerable<RegFunctionGroupKeyboard> queryPreviewDuplicate = GlobalList.Where(x => x.KeyCombination.Length == pressedKeys.Length + 1);
-
-            IEnumerable<RegFunctionGroupKeyboard>? queryStrong = GlobalList.Where(x => x.KeyCombination.Length == pressedKeys.Length);
-            if(queryStrong is not null && queryStrong.Any())
-            {
-                foreach(RegFunctionGroupKeyboard item in queryStrong)
-                {
-                    bool isForceStrongCombination = item.KeyCombination.Except(pressedKeys).Any() is false;
-
-                    if(isForceStrongCombination is true)
-                    {
-                        await InvokeFunctions(item.ListOfRegisteredFunctions);
-                        return;
-                    }
-                }
-            }
-            List<VKeys> previewListExpectedKeys = new List<VKeys>();
-            if(queryPreviewNotDuplicate.Any() is false)
-            {
-                if(queryPreviewDuplicate.Any() is false)
-                    return;
-                else
-                {
-                    foreach(RegFunctionGroupKeyboard x in queryPreviewDuplicate)
-                    {
-                        IEnumerable<VKeys> resultDifference = GetDifference(x.KeyCombination, pressedKeys);
-                        if(resultDifference.Count() is 1)
-                            previewListExpectedKeys.Add(resultDifference.ToArray()[0]);
-                    }
-                }
-            }
-            else if(queryPreviewNotDuplicate.Any() is true)
-            {
-                IEnumerable<VKeys> preKeysGroup = queryPreviewNotDuplicate.Select(x => x.KeyCombination.Except(pressedKeys)).ToArray().Select(x => x.ToArray()[0]);
-
-                VKeys? preKeyInput = await this.PreKeys(preKeysGroup);
-
-                if(preKeyInput.HasValue is false)
-                    return;
-                else
-                {
-                    RegFunctionGroupKeyboard invokeQuery = queryPreviewNotDuplicate.Single(x => x.KeyCombination.Intersect(new VKeys[] { preKeyInput.Value }).Count() is 1);
-                    await InvokeFunctions(invokeQuery.ListOfRegisteredFunctions);
-                }
-            }
-            if(previewListExpectedKeys.Count is 0)
-                return;
-            {
-                VKeys? preKeyInput2 = await this.PreKeys(previewListExpectedKeys);
-
-                if(preKeyInput2.HasValue is false)
-                    return;
-                else
-                {
-                    RegFunctionGroupKeyboard invokeQuery = queryPreviewDuplicate.Single(x => x.KeyCombination.Intersect(new VKeys[] { preKeyInput2.Value }).Count() is 1);
-                    await InvokeFunctions(invokeQuery.ListOfRegisteredFunctions);
-                }
-            }
+            if(_isDispose is true) return;
+            _isDispose = true;
+            _lowLevelHook.Dispose();
         }
-        public async Task InvokeFunctions(IEnumerable<IRegFunction> toTaskInvoke)
-        {
-            if(toTaskInvoke.Any() is false) throw new InvalidOperationException("The collection cannot be empty");
-
-            static async Task StartOrRunTask(Func<Task> taskFunc)
-            {
-                Task task = taskFunc.Invoke();
-                if(task.Status == TaskStatus.Created)
-                {
-                    task.Start();
-                    await task;
-                }
-            }
-
-            System.Windows.Threading.Dispatcher? dispatcher = null;
-            try
-            {
-                dispatcher = System.Windows.Application.Current.Dispatcher;
-            }
-            catch { dispatcher = null; }
-#if DEBUG
-            Debug.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fffff")} ===============================> InvokeFunctions");
-#endif
-            if(dispatcher is not null) await Task.WhenAll(toTaskInvoke.Select(x => x.CallbackTask).Select(func => dispatcher.InvokeAsync(() => StartOrRunTask(func)).Task));
-            else
-            {
-                if(Dispatcher.FromThread(Thread.CurrentThread) is not Dispatcher inputHandlerDispatcher) throw new NullReferenceException(nameof(inputHandlerDispatcher));
-
-                await Task.WhenAll(toTaskInvoke.Select(x => x.CallbackTask).Select(func => inputHandlerDispatcher.InvokeAsync(() => StartOrRunTask(func)).Task));
-            }
-        }
-        private async Task<VKeys?> PreKeys(IEnumerable<VKeys> keys)
-        {
-            if(_lowLevelHook is null) throw new NullReferenceException(nameof(LowLevelKeyHook));
-
-            VKeys? res = null;
-            bool complete = false;
-
-            void CheckKeyCallback(object? _, LowLevelKeyHook.EventKeyLowLevelHook e)
-            {
-                if(_lowLevelHook is null)
-                    throw new NullReferenceException(nameof(LowLevelKeyHook));
-                VKeys? checkKey = null;
-
-                checkKey = e.Key switch
-                {
-                    VKeys.VK_LCONTROL or VKeys.VK_RCONTROL => (VKeys?)VKeys.VK_CONTROL,
-                    VKeys.VK_LMENU or VKeys.VK_RMENU => (VKeys?)VKeys.VK_MENU,
-                    VKeys.VK_LSHIFT or VKeys.VK_RSHIFT => (VKeys?)VKeys.VK_SHIFT,
-                    _ => (VKeys?)e.Key,
-                };
-                if(checkKey.HasValue is false)
-                    throw new InvalidOperationException();
-#if DEBUG
-                Debug.WriteLine($"{keys.First()} - {checkKey.Value}");
-#endif
-                if(keys.Contains(checkKey.Value))
-                {
-                    res = checkKey;
-                    e.Break = true;
-                    _lowLevelHook.KeyDownEvent -= CheckKeyCallback;
-                    complete = true;
-                }
-                else
-                {
-                    _lowLevelHook.KeyDownEvent -= CheckKeyCallback;
-                    complete = true;
-                }
-            }
-            return await Task.Run<VKeys?>(() =>
-            {
-                _lowLevelHook.KeyDownEvent += CheckKeyCallback;
-                if(System.Threading.SpinWait.SpinUntil(() => complete is true, TimeSpan.FromMilliseconds(950)) is not true)
-                {
-#if DEBUG
-                    Debug.WriteLine($"Warning Timeout {CheckKeyCallback}");
-#endif
-                }
-                return res;
-            });
-        }
-        public Task AddCallBackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null)
+        public List<RegFunctionGroupKeyboard> ReturnGroupRegFunctions() => GlobalList.ToList();
+        public Task AddCallbackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null)
         {
             lock(_lockObject)
             {
@@ -220,11 +53,10 @@ namespace FVH.Background.Input
                 if(queryContainGroup is not null) queryContainGroup.ListOfRegisteredFunctions.Add(new RegFunction(callbackTask, identifier));
                 else
                 {
-                    RegFunctionGroupKeyboard newGroupF = new RegFunctionGroupKeyboard(keyCombo, new List<IRegFunction>());
+                    RegFunctionGroupKeyboard newGroupF = new RegFunctionGroupKeyboard(keyCombo, new List<RegFunction>());
                     newGroupF.ListOfRegisteredFunctions.Add(new RegFunction(callbackTask, identifier));
                     GlobalList.Add(newGroupF);
                 }
-                CalculateSingleKeys();
                 return Task.CompletedTask;
             }
         }
@@ -233,7 +65,7 @@ namespace FVH.Background.Input
             lock(_lockObject)
             {
                 if(identifier is null) return Task.FromResult(false);
-                IRegFunction? queryF = null;
+                RegFunction? queryF = null;
                 RegFunctionGroupKeyboard? queryResult = GlobalList.SingleOrDefault(x =>
                 {
                     queryF = x.ListOfRegisteredFunctions.SingleOrDefault(x => x.Identifier is not null && x.Identifier.Equals(identifier));
@@ -245,7 +77,6 @@ namespace FVH.Background.Input
                     if(queryResult.ListOfRegisteredFunctions.Remove(queryF ?? throw new NullReferenceException(nameof(queryF))) is not true) throw new InvalidOperationException();
 
                     GlobalList.Where(x => x.ListOfRegisteredFunctions.Any() is not true).ToList().ForEach(x => GlobalList.Remove(x));
-                    CalculateSingleKeys();
                     return Task.FromResult(true);
                 }
             }
@@ -258,11 +89,215 @@ namespace FVH.Background.Input
                 RegFunctionGroupKeyboard? queryResult = GlobalList.SingleOrDefault(x => x.KeyCombination == keyCombo);
                 if(queryResult is null) return Task.FromResult(false);
                 if(GlobalList.Remove(queryResult) is not true) throw new InvalidOperationException();
-                CalculateSingleKeys();
                 return Task.FromResult(true);
             }
         }
-        public List<RegFunctionGroupKeyboard> ReturnGroupRegFunctions() => GlobalList.ToList();
         public Task<bool> ContainsKeyCombination(VKeys[] keyCombo) => Task.FromResult(GlobalList.SingleOrDefault(x => x.KeyCombination == keyCombo) is not null);
+        private void LowLevelHookKeyboardEventHandler(object? _, KeyboardEventArgs e)
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            bool InvokeAndBreakIfStrongCommination()
+            {
+                VKeys[] fullKeyCombination = _currentPressLogicKeys.ToArray();
+
+                IEnumerable<RegFunctionGroupKeyboard> queryStrongLength = GlobalList.Where(x => x.KeyCombination.Length == fullKeyCombination.Length);
+                
+                bool anyFunctionInvoked = false;
+                if(queryStrongLength.Any())
+                {
+                    foreach(RegFunctionGroupKeyboard item in queryStrongLength)
+                    {
+                        bool isForceStrongCombination = item.KeyCombination.Except(fullKeyCombination).Any() is false;
+
+                        if(isForceStrongCombination)
+                        {
+                            InvokeFunctions(item.ListOfRegisteredFunctions);
+                            anyFunctionInvoked = true;
+                        }
+                    }
+                }
+
+                if(anyFunctionInvoked is true) e.BreakLogicKey = true;
+
+                return anyFunctionInvoked;
+            }
+            if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.Up) 
+            {
+                _ = _currentPressLogicKeys.Remove(e.Key);
+
+                NotifyKeyboardEvent?.Invoke(this, e);
+            }
+            if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.Down)
+            {
+                _ = _currentPressLogicKeys.Add(e.Key);
+
+                _ = InvokeAndBreakIfStrongCommination();
+
+                NotifyKeyboardEvent?.Invoke(this, e);
+            }
+        }
+        private void InvokeFunctions(IEnumerable<RegFunction> toTaskInvoke)
+        {
+            if(toTaskInvoke.Any() is false) throw new InvalidOperationException("The collection cannot be empty");
+
+            static async Task StartOrRunTask(Func<Task> taskFunc)
+            {
+                Task task = taskFunc.Invoke();
+                if(task.Status == TaskStatus.Created) task.Start();
+                await task;
+            }
+            _ = _toCallbackDispatcher.InvokeAsync(async () =>
+            {
+                try
+                {
+                    await Task.WhenAll(toTaskInvoke.Select(x => StartOrRunTask(x.CallbackTask)));
+                }
+                catch(Exception)
+                {
+                    throw;
+                }
+            }).Task.Unwrap();
+        }
+        internal partial class LowLevelKeyboard : CriticalFinalizerObject, IDisposable
+        {
+            private const int WH_KEYBOARD_LL = 13;
+            private const int HC_ACTION = 0;
+            private const uint _THREAD_ID_ALL_IN_CURRENT_DESKTOP = 0;
+            private nint _hookID = nint.Zero;
+            private bool _isDispose = false;
+            private delegate nint KeyboardHookHandler(int nCode, WMEvent wParam, nint lParam);
+            private KeyboardHookHandler? _lowLevelKeyboardHandler;
+            private readonly HashSet<VKeys> KeyDownPhysicallyProcessed = new HashSet<VKeys>();
+            internal event EventHandler<KeyboardEventArgs>? KeyboardEventHandler;
+            internal LowLevelKeyboard() { }
+            ~LowLevelKeyboard() => Dispose();
+            public void Dispose()
+            {
+                if(_isDispose is true) return;
+                UninstallHook();
+                _isDispose = true;
+                GC.SuppressFinalize(this);
+            }
+            internal void InstallHook()
+            {
+                ObjectDisposedException.ThrowIf(_isDispose, this);
+                ArgumentNullException.ThrowIfNull(KeyboardEventHandler, nameof(KeyboardEventHandler));
+
+                if(Process.GetCurrentProcess().MainModule is not ProcessModule module) throw new NullReferenceException(nameof(module));
+                nint hMod = GetModuleHandleW(module.ModuleName);
+                if(hMod == nint.Zero) throw new NullReferenceException(nameof(hMod));
+
+                _lowLevelKeyboardHandler ??= new KeyboardHookHandler(LowLevelKeyboardProc);
+
+                nint handleHookProcedure = SetWindowsHookExW(WH_KEYBOARD_LL, _lowLevelKeyboardHandler, hMod, _THREAD_ID_ALL_IN_CURRENT_DESKTOP);
+                if(handleHookProcedure == nint.Zero) throw new Win32Exception(Marshal.GetLastPInvokeError(), $"{nameof(handleHookProcedure)}{Marshal.GetLastPInvokeErrorMessage()}");
+
+                _hookID = handleHookProcedure;
+            }
+            internal void UninstallHook()
+            {
+                if(_hookID == nint.Zero) return;
+                _ = UnhookWindowsHookEx(_hookID);
+                _hookID = nint.Zero;
+                KeyDownPhysicallyProcessed.Clear();
+            }
+            private nint LowLevelKeyboardProc(int nCode, WMEvent wParam, nint lParam)
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                nint KeyDown()
+                {
+                    TagKBDLLHOOKSTRUCT keyboardStruct = Marshal.PtrToStructure<TagKBDLLHOOKSTRUCT>(lParam);
+
+                    bool isRepeatDownLogicKey = KeyDownPhysicallyProcessed.Contains(keyboardStruct.VkCode);
+
+                    if(isRepeatDownLogicKey is true) return CallNextHookEx(_hookID, nCode, wParam, lParam);
+
+                    KeyboardEventArgs argDown = new KeyboardEventArgs(
+                     keyboardStruct.VkCode,
+                      KeyboardEventArgs.TypePhysicallyEvent.Down,
+                       false);
+
+                    KeyboardEventHandler!.Invoke(this, argDown);
+                    if(argDown.BreakLogicKey is true) return (nint)1;
+                    _ = KeyDownPhysicallyProcessed.Add(keyboardStruct.VkCode);
+                    return CallNextHookEx(_hookID, nCode, wParam, lParam);
+                }
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                nint KeyUP()
+                {
+                    TagKBDLLHOOKSTRUCT keyboardStruct = Marshal.PtrToStructure<TagKBDLLHOOKSTRUCT>(lParam);
+
+                    KeyboardEventArgs argUp = new KeyboardEventArgs(
+                     keyboardStruct.VkCode,
+                      KeyboardEventArgs.TypePhysicallyEvent.Up,
+                       false);
+
+                    KeyboardEventHandler!.Invoke(this, argUp);
+
+                    if(argUp.BreakLogicKey is true) return (nint)1;
+
+                    _ = KeyDownPhysicallyProcessed.Remove(keyboardStruct.VkCode);
+
+                    return CallNextHookEx(_hookID, nCode, wParam, lParam);
+                }
+                if(nCode is HC_ACTION)
+                {
+                    switch(wParam)
+                    {
+                        case WMEvent.WM_KEYDOWN: return KeyDown();
+                        case WMEvent.WM_SYSKEYDOWN: return KeyDown();
+                        case WMEvent.WM_KEYUP: return KeyUP();
+                        case WMEvent.WM_SYSKEYUP: return KeyUP();
+                    }
+                }
+                return CallNextHookEx(_hookID, nCode, wParam, lParam);
+            }
+
+            private enum WMEvent : uint
+            {
+                WM_KEYDOWN = 256,
+                WM_SYSKEYDOWN = 260,
+                WM_KEYUP = 257,
+                WM_SYSKEYUP = 261
+            }
+            /// <summary>
+            /// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-kbdllhookstruct?redirectedfrom=MSDN
+            /// </summary>
+            [StructLayout(LayoutKind.Sequential)]
+            private readonly struct TagKBDLLHOOKSTRUCT
+            {
+                internal readonly VKeys VkCode;
+                internal readonly uint ScanCode;
+                internal readonly uint Flags;
+                internal readonly uint Time;  //GetMessageTime() для сообщениями. До переполнение примерно 49,71 дней.
+                internal readonly nuint DwExtraInfo; // ?
+            }
+            [LibraryImport("user32", SetLastError = true)]
+            private static partial nint SetWindowsHookExW(int idHook, KeyboardHookHandler lpfn, nint hMod, uint dwThreadId);
+            [LibraryImport("user32")]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            private static partial bool UnhookWindowsHookEx(nint hhk);
+            [LibraryImport("user32")]
+            private static partial nint CallNextHookEx(nint hhk, int nCode, WMEvent wParam, nint lParam);
+            [LibraryImport("Kernel32")]
+            private static partial nint GetModuleHandleW([MarshalAs(UnmanagedType.LPWStr)] string lpModuleName);
+        }
+    }
+    internal class KeyboardEventArgs
+    {
+        internal enum TypePhysicallyEvent
+        {
+            Down = 1,
+            Up = 2,
+        }
+        internal KeyboardEventArgs(VKeys key, TypePhysicallyEvent typeEvent, bool breakKey)
+        {
+            Key = key;
+            Type = typeEvent;
+            BreakLogicKey = breakKey;
+        }
+        internal VKeys Key { get; init; }
+        internal TypePhysicallyEvent Type { get; set; }
+        internal bool BreakLogicKey { get; set; } = false;
     }
 }

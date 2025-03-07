@@ -6,14 +6,17 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
+using System.Windows.Threading;
 
+using FVH.Background.Input;
 using FVH.Background.Input.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure.Win32;
 
 using R3;
 
-using static FVH.Background.Input.Input;
+
 
 
 namespace FVH.SSHF.Infrastructure.Input
@@ -21,48 +24,50 @@ namespace FVH.SSHF.Infrastructure.Input
     internal class WaitingInputProvider : IDisposable
     {
         private bool _isDisposed = false;
-        private bool _IsDisposeInternalInput = true;
+        private bool _statusHookInput = true;
         private readonly R3.BehaviorSubject<bool> _subjectRequestSwitchInput;
         private readonly Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> _subjectListGlobalShortcuts;
-        private Background.Input.Input? _input;
+        private readonly Background.Input.Input _input;
         private readonly IDisposable _disposablesSubscribe;
-        internal readonly R3.BehaviorSubject<bool> IsDisposeInput;
-        internal readonly R3.BehaviorSubject<IKeyboardHandler?> CurrentInstanceIKeyboardHandlerOrDefault;
-        internal WaitingInputProvider(R3.BehaviorSubject<bool> setInputLifeAsObservable, Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> listGlobalShortcutsAsObservable)
+        internal readonly R3.BehaviorSubject<bool> CurrentStatusSubscribeInput;
+        internal event EventHandler<FVH.Background.Input.KeyboardEventArgs>? NotifyKeyboardEvent;
+
+        internal WaitingInputProvider(Dispatcher toCallbackDispatcher, R3.BehaviorSubject<bool> setInputLifeAsObservable, Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> listGlobalShortcutsAsObservable)
         {
             _subjectRequestSwitchInput = setInputLifeAsObservable;
             _subjectListGlobalShortcuts = listGlobalShortcutsAsObservable;
 
-            CurrentInstanceIKeyboardHandlerOrDefault = new R3.BehaviorSubject<IKeyboardHandler?>(null);
-            IsDisposeInput = new R3.BehaviorSubject<bool>(true);
+            _input = new Background.Input.Input(toCallbackDispatcher);
+            _input.NotifyKeyboardEvent += InputNotifyKeyboardEvent;
 
+            CurrentStatusSubscribeInput = new R3.BehaviorSubject<bool>(false);
+  
             IDisposable subscribeSetInput = _subjectRequestSwitchInput.ObserveOn(ObservableSystem.DefaultTimeProvider).
-               Subscribe((bool requestDisposeInput) =>
-               {
-                 InputRequestChecker(requestDisposeInput);
-               },
-               onCompleted: (Result _) => 
-               {
-                   Dispose();
-               });
+            Subscribe((bool requestSubOrUnSub) =>
+            {
+                InputRequestChecker(requestSubOrUnSub);
+            },
+            onCompleted: (Result _) => 
+            {
+                Dispose();
+            });
 
             _disposablesSubscribe = R3.Disposable.Combine(subscribeSetInput);
-        }
+        }      
         public void Dispose()
         {
             if(_isDisposed is true) return;
             _disposablesSubscribe.Dispose();
+            _input.NotifyKeyboardEvent -= InputNotifyKeyboardEvent;
             _input?.Dispose();
-            IsDisposeInput.OnCompleted(Result.Success);
-            IsDisposeInput.Dispose();
+            CurrentStatusSubscribeInput.OnCompleted(Result.Success);
+            CurrentStatusSubscribeInput.Dispose();
             _isDisposed = true;
         }
-        private void InputRequestChecker(bool isDisposeInput)
+        private void InputNotifyKeyboardEvent(object? sender, FVH.Background.Input.KeyboardEventArgs e) => NotifyKeyboardEvent?.Invoke(this, e);
+        private bool _isInit = false;
+        private void InputRequestChecker(bool statusRequestUnintsallHook)
         {
-            ObjectDisposedException.ThrowIf(_isDisposed is true, this);
-
-            IKeyboardCallback? keyboardCallback;
-
             void RegisterGlobalShortcuts(BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>> subject) =>            
             Task.Run(async () => 
             (await subject.FirstAsync()).ToList().ForEach((IBehaviorSubjectGlobalShortcuts iGlobalShortcutBehaviorSubject) =>
@@ -70,36 +75,37 @@ namespace FVH.SSHF.Infrastructure.Input
                 R3.BehaviorSubject<IEnumerable<KeyboardShortcut>> shortcutsAsObservable = iGlobalShortcutBehaviorSubject.GetShortcutsAsObservable();
                 IEnumerable<KeyboardShortcut> keyboardShortcutList = shortcutsAsObservable.FirstAsync().Result;
                 keyboardShortcutList.ToList().ForEach((KeyboardShortcut keyboardShortcut) =>
-                keyboardCallback.AddCallBackTask(keyboardShortcut.KeyCombo.CurrentValue, keyboardShortcut.CallbackTask, keyboardShortcut.Identifier ?? keyboardShortcut.CallbackTask.Method.Name).Wait());
+                _input.AddCallbackTask(keyboardShortcut.KeyCombo.CurrentValue, keyboardShortcut.CallbackTask, keyboardShortcut.Identifier ?? keyboardShortcut.CallbackTask.Method.Name).Wait());
             })).Wait();
+           
+            ObjectDisposedException.ThrowIf(_isDisposed is true, this);
             
-            switch(isDisposeInput)
+            switch(statusRequestUnintsallHook)
             {
-                case false:           
-                    _input?.Dispose();
-                    _input = new Background.Input.Input(initInputHandle: HandlersInput.Keyboard); // не забывать HandlersInput.Keyboard
+                case false:
+                    if(_statusHookInput is true) return;
+                    if(_isInit is false)
+                    {
+                        _isInit = true;
+                        BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>? list = _subjectListGlobalShortcuts.Invoke();
+                        RegisterGlobalShortcuts(list);
+                    }
 
-                    _IsDisposeInternalInput = false;
-                    keyboardCallback = _input.GetKeyboardCallbackFunction();
-                    
-                    CurrentInstanceIKeyboardHandlerOrDefault.OnNext(_input.GetKeyboardHandler());
+                    _input.InstallHook();
 
-                    BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>? test = _subjectListGlobalShortcuts.Invoke();
+                    _statusHookInput = true;
 
-                    RegisterGlobalShortcuts(test);
-                    
-                    this.IsDisposeInput.OnNext(_IsDisposeInternalInput);
+                    CurrentStatusSubscribeInput.OnNext(_statusHookInput);   
                     break;
                 case true:
-                   _input?.Dispose();
+                    if(_statusHookInput is false) return;
+                   _input.UninstallHook();
 #if DEBUG
-                Debug.WriteLine($"{App.Stopwatch.ElapsedMilliseconds}");
+                   Debug.WriteLine($"{App.Stopwatch.ElapsedMilliseconds}");
 #endif
-                if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is true) Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread();
-                   _input = null;
-                   _IsDisposeInternalInput = true;
-                   CurrentInstanceIKeyboardHandlerOrDefault.OnNext(null);
-                   this.IsDisposeInput.OnNext(_IsDisposeInternalInput);
+                   if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is true) Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread();
+                   _statusHookInput = false;
+                   CurrentStatusSubscribeInput.OnNext(_statusHookInput);
                 break;
             }
         }     

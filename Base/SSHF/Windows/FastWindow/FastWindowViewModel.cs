@@ -24,8 +24,8 @@ namespace FVH.SSHF.FastWindowArea
         private CancellationTokenSource _updateWindowCancellationToken = new CancellationTokenSource();
         private readonly BindableReactiveProperty<bool> _blockRefresh = new BindableReactiveProperty<bool>();
         private bool _isCancellingUpdate = false;
-        private readonly BindableReactiveProperty<bool> _dropCondition = new BindableReactiveProperty<bool>();
-        private readonly BindableReactiveProperty<bool> _dragMoveCondition = new BindableReactiveProperty<bool>();
+        private readonly BindableReactiveProperty<bool> _dropCondition = new BindableReactiveProperty<bool>(false);
+        private readonly BindableReactiveProperty<bool> _dragMoveCondition = new BindableReactiveProperty<bool>(true);
         private readonly BindableReactiveProperty<double> _width = new BindableReactiveProperty<double>(0);
         private readonly BindableReactiveProperty<double> _height = new BindableReactiveProperty<double>(0);
         private readonly BindableReactiveProperty<Visibility> _visibleCondition = new BindableReactiveProperty<Visibility>(Visibility.Hidden);
@@ -154,8 +154,7 @@ namespace FVH.SSHF.FastWindowArea
         private void DropWindowImage(object ev)
         {
             if(_imageBackground.Value is not ImageSource img) return;
-            if(_windowPositionUpdater.IsUpdateWindow is true) return;
-            if(Keyboard.IsKeyDown(Key.LeftCtrl) is not true) return;           
+            if(_windowPositionUpdater.IsUpdateWindow is true) return;      
             if(Mouse.LeftButton is not MouseButtonState.Pressed) return;
             _setImage.SaveImageFromDrop(ev, img);
         }

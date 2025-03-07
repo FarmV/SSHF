@@ -108,8 +108,6 @@ namespace FVH.SSHF
 
             Environment.ExitCode = _applicationExitCode;
         }
-
-
         private static async Task Start(string[]? args)
         {       
             Thread uiThread = Thread.CurrentThread;
@@ -221,7 +219,7 @@ namespace FVH.SSHF
             messageEx = str;
 
             //string message = "It's test message";
-            //AppNativeHelper.DebugExceptionFormat(ref message, new StackTrace());
+            //AppHelper.DebugExceptionFormat(ref message, new StackTrace());
             //TimeoutException Test = new TimeoutException(message); FormatEx
         }
     }

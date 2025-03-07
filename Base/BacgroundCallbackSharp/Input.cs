@@ -2,18 +2,15 @@
 using System.Windows.Interop;
 using System.Windows.Threading;
 
-using Linearstar.Windows.RawInput;
 
 using FVH.Background.Input.Infrastructure.Interfaces;
+using System.Windows;
+using System.Threading;
+using FVH.Background.Input.Infrastructure;
+using static FVH.Background.Input.CallbackFunctionKeyboard;
 
 namespace FVH.Background.Input
 {
-    ///<summary>
-    ///<br><see langword="En"/></br>
-    ///<br/>The class creates a proxy <see cref="HwndSource"/>. Registers it to receive mouse and keyboard events. Creates classes to handle events.
-    ///<br><see langword="Ru"/></br>
-    ///<br>Класс создает прокси-источник HwndSource. Регистрирует его для получения событий мыши и клавиатуры. Создает классы для обработки событий.</br>
-    ///</summary>
     public partial class Input : IDisposable
     {
         /// <summary>
@@ -24,120 +21,80 @@ namespace FVH.Background.Input
         /// </summary>
         private const long WS_POPUP = 0x80000000L;
         private const int WM_INPUT = 0x00FF;
-        private bool isDispose = false;
-        private bool _isInitialized = false;
-        private readonly IKeyboardHandler _keyboardHandler;
-        private readonly IMouseHandler _mouseHandler;
-        private readonly HandlersInput _initInput;
-        private IKeyboardCallback? _callbackFunction;
-        private readonly Action<RawInputKeyboardData> _callbackEventKeyboardData;
-        private readonly Action<RawInputMouseData> _callbackEventMouseData;
-        private volatile HwndSource? _proxyInputHandlerWindow;
-        private LowLevelKeyHook? _lowLevelHook;
-        private Thread? _winThread;
+        private volatile bool _isDispose = false;
+        private readonly Dispatcher _toCallbackDispatcher;
+        private readonly Dispatcher _inputDispatcher;
+        private readonly CallbackFunctionKeyboard _callbackFunctionKeyboard;
 
-        public Input() : this(null, HandlersInput.Keyboard | HandlersInput.Mouse) { }
-        public Input(IMouseHandler? mouseHandler = null, HandlersInput initInputHandle = HandlersInput.Keyboard | HandlersInput.Mouse)
+        internal event EventHandler<KeyboardEventArgs>? NotifyKeyboardEvent;
+        public Input(Dispatcher toCallbackDispatcher)
         {
-            _initInput = initInputHandle;
-
-            _keyboardHandler = new KeyboardHandler();
-            _mouseHandler = mouseHandler is IMouseHandler handlerMouse ? handlerMouse : new MouseHandler();
-
-            _callbackEventKeyboardData = new Action<RawInputKeyboardData>((x) => _keyboardHandler.HandlerKeyboard(x));
-            _callbackEventMouseData = new Action<RawInputMouseData>((x) => _mouseHandler.HandlerMouse(x));
-
-            Task waitForInitialization = Task.Run(Initialization);
-            waitForInitialization.Wait();
-            this._initInput = initInputHandle;
+            _toCallbackDispatcher = toCallbackDispatcher;
+            _inputDispatcher = CreateDispatcher();
+            _callbackFunctionKeyboard = _inputDispatcher.Invoke(() => new CallbackFunctionKeyboard(_toCallbackDispatcher));
+            _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.NotifyKeyboardEvent += SendNotifyKeyboardEvent);
         }
+
+        private void SendNotifyKeyboardEvent(object? sender, KeyboardEventArgs e) => NotifyKeyboardEvent?.Invoke(this, e);
+
+        ~Input() => Dispose();
         public void Dispose()
         {
-            if(isDispose is true) return;
-            _proxyInputHandlerWindow?.Dispatcher.Invoke(() =>
+            if(_isDispose is true) return;
+            _isDispose = true;
+            _inputDispatcher.Invoke(() =>
             {
-                _proxyInputHandlerWindow.Dispose();
-                _lowLevelHook?.Dispose();
-                _proxyInputHandlerWindow?.Dispatcher?.InvokeShutdown();
-              //  _v2?.Dispose();
+                _callbackFunctionKeyboard?.Dispose();
             });
+            _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.NotifyKeyboardEvent -= SendNotifyKeyboardEvent);
+            _inputDispatcher.InvokeShutdown();
             GC.SuppressFinalize(this);
         }
-        ~Input()
+        public void InstallHook()
         {
-            if (isDispose is true) return;
-            try
+            ObjectDisposedException.ThrowIf(_isDispose, this);
+            _inputDispatcher.Invoke(() =>
             {
-                _lowLevelHook?.Dispose();
-                _proxyInputHandlerWindow?.Dispose();
-            }
-            catch { }
+                _callbackFunctionKeyboard.InstallHook();
+            });
         }
-        ///<returns>
-        /// <br><see langword="En"/></br>
-        /// <br>Reference to the class that implements the <see cref="IKeyboardHandler"/>.</br>
-        /// <br><see langword="Ru"/></br>
-        /// <br>Ссылка на класс, реализующий интерфейс <see cref="IKeyboardHandler"/>.</br>
-        ///</returns>      
-        public IKeyboardHandler GetKeyboardHandler() => _keyboardHandler;
-        ///<returns>
-        /// <br><see langword="En"/></br>
-        /// <br>Reference to the class that implements the <see cref="IMouseHandler"/>.</br>
-        /// <br><see langword="Ru"/></br>
-        /// <br>Ссылка на класс, реализующий интерфейс <see cref="IMouseHandler"/>.</br>
-        ///</returns>
-        public IMouseHandler GetMouseHandler() => _mouseHandler;
-        ///<returns>
-        /// <br><see langword="En"/></br>
-        /// <br>Reference to the class that implements the <see cref="IKeyboardCallback"/>.</br>
-        /// <br><see langword="Ru"/></br>
-        /// <br>Ссылка на класс, реализующий интерфейс <see cref="IKeyboardCallback"/>.</br>
-        ///</returns>
-        public IKeyboardCallback GetKeyboardCallbackFunction() => _callbackFunction is IKeyboardCallback CallBack ? CallBack : throw new NullReferenceException(nameof(_callbackFunction));
-
-        private Win32MMCSSv2? _v2;
-        private Task Initialization()
+        public void UninstallHook()
         {
-            if (_isInitialized is true) throw new InvalidOperationException($"The object({nameof(Input)}) cannot be re-initialized");
-
+            ObjectDisposedException.ThrowIf(_isDispose, this);
+            _inputDispatcher.Invoke(() =>
+            {
+                _callbackFunctionKeyboard.UninstallHook();
+            });
+        }
+        public Task<bool> ContainsKeyCombination(VKeys[] keyCombo) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.ContainsKeyCombination(keyCombo));
+        public Task AddCallbackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.AddCallbackTask(keyCombo, callbackTask, identifier));
+        public Task<bool> DeleteTaskByAnIdentifier(object identifier) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.DeleteTaskByAnIdentifier(identifier));
+        public Task<bool> DeleteInvokeListByKeyCombination(VKeys[] keyCombo) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.DeleteInvokeListByKeyCombination(keyCombo));
+        public List<RegFunctionGroupKeyboard> ReturnGroupRegFunctions() => _inputDispatcher.Invoke(_callbackFunctionKeyboard.ReturnGroupRegFunctions);
+        private Dispatcher CreateDispatcher()
+        {
+            Thread? thread = null;
             Task InitThreadAndSetWindowsHandler = Task.Run(() =>
             {
-                _winThread = new Thread(() =>
+                thread = new Thread(() => Dispatcher.Run())
                 {
-                    Thread.CurrentThread.Priority = ThreadPriority.Highest;
-                    HwndSourceParameters configInitWindow = new HwndSourceParameters($"InputHandler-{Path.GetRandomFileName}", 0, 0)
-                    {
-                        WindowStyle = unchecked((int)WS_POPUP)
-                    };
-                    _proxyInputHandlerWindow = new HwndSource(configInitWindow);
+                    Name = ".FVH Background Input Handler"
+                };
+                thread.SetApartmentState(ApartmentState.STA);
+                thread.IsBackground = false;
 
-                    Dispatcher.Run();
-                })
-                { Name = "Input Handler" };
-                _winThread.SetApartmentState(ApartmentState.STA);
-                _winThread.Start();
+                thread.UnsafeStart();
             });
-
-            Task waitForDispatcherValidation = Task.Run(async () =>
+            Task<Dispatcher> waitForDispatcherValidation = Task.Run(async () =>
             {
-                Dispatcher? winDispatcher = Dispatcher.FromThread(_winThread);
-                _v2 = new Win32MMCSSv2(winDispatcher);
-
-              //  if(_v2.SetMaxCPUPriority() is false) throw new InvalidOperationException();
+                Dispatcher? winDispatcher = null;
 
                 if (SpinWait.SpinUntil(() =>
                 {
-                    winDispatcher = Dispatcher.FromThread(_winThread);
+                    winDispatcher = Dispatcher.FromThread(thread);
                     return winDispatcher is not null;
                 }, TimeSpan.FromMilliseconds(500)) is false) throw new NullReferenceException($"Failed to get window Dispatcher - {nameof(winDispatcher)} is null");
 
-                /// <summary>
-                /// Ранее была проблема, которое выражалось в том, что полученный объект Dispatcher был в не валидном состоянии.
-                /// это проявляясь в том, что вызов Invoke() был бесконечным (вроде), а await InvokeAsync() возвращал 
-                /// ошибку TaskCanceledException, по которой я решил определять валидное состояние. Как только объект 
-                /// принимал валидное состояние функция завершалось успешно. Мне не известны иные способы ожидания валидности данного объекта.
-                /// И хотя проблема, сейчас не наблюдается, пусть проверка останется.
-                /// </summary>
                 bool isTimeoutInitializationDispatcher = false;
                 System.Threading.Timer timeoutTimer = new System.Threading.Timer((_) => isTimeoutInitializationDispatcher = true);
                 timeoutTimer.Change(TimeSpan.FromSeconds(4), Timeout.InfiniteTimeSpan);
@@ -146,77 +103,19 @@ namespace FVH.Background.Input
                     try
                     {
                         if (isTimeoutInitializationDispatcher is true) throw new TimeoutException(nameof(waitForDispatcherValidation));
-                        Task taskWinInit = await winDispatcher.InvokeAsync(async () => await Task.Delay(1)).Task;
+                        Task taskWinInit = await winDispatcher!.InvokeAsync(async () => await Task.Delay(1)).Task;
                         timeoutTimer.Dispose();
                         break;
                     }
                     catch (System.Threading.Tasks.TaskCanceledException) { }
                 }
+                return winDispatcher;
             });
 
-
-
-            Task subscribeWindowToRawInput = new Task(() =>
-            {
-                if (_proxyInputHandlerWindow is null) throw new NullReferenceException("The window could not initialize");
-
-                IntPtr HandleWindow = _proxyInputHandlerWindow.Handle;
-                List<(HidUsageAndPage InputType, RawInputDeviceFlags Mode, nint hWndTarget)> queryTypeList = [];
-                _proxyInputHandlerWindow.Dispatcher.Invoke(() =>
-                {
-                    switch (_initInput)
-                    {
-                        case HandlersInput.Keyboard | HandlersInput.Mouse:
-                            queryTypeList.Add((HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, HandleWindow));
-                            queryTypeList.Add((HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, HandleWindow));
-                            break;
-                        case HandlersInput.Keyboard:
-                            queryTypeList.Add((HidUsageAndPage.Keyboard, RawInputDeviceFlags.InputSink, HandleWindow));
-                            break;
-                        case HandlersInput.Mouse:
-                            queryTypeList.Add((HidUsageAndPage.Mouse, RawInputDeviceFlags.InputSink, HandleWindow));
-                            break;
-                        default: throw new NullReferenceException(nameof(_initInput));
-                    }
-                    Array.ForEach(queryTypeList.ToArray(), (clientInput) => RawInputDevice.RegisterDevice(clientInput.InputType, clientInput.Mode, clientInput.hWndTarget));
-
-                    _proxyInputHandlerWindow.AddHook(WndProc);
-
-                    nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
-                    {
-                        if (msg is WM_INPUT)
-                        {
-                            if (RawInputData.FromHandle(lParam) is RawInputData data)
-                            {
-                                switch (data)
-                                {
-                                    case RawInputKeyboardData keyboardData:
-                                        _callbackEventKeyboardData.Invoke(keyboardData);
-                                        break;
-
-                                    case RawInputMouseData mouseData:
-                                        _callbackEventMouseData.Invoke(mouseData);
-                                        break;
-                                }
-                            }
-                        }
-                        return hwnd;
-                    }
-
-                    _lowLevelHook = new LowLevelKeyHook();
-                    _lowLevelHook.InstallHook();
-
-                    CallbackFunctionKeyboard callbackFunctionKeyboard = new CallbackFunctionKeyboard(_keyboardHandler, _lowLevelHook);
-                    _callbackFunction = callbackFunctionKeyboard;
-
-                }, DispatcherPriority.Render);
-            });
             Task.WaitAll(InitThreadAndSetWindowsHandler, waitForDispatcherValidation);
-    
-            subscribeWindowToRawInput.Start();
-            subscribeWindowToRawInput.Wait();
-            _isInitialized = true;
-            return Task.CompletedTask;      
+
+
+            return waitForDispatcherValidation.Result;
         }
     }
 }

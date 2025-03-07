@@ -21,7 +21,7 @@ namespace FVH.Background.Input.Infrastructure.Interfaces
     ///     <br/>
     ///     <see href="https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes">docs.microsoft.com</see>  
     /// </summary>
-    public enum VKeys
+    public enum VKeys : uint
     {
         // Constant = Value        Description
 
@@ -72,7 +72,7 @@ namespace FVH.Background.Input.Infrastructure.Interfaces
         VK_SNAPSHOT = 0x2C,            /* PRINT SCREEN key*/
         VK_INSERT = 0x2D,          /* INS key*/
         VK_DELETE = 0x2E,          /* DEL key*/
-        VK_VK_HELP = 0x2F,            /* HELP key*/
+        VK_HELP = 0x2F,            /* HELP key*/
         VK_KEY_0 = 0x30,          // 0 key
         VK_KEY_1 = 0x31,          // 1 key
         VK_KEY_2 = 0x32,          // 2 key

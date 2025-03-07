@@ -1,26 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Windows.Threading;
-using System.Threading.Tasks;
 using System.Linq;
-using System.Windows.Forms;
-
-using FVH.Background.Input.Infrastructure.Interfaces;
-using FVH.SSHF.Infrastructure.Interfaces;
-using FVH.SSHF.Infrastructure.Input;
 using System.Threading;
-using System.Diagnostics;
+using System.Threading.Tasks;
+using System.Windows.Threading;
+
 using R3;
-using System.Security.Policy;
+
 using FVH.SSHF.Infrastructure;
+using FVH.SSHF.Infrastructure.Input;
+using FVH.SSHF.Infrastructure.Interfaces;
+using FVH.Background.Input.Infrastructure.Interfaces;
 
 namespace FVH.SSHF.FastWindowArea
 {
-    internal struct ShortcutsFunction
-    {
-        internal string NameFunction;
-        internal VKeys[] Shortcut;
-    }
     internal partial class FastWindowManager : IBehaviorSubjectGlobalShortcuts, IDisposable
     {
         private int _currentIndexFastWindow = 0;
@@ -32,7 +25,6 @@ namespace FVH.SSHF.FastWindowArea
         private OneFastWindow? _firstFastWindow;
         private OneFastWindow? _activeFastWindow;
         private KeyboardShortcut[]? _currentShortcutsFastWindow;
-        private readonly BehaviorSubject<IKeyboardHandler?> _keyboardHandler;
         private readonly WaitingInputProvider _waitingInputProvider;
 
         internal bool IsInitialize = false;
@@ -41,21 +33,19 @@ namespace FVH.SSHF.FastWindowArea
         (
             Dispatcher dispatcher,
             Func<FastWindowViewModelDependencies> getFastWindowViewModelDependencies,
-            BehaviorSubject<IKeyboardHandler?> keyboardHandler,
             WaitingInputProvider waitingInputProvider
         )
         {
             _dispatcher = dispatcher;
             _fastWindows = new Dictionary<int, OneFastWindow>();
-            _keyboardHandler = keyboardHandler;
             _windowCreator = new FastWindowCreator(dispatcher, getFastWindowViewModelDependencies);
 
             _currentStatusShortcutsFastWindow = new BehaviorSubject<IEnumerable<KeyboardShortcut>>(GetDefaultShortcuts());
 
             _waitingInputProvider = waitingInputProvider;
 
-            _ = _waitingInputProvider.IsDisposeInput.ObserveOnThreadPool().
-                SubscribeAwait(onNextAsync: async (bool next,CancellationToken _) => await IfInputDispose(next), AwaitOperation.ThrottleFirstLast);
+          _ = _waitingInputProvider.CurrentStatusSubscribeInput.ObserveOnThreadPool().Skip(1).
+               SubscribeAwait(onNextAsync: async (bool next,CancellationToken _) => await IfInputDispose(next), AwaitOperation.ThrottleFirstLast);
         }
         public void Dispose()
         {
@@ -65,39 +55,12 @@ namespace FVH.SSHF.FastWindowArea
             _fastWindows.Clear();
         }
         public BehaviorSubject<IEnumerable<KeyboardShortcut>> GetShortcutsAsObservable() => _currentStatusShortcutsFastWindow;
-
         public IEnumerable<KeyboardShortcut> GetShortcuts()
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
             if(IsInitialize is false) throw new InvalidOperationException("The object must be initialized");
             ArgumentNullException.ThrowIfNull(_activeFastWindow);
             return _currentShortcutsFastWindow!;
-        }
-        internal void SetNewShortcuts(ShortcutsFunction[] shortcutsFunction)
-        {
-            void SetNewShortcut(ShortcutsFunction shortcutFunction)
-            {
-                KeyboardShortcut[] arrayShortcuts = _currentShortcutsFastWindow;
-                KeyboardShortcut? singleElement = arrayShortcuts.Single((shortcut) =>
-                {
-                    ArgumentNullException.ThrowIfNull(shortcut.Identifier);
-                    return shortcut.Identifier.ToString() == shortcutFunction.NameFunction;
-                });
-                singleElement.KeyCombo.Value = shortcutFunction.Shortcut;
-            }
-
-            ObjectDisposedException.ThrowIf(IsDisposed, this);
-            if(IsInitialize is not true) throw new InvalidOperationException("IsInitialize is false");
-            if(_currentShortcutsFastWindow is null) throw new NullReferenceException("_currentShortcutsFastWindow is null");
-
-            Array.ForEach(shortcutsFunction, (shortcut) =>
-            {
-                ArgumentException.ThrowIfNullOrWhiteSpace(shortcut.NameFunction);
-                ArgumentNullException.ThrowIfNull(shortcut.Shortcut);
-            });
-            Array.ForEach(shortcutsFunction, SetNewShortcut);
-
-            _currentStatusShortcutsFastWindow.OnNext(_currentShortcutsFastWindow);
         }
         internal async Task CreateMainWindow()
         {
@@ -117,7 +80,7 @@ namespace FVH.SSHF.FastWindowArea
             new KeyboardShortcut(
             [
                 VKeys.VK_LWIN,
-                VKeys.VK_SHIFT,
+                VKeys.VK_LSHIFT,
                 VKeys.VK_KEY_A
             ],
             () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.PresentNewImage(), nameof(_activeFastWindow.FastWindowCommand.PresentNewImage)),
@@ -125,7 +88,7 @@ namespace FVH.SSHF.FastWindowArea
             new KeyboardShortcut(
             [
                 VKeys.VK_LWIN,
-                VKeys.VK_SHIFT,
+                VKeys.VK_LSHIFT,
                 VKeys.VK_KEY_S
             ],
             () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.InvokeMsScreenClip(), nameof(_activeFastWindow.FastWindowCommand.InvokeMsScreenClip)),
@@ -139,7 +102,7 @@ namespace FVH.SSHF.FastWindowArea
 
             new KeyboardShortcut(
             [
-                VKeys.VK_CONTROL
+                VKeys.VK_LCONTROL
             ],
             () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.StopRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.StopRefreshWindow)),
 
@@ -152,7 +115,7 @@ namespace FVH.SSHF.FastWindowArea
             new KeyboardShortcut(
             [
                 VKeys.VK_LWIN,
-                VKeys.VK_SHIFT,
+                VKeys.VK_LSHIFT,
                 VKeys.VK_ADD
             ],
             () => BlockInput is true ? Task.CompletedTask : CreateWindowAsync(), nameof(CreateWindowAsync)),
@@ -160,7 +123,7 @@ namespace FVH.SSHF.FastWindowArea
             new KeyboardShortcut(
             [
                 VKeys.VK_LWIN,
-                VKeys.VK_SHIFT,
+                VKeys.VK_LSHIFT,
                 VKeys.VK_SUBTRACT
             ],
             () => BlockInput is true ? Task.CompletedTask : DisposeActiveWindowAsync(), nameof(DisposeActiveWindowAsync)),
@@ -189,31 +152,21 @@ namespace FVH.SSHF.FastWindowArea
 
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is true) SynchronizationContext.Current.StopSafeUITimeCriticalSection();
         }
-        //        async() =>
-        //            {
-        //                if(_fastWindows.Count == 1) await _activeFastWindow!.FastWindowCommand.InvokeMsScreenClip();
-        //                else
-        //                {
-        //                    await _activeFastWindow!.FastWindowCommand.InvokeMsScreenClip();
-        //                    await HideAllWindowAsScreenClip();
-        //    }
-
-        //}
-        private async Task IfInputDispose(bool disposeInput)
+        private async Task IfInputDispose(bool statusSubscribeInput)
         {
-            if(disposeInput is false) return;
+            if(statusSubscribeInput is true) return;
 
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) SynchronizationContext.Current.StartSafeUITimeCriticalSection();
                         
             ParallelQuery<Task> taskWindowList = _fastWindows.Values.AsParallel().AsUnordered().Select(async one =>
             {
                 Task taskStopRefreshWindow = one.FastWindowCommand.MainWindowViewModel.WindowPositionUpdater.IsUpdateWindow is true
-                    ? one.FastWindowCommand.StopRefreshWindow()
-                    : Task.CompletedTask; 
+                      ? one.FastWindowCommand.StopRefreshWindow()
+                       : Task.CompletedTask; 
 
                 Task taskHideWindow = one.FastWindowCommand.MainWindowViewModel.VisibleCondition.CurrentValue == System.Windows.Visibility.Visible
-                    ? one.FastWindowCommand.HideWindow()
-                    : Task.CompletedTask; 
+                      ? one.FastWindowCommand.HideWindow()
+                       : Task.CompletedTask; 
 
                 await taskStopRefreshWindow;
                 await taskHideWindow;
@@ -242,7 +195,7 @@ namespace FVH.SSHF.FastWindowArea
             ObjectDisposedException.ThrowIf(IsDisposed, this);
             if(_firstFastWindow!.Equals(_activeFastWindow) is true) return Task.CompletedTask;
             _activeFastWindow!.Dispose();
-            _fastWindows.Remove(_currentIndexFastWindow);
+            _ = _fastWindows.Remove(_currentIndexFastWindow);
             _currentIndexFastWindow--;
             return Task.CompletedTask;
         }
@@ -254,14 +207,14 @@ namespace FVH.SSHF.FastWindowArea
 
             (FastWindow FastWindow, FastWindowViewModel FastWindowViewModel, FastWindowViewModelDependencies FastWindowViewModelDependencies) fastWindow = await task;
 
-            FastWindowExternalConditions fastWindowExternalConditions = new FastWindowExternalConditions(fastWindow.FastWindowViewModel, _keyboardHandler);
+            FastWindowExternalConditions fastWindowExternalConditions = new FastWindowExternalConditions(fastWindow.FastWindowViewModel, _waitingInputProvider);
             FastWindowCommand fastWindowCommand = new FastWindowCommand(fastWindow.FastWindow, fastWindow.FastWindowViewModel);
             OneFastWindow oneFastWindow = new OneFastWindow(fastWindow.FastWindow, fastWindow.FastWindowViewModelDependencies, fastWindowExternalConditions, fastWindowCommand);
 
             _fastWindows[_fastWindows.Count + 1] = oneFastWindow;
             _currentIndexFastWindow++;
 
-            _dispatcher.Invoke(() => fastWindow.FastWindow.Name = $"Fast_index_{_currentIndexFastWindow}");
+            _ = _dispatcher.Invoke(() => fastWindow.FastWindow.Name = $"Fast_index_{_currentIndexFastWindow}");
 
             return oneFastWindow;
         }

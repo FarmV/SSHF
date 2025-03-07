@@ -44,16 +44,15 @@ namespace FVH.SSHF
              
                 IGetImage iGetImage = new ImageProvider();
 
-                R3.BehaviorSubject<IKeyboardHandler?> keyboardHandlerObservableSubject = new R3.BehaviorSubject<IKeyboardHandler?>(null);
-
                 R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>? listIInvokeShortcutsBehaviorSubject = null;
-                Func<BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> delegateListIInvokeShortcutsBehaviorSubject = 
-                   new Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>>(() => listIInvokeShortcutsBehaviorSubject!);
 
-                WaitingInputProvider? waitingInput = new WaitingInputProvider(aggregatorInputCondition.InputConditionsBehaviorSubject, delegateListIInvokeShortcutsBehaviorSubject);
+                Func<BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> delegateListIInvokeShortcutsBehaviorSubject = 
+                 new Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>>(() => listIInvokeShortcutsBehaviorSubject!);
+
+                WaitingInputProvider? waitingInput = new WaitingInputProvider(uiDispatcher, aggregatorInputCondition.InputConditionsBehaviorSubject, delegateListIInvokeShortcutsBehaviorSubject);
 
                 FastWindowManager fastWindowManager = uiDispatcher.Invoke(
-                () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(iGetImage), keyboardHandlerObservableSubject, waitingInput));
+                () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(iGetImage), waitingInput));
                 if(args?.Length > 0)
                 {
                     if(args.SingleOrDefault(x => x == "--SCR_NotBR") is not null)
@@ -64,8 +63,6 @@ namespace FVH.SSHF
                 }
           
                 listIInvokeShortcutsBehaviorSubject = new BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>([fastWindowManager]);
-
-                waitingInput.CurrentInstanceIKeyboardHandlerOrDefault.Subscribe(keyboardHandlerObservableSubject.OnNext);
         
                 TrayIcon trayIcon = CreateAnIconInTheNotificationArea(uiDispatcher);
 
@@ -117,7 +114,6 @@ namespace FVH.SSHF
 
                 return ValueTask.FromResult(host);
             }
-
             private static TrayIcon CreateAnIconInTheNotificationArea(Dispatcher uiDispatcher) => uiDispatcher.Invoke(() => _ = new TrayIcon(App.GetResource(Resource.AppIcon).Stream));
             private static FastWindowViewModelDependencies CreateFastWindowViewModelDependencies(IGetImage imageProvider) => _ = new FastWindowViewModelDependencies(imageProvider);
         }

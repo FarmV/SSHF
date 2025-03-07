@@ -2,7 +2,7 @@
 
 namespace FVH.Background.Input.Infrastructure
 {
-    public record RegFunction : IRegFunction
+    public record RegFunction 
     {
         internal RegFunction(Func<Task> callBackTask, object? identifier = null)
         {
