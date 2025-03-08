@@ -79,7 +79,7 @@ namespace FVH.SSHF.FastWindowArea
         {
             if(_dropCondition.CurrentValue == newCondition) return;
             if(Application.Current.Dispatcher.CheckAccess() is true) _dropCondition.Value = newCondition; 
-            else Application.Current.Dispatcher.Invoke(() => _dropCondition.Value = newCondition);
+            else _ = Application.Current.Dispatcher.Invoke(() => _dropCondition.Value = newCondition);
         }
         public IWindowPositionUpdater WindowPositionUpdater => _windowPositionUpdater;       
         public BindableReactiveProperty<bool> BlockRefresh => _blockRefresh;
@@ -91,7 +91,7 @@ namespace FVH.SSHF.FastWindowArea
         {
             if(_dragMoveCondition.CurrentValue == newCondition) return;
             if(Application.Current.Dispatcher.CheckAccess() is true) _dragMoveCondition.Value = newCondition;
-            else Application.Current.Dispatcher.Invoke(() => _dragMoveCondition.Value = newCondition);
+            else _ = Application.Current.Dispatcher.Invoke(() => _dragMoveCondition.Value = newCondition);
         }
         public BindableReactiveProperty<Visibility> VisibleCondition => _visibleCondition;       
         private async Task WindowUpdate()
@@ -141,16 +141,15 @@ namespace FVH.SSHF.FastWindowArea
         {
             System.Windows.Threading.Dispatcher dispatcher = Application.Current.Dispatcher;
             if(dispatcher.CheckAccess() is true) _visibleCondition.Value = Visibility.Hidden;
-            else await dispatcher.InvokeAsync(() => _visibleCondition.Value = Visibility.Hidden, DispatcherPriority.Render);
+            else _ = await dispatcher.InvokeAsync(() => _visibleCondition.Value = Visibility.Hidden, DispatcherPriority.Render);
         }
         private void Show()
         {
             if(MsScreenClip.IsEnableProcessHost() is true) return;
             if(Application.Current.Dispatcher.CheckAccess() is true) VisibleCondition.Value = Visibility.Visible;
-            else Application.Current.Dispatcher.Invoke(() => VisibleCondition.Value = Visibility.Visible);            
+            else _ = Application.Current.Dispatcher.Invoke(() => VisibleCondition.Value = Visibility.Visible);            
         }
-        private Task DragMove() => _windowPositionUpdater.DragMove();
-        
+        private Task DragMove() => _windowPositionUpdater.DragMove();       
         private void DropWindowImage(object ev)
         {
             if(_imageBackground.Value is not ImageSource img) return;
@@ -162,7 +161,7 @@ namespace FVH.SSHF.FastWindowArea
         {
            if(WindowPositionUpdater.IsUpdateWindow is true) await StopUpdateWindow();
            MsScreenClip.Invoke();
-           Thread.Sleep(200); // Чтобы окно оставалось в скриншоте, но убралось и не мешало композиции
+           Thread.Sleep(200); // Чтобы окно оставалось в скриншоте, но убралось, не мешало композиции
            HideWindow.Execute(Unit.Default);
         }      
     }

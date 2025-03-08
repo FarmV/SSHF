@@ -17,7 +17,6 @@ using FVH.SSHF.FastWindowArea;
 
 namespace FVH.SSHF
 {
-
     internal partial class App
     {
         internal const string UIThreadName = "FVH Main Thread";
@@ -75,9 +74,8 @@ namespace FVH.SSHF
 
             application.DispatcherUnhandledException += (object _, DispatcherUnhandledExceptionEventArgs ev) => { ev.Handled = true; EmergencyAppTermination(ev.Exception); };
             AppDomain.CurrentDomain.UnhandledException += (_,e) => EmergencyAppTermination((Exception)e.ExceptionObject);
-
            
-            _ = Thread.CurrentThread.InUIThreadTimeCriticalSection(); //инициализация статического конструктора
+            _ = Thread.CurrentThread.InUIThreadTimeCriticalSection(); // Инициализация статического конструктора
 
             /// <summary>
             /// Чтобы окно при вставке изображения из буфера обмена сохраняло пропорции и не масштабировалось. 
@@ -186,7 +184,6 @@ namespace FVH.SSHF
         internal static bool InUIThreadTimeCriticalSection(this SynchronizationContext? _) => Win32MMCSS.InTimeCriticalSection;
         internal static bool StartUITimeCriticalSectionThrowIfNotUIThread(this Thread _) => Win32MMCSS.StartTimeCriticalSectionUI();
         internal static bool StopUITimeCriticalSectionThrowIfNotUIThread(this Thread _) => Win32MMCSS.StopTimeCriticalSectionUI();
-
         internal static bool StartSafeUITimeCriticalSection(this SynchronizationContext? _)
         {
             bool res = false;
@@ -201,7 +198,6 @@ namespace FVH.SSHF
             else res = Win32MMCSS.StopTimeCriticalSectionUI();
             return res;
         }
-
         [Conditional("DEBUG")]
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void DebugExceptionFormat(ref string messageEx, StackTrace stackTrace,

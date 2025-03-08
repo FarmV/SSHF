@@ -26,7 +26,6 @@ namespace FVH.SSHF
         private class BasicDependencies 
         {
             internal BasicDependencies() { }
-
             internal static ValueTask<IHost> ConfigureDependencies(Thread uiThread, string[]? args = null) 
             {
                 Dispatcher uiDispatcher = Dispatcher.FromThread(uiThread) is not Dispatcher dispatcher ? throw new InvalidOperationException() : dispatcher;
@@ -69,15 +68,15 @@ namespace FVH.SSHF
                 IHost host = Host.CreateDefaultBuilder(args).ConfigureAppConfiguration((_, configuration) =>
                 { configuration.Sources.Clear(); }).ConfigureServices((__, container) =>
                 {
-                    container.AddSingleton<Win32MMCSS>(win32MMCSS);
-                    container.AddSingleton<Dispatcher>(uiDispatcher);
-                    container.AddSingleton<AggregatorInputConditions>(aggregatorInputCondition);
-                    container.AddSingleton<IGetImage>(iGetImage);
-                    container.AddSingleton<FastWindowManager>(fastWindowManager);
-                    container.AddSingleton<WaitingInputProvider>(waitingInput);
-                    container.AddSingleton<TrayIcon>(trayIcon);
+                    _ = container.AddSingleton<Win32MMCSS>(win32MMCSS);
+                    _ = container.AddSingleton<Dispatcher>(uiDispatcher);
+                    _ = container.AddSingleton<AggregatorInputConditions>(aggregatorInputCondition);
+                    _ = container.AddSingleton<IGetImage>(iGetImage);
+                    _ = container.AddSingleton<FastWindowManager>(fastWindowManager);
+                    _ = container.AddSingleton<WaitingInputProvider>(waitingInput);
+                    _ = container.AddSingleton<TrayIcon>(trayIcon);
 
-                    container.AddSingleton<Win32ObserverExclusiveMode>(requestExclusiveModeDisposeInput);
+                    _ = container.AddSingleton<Win32ObserverExclusiveMode>(requestExclusiveModeDisposeInput);
                 }).Build();
 
                 CompositeDisposable disposablesDependencies =
@@ -104,6 +103,7 @@ namespace FVH.SSHF
 
                     tokenApplicationStartedCallback?.Dispose();
                 });
+
                 CancellationTokenRegistration? tokenApplicationApplicationStopped = null;
                 tokenApplicationApplicationStopped =
                 host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping.Register(() =>
