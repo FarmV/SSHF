@@ -120,6 +120,8 @@ namespace FVH.SSHF.Infrastructure
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void UpdateWindowPositionRelativeToCursor()
             {
+                Thread.CurrentThread.Priority = ThreadPriority.Highest;
+
                 FastWindowViewModel model = _window.Dispatcher.Invoke(() =>
                 {
                     if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is false) Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread();
@@ -196,4 +198,3 @@ namespace FVH.SSHF.Infrastructure
         private static partial bool SetWindowPos(nint handle, nint handle2, int x, int y, int cx, int cy, int flag);
     }
 }
-
