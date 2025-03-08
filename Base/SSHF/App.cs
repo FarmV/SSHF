@@ -74,8 +74,8 @@ namespace FVH.SSHF
 
             application.DispatcherUnhandledException += (object _, DispatcherUnhandledExceptionEventArgs ev) => { ev.Handled = true; EmergencyAppTermination(ev.Exception); };
             AppDomain.CurrentDomain.UnhandledException += (_,e) => EmergencyAppTermination((Exception)e.ExceptionObject);
-           
-            _ = Thread.CurrentThread.InUIThreadTimeCriticalSection(); // Инициализация статического конструктора
+
+            RuntimeHelpers.RunClassConstructor(typeof(AppHelper).TypeHandle); // Инициализация статического конструктора
 
             /// <summary>
             /// Чтобы окно при вставке изображения из буфера обмена сохраняло пропорции и не масштабировалось. 
