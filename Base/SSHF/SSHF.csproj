@@ -2,7 +2,7 @@
 
 	<PropertyGroup Label="Application Base">
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
+		<TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
 		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
 		<PlatformTarget>x64</PlatformTarget>		
 		<UseWPF>true</UseWPF>
