@@ -65,6 +65,7 @@ namespace FVH.SSHF.FastWindowArea
         public IEnumerable<KeyboardShortcut> GetShortcuts() => _shortcuts ?? throw new NullReferenceException(nameof(_shortcuts));
         public async Task PresentNewImage()
         {
+            _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
             Task SetNewImage()
             {
                 if(MainWindowViewModel.SetNewImage.CanExecute() is false) return Task.CompletedTask;
@@ -78,8 +79,7 @@ namespace FVH.SSHF.FastWindowArea
                 return Task.CompletedTask;
             }
             Task RefreshWindowInvoke()
-            {
-                
+            {                
                 if(MainWindowViewModel.RefreshWindowInvoke.CanExecute() is false) return Task.CompletedTask;
                 MainWindowViewModel.RefreshWindowInvoke.Execute(R3.Unit.Default);
                 return Task.CompletedTask;
@@ -94,7 +94,10 @@ namespace FVH.SSHF.FastWindowArea
 
                 await RefreshWindowInvoke().ConfigureAwait(false);
             }
-            finally { Volatile.Write(ref _isExecutePresentNewImage, false); }
+            finally 
+            {         
+                Volatile.Write(ref _isExecutePresentNewImage, false); 
+            }
         }
         public Task SwitchBlockRefreshWindow()
         {
