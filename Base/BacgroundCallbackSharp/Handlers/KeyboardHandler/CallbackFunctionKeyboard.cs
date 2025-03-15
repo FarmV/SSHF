@@ -93,6 +93,9 @@ namespace FVH.Background.Input
             }
         }
         public Task<bool> ContainsKeyCombination(VKeys[] keyCombo) => Task.FromResult(GlobalList.SingleOrDefault(x => x.KeyCombination == keyCombo) is not null);
+
+        private VKeys[] _activeCombination = Array.Empty<VKeys>();
+        private bool _isCombinationActive = false;
         private void LowLevelHookKeyboardEventHandler(object? _, KeyboardEventArgs e)
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -113,17 +116,32 @@ namespace FVH.Background.Input
                         {
                             InvokeFunctions(item.ListOfRegisteredFunctions);
                             anyFunctionInvoked = true;
+                            _activeCombination = item.KeyCombination;
                         }
                     }
                 }
 
-                if(anyFunctionInvoked is true) e.BreakLogicKey = true;
+                if(anyFunctionInvoked is true)
+                {
+                    _isCombinationActive = true;
+                    e.BreakLogicKey = true;
+                }
 
                 return anyFunctionInvoked;
             }
             if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.Up) 
             {
                 _ = _currentPressLogicKeys.Remove(e.Key);
+
+                if(_isCombinationActive && _activeCombination.Contains(e.Key))
+                {
+                    e.BreakLogicKey = true;
+                    if(_currentPressLogicKeys.Count == 0)
+                    {
+                        _isCombinationActive = false; 
+                        _activeCombination = Array.Empty<VKeys>(); // Сбрасываем активную комбинацию
+                    }                    
+                }
 
                 NotifyKeyboardEvent?.Invoke(this, e);
             }
@@ -234,9 +252,11 @@ namespace FVH.Background.Input
 
                     KeyboardEventHandler!.Invoke(this, argUp);
 
-                    if(argUp.BreakLogicKey is true) return (nint)1;
-
-                    _ = KeyDownPhysicallyProcessed.Remove(keyboardStruct.VkCode);
+                    if(argUp.BreakLogicKey is true)
+                    {
+                        _ = KeyDownPhysicallyProcessed.Remove(keyboardStruct.VkCode);
+                        return (nint)1;
+                    }
 
                     return CallNextHookEx(_hookID, nCode, wParam, lParam);
                 }
