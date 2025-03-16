@@ -70,7 +70,7 @@ namespace FVH.Background.Input
         public Task AddCallbackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.AddCallbackTask(keyCombo, callbackTask, identifier));
         public Task<bool> DeleteTaskByAnIdentifier(object identifier) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.DeleteTaskByAnIdentifier(identifier));
         public Task<bool> DeleteInvokeListByKeyCombination(VKeys[] keyCombo) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.DeleteInvokeListByKeyCombination(keyCombo));
-        public List<RegFunctionGroupKeyboard> ReturnGroupRegFunctions() => _inputDispatcher.Invoke(_callbackFunctionKeyboard.ReturnGroupRegFunctions);
+        public List<GroupFunctions> ReturnGroupRegFunctions() => _inputDispatcher.Invoke(_callbackFunctionKeyboard.ReturnGroupRegFunctions);
         private Dispatcher CreateDispatcher()
         {
             Thread? thread = null;

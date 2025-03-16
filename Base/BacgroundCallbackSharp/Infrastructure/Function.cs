@@ -2,14 +2,14 @@
 
 namespace FVH.Background.Input.Infrastructure
 {
-    public record RegFunction 
+    public record Function 
     {
-        internal RegFunction(Func<Task> callBackTask, object? identifier = null)
+        internal Function(Func<Task> callback, object? identifier = null)
         {
-            CallbackTask = callBackTask;
+            Callback = callback;
             Identifier = identifier;
         }
         public object? Identifier { get; }
-        public Func<Task> CallbackTask { get; }
+        public Func<Task> Callback { get; }
     }
 }

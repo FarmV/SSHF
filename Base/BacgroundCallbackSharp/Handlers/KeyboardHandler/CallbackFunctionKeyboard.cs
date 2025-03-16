@@ -18,7 +18,7 @@ namespace FVH.Background.Input
     internal partial class CallbackFunctionKeyboard : IDisposable
     {
         private bool _isDispose = false;
-        private readonly List<RegFunctionGroupKeyboard> GlobalList = new List<RegFunctionGroupKeyboard>();
+        private readonly List<GroupFunctions> GlobalList = new List<GroupFunctions>();
         private readonly object _lockObject = new object();
         private readonly LowLevelKeyboard _lowLevelHook;
         private readonly Dispatcher _toCallbackDispatcher;
@@ -44,17 +44,17 @@ namespace FVH.Background.Input
             _isDispose = true;
             _lowLevelHook.Dispose();
         }
-        public List<RegFunctionGroupKeyboard> ReturnGroupRegFunctions() => GlobalList.ToList();
+        public List<GroupFunctions> ReturnGroupRegFunctions() => GlobalList.ToList();
         public Task AddCallbackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null)
         {
             lock(_lockObject)
             {
-                RegFunctionGroupKeyboard? queryContainGroup = GlobalList.SingleOrDefault(x => x.KeyCombination.SequenceEqual(keyCombo));
-                if(queryContainGroup is not null) queryContainGroup.ListOfRegisteredFunctions.Add(new RegFunction(callbackTask, identifier));
+                GroupFunctions? queryContainGroup = GlobalList.SingleOrDefault(x => x.Combination.SequenceEqual(keyCombo));
+                if(queryContainGroup is not null) queryContainGroup.Functions.Add(new Function(callbackTask, identifier));
                 else
                 {
-                    RegFunctionGroupKeyboard newGroupF = new RegFunctionGroupKeyboard(keyCombo, new List<RegFunction>());
-                    newGroupF.ListOfRegisteredFunctions.Add(new RegFunction(callbackTask, identifier));
+                    GroupFunctions newGroupF = new GroupFunctions(keyCombo, new List<Function>());
+                    newGroupF.Functions.Add(new Function(callbackTask, identifier));
                     GlobalList.Add(newGroupF);
                 }
                 return Task.CompletedTask;
@@ -65,18 +65,18 @@ namespace FVH.Background.Input
             lock(_lockObject)
             {
                 if(identifier is null) return Task.FromResult(false);
-                RegFunction? queryF = null;
-                RegFunctionGroupKeyboard? queryResult = GlobalList.SingleOrDefault(x =>
+                Function? queryF = null;
+                GroupFunctions? queryResult = GlobalList.SingleOrDefault(x =>
                 {
-                    queryF = x.ListOfRegisteredFunctions.SingleOrDefault(x => x.Identifier is not null && x.Identifier.Equals(identifier));
+                    queryF = x.Functions.SingleOrDefault(x => x.Identifier is not null && x.Identifier.Equals(identifier));
                     return queryF is not null;
                 });
                 if(queryResult is null) return Task.FromResult(false);
                 else
                 {
-                    if(queryResult.ListOfRegisteredFunctions.Remove(queryF ?? throw new NullReferenceException(nameof(queryF))) is not true) throw new InvalidOperationException();
+                    if(queryResult.Functions.Remove(queryF ?? throw new NullReferenceException(nameof(queryF))) is not true) throw new InvalidOperationException();
 
-                    GlobalList.Where(x => x.ListOfRegisteredFunctions.Any() is not true).ToList().ForEach(x => GlobalList.Remove(x));
+                    GlobalList.Where(x => x.Functions.Any() is not true).ToList().ForEach(x => GlobalList.Remove(x));
                     return Task.FromResult(true);
                 }
             }
@@ -86,13 +86,13 @@ namespace FVH.Background.Input
             lock(_lockObject)
             {
                 if(keyCombo.Length is 0) return Task.FromResult(false);
-                RegFunctionGroupKeyboard? queryResult = GlobalList.SingleOrDefault(x => x.KeyCombination == keyCombo);
+                GroupFunctions? queryResult = GlobalList.SingleOrDefault(x => x.Combination == keyCombo);
                 if(queryResult is null) return Task.FromResult(false);
                 if(GlobalList.Remove(queryResult) is not true) throw new InvalidOperationException();
                 return Task.FromResult(true);
             }
         }
-        public Task<bool> ContainsKeyCombination(VKeys[] keyCombo) => Task.FromResult(GlobalList.SingleOrDefault(x => x.KeyCombination == keyCombo) is not null);
+        public Task<bool> ContainsKeyCombination(VKeys[] keyCombo) => Task.FromResult(GlobalList.SingleOrDefault(x => x.Combination == keyCombo) is not null);
 
         private VKeys[] _activeCombination = Array.Empty<VKeys>();
         private bool _isCombinationActive = false;
@@ -103,20 +103,20 @@ namespace FVH.Background.Input
             {
                 VKeys[] fullKeyCombination = _currentPressLogicKeys.ToArray();
 
-                IEnumerable<RegFunctionGroupKeyboard> queryStrongLength = GlobalList.Where(x => x.KeyCombination.Length == fullKeyCombination.Length);
+                IEnumerable<GroupFunctions> queryStrongLength = GlobalList.Where(x => x.Combination.Length == fullKeyCombination.Length);
                 
                 bool anyFunctionInvoked = false;
                 if(queryStrongLength.Any())
                 {
-                    foreach(RegFunctionGroupKeyboard item in queryStrongLength)
+                    foreach(GroupFunctions item in queryStrongLength)
                     {
-                        bool isForceStrongCombination = item.KeyCombination.Except(fullKeyCombination).Any() is false;
+                        bool isForceStrongCombination = item.Combination.Except(fullKeyCombination).Any() is false;
 
                         if(isForceStrongCombination)
                         {
-                            InvokeFunctions(item.ListOfRegisteredFunctions);
+                            InvokeFunctions(item.Functions);
                             anyFunctionInvoked = true;
-                            _activeCombination = item.KeyCombination;
+                            _activeCombination = item.Combination;
                         }
                     }
                 }
@@ -154,7 +154,7 @@ namespace FVH.Background.Input
                 NotifyKeyboardEvent?.Invoke(this, e);
             }
         }
-        private void InvokeFunctions(IEnumerable<RegFunction> toTaskInvoke)
+        private void InvokeFunctions(IEnumerable<Function> toTaskInvoke)
         {
             if(toTaskInvoke.Any() is false) throw new InvalidOperationException("The collection cannot be empty");
 
@@ -168,13 +168,13 @@ namespace FVH.Background.Input
             {
                 try
                 {
-                    await Task.WhenAll(toTaskInvoke.Select(x => StartOrRunTask(x.CallbackTask)));
+                    await Task.WhenAll(toTaskInvoke.Select(x => StartOrRunTask(x.Callback)));
                 }
                 catch(Exception)
                 {
                     throw;
                 }
-            }).Task.Unwrap();
+            }, DispatcherPriority.Send).Task.Unwrap();
         }
         internal partial class LowLevelKeyboard : CriticalFinalizerObject, IDisposable
         {
