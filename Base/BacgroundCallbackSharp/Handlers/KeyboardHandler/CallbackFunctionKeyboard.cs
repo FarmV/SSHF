@@ -254,8 +254,6 @@ namespace FVH.Background.Input
 
                     bool isRepeatDownLogicKey = KeyDownPhysicallyProcessed.Contains(keyboardStruct.VkCode);
 
-                   // if(isRepeatDownLogicKey is true) return CallNextHookEx(_hookID, nCode, wParam, lParam);
-
                     KeyboardEventArgs argDown = new KeyboardEventArgs(
                      keyboardStruct.VkCode,
                       KeyboardEventArgs.TypePhysicallyEvent.Down);
