@@ -137,7 +137,7 @@ namespace FVH.Background.Input
                     }
                 }
 
-                return anyLogicFunctionInvoked;
+                return InFactAnyInvoked;
             }
             if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.Up) 
             {
@@ -149,18 +149,26 @@ namespace FVH.Background.Input
                     if(_currentPressLogicKeys.Count == 0)
                     {
                         _isCombinationActive = false; 
-                        _activeCombination = Array.Empty<VKeys>(); // Сбрасываем активную комбинацию
+                        _activeCombination = Array.Empty<VKeys>(); 
                     }                    
                 }
 
                 NotifyKeyboardEvent?.Invoke(this, e);
+                return;
             }
             if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.Down)
             {
                 _ = _currentPressLogicKeys.Add(e.Key);
 
-                _ = InvokeAndBreakIfStrongCommination();
+                if(e.IsDownRepeat is true && _isCombinationActive is true)
+                {
+                    e.BreakLogicKey = true;
+                    NotifyKeyboardEvent?.Invoke(this, e);
+                    return;
+                }
 
+                _ = InvokeAndBreakIfStrongCommination();
+         
                 NotifyKeyboardEvent?.Invoke(this, e);
             }
         }
@@ -246,14 +254,16 @@ namespace FVH.Background.Input
 
                     bool isRepeatDownLogicKey = KeyDownPhysicallyProcessed.Contains(keyboardStruct.VkCode);
 
-                    if(isRepeatDownLogicKey is true) return CallNextHookEx(_hookID, nCode, wParam, lParam);
+                   // if(isRepeatDownLogicKey is true) return CallNextHookEx(_hookID, nCode, wParam, lParam);
 
                     KeyboardEventArgs argDown = new KeyboardEventArgs(
                      keyboardStruct.VkCode,
-                      KeyboardEventArgs.TypePhysicallyEvent.Down,
-                       false);
+                      KeyboardEventArgs.TypePhysicallyEvent.Down);
 
+                    if(isRepeatDownLogicKey is true) argDown.IsDownRepeat = true;
+                    
                     KeyboardEventHandler!.Invoke(this, argDown);
+
                     if(argDown.BreakLogicKey is true) return (nint)1;
                     _ = KeyDownPhysicallyProcessed.Add(keyboardStruct.VkCode);
                     return CallNextHookEx(_hookID, nCode, wParam, lParam);
@@ -265,8 +275,7 @@ namespace FVH.Background.Input
 
                     KeyboardEventArgs argUp = new KeyboardEventArgs(
                      keyboardStruct.VkCode,
-                      KeyboardEventArgs.TypePhysicallyEvent.Up,
-                       false);
+                      KeyboardEventArgs.TypePhysicallyEvent.Up);
 
                     KeyboardEventHandler!.Invoke(this, argUp);
 
@@ -324,19 +333,27 @@ namespace FVH.Background.Input
     }
     internal class KeyboardEventArgs
     {
+        private bool _isDownRepeat = false;
         internal enum TypePhysicallyEvent
         {
             Down = 1,
             Up = 2,
         }
-        internal KeyboardEventArgs(VKeys key, TypePhysicallyEvent typeEvent, bool breakKey)
+        internal KeyboardEventArgs(VKeys key, TypePhysicallyEvent typeEvent)
         {
             Key = key;
             Type = typeEvent;
-            BreakLogicKey = breakKey;
         }
         internal VKeys Key { get; init; }
         internal TypePhysicallyEvent Type { get; set; }
         internal bool BreakLogicKey { get; set; } = false;
+        internal bool IsDownRepeat
+        {
+            get => _isDownRepeat;
+            set 
+            {
+                if(value is true) _isDownRepeat = value;
+            }
+        }
     }
 }
