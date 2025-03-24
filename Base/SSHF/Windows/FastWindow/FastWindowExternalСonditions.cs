@@ -18,7 +18,7 @@ namespace FVH.SSHF.FastWindowArea
         private readonly R3.CompositeDisposable _disposables;
         private readonly IDisposable? _keyboardHandlerSubscription;
         private readonly WaitingInputProvider _provider;
-        internal FastWindowExternalConditions(FastWindowViewModel mainWindowViewModel, WaitingInputProvider provider) //todo Позаботится об отписках
+        internal FastWindowExternalConditions(FastWindowViewModel mainWindowViewModel, WaitingInputProvider provider)
         {
             _mainWindowViewModel = mainWindowViewModel;
             _disposables = new R3.CompositeDisposable();
@@ -26,11 +26,17 @@ namespace FVH.SSHF.FastWindowArea
             _provider = provider;
 
             _provider.NotifyKeyboardEvent += NotifyKeyboardEvent;
-
-            // _keyboardHandlerSubscription = keyboardHandler.Subscribe((IKeyboardHandler? iKeyboardHandler) => Subscribe(iKeyboardHandler));       
+   
         }
-
-        private void NotifyKeyboardEvent(object? _, Background.Input.KeyboardEventArgs e)
+        public void Dispose()
+        {
+            if(_isDispose is true) return;
+            _isDispose = true;
+            _provider.NotifyKeyboardEvent -= NotifyKeyboardEvent;
+            _keyboardHandlerSubscription?.Dispose();
+            _disposables?.Dispose();
+        }
+        private void NotifyKeyboardEvent(ref Background.Input.KeyboardEventArgs e)
         {
             if(e.Key == VKeys.VK_LCONTROL)
             {
@@ -63,63 +69,5 @@ namespace FVH.SSHF.FastWindowArea
                 }
             }
         }
-
-        public void Dispose()
-        {
-            if(_isDispose is true) return;
-            _isDispose = true;
-            _provider.NotifyKeyboardEvent -= NotifyKeyboardEvent;
-            _keyboardHandlerSubscription?.Dispose();
-            _disposables?.Dispose();
-        }
-        //        private void Subscribe(IKeyboardHandler? keyboardHandler)
-        //        {
-        //            switch(keyboardHandler)
-        //            {
-        //                case not null:
-        //                    R3.Observable<VKeys[]> keyPressObservable = R3.Observable.FromEventHandler(
-        //                                        (EventHandler<IKeysNotifier> handler) => keyboardHandler.KeyPressEvent += handler,
-        //                                        (EventHandler<IKeysNotifier> handler) => keyboardHandler.KeyPressEvent -= handler).Select(x => x.e.Keys);
-
-
-
-        //                    R3.Observable<VKeys[]> keyUPObservable = R3.Observable.FromEventHandler(
-        //                                         (EventHandler<IKeysNotifier> handler) => keyboardHandler.KeyUpPressEvent += handler,
-        //                                         (EventHandler<IKeysNotifier> handler) => keyboardHandler.KeyUpPressEvent -= handler).Select(x => x.e.Keys);
-
-        //                    IDisposable keyPressSubscribe = keyPressObservable.ObserveOn(ObservableSystem.DefaultTimeProvider).Subscribe(x =>
-        //                       {
-        //                           if(Keyboard.IsKeyUp(Key.LeftCtrl) is false)
-        //                           {
-        //                               _mainWindowViewModel.SetDragMoveCondition(false);
-        //                               _mainWindowViewModel.SetDropCondition(true);
-        //                           }
-        //                       });
-
-        //                       IDisposable keyUPSubscribe = keyUPObservable.ObserveOn(ObservableSystem.DefaultTimeProvider).Subscribe(x =>
-        //                       {
-        //                           if(_mainWindowViewModel.VisibleCondition.CurrentValue == Visibility.Hidden)
-        //                           {
-        //                               bool IsReturn = true;
-        //#if OneFastWindowNotTopMost
-        //                               IsReturn = false;
-        //#endif
-        //                               if(IsReturn is true) return;                                                                                          
-        //                           }
-        //                           if(Keyboard.IsKeyUp(Key.LeftCtrl) is true)
-        //                           {
-        //                               _mainWindowViewModel.SetDragMoveCondition(true);     
-        //                               _mainWindowViewModel.SetDropCondition(false);
-        //                           }
-        //                       });
-        //                    _disposables.Add(keyPressSubscribe);
-        //                    _disposables.Add(keyUPSubscribe);
-        //                break;
-        //                case null:
-        //                   _disposables.Clear();
-        //                break;
-        //            }
-        //        }
-        //    }
     }
 }

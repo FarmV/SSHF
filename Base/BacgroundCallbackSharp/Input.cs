@@ -28,7 +28,7 @@ namespace FVH.Background.Input
         private readonly Dispatcher _inputDispatcher;
         private readonly CallbackFunctionKeyboard _callbackFunctionKeyboard;
 
-        internal event EventHandler<KeyboardEventArgs>? NotifyKeyboardEvent;
+        internal event LowLevelKeyboard.KeyboardEvent? NotifyKeyboardEvent;
         public Input(Dispatcher toCallbackDispatcher)
         {
             _toCallbackDispatcher = toCallbackDispatcher;
@@ -36,7 +36,7 @@ namespace FVH.Background.Input
             _callbackFunctionKeyboard = _inputDispatcher.Invoke(() => new CallbackFunctionKeyboard(_toCallbackDispatcher));
             _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.NotifyKeyboardEvent += SendNotifyKeyboardEvent);
         }
-        private void SendNotifyKeyboardEvent(object? sender, KeyboardEventArgs e) => NotifyKeyboardEvent?.Invoke(this, e);
+        private void SendNotifyKeyboardEvent(ref KeyboardEventArgs e) => NotifyKeyboardEvent?.Invoke(ref e);
         ~Input() => Dispose();
         public void Dispose()
         {

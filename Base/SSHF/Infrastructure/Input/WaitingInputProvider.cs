@@ -19,6 +19,8 @@ using R3;
 
 
 
+
+
 namespace FVH.SSHF.Infrastructure.Input
 {
     internal class WaitingInputProvider : IDisposable
@@ -30,8 +32,7 @@ namespace FVH.SSHF.Infrastructure.Input
         private readonly Background.Input.Input _input;
         private readonly IDisposable _disposablesSubscribe;
         internal readonly R3.BehaviorSubject<bool> CurrentStatusSubscribeInput;
-        internal event EventHandler<FVH.Background.Input.KeyboardEventArgs>? NotifyKeyboardEvent;
-
+        internal event FVH.Background.Input.CallbackFunctionKeyboard.LowLevelKeyboard.KeyboardEvent? NotifyKeyboardEvent;
         internal WaitingInputProvider(Dispatcher toCallbackDispatcher, R3.BehaviorSubject<bool> setInputLifeAsObservable, Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> listGlobalShortcutsAsObservable)
         {
             _subjectRequestSwitchInput = setInputLifeAsObservable;
@@ -64,7 +65,7 @@ namespace FVH.SSHF.Infrastructure.Input
             CurrentStatusSubscribeInput.Dispose();
             _isDisposed = true;
         }
-        private void InputNotifyKeyboardEvent(object? sender, FVH.Background.Input.KeyboardEventArgs e) => NotifyKeyboardEvent?.Invoke(this, e);
+        private void InputNotifyKeyboardEvent(ref FVH.Background.Input.KeyboardEventArgs e) => NotifyKeyboardEvent?.Invoke(ref e);
         private bool _isInit = false;
         private void InputRequestChecker(bool statusRequestUnintsallHook)
         {
