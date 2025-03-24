@@ -105,6 +105,11 @@ namespace FVH.SSHF.FastWindowArea
                 else await _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token);
             }           
         }
+        public bool CanExecuteStopRefreshWindow() 
+        {
+            if(_windowPositionUpdater.IsUpdateWindow is false || _isCancellingUpdate is true) return false;
+            else { return true; }
+        }
         private async Task StopUpdateWindow()
         {
             if(_windowPositionUpdater.IsUpdateWindow is false || _isCancellingUpdate is true) return;

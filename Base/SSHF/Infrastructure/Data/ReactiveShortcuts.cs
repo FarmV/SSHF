@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-
+using R3;
 
 using FVH.Background.Input.Infrastructure.Interfaces;
 
-using R3;
 
 namespace FVH.SSHF
 {
     public class KeyboardShortcut 
     {
-        public KeyboardShortcut(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier)
+        public KeyboardShortcut(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier, Func<bool>? canExecute = null)
         {
             KeyCombo.Value = keyCombo;
             CallbackTask = callbackTask;
             Identifier = identifier;
+            if(canExecute is null) CanExecute = static () => true;
+            else { CanExecute = canExecute; }
         }
         public readonly BindableReactiveProperty<VKeys[]> KeyCombo = new BindableReactiveProperty<VKeys[]>([]);
         public Func<Task> CallbackTask
@@ -24,5 +25,6 @@ namespace FVH.SSHF
             set;
         }
         public object? Identifier { get; set; }
+        public Func<bool> CanExecute { get; }
     }
 }

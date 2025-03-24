@@ -75,7 +75,7 @@ namespace FVH.SSHF.Infrastructure.Input
                 R3.BehaviorSubject<IEnumerable<KeyboardShortcut>> shortcutsAsObservable = iGlobalShortcutBehaviorSubject.GetShortcutsAsObservable();
                 IEnumerable<KeyboardShortcut> keyboardShortcutList = shortcutsAsObservable.FirstAsync().Result;
                 keyboardShortcutList.ToList().ForEach((KeyboardShortcut keyboardShortcut) =>
-                _input.AddCallbackTask(keyboardShortcut.KeyCombo.CurrentValue, keyboardShortcut.CallbackTask, keyboardShortcut.Identifier ?? keyboardShortcut.CallbackTask.Method.Name).Wait());
+                _input.AddCallbackTask(keyboardShortcut.KeyCombo.CurrentValue, keyboardShortcut.CallbackTask, keyboardShortcut.Identifier ?? keyboardShortcut.CallbackTask.Method.Name, keyboardShortcut.CanExecute).Wait());
             })).Wait();
            
             ObjectDisposedException.ThrowIf(_isDisposed is true, this);

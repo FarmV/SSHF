@@ -104,7 +104,11 @@ namespace FVH.SSHF.FastWindowArea
             [
                 VKeys.VK_LCONTROL
             ],
-            () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.StopRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.StopRefreshWindow)),
+            () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.StopRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.StopRefreshWindow),() => 
+            {
+                if(BlockInput is true) return false;
+                return _activeFastWindow!.FastWindowCommand.CanExecuteStopRefreshWindow();
+            }),
 
             new KeyboardShortcut(
             [

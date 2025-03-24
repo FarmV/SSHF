@@ -105,6 +105,7 @@ namespace FVH.SSHF.FastWindowArea
             MainWindowViewModel.SwitchBlockRefreshWindow.Execute(R3.Unit.Default);
             return Task.CompletedTask;
         }
+        public bool CanExecuteStopRefreshWindow() => MainWindowViewModel.CanExecuteStopRefreshWindow();
         public Task StopRefreshWindow()
         {
             if(MainWindowViewModel.StopWindowUpdater.CanExecute() is false) return Task.CompletedTask;
@@ -122,6 +123,6 @@ namespace FVH.SSHF.FastWindowArea
             if(MainWindowViewModel.HideWindow.CanExecute() is false) return Task.CompletedTask;
             MainWindowViewModel.HideWindow.Execute(R3.Unit.Default);
             return Task.CompletedTask; 
-        }        
+        }              
     }
 }

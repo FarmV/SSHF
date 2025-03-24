@@ -36,7 +36,7 @@ namespace FVH.SSHF
         internal static App? GetDEBUG { get; private set; }
 
         internal static Stopwatch Stopwatch = new Stopwatch();
-        static App() => Trace = new TraceSwitch("Debug", "Debugging only") { Level = TraceLevel.Verbose };
+        static App() => Trace = new TraceSwitch("Debug", "Debugging only") { Level = TraceLevel.Off };
 #endif
         private App(IHost program)
         {

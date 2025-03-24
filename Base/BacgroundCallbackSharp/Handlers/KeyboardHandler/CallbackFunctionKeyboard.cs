@@ -45,7 +45,7 @@ namespace FVH.Background.Input
             _lowLevelHook.Dispose();
         }
         public List<GroupFunctions> ReturnGroupRegFunctions() => GlobalList.ToList();
-        public Task AddCallbackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null)
+        public Task AddCallbackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null, Func<bool>? canExecute = null)
         {
             lock(_lockObject)
             {
@@ -54,7 +54,7 @@ namespace FVH.Background.Input
                 else
                 {
                     GroupFunctions newGroupF = new GroupFunctions(keyCombo, new List<Function>());
-                    newGroupF.Functions.Add(new Function(callbackTask, identifier));
+                    newGroupF.Functions.Add(new Function(callbackTask, identifier, canExecute));
                     GlobalList.Add(newGroupF);
                 }
                 return Task.CompletedTask;
@@ -101,11 +101,12 @@ namespace FVH.Background.Input
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             bool InvokeAndBreakIfStrongCommination()
             {
+                bool InFactAnyInvoked = false;
                 VKeys[] fullKeyCombination = _currentPressLogicKeys.ToArray();
 
                 IEnumerable<GroupFunctions> queryStrongLength = GlobalList.Where(x => x.Combination.Length == fullKeyCombination.Length);
                 
-                bool anyFunctionInvoked = false;
+                bool anyLogicFunctionInvoked = false;
                 if(queryStrongLength.Any())
                 {
                     foreach(GroupFunctions item in queryStrongLength)
@@ -114,20 +115,29 @@ namespace FVH.Background.Input
 
                         if(isForceStrongCombination)
                         {
-                            InvokeFunctions(item.Functions);
-                            anyFunctionInvoked = true;
+                            InFactAnyInvoked = IsBreakAndInvokeFunctions(item.Functions);
+                            anyLogicFunctionInvoked = true;
                             _activeCombination = item.Combination;
                         }
                     }
                 }
-
-                if(anyFunctionInvoked is true)
+                
+                if(anyLogicFunctionInvoked is true)
                 {
-                    _isCombinationActive = true;
-                    e.BreakLogicKey = true;
+                    if(InFactAnyInvoked is false)
+                    {
+                        _isCombinationActive = false;
+                        _activeCombination = Array.Empty<VKeys>();
+                        return InFactAnyInvoked;
+                    }
+                    else
+                    {
+                        _isCombinationActive = true;
+                        e.BreakLogicKey = true;
+                    }
                 }
 
-                return anyFunctionInvoked;
+                return anyLogicFunctionInvoked;
             }
             if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.Up) 
             {
@@ -154,27 +164,35 @@ namespace FVH.Background.Input
                 NotifyKeyboardEvent?.Invoke(this, e);
             }
         }
-        private void InvokeFunctions(IEnumerable<Function> toTaskInvoke)
+        private bool IsBreakAndInvokeFunctions(IEnumerable<Function> toTaskInvoke)
         {
-            if(toTaskInvoke.Any() is false) throw new InvalidOperationException("The collection cannot be empty");
-
+            bool isBreak = false;
             static async Task StartOrRunTask(Func<Task> taskFunc)
             {
                 Task task = taskFunc.Invoke();
                 if(task.Status == TaskStatus.Created) task.Start();
                 await task;
             }
+
+            if(toTaskInvoke.Any() is false) throw new InvalidOperationException("The collection cannot be empty");
+
+            IEnumerable<Function> toCanExecute = toTaskInvoke.Where(static (Function f) => f.CanExecute.Invoke() == true);
+
+            isBreak = toCanExecute.Any();
+
             _ = _toCallbackDispatcher.InvokeAsync(async () =>
             {
                 try
                 {
-                    await Task.WhenAll(toTaskInvoke.Select(x => StartOrRunTask(x.Callback)));
+                    await Task.WhenAll(toCanExecute.Select(static (Function f) => StartOrRunTask(f.Callback)));
                 }
                 catch(Exception)
                 {
                     throw;
                 }
             }, DispatcherPriority.Send).Task.Unwrap();
+
+            return isBreak;
         }
         internal partial class LowLevelKeyboard : CriticalFinalizerObject, IDisposable
         {
@@ -255,9 +273,10 @@ namespace FVH.Background.Input
                     if(argUp.BreakLogicKey is true)
                     {
                         _ = KeyDownPhysicallyProcessed.Remove(keyboardStruct.VkCode);
-                        return (nint)1;
+                        return CallNextHookEx(_hookID,-1, wParam, lParam);
                     }
 
+                    _ = KeyDownPhysicallyProcessed.Remove(keyboardStruct.VkCode);
                     return CallNextHookEx(_hookID, nCode, wParam, lParam);
                 }
                 if(nCode is HC_ACTION)
