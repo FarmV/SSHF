@@ -8,6 +8,7 @@ using System.Windows;
 using System.Threading;
 using FVH.Background.Input.Infrastructure;
 using static FVH.Background.Input.CallbackFunctionKeyboard;
+using System.Runtime.InteropServices;
 
 namespace FVH.Background.Input
 {
@@ -21,6 +22,7 @@ namespace FVH.Background.Input
         /// </summary>
         private const long WS_POPUP = 0x80000000L;
         private const int WM_INPUT = 0x00FF;
+        private const int THREAD_PRIORITY_TIME_CRITICAL = 15;
         private volatile bool _isDispose = false;
         private readonly Dispatcher _toCallbackDispatcher;
         private readonly Dispatcher _inputDispatcher;
@@ -34,9 +36,7 @@ namespace FVH.Background.Input
             _callbackFunctionKeyboard = _inputDispatcher.Invoke(() => new CallbackFunctionKeyboard(_toCallbackDispatcher));
             _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.NotifyKeyboardEvent += SendNotifyKeyboardEvent);
         }
-
         private void SendNotifyKeyboardEvent(object? sender, KeyboardEventArgs e) => NotifyKeyboardEvent?.Invoke(this, e);
-
         ~Input() => Dispose();
         public void Dispose()
         {
@@ -71,7 +71,7 @@ namespace FVH.Background.Input
         public Task<bool> DeleteTaskByAnIdentifier(object identifier) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.DeleteTaskByAnIdentifier(identifier));
         public Task<bool> DeleteInvokeListByKeyCombination(VKeys[] keyCombo) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.DeleteInvokeListByKeyCombination(keyCombo));
         public List<GroupFunctions> ReturnGroupRegFunctions() => _inputDispatcher.Invoke(_callbackFunctionKeyboard.ReturnGroupRegFunctions);
-        private Dispatcher CreateDispatcher()
+        private static Dispatcher CreateDispatcher()
         {
             Thread? thread = null;
             Task InitThreadAndSetWindowsHandler = Task.Run(() =>
@@ -114,8 +114,20 @@ namespace FVH.Background.Input
 
             Task.WaitAll(InitThreadAndSetWindowsHandler, waitForDispatcherValidation);
 
+            Dispatcher.FromThread(thread).Invoke(() =>
+            {
+                Thread.CurrentThread.Priority = ThreadPriority.Highest;
+
+                nint hThread = GetCurrentThread();
+                _ = SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
+            });
 
             return waitForDispatcherValidation.Result;
-        }
+        }        
+        [LibraryImport("Kernel32")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool SetThreadPriority(nint hThread,int nPriority);
+        [LibraryImport("Kernel32")]
+        private static partial nint GetCurrentThread();
     }
 }
