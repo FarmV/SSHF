@@ -18,18 +18,22 @@ namespace FVH.Background.Input
     internal partial class CallbackFunctionKeyboard : IDisposable
     {
         private bool _isDispose = false;
-        private readonly List<GroupFunctions> GlobalList = new List<GroupFunctions>();
+        private VKeys[] _activeCombination;
+        private bool _isCombinationActive = false;
         private readonly object _lockObject = new object();
+        private readonly List<GroupFunctions> _globalCallbackList;
         private readonly LowLevelKeyboard _lowLevelHook;
         private readonly Dispatcher _toCallbackDispatcher;
-        private readonly HashSet<VKeys> _currentPressLogicKeys = new HashSet<VKeys>();
+        private readonly HashSet<VKeys> _currentPressLogicKeys;
         internal event EventHandler<KeyboardEventArgs>? NotifyKeyboardEvent;
         public CallbackFunctionKeyboard(Dispatcher toCallbackDispatcher)
         {
+            _activeCombination = Array.Empty<VKeys>();
+            _globalCallbackList = new List<GroupFunctions>();
+            _currentPressLogicKeys = new HashSet<VKeys>();
+
             _toCallbackDispatcher = toCallbackDispatcher;
-
             _lowLevelHook = new LowLevelKeyboard();
-
             _lowLevelHook.KeyboardEventHandler += LowLevelHookKeyboardEventHandler;
         }
         internal void InstallHook() => _lowLevelHook.InstallHook();
@@ -44,18 +48,18 @@ namespace FVH.Background.Input
             _isDispose = true;
             _lowLevelHook.Dispose();
         }
-        public List<GroupFunctions> ReturnGroupRegFunctions() => GlobalList.ToList();
+        public List<GroupFunctions> ReturnGroupRegFunctions() => _globalCallbackList.ToList();
         public Task AddCallbackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null, Func<bool>? canExecute = null)
         {
             lock(_lockObject)
             {
-                GroupFunctions? queryContainGroup = GlobalList.SingleOrDefault(x => x.Combination.SequenceEqual(keyCombo));
+                GroupFunctions? queryContainGroup = _globalCallbackList.SingleOrDefault(x => x.Combination.SequenceEqual(keyCombo));
                 if(queryContainGroup is not null) queryContainGroup.Functions.Add(new Function(callbackTask, identifier));
                 else
                 {
                     GroupFunctions newGroupF = new GroupFunctions(keyCombo, new List<Function>());
                     newGroupF.Functions.Add(new Function(callbackTask, identifier, canExecute));
-                    GlobalList.Add(newGroupF);
+                    _globalCallbackList.Add(newGroupF);
                 }
                 return Task.CompletedTask;
             }
@@ -66,7 +70,7 @@ namespace FVH.Background.Input
             {
                 if(identifier is null) return Task.FromResult(false);
                 Function? queryF = null;
-                GroupFunctions? queryResult = GlobalList.SingleOrDefault(x =>
+                GroupFunctions? queryResult = _globalCallbackList.SingleOrDefault(x =>
                 {
                     queryF = x.Functions.SingleOrDefault(x => x.Identifier is not null && x.Identifier.Equals(identifier));
                     return queryF is not null;
@@ -76,7 +80,7 @@ namespace FVH.Background.Input
                 {
                     if(queryResult.Functions.Remove(queryF ?? throw new NullReferenceException(nameof(queryF))) is not true) throw new InvalidOperationException();
 
-                    GlobalList.Where(x => x.Functions.Any() is not true).ToList().ForEach(x => GlobalList.Remove(x));
+                    _globalCallbackList.Where(x => x.Functions.Any() is not true).ToList().ForEach(x => _globalCallbackList.Remove(x));
                     return Task.FromResult(true);
                 }
             }
@@ -86,16 +90,14 @@ namespace FVH.Background.Input
             lock(_lockObject)
             {
                 if(keyCombo.Length is 0) return Task.FromResult(false);
-                GroupFunctions? queryResult = GlobalList.SingleOrDefault(x => x.Combination == keyCombo);
+                GroupFunctions? queryResult = _globalCallbackList.SingleOrDefault(x => x.Combination == keyCombo);
                 if(queryResult is null) return Task.FromResult(false);
-                if(GlobalList.Remove(queryResult) is not true) throw new InvalidOperationException();
+                if(_globalCallbackList.Remove(queryResult) is not true) throw new InvalidOperationException();
                 return Task.FromResult(true);
             }
         }
-        public Task<bool> ContainsKeyCombination(VKeys[] keyCombo) => Task.FromResult(GlobalList.SingleOrDefault(x => x.Combination == keyCombo) is not null);
+        public Task<bool> ContainsKeyCombination(VKeys[] keyCombo) => Task.FromResult(_globalCallbackList.SingleOrDefault(x => x.Combination == keyCombo) is not null);
 
-        private VKeys[] _activeCombination = Array.Empty<VKeys>();
-        private bool _isCombinationActive = false;
         private void LowLevelHookKeyboardEventHandler(object? _, KeyboardEventArgs e)
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -104,7 +106,7 @@ namespace FVH.Background.Input
                 bool InFactAnyInvoked = false;
                 VKeys[] fullKeyCombination = _currentPressLogicKeys.ToArray();
 
-                IEnumerable<GroupFunctions> queryStrongLength = GlobalList.Where(x => x.Combination.Length == fullKeyCombination.Length);
+                IEnumerable<GroupFunctions> queryStrongLength = _globalCallbackList.Where(x => x.Combination.Length == fullKeyCombination.Length);
                 
                 bool anyLogicFunctionInvoked = false;
                 if(queryStrongLength.Any())
