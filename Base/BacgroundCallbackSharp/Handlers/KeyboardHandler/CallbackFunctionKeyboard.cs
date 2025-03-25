@@ -104,15 +104,14 @@ namespace FVH.Background.Input
             bool InvokeAndBreakIfStrongCommination(ref KeyboardEventArgs ev)
             {
                 bool anyInvoked = false;
-                VKeys[] fullKeyCombination = _currentPressLogicKeys.ToArray();
-
-                IEnumerable<GroupFunctions> queryStrongLength = _globalCallbackList.Where((GroupFunctions g) => g.Combination.Length == fullKeyCombination.Length);
+ 
+                IEnumerable<GroupFunctions> queryStrongLength = _globalCallbackList.Where((GroupFunctions g) => g.Combination.Length == _currentPressLogicKeys.Count);
                 
                 if(queryStrongLength.Any())
                 {
                     foreach(GroupFunctions item in queryStrongLength)
                     {
-                        bool isForceStrongCombination = item.Combination.Except(fullKeyCombination).Any() is false;
+                        bool isForceStrongCombination = item.Combination.Except(_currentPressLogicKeys).Any() is false;
 
                         if(isForceStrongCombination)
                         {
