@@ -26,7 +26,7 @@ namespace FVH.Background.Input
         private readonly LowLevelKeyboard _lowLevelHook;
         private readonly Dispatcher _toCallbackDispatcher;
         private readonly HashSet<VKeys> _currentPressLogicKeys;
-        internal event LowLevelKeyboard.KeyboardEvent? NotifyKeyboardEvent;
+        internal event LowLevelKeyboard.KeyboardEventHandler? NotifyKeyboardEvent;
         public CallbackFunctionKeyboard(Dispatcher toCallbackDispatcher)
         {
             _activeCombination = Array.Empty<VKeys>();
@@ -35,7 +35,7 @@ namespace FVH.Background.Input
 
             _toCallbackDispatcher = toCallbackDispatcher;
             _lowLevelHook = new LowLevelKeyboard();
-            _lowLevelHook.KeyboardEventHandler += LowLevelHookKeyboardEventHandler;
+            _lowLevelHook.KeyAction += LowLevelHookKeyboardEventHandler;
         }
         internal void InstallHook() => _lowLevelHook.InstallHook();
         internal void UninstallHook()
@@ -200,12 +200,10 @@ namespace FVH.Background.Input
             private bool _isDispose = false;
             private delegate nint KeyboardHookHandler(int nCode, WMEvent wParam, nint lParam);
             private KeyboardHookHandler? _lowLevelKeyboardHandler;
-            private readonly HashSet<VKeys> KeyDownPhysicallyProcessed = new HashSet<VKeys>();
-      
-            public delegate void KeyboardEvent(ref KeyboardEventArgs args2);
-            public event KeyboardEvent? KeyboardEventHandler;
-
-            internal LowLevelKeyboard() { }
+            private readonly HashSet<VKeys> KeyDownPhysicallyProcessed;
+            internal delegate void KeyboardEventHandler(ref KeyboardEventArgs args);
+            internal event KeyboardEventHandler? KeyAction;
+            internal LowLevelKeyboard() => KeyDownPhysicallyProcessed = new HashSet<VKeys>();            
             ~LowLevelKeyboard() => Dispose();
             public void Dispose() 
             {
@@ -217,7 +215,7 @@ namespace FVH.Background.Input
             internal void InstallHook()
             {
                 ObjectDisposedException.ThrowIf(_isDispose, this);
-                ArgumentNullException.ThrowIfNull(KeyboardEventHandler, nameof(KeyboardEventHandler));
+                ArgumentNullException.ThrowIfNull(KeyAction, nameof(KeyboardEventHandler));
 
                 if(Process.GetCurrentProcess().MainModule is not ProcessModule module) throw new NullReferenceException(nameof(module));
                 nint hMod = GetModuleHandleW(module.ModuleName);
@@ -242,12 +240,12 @@ namespace FVH.Background.Input
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 nint KeyDown(ref readonly TagKBDLLHOOKSTRUCT keyboardStruct)
                 {   
-                    KeyboardEventArgs keyboardEventDown = new KeyboardEventArgs(KeyboardEventArgs.TypePhysicallyEvent.Down, isDownRepeat:KeyDownPhysicallyProcessed.Contains(keyboardStruct.VkCode))
+                    KeyboardEventArgs keyboardEventDown = new KeyboardEventArgs(KeyboardEventArgs.TypePhysicallyEvent.Down, isDownRepeat: KeyDownPhysicallyProcessed.Contains(keyboardStruct.VkCode))
                     {
                         Key = ref keyboardStruct.VkCode
                     };
 
-                    KeyboardEventHandler!.Invoke(ref keyboardEventDown);
+                    KeyAction!.Invoke(ref keyboardEventDown);
 
                     if(keyboardEventDown.BreakLogicKey is true) return (nint)1;
 
@@ -263,7 +261,7 @@ namespace FVH.Background.Input
                         Key = ref keyboardStruct.VkCode,
                     };
 
-                    KeyboardEventHandler!.Invoke(ref keyboardEventUP);
+                    KeyAction!.Invoke(ref keyboardEventUP);
 
                     if(keyboardEventUP.BreakLogicKey is true) 
                     {

@@ -32,7 +32,7 @@ namespace FVH.SSHF.Infrastructure.Input
         private readonly Background.Input.Input _input;
         private readonly IDisposable _disposablesSubscribe;
         internal readonly R3.BehaviorSubject<bool> CurrentStatusSubscribeInput;
-        internal event FVH.Background.Input.CallbackFunctionKeyboard.LowLevelKeyboard.KeyboardEvent? NotifyKeyboardEvent;
+        internal event FVH.Background.Input.CallbackFunctionKeyboard.LowLevelKeyboard.KeyboardEventHandler? NotifyKeyboardEvent;
         internal WaitingInputProvider(Dispatcher toCallbackDispatcher, R3.BehaviorSubject<bool> setInputLifeAsObservable, Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> listGlobalShortcutsAsObservable)
         {
             _subjectRequestSwitchInput = setInputLifeAsObservable;
