@@ -14,7 +14,6 @@ namespace FVH.Background.Input.Infrastructure
         {          
             Functions = functions;
             Combination = combination;
-
         }
         public VKeys[] Combination { get; }
         public List<Function> Functions { get; }

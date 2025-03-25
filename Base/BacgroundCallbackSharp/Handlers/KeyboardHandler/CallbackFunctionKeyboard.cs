@@ -103,7 +103,7 @@ namespace FVH.Background.Input
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             bool InvokeAndBreakIfStrongCommination(ref KeyboardEventArgs ev)
             {
-                bool InFactAnyInvoked = false;
+                bool anyInvoked = false;
                 VKeys[] fullKeyCombination = _currentPressLogicKeys.ToArray();
 
                 IEnumerable<GroupFunctions> queryStrongLength = _globalCallbackList.Where((GroupFunctions g) => g.Combination.Length == fullKeyCombination.Length);
@@ -116,17 +116,17 @@ namespace FVH.Background.Input
 
                         if(isForceStrongCombination)
                         {
-                            InFactAnyInvoked = AnyInvokeFunctions(item.Functions);                
+                            anyInvoked = AnyInvokeFunctions(item.Functions);                
                             _activeCombination = item.Combination;
                         }
                     }
                 }
 
-                if(InFactAnyInvoked is false)
+                if(anyInvoked is false)
                 {
                     _isCombinationActive = false;
                     _activeCombination = Array.Empty<VKeys>();
-                    return InFactAnyInvoked;
+                    return anyInvoked;
                 }
                 else
                 {
@@ -134,7 +134,7 @@ namespace FVH.Background.Input
                     ev.BreakLogicKey = true;
                 }
 
-                return InFactAnyInvoked;
+                return anyInvoked;
             }
             if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.Up) 
             {
@@ -187,9 +187,9 @@ namespace FVH.Background.Input
             isAny = toCanExecute.Any();
             if(isAny is false) return isAny;
 
-            _ = _toCallbackDispatcher.InvokeAsync(async () => await Task.WhenAll(toCanExecute.Select(static (Function f) => StartOrRunTask(f.Callback))),
+            _ = _toCallbackDispatcher.InvokeAsync(async () => await Task.WhenAll(toCanExecute.Select(static (Function f) => StartOrRunTask(f.Callback))).ConfigureAwait(false),
              DispatcherPriority.Send).Task.Unwrap().ContinueWith((Task t) => 
-              _ = ThreadPool.QueueUserWorkItem((object? __) => throw new InvalidOperationException($"Callback task is faulted. Id task => {t.Id}")),TaskContinuationOptions.OnlyOnFaulted);
+              _ = ThreadPool.QueueUserWorkItem((object? __) => throw t.Exception ?? new AggregateException($"Callback task is faulted. Id task => {t.Id}")),TaskContinuationOptions.OnlyOnFaulted);
             return isAny;
         }
         internal partial class LowLevelKeyboard : CriticalFinalizerObject, IDisposable
@@ -242,13 +242,10 @@ namespace FVH.Background.Input
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 nint KeyDown(ref readonly TagKBDLLHOOKSTRUCT keyboardStruct)
-                {
-                    bool isRepeatDownLogicKey = KeyDownPhysicallyProcessed.Contains(keyboardStruct.VkCode);
-
-                    KeyboardEventArgs keyboardEventDown = new KeyboardEventArgs(KeyboardEventArgs.TypePhysicallyEvent.Down)
+                {   
+                    KeyboardEventArgs keyboardEventDown = new KeyboardEventArgs(KeyboardEventArgs.TypePhysicallyEvent.Down, isDownRepeat:KeyDownPhysicallyProcessed.Contains(keyboardStruct.VkCode))
                     {
-                        Key = ref keyboardStruct.VkCode,
-                        IsDownRepeat = ref isRepeatDownLogicKey
+                        Key = ref keyboardStruct.VkCode
                     };
 
                     KeyboardEventHandler!.Invoke(ref keyboardEventDown);
@@ -269,10 +266,10 @@ namespace FVH.Background.Input
 
                     KeyboardEventHandler!.Invoke(ref keyboardEventUP);
 
-                    if(keyboardEventUP.BreakLogicKey is true)
+                    if(keyboardEventUP.BreakLogicKey is true) 
                     {
                         _ = KeyDownPhysicallyProcessed.Remove(keyboardStruct.VkCode);
-                        return CallNextHookEx(_hookID,-1, wParam, lParam);
+                        return CallNextHookEx(_hookID, nCode, wParam, lParam); // Ошибки связанные Up фактически блокируют клавишу в зажатом состоянии. 
                     }
 
                     _ = KeyDownPhysicallyProcessed.Remove(keyboardStruct.VkCode);
@@ -329,14 +326,15 @@ namespace FVH.Background.Input
             Down = 1,
             Up = 2,
         }
-        internal KeyboardEventArgs(TypePhysicallyEvent ev, bool breakLogicKey = false)
+        internal KeyboardEventArgs(TypePhysicallyEvent ev, bool breakLogicKey = false, bool isDownRepeat = false)
         {
             Type = ev;
             BreakLogicKey = breakLogicKey;
+            IsDownRepeat = isDownRepeat;
         }
         internal ref readonly VKeys Key;
         internal readonly TypePhysicallyEvent Type;
+        internal readonly bool IsDownRepeat;
         internal bool BreakLogicKey;
-        internal ref readonly bool IsDownRepeat;
-    }
+   }
 }
