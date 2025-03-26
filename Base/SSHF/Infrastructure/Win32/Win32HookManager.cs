@@ -243,11 +243,11 @@ namespace FVH.SSHF.Infrastructure.Win32
     {
         private const string MsScreenClipPath = "C:\\Windows\\SystemApps\\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\\ScreenClippingHost.exe";
         private HashSet<Process> _msScreenClipExecutingSet;
-        internal readonly R3.BehaviorSubject<bool> MsScreenClipExecuting;
+        internal readonly R3.BehaviorSubject<bool> IsExecutingProccesScreenClip;
         public ObserverMsScreenClipExecuting()
         {
             _msScreenClipExecutingSet = new HashSet<Process>();
-            MsScreenClipExecuting = new BehaviorSubject<bool>(false);
+            IsExecutingProccesScreenClip = new BehaviorSubject<bool>(false);
         }
         internal void CheckAndSetStateMsScreenClipExecuting(ref nint handleWindow)
         {
@@ -256,7 +256,7 @@ namespace FVH.SSHF.Infrastructure.Win32
                 if(proc is not Process pr) throw new InvalidCastException();
                 pr.Exited -= ProcessExitedEvent;
                 pr.Dispose();
-                MsScreenClipExecuting.OnNext(false);
+                IsExecutingProccesScreenClip.OnNext(false);
             }
             uint treadID = GetWindowThreadProcessId(new HWND(handleWindow), out uint procID);
             Process pr = System.Diagnostics.Process.GetProcessById((int)procID);
@@ -274,7 +274,7 @@ namespace FVH.SSHF.Infrastructure.Win32
 
                 pr.Exited += ProcessExitedEvent;
 
-                MsScreenClipExecuting.OnNext(true);
+                IsExecutingProccesScreenClip.OnNext(true);
             }
         }              
         [DllImport("user32")]

@@ -71,13 +71,7 @@ namespace FVH.SSHF.FastWindowArea
                 if(MainWindowViewModel.SetNewImage.CanExecute() is false) return Task.CompletedTask;
                 MainWindowViewModel.SetNewImage.Execute(R3.Unit.Default);
                 return Task.CompletedTask;          
-            }
-            Task ShowWindow()
-            {
-                if(MainWindowViewModel.ShowWindow.CanExecute() is false) return Task.CompletedTask;
-                MainWindowViewModel.ShowWindow.Execute(R3.Unit.Default);
-                return Task.CompletedTask;
-            }
+            }          
             Task RefreshWindowInvoke()
             {                
                 if(MainWindowViewModel.RefreshWindowInvoke.CanExecute() is false) return Task.CompletedTask;
@@ -123,6 +117,12 @@ namespace FVH.SSHF.FastWindowArea
             if(MainWindowViewModel.HideWindow.CanExecute() is false) return Task.CompletedTask;
             MainWindowViewModel.HideWindow.Execute(R3.Unit.Default);
             return Task.CompletedTask; 
-        }              
+        }
+        public Task ShowWindow()
+        {
+            if(MainWindowViewModel.ShowWindow.CanExecute() is false) return Task.CompletedTask;
+            MainWindowViewModel.ShowWindow.Execute(R3.Unit.Default);
+            return Task.CompletedTask;
+        }
     }
 }
