@@ -17,6 +17,7 @@ namespace FVH.SSHF.FastWindowArea
 {
     internal partial class FastWindowManager : IBehaviorSubjectGlobalShortcuts, IDisposable
     {
+        private const int DelayHideWindow = 200;
         private int _currentIndexFastWindow = 0;
         private bool IsDisposed = false;
         private readonly Dispatcher _dispatcher;
@@ -46,7 +47,7 @@ namespace FVH.SSHF.FastWindowArea
             _observerMsScreenClipExecuting = observerMsScreenClipExecuting;
             _ = observerMsScreenClipExecuting.IsExecutingProccesScreenClip.ObserveOnThreadPool().SubscribeAwait(async (bool isExecuting,CancellationToken _) =>
               {
-                  if(isExecuting is true) await HideAllWindow2(200);
+                  if(isExecuting is true) await HideAllWindow2(DelayHideWindow);
                   else { await ShowAllWindowExcludingActiveWindow(); }
               },awaitOperation: AwaitOperation.ThrottleFirstLast,configureAwait:false);
 
@@ -206,7 +207,7 @@ namespace FVH.SSHF.FastWindowArea
             { 
                 if(one.FastWindowCommand.MainWindowViewModel.VisibleCondition.CurrentValue == System.Windows.Visibility.Visible)
                 {
-                    await Task.Delay(200);
+                    await Task.Delay(DelayHideWindow);
                     await one.FastWindowCommand.HideWindow();
                 }                          
             });
