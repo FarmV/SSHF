@@ -131,6 +131,14 @@ namespace FVH.SSHF.Infrastructure.Win32
                     case HSHELL.WINDOWREPLACED:
                     break;
                     case HSHELL.WINDOWCREATED:
+                         var r13 =  SetWindowPos (lParam, 0 , 0, 0, 700, 700, 0x0002);
+                         
+                         uint treadID = GetWindowThreadProcessId(new HWND(lParam),out uint procID);
+                         Process pr = System.Diagnostics.Process.GetProcessById((int)procID);
+                         
+
+
+
                     break;
                     case HSHELL.WINDOWDESTROYED:
                          CheckAndSetStateExcusiveMode();
@@ -158,6 +166,8 @@ namespace FVH.SSHF.Infrastructure.Win32
                     break;
                     case HSHELL.APPCOMMAND_DELETE:
                          CheckAndSetStateExcusiveMode();
+
+                        var r =  SetWindowPos (7147458, 0 , 0, 0, 700, 700, 0x0002);
                     break;
                     case HSHELL.APPCOMMAND_DWM_FLIP3D:
                          CheckAndSetStateExcusiveMode();
@@ -257,5 +267,11 @@ namespace FVH.SSHF.Infrastructure.Win32
             APPCOMMAND_DELETE = 53U,  // Происходит при появлении окна системного выбора окон => ALT + TAB, WIN + TAB
             APPCOMMAND_DWM_FLIP3D = 54U // Происходит при закрытии окна системного выбора окон => ALT + TAB, WIN + TAB
         }
+
+        [LibraryImport("user32")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool SetWindowPos(nint handle, nint handle2, int x, int y, int cx, int cy, int flag);
+        [DllImport("user32")]
+        private static extern uint GetWindowThreadProcessId(HWND hWnd,out uint lpdwProcessId);
     }
 }

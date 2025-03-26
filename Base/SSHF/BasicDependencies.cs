@@ -35,10 +35,14 @@ namespace FVH.SSHF
                 AggregatorInputConditions aggregatorInputCondition = new AggregatorInputConditions();
                 R3.BehaviorSubject<bool> requestCompleteAppStartedDisposeInput = new R3.BehaviorSubject<bool>(true);
                 R3.BehaviorSubject<bool> requestExternalDisposeInput = new R3.BehaviorSubject<bool>(false);
-                Win32ObserverExclusiveMode requestExclusiveModeDisposeInput = new Win32ObserverExclusiveMode(uiDispatcher);
                 Observable<bool> combineConditionsDisposeInput = requestExternalDisposeInput.CombineLatest(requestCompleteAppStartedDisposeInput, (bool AppStarted, bool disposeInput) => AppStarted || disposeInput);
 
-                aggregatorInputCondition.AddIObservable(requestExclusiveModeDisposeInput.ExcusiveMode);
+                ObserverExclusiveMode observerExclusiveMode = new ObserverExclusiveMode(uiDispatcher);
+                ObserverMsScreenClipExecuting observerMsScreenClipExecuting = new ObserverMsScreenClipExecuting();
+                ShellHookPriorityHandlers shellHookPriorityHandlers = new ShellHookPriorityHandlers(observerExclusiveMode, observerMsScreenClipExecuting);
+                Win32HookManager win32HookManager = new Win32HookManager(uiDispatcher,shellHookPriorityHandlers);
+                
+                aggregatorInputCondition.AddIObservable(observerExclusiveMode.ExcusiveMode);
                 aggregatorInputCondition.AddIObservable(combineConditionsDisposeInput);
              
                 IGetImage iGetImage = new ImageProvider();
@@ -51,7 +55,7 @@ namespace FVH.SSHF
                 WaitingInputProvider? waitingInput = new WaitingInputProvider(uiDispatcher, aggregatorInputCondition.InputConditionsBehaviorSubject, delegateListIInvokeShortcutsBehaviorSubject);
 
                 FastWindowManager fastWindowManager = uiDispatcher.Invoke(
-                () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(iGetImage), waitingInput));
+                 () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(iGetImage), waitingInput));
                 if(args?.Length > 0)
                 {
                     if(args.SingleOrDefault(x => x == "--SCR_NotBR") is not null)
@@ -67,50 +71,52 @@ namespace FVH.SSHF
 
                 IHost host = Host.CreateDefaultBuilder(args).ConfigureAppConfiguration((_, configuration) =>
                 { configuration.Sources.Clear(); }).ConfigureServices((__, container) =>
-                {
-                    _ = container.AddSingleton<Win32MMCSS>(win32MMCSS);
-                    _ = container.AddSingleton<Dispatcher>(uiDispatcher);
-                    _ = container.AddSingleton<AggregatorInputConditions>(aggregatorInputCondition);
-                    _ = container.AddSingleton<IGetImage>(iGetImage);
-                    _ = container.AddSingleton<FastWindowManager>(fastWindowManager);
-                    _ = container.AddSingleton<WaitingInputProvider>(waitingInput);
-                    _ = container.AddSingleton<TrayIcon>(trayIcon);
+                 {
+                     _ = container.AddSingleton<Win32MMCSS>(win32MMCSS);
+                     _ = container.AddSingleton<Dispatcher>(uiDispatcher);
+                     _ = container.AddSingleton<AggregatorInputConditions>(aggregatorInputCondition);
+                     _ = container.AddSingleton<IGetImage>(iGetImage);
+                     _ = container.AddSingleton<FastWindowManager>(fastWindowManager);
+                     _ = container.AddSingleton<WaitingInputProvider>(waitingInput);
+                     _ = container.AddSingleton<TrayIcon>(trayIcon);
 
-                    _ = container.AddSingleton<Win32ObserverExclusiveMode>(requestExclusiveModeDisposeInput);
-                }).Build();
+                     _ = container.AddSingleton<ObserverExclusiveMode>(observerExclusiveMode);
+                     _ = container.AddSingleton<Win32HookManager>(win32HookManager);
+                 }).Build();
 
                 CompositeDisposable disposablesDependencies =
                 [
-                    win32MMCSS,
-                    aggregatorInputCondition,
-                    requestExclusiveModeDisposeInput,
-                    fastWindowManager,
-                    waitingInput,
-                    trayIcon,
+                     win32MMCSS,
+                     aggregatorInputCondition,
+                     observerExclusiveMode,
+                     fastWindowManager,
+                     waitingInput,
+                     trayIcon,
+                     win32HookManager
                 ];
 
                 CancellationTokenRegistration? tokenApplicationStartedCallback = null;
                 tokenApplicationStartedCallback = 
-                host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStarted.Register(() =>
-                {
-                    fastWindowManager.CreateMainWindow().Wait();
+                 host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStarted.Register(() =>
+                 {
+                      fastWindowManager.CreateMainWindow().Wait();
+                  
+                      requestCompleteAppStartedDisposeInput.OnNext(false);
+                      requestCompleteAppStartedDisposeInput.OnCompleted();
+                      requestCompleteAppStartedDisposeInput.Dispose();
 
-                    requestCompleteAppStartedDisposeInput.OnNext(false);
-                    requestCompleteAppStartedDisposeInput.OnCompleted();
-                    requestCompleteAppStartedDisposeInput.Dispose();
-
-                    requestExclusiveModeDisposeInput.RegisterShellHook();
-
-                    tokenApplicationStartedCallback?.Dispose();
-                });
+                      win32HookManager.RegisterShellHook();
+                  
+                      tokenApplicationStartedCallback?.Dispose();
+                 });
 
                 CancellationTokenRegistration? tokenApplicationApplicationStopped = null;
                 tokenApplicationApplicationStopped =
-                host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping.Register(() =>
-                {
-                    disposablesDependencies.Dispose();
-                    tokenApplicationApplicationStopped?.Dispose();
-                });
+                 host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping.Register(() =>
+                 {
+                      disposablesDependencies.Dispose();
+                      tokenApplicationApplicationStopped?.Dispose();
+                 });
 
                 return ValueTask.FromResult(host);
             }

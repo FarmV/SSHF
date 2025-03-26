@@ -44,19 +44,14 @@ namespace FVH.SSHF.Infrastructure.Win32
         {
             bool isExclusiveMode = _idd7.TestCooperativeLevel() == DDERR_EXCLUSIVEMODEALREADYSET;
 
-            if(isExclusiveMode is true)
-            {
-#if DEBUG
-                Debug.WriteLine($"{DateTime.Now.ToString("mm:ss.ffffff")}========D3DKMTCheckExclusiveOwnership=>{D3DKMTCheckExclusiveOwnership()}====");
-                // var r2 =  App.GetDEBUG.GetDEBUGDependency<Win32MMCSS>();
-                //// if(SetThreadPriority(GetCurrentThread(),15) is not true) throw new InvalidOperationException();
-                ////_ = SetThreadPriority(GetCurrentThread(), 0);
-                //App.GetDEBUG.GetDEBUGDependency<Win32MMCSS>().SetMaxCPUPriority();
-                Debug.WriteLine($"{DateTime.Now.ToString("mm:ss.ffffff")}");
-                App.Stopwatch.Restart();
-#endif
-
-            }
+//            if(isExclusiveMode is true)
+//            {
+//#if DEBUG
+//                Debug.WriteLine($"{DateTime.Now.ToString("mm:ss.ffffff")}========D3DKMTCheckExclusiveOwnership=>{D3DKMTCheckExclusiveOwnership()}====");                
+//                Debug.WriteLine($"{DateTime.Now.ToString("mm:ss.ffffff")}");
+//                App.Stopwatch.Restart();
+//#endif
+//            }
             return isExclusiveMode;
         });
         [DllImport("Kernel32")]
@@ -67,8 +62,5 @@ namespace FVH.SSHF.Infrastructure.Win32
         [LibraryImport("Gdi32")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool D3DKMTCheckExclusiveOwnership();
-    }
-
-   
+    }   
 }
-

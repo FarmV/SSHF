@@ -44,8 +44,8 @@ namespace FVH.SSHF.FastWindowArea
 
             _waitingInputProvider = waitingInputProvider;
 
-          _ = _waitingInputProvider.CurrentStatusSubscribeInput.ObserveOnThreadPool().Skip(1).
-               SubscribeAwait(onNextAsync: async (bool next,CancellationToken _) => await IfInputDispose(next), AwaitOperation.ThrottleFirstLast);
+            _ = _waitingInputProvider.CurrentStatusSubscribeInput.ObserveOnThreadPool().Skip(1).
+             SubscribeAwait(onNextAsync: async (bool next, CancellationToken _) => await IfInputDispose(next), AwaitOperation.ThrottleFirstLast);
         }
         public void Dispose()
         {
@@ -68,6 +68,8 @@ namespace FVH.SSHF.FastWindowArea
             IsInitialize = true;
 
             OneFastWindow firstFastWindow = await CreateFastWindowAsync();
+            _ =_dispatcher.Invoke(() => _ = firstFastWindow.FastWindow.Tag = nameof(_firstFastWindow));
+            _dispatcher.Invoke(() => { if(_fastWindows[1].FastWindow.Tag is not nameof(_firstFastWindow)) throw new InvalidOperationException(); });
 
             _firstFastWindow = firstFastWindow;
             _activeFastWindow = firstFastWindow;
@@ -137,14 +139,27 @@ namespace FVH.SSHF.FastWindowArea
                 VKeys.VK_LWIN,
                 VKeys.VK_SCROLL,
             ],
-            () => BlockInput is true ? Task.CompletedTask : HideAllWindowAsScreenClip(), nameof(DisposeActiveWindowAsync))
+            () => BlockInput is true ? Task.CompletedTask : HideAllWindowAsScreenClip().ContinueWith((Task _) => DisposeAllWindowExcludingFirsWindow()), nameof(HideAllWindowAsScreenClip))
         ];
+        private Task DisposeAllWindowExcludingFirsWindow()
+        {
+            _activeFastWindow = _firstFastWindow;
+
+            _ = _fastWindows.Remove(1);
+
+            _dispatcher.Invoke(() => { foreach(OneFastWindow window in _fastWindows.Values) window.Dispose(); });
+            _fastWindows.Clear();
+
+            _fastWindows[1] = _firstFastWindow!;
+
+            return Task.CompletedTask;
+        }
         private async Task HideAllWindowAsScreenClip()
         {
-            if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) SynchronizationContext.Current.StartSafeUITimeCriticalSection();
+            if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
 
             MsScreenClip.Invoke();
-            ParallelQuery<Task> taskWindowList = _fastWindows.Values.AsParallel().AsUnordered().Select(async one =>
+            ParallelQuery<Task> taskWindowList = _fastWindows.Values.AsParallel().AsUnordered().Select(async (OneFastWindow one) =>
             { 
                 if(one.FastWindowCommand.MainWindowViewModel.VisibleCondition.CurrentValue == System.Windows.Visibility.Visible)
                 {
@@ -154,13 +169,13 @@ namespace FVH.SSHF.FastWindowArea
             });
             await Task.WhenAll(taskWindowList.ToArray());
 
-            if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is true) SynchronizationContext.Current.StopSafeUITimeCriticalSection();
+            if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is true) _ = SynchronizationContext.Current.StopSafeUITimeCriticalSection();
         }
         private async Task IfInputDispose(bool statusSubscribeInput)
         {
             if(statusSubscribeInput is true) return;
 
-            if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) SynchronizationContext.Current.StartSafeUITimeCriticalSection();
+            if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
                         
             ParallelQuery<Task> taskWindowList = _fastWindows.Values.AsParallel().AsUnordered().Select(async one =>
             {
@@ -177,7 +192,7 @@ namespace FVH.SSHF.FastWindowArea
             });
             await Task.WhenAll(taskWindowList.ToArray());
 
-            if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is true) SynchronizationContext.Current.StopSafeUITimeCriticalSection();          
+            if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is true) _ = SynchronizationContext.Current.StopSafeUITimeCriticalSection();          
         }
         private async Task CreateWindowAsync()
         {
