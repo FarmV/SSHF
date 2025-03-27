@@ -195,7 +195,7 @@ namespace FVH.Background.Input
         {
             private const int WH_KEYBOARD_LL = 13;
             private const int HC_ACTION = 0;
-            private const uint _THREAD_ID_ALL_IN_CURRENT_DESKTOP = 0;
+            private const uint ThreadIdAllInCurrentDesktop = 0;
             private nint _hookID = nint.Zero;
             private bool _isDispose = false;
             private delegate nint KeyboardHookHandler(int nCode, WMEvent wParam, nint lParam);
@@ -223,7 +223,7 @@ namespace FVH.Background.Input
 
                 _lowLevelKeyboardHandler ??= new KeyboardHookHandler(LowLevelKeyboardProc);
 
-                nint handleHookProcedure = SetWindowsHookExW(WH_KEYBOARD_LL, _lowLevelKeyboardHandler, hMod, _THREAD_ID_ALL_IN_CURRENT_DESKTOP);
+                nint handleHookProcedure = SetWindowsHookExW(WH_KEYBOARD_LL, _lowLevelKeyboardHandler, hMod, ThreadIdAllInCurrentDesktop);
                 if(handleHookProcedure == nint.Zero) throw new Win32Exception(Marshal.GetLastPInvokeError(), $"{nameof(handleHookProcedure)}{Marshal.GetLastPInvokeErrorMessage()}");
 
                 _hookID = handleHookProcedure;

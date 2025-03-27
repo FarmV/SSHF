@@ -17,18 +17,19 @@ namespace FVH.SSHF.FastWindowArea
 {
     internal partial class FastWindowManager : IBehaviorSubjectGlobalShortcuts, IDisposable
     {
-        private const int DelayHideWindow = 200;
+        private const int DelayHideWindow = 300;
         private int _currentIndexFastWindow = 0;
-        private bool IsDisposed = false;
+        private bool _isDisposed = false;
+        private readonly R3.CompositeDisposable _disposables;
         private readonly Dispatcher _dispatcher;
         private readonly FastWindowCreator _windowCreator;
         private readonly Dictionary<int, OneFastWindow> _fastWindows;
         private readonly BehaviorSubject<IEnumerable<KeyboardShortcut>> _currentStatusShortcutsFastWindow;
+        private readonly WaitingInputProvider _waitingInputProvider;
+        private readonly ObserverMsScreenClipExecuting _observerMsScreenClipExecuting;
         private OneFastWindow? _firstFastWindow;
         private OneFastWindow? _activeFastWindow;
         private KeyboardShortcut[]? _currentShortcutsFastWindow;
-        private readonly WaitingInputProvider _waitingInputProvider;
-        private readonly ObserverMsScreenClipExecuting _observerMsScreenClipExecuting;
 
         internal bool IsInitialize = false;
         internal bool BlockInput = false;
@@ -44,31 +45,34 @@ namespace FVH.SSHF.FastWindowArea
             _fastWindows = new Dictionary<int, OneFastWindow>();
             _windowCreator = new FastWindowCreator(dispatcher, getFastWindowViewModelDependencies);
 
+            _disposables = new CompositeDisposable();
+
             _observerMsScreenClipExecuting = observerMsScreenClipExecuting;
-            _ = observerMsScreenClipExecuting.IsExecutingProccesScreenClip.ObserveOnThreadPool().SubscribeAwait(async (bool isExecuting,CancellationToken _) =>
-              {
-                  if(isExecuting is true) await HideAllWindow2(DelayHideWindow);
-                  else { await ShowAllWindowExcludingActiveWindow(); }
-              },awaitOperation: AwaitOperation.ThrottleFirstLast,configureAwait:false);
+            _disposables.Add(observerMsScreenClipExecuting.IsExecutingProcessScreenClip.ObserveOnThreadPool().SubscribeAwait(async (bool isExecuting,CancellationToken _) =>
+             {
+                 if(isExecuting is true) await HideAllWindow2(DelayHideWindow);
+                 else { await ShowAllWindowExcludingActiveWindow(); }
+             },awaitOperation: AwaitOperation.ThrottleFirstLast,configureAwait:false));
 
             _currentStatusShortcutsFastWindow = new BehaviorSubject<IEnumerable<KeyboardShortcut>>(GetDefaultShortcuts());
 
             _waitingInputProvider = waitingInputProvider;
 
-            _ = _waitingInputProvider.CurrentStatusSubscribeInput.ObserveOnThreadPool().Skip(1).
-              SubscribeAwait(onNextAsync: async (bool next, CancellationToken _) => await IfInputDispose(next), AwaitOperation.ThrottleFirstLast);
+            _disposables.Add(_waitingInputProvider.CurrentStatusSubscribeInput.ObserveOnThreadPool().Skip(1).
+             SubscribeAwait(onNextAsync: async (bool next, CancellationToken _) => await IfInputDispose(next), AwaitOperation.ThrottleFirstLast));
         }
         public void Dispose()
         {
-            if(IsDisposed is true) return;
-            IsDisposed = true;
+            if(_isDisposed is true) return;
+            _isDisposed = true;
             Array.ForEach(_fastWindows.Select(value => value.Value).ToArray(), oneFastWindow => oneFastWindow.Dispose());
             _fastWindows.Clear();
+            _disposables.Dispose();
         }
         public BehaviorSubject<IEnumerable<KeyboardShortcut>> GetShortcutsAsObservable() => _currentStatusShortcutsFastWindow;
         public IEnumerable<KeyboardShortcut> GetShortcuts()
         {
-            ObjectDisposedException.ThrowIf(IsDisposed, this);
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
             if(IsInitialize is false) throw new InvalidOperationException("The object must be initialized");
             ArgumentNullException.ThrowIfNull(_activeFastWindow);
             return _currentShortcutsFastWindow!;
@@ -137,22 +141,13 @@ namespace FVH.SSHF.FastWindowArea
             ],
             () => BlockInput is true ? Task.CompletedTask : CreateWindowAsync(), nameof(CreateWindowAsync)),
 
-            //new KeyboardShortcut(
-            //[
-            //    VKeys.VK_LWIN,
-            //    VKeys.VK_LSHIFT,
-            //    VKeys.VK_SUBTRACT
-            //],
-            //() => BlockInput is true ? Task.CompletedTask : DisposeActiveWindowAsync(), nameof(DisposeActiveWindowAsync)),
-
             new KeyboardShortcut(
             [
                 VKeys.VK_LWIN,
                 VKeys.VK_SCROLL,
             ],
             () => BlockInput is true ? Task.CompletedTask : HideAllWindowAsScreenClip().ContinueWith((Task _) => DisposeAllWindowExcludingFirsWindow()), nameof(HideAllWindowAsScreenClip))
-        ];
-  
+        ];  
         private Task DisposeAllWindowExcludingFirsWindow()
         {
             _activeFastWindow = _firstFastWindow;
@@ -245,26 +240,10 @@ namespace FVH.SSHF.FastWindowArea
             OneFastWindow fastWindow = await _dispatcher.InvokeAsync(CreateFastWindowAsync).Task.Unwrap();
             _activeFastWindow = fastWindow;
             BlockInput = false;
-        }
-        private async Task DisposeActiveWindowAsync()
-        {
-            BlockInput = true;
-            await _dispatcher.InvokeAsync(DisposeActiveFastWindowAsync).Task.Unwrap();
-            _activeFastWindow = _fastWindows[_currentIndexFastWindow];
-            BlockInput = false;
-        }
-        private Task DisposeActiveFastWindowAsync()
-        {
-            ObjectDisposedException.ThrowIf(IsDisposed, this);
-            if(_firstFastWindow!.Equals(_activeFastWindow) is true) return Task.CompletedTask;
-            _activeFastWindow!.Dispose();
-            _ = _fastWindows.Remove(_currentIndexFastWindow);
-            _currentIndexFastWindow--;
-            return Task.CompletedTask;
-        }
+        }      
         private async Task<OneFastWindow> CreateFastWindowAsync()
         {
-            ObjectDisposedException.ThrowIf(IsDisposed, this);
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
 
             Task<(FastWindow, FastWindowViewModel, FastWindowViewModelDependencies)> task = _dispatcher.Invoke(_windowCreator.CreateFastWindowAsync);
 

@@ -40,7 +40,7 @@ namespace FVH.SSHF
                 ObserverExclusiveMode observerExclusiveMode = new ObserverExclusiveMode(uiDispatcher);
                 ObserverMsScreenClipExecuting observerMsScreenClipExecuting = new ObserverMsScreenClipExecuting();
                 ShellHookPriorityHandlers shellHookPriorityHandlers = new ShellHookPriorityHandlers(observerExclusiveMode, observerMsScreenClipExecuting);
-                Win32HookManager win32HookManager = new Win32HookManager(uiDispatcher,shellHookPriorityHandlers);
+                HookManager win32HookManager = new HookManager(uiDispatcher,shellHookPriorityHandlers);
                 
                 aggregatorInputCondition.AddIObservable(observerExclusiveMode.ExcusiveMode);
                 aggregatorInputCondition.AddIObservable(combineConditionsDisposeInput);
@@ -81,7 +81,7 @@ namespace FVH.SSHF
                      _ = container.AddSingleton<TrayIcon>(trayIcon);
 
                      _ = container.AddSingleton<ObserverExclusiveMode>(observerExclusiveMode);
-                     _ = container.AddSingleton<Win32HookManager>(win32HookManager);
+                     _ = container.AddSingleton<HookManager>(win32HookManager);
                  }).Build();
 
                 CompositeDisposable disposablesDependencies =

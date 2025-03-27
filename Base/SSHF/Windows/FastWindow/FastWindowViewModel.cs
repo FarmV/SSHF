@@ -166,7 +166,7 @@ namespace FVH.SSHF.FastWindowArea
         {
            if(WindowPositionUpdater.IsUpdateWindow is true) await StopUpdateWindow();
            MsScreenClip.Invoke();
-           Thread.Sleep(200); // Чтобы окно оставалось в скриншоте, но убралось, не мешало композиции
+        //   Thread.Sleep(200); // Чтобы окно оставалось в скриншоте, но убралось, не мешало композиции
            HideWindow.Execute(Unit.Default);
         }      
     }

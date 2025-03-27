@@ -19,16 +19,17 @@ namespace FVH.SSHF
 {
     internal partial class App
     {
-        internal const string UIThreadName = "FVH Main Thread";
         private const string MutexNameSingleInstance = "FVH.SSHF.SingleProgramInstance";
-        private const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
-        private const int ERROR_UNHANDLED = 100_001;
-        private const int ERROR_CREATE_MUTEX = 100_002;
         private const int ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
-        private static int _applicationExitCode = 0;
-        private static Mutex? _mutexSingleInstance;
+        private const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
+        private const int ErrorUnhandled = 100_001;
+        private const int ErrorCreateMutex = 100_002;
+        private static int s_applicationExitCode = 0;
+        private static Mutex? s_mutexSingleInstance;
         private readonly IHost _program;
         private readonly IServiceProvider _serviceProvider;
+
+        internal const string UiThreadName = "FVH Main Thread";
 
         internal static bool DesignerMode = true;
 #if DEBUG
@@ -56,13 +57,13 @@ namespace FVH.SSHF
         {          
             if(CreateMutexForSingleProgram() is false)
             {
-                Environment.ExitCode = ERROR_CREATE_MUTEX;
+                Environment.ExitCode = ErrorCreateMutex;
                 return;
             }
             
             _ = Native.SetPriorityClass(Native.GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
 
-            Thread.CurrentThread.Name = UIThreadName;
+            Thread.CurrentThread.Name = UiThreadName;
 
             System.Windows.Application application = new System.Windows.Application();
             Dispatcher dispatcher = Dispatcher.FromThread(Thread.CurrentThread);
@@ -104,7 +105,7 @@ namespace FVH.SSHF
 
             _ = application.Run();
 
-            Environment.ExitCode = _applicationExitCode;
+            Environment.ExitCode = s_applicationExitCode;
         }
         private static async Task Start(string[]? args)
         {       
@@ -125,14 +126,14 @@ namespace FVH.SSHF
         }
         private void Shutdown(object _, ExitEventArgs e)
         {
-            _applicationExitCode = e.ApplicationExitCode;            
+            s_applicationExitCode = e.ApplicationExitCode;            
             _program.StopAsync().GetAwaiter().GetResult();          
-            _mutexSingleInstance?.Dispose();
+            s_mutexSingleInstance?.Dispose();
         }
         internal static void EmergencyAppTermination(Exception ex)
         {
-            _applicationExitCode = ERROR_UNHANDLED;
-            Application.Current.Shutdown(ERROR_UNHANDLED);
+            s_applicationExitCode = ErrorUnhandled;
+            Application.Current.Shutdown(ErrorUnhandled);
 #if DEBUG
             Debug.WriteLine($"{Environment.NewLine}{ex.StackTrace}");
             Type typeEx = ex.GetType();
@@ -144,7 +145,7 @@ namespace FVH.SSHF
         private static bool CreateMutexForSingleProgram()
         {
             bool mutexWasCreated;
-            try { _mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out mutexWasCreated); }
+            try { s_mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out mutexWasCreated); }
             catch { return false; }
             if(mutexWasCreated is false) return false;
             return true;
@@ -177,7 +178,7 @@ namespace FVH.SSHF
         private static Win32MMCSS Win32MMCSS => win32MMCSS;
         static AppHelper()
         {
-            if(Thread.CurrentThread.Name is not App.UIThreadName) throw new InvalidOperationException();
+            if(Thread.CurrentThread.Name is not App.UiThreadName) throw new InvalidOperationException();
             win32MMCSS = new Win32MMCSS(Dispatcher.FromThread(Thread.CurrentThread));
         }
         internal static bool InUIThreadTimeCriticalSection(this Thread _) => Win32MMCSS.InTimeCriticalSection;
