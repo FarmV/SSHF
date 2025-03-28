@@ -135,6 +135,12 @@ namespace FVH.Background.Input
 
                 return anyInvoked;
             }
+            if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.ForceClearState)
+            {
+                _currentPressLogicKeys.Clear();
+                _activeCombination = Array.Empty<VKeys>();
+                _isCombinationActive = false;
+            }
             if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.Up) 
             {
                 _ = _currentPressLogicKeys.Remove(e.Key);
@@ -195,15 +201,20 @@ namespace FVH.Background.Input
         {
             private const int WH_KEYBOARD_LL = 13;
             private const int HC_ACTION = 0;
+            const uint WINEVENT_OUTOFCONTEXT = 0x0000; 
+            const uint EVENT_SYSTEM_DESKTOPSWITCH = 0x0020; 
             private const uint ThreadIdAllInCurrentDesktop = 0;
             private nint _hookID = nint.Zero;
+            private nint _hDesktopSwitchHook = nint.Zero;
             private bool _isDispose = false;
             private delegate nint KeyboardHookHandler(int nCode, WMEvent wParam, nint lParam);
+            private delegate void WinEventDelegate(nint hWinEventHook, uint eventType, nint hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
+            private WinEventDelegate? _desktopSwitchDelegate;
             private KeyboardHookHandler? _lowLevelKeyboardHandler;
             private readonly HashSet<VKeys> KeyDownPhysicallyProcessed;
             internal delegate void KeyboardEventHandler(ref KeyboardEventArgs args);
             internal event KeyboardEventHandler? KeyAction;
-            internal LowLevelKeyboard() => KeyDownPhysicallyProcessed = new HashSet<VKeys>();            
+            internal LowLevelKeyboard() => KeyDownPhysicallyProcessed = new HashSet<VKeys>();
             ~LowLevelKeyboard() => Dispose();
             public void Dispose() 
             {
@@ -211,29 +222,51 @@ namespace FVH.Background.Input
                 UninstallHook();
                 _isDispose = true;
                 GC.SuppressFinalize(this);
-            }
+            }       
             internal void InstallHook()
             {
                 ObjectDisposedException.ThrowIf(_isDispose, this);
                 ArgumentNullException.ThrowIfNull(KeyAction, nameof(KeyboardEventHandler));
 
-                if(Process.GetCurrentProcess().MainModule is not ProcessModule module) throw new NullReferenceException(nameof(module));
-                nint hMod = GetModuleHandleW(module.ModuleName);
-                if(hMod == nint.Zero) throw new NullReferenceException(nameof(hMod));
+                if(_hookID == nint.Zero)
+                {
+                    if(Process.GetCurrentProcess().MainModule is not ProcessModule module) throw new NullReferenceException(nameof(module));
+                    nint hMod = GetModuleHandleW(module.ModuleName);
+                    if(hMod == nint.Zero) throw new NullReferenceException(nameof(hMod));
 
-                _lowLevelKeyboardHandler ??= new KeyboardHookHandler(LowLevelKeyboardProc);
+                    _lowLevelKeyboardHandler ??= new KeyboardHookHandler(LowLevelKeyboardProc);
 
-                nint handleHookProcedure = SetWindowsHookExW(WH_KEYBOARD_LL, _lowLevelKeyboardHandler, hMod, ThreadIdAllInCurrentDesktop);
-                if(handleHookProcedure == nint.Zero) throw new Win32Exception(Marshal.GetLastPInvokeError(), $"{nameof(handleHookProcedure)}{Marshal.GetLastPInvokeErrorMessage()}");
+                    nint handleHookProcedure = SetWindowsHookExW(WH_KEYBOARD_LL, _lowLevelKeyboardHandler, hMod, ThreadIdAllInCurrentDesktop);
+                    if(handleHookProcedure == nint.Zero) throw new Win32Exception(Marshal.GetLastPInvokeError(), $"{nameof(handleHookProcedure)}{Marshal.GetLastPInvokeErrorMessage()}");
 
-                _hookID = handleHookProcedure;
+                    _hookID = handleHookProcedure;
+                }
+                InstallHookDesktopSwitch();
             }
             internal void UninstallHook()
             {
-                if(_hookID == nint.Zero) return;
-                _ = UnhookWindowsHookEx(_hookID);
-                _hookID = nint.Zero;
+                if(_hookID != nint.Zero)
+                {
+                    _ = UnhookWindowsHookEx(_hookID);
+                    _hookID = nint.Zero;
+                }                               
+                UnhookDesktopSwitchHook();
+
                 KeyDownPhysicallyProcessed.Clear();
+            }
+            private void InstallHookDesktopSwitch()
+            {
+                if(_hDesktopSwitchHook != nint.Zero) return;
+                _desktopSwitchDelegate = new WinEventDelegate(DesktopSwitchEventHandler);
+
+                _hDesktopSwitchHook = SetWinEventHook(EVENT_SYSTEM_DESKTOPSWITCH, EVENT_SYSTEM_DESKTOPSWITCH, nint.Zero, _desktopSwitchDelegate, 0, 0, WINEVENT_OUTOFCONTEXT);
+                if(_hDesktopSwitchHook == nint.Zero) throw new Win32Exception();
+            }
+            private void UnhookDesktopSwitchHook()
+            {
+                if(_hDesktopSwitchHook == nint.Zero) return;
+                _ = UnhookWinEvent(_hDesktopSwitchHook);
+                _hDesktopSwitchHook = nint.Zero;
             }
             private nint LowLevelKeyboardProc(int nCode, WMEvent wParam, nint lParam)
             {
@@ -244,6 +277,8 @@ namespace FVH.Background.Input
                     {
                         Key = ref keyboardStruct.VkCode
                     };
+
+                    if(keyboardStruct.VkCode == VKeys.VK_DELETE) return (nint)1;
 
                     KeyAction!.Invoke(ref keyboardEventDown);
 
@@ -256,6 +291,7 @@ namespace FVH.Background.Input
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 nint KeyUP(ref readonly TagKBDLLHOOKSTRUCT keyboardStruct)
                 {
+                    if(keyboardStruct.VkCode == VKeys.VK_DELETE) return (nint)1;
                     KeyboardEventArgs keyboardEventUP = new KeyboardEventArgs(KeyboardEventArgs.TypePhysicallyEvent.Up)
                     {
                         Key = ref keyboardStruct.VkCode,
@@ -286,12 +322,34 @@ namespace FVH.Background.Input
                 }
                 return CallNextHookEx(_hookID, nCode, wParam, lParam);
             }
+            private void DesktopSwitchEventHandler(nint hWinEventHook, uint eventType, nint hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime) => EnsureKeyboardStateSync();           
+            private void EnsureKeyboardStateSync()
+            {
+                bool isForce = false;
+                foreach(VKeys vkCodeDown in KeyDownPhysicallyProcessed)
+                {
+                    if((GetAsyncKeyState((int)vkCodeDown) & 0x8000) is 0)
+                    {
+                        _ = KeyDownPhysicallyProcessed.Remove(vkCodeDown);
+                        isForce = true;
+                    }
+                }
+                if(isForce is true)
+                {
+                    VKeys vKeys = VKeys.VK_F24;
+                    KeyboardEventArgs keyboardEventDown = new KeyboardEventArgs(KeyboardEventArgs.TypePhysicallyEvent.ForceClearState, isDownRepeat:false)
+                    {
+                        Key = ref vKeys
+                    };
+                    KeyAction!.Invoke(ref keyboardEventDown);
+                }
+            }
             private enum WMEvent : uint
             {
                 WM_KEYDOWN = 256,
                 WM_SYSKEYDOWN = 260,
                 WM_KEYUP = 257,
-                WM_SYSKEYUP = 261
+                WM_SYSKEYUP = 261,
             }
             /// <summary>
             /// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-kbdllhookstruct?redirectedfrom=MSDN
@@ -314,6 +372,14 @@ namespace FVH.Background.Input
             private static partial nint CallNextHookEx(nint hhk, int nCode, WMEvent wParam, nint lParam);
             [LibraryImport("Kernel32")]
             private static partial nint GetModuleHandleW([MarshalAs(UnmanagedType.LPWStr)] string lpModuleName);
+
+            [LibraryImport("user32")]
+            [return:MarshalAs(UnmanagedType.Bool)]
+            private static partial bool UnhookWinEvent(nint hWinEventHook);
+            [LibraryImport("user32")]
+            private static partial nint SetWinEventHook(uint eventMin, uint eventMax, nint hmodWinEventProc, WinEventDelegate lpfnWinEventProc, uint idProcess, uint idThread, uint dwFlags);
+            [LibraryImport("user32")] 
+            private static partial short GetAsyncKeyState(int vKey);
         }
     }
    public ref struct KeyboardEventArgs
@@ -322,6 +388,7 @@ namespace FVH.Background.Input
         {
             Down = 1,
             Up = 2,
+            ForceClearState
         }
         internal KeyboardEventArgs(TypePhysicallyEvent ev, bool breakLogicKey = false, bool isDownRepeat = false)
         {
