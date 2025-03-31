@@ -25,8 +25,7 @@
     Topmost              = "True" 
     SizeToContent        = "Manual"   
     ResizeMode           = "NoResize"
-
-    ShowInTaskbar        = "False"    
+ 
     ShowTitleBar         = "False"
     ShowMinButton        = "False"
     ShowCloseButton      = "False"

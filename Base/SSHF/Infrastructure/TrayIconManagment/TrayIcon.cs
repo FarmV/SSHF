@@ -1,12 +1,17 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
 
+using FVH.SSHF.FastWindowArea;
+
+using R3;
+
 namespace FVH.SSHF.Infrastructure.TrayIconManagement
 {
-    internal class TrayIcon : IDisposable
+    internal  class TrayIcon : IDisposable
     {
         private bool _disposed;
         private bool _blockRepeatInvokeMessageBox = false;
@@ -23,21 +28,21 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
             _dpiCorrector.ActualSizeIcon += ActualSizeIconLogic;
             _taskbarIcon.MouseDown += TaskbarIcon_MouseDown;          
         }
-        private void TaskbarIcon_MouseDown(object? sender, MouseEventArgs e)
+        private void TaskbarIcon_MouseDown(object? sender, MouseEventArgs e) 
         {
             if (_blockRepeatInvokeMessageBox is true) return;
             _blockRepeatInvokeMessageBox = true;
-
-            //App.GetDEBUG<>
-
-
-            if (System.Windows.MessageBox.Show("Закрыть приложение?", "Запрос SSHF", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) is MessageBoxResult.Yes)
+            ((FastWindow)System.Windows.Application.Current.MainWindow).ShowInTaskbar = false;// чтобы получить модальное окно без отображение в панели задач 
+            if (System.Windows.MessageBox.Show(System.Windows.Application.Current.MainWindow, "Закрыть приложение?", "Запрос SSHF", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) is MessageBoxResult.Yes)
             {
+                // владельцем обязательно должно быть главное окно, так как нужно перестанавливать стиль
                 System.Windows.Application.Current.Dispatcher.Invoke(System.Windows.Application.Current.Shutdown);
                 return;
             }
+            ((FastWindow)System.Windows.Application.Current.MainWindow).ShowInTaskbar = true;
+            ((FastWindow)System.Windows.Application.Current.MainWindow).SetStyleWindow(ensureUseStyle:true); // переустанавливает стиль снова стиль главного окна
             _blockRepeatInvokeMessageBox = false;
-        }    
+        }
         public void Dispose()
         {
             if (_disposed is true) return;

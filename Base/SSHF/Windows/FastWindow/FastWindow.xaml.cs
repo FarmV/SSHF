@@ -16,26 +16,30 @@ namespace FVH.SSHF.FastWindowArea
     public partial class FastWindow : MahApps.Metro.Controls.MetroWindow 
     {
         public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(nameof(ViewModel), typeof(FastWindowViewModel), typeof(FastWindow));
-        private readonly int GWL_EXSTYLE = -20;
-        private readonly long WS_EX_TOOLWINDOW = 0x00000080;
-        private readonly long WS_EX_NOACTIVATE = 0x08000000L;
+        private const int GWL_EXSTYLE = -20;
+        private const long WS_EX_TOOLWINDOW = 0x00000080; // Hide in Task Switcher(ALT + TAB), Taskbar
+        private const long WS_EX_NOACTIVATE = 0x08000000L; // Does not intercept keyboard focus
+        private const string NameWindow = "Fast Window";
         private IDisposable? _bind;
         public FastWindow()
         {
             InitializeComponent();
-            this.Title = "Fast Window";
+            this.Title = NameWindow;
 
-  
-            HideAltTabWindow();
+           // if(this.ShowInTaskbar == false) throw new InvalidOperationException("ShowInTaskbar in wpf + SetWindowLongPtrW leads to violation of Z order of windows in windows (+1 window)");
+
+            SetStyleWindow();
 
 #if OneFastWindowNotTopMost
             this.Topmost = false;
 #endif
         }
-        private void HideAltTabWindow()
+        internal void SetStyleWindow(bool ensureUseStyle = false)  
         {
-            IntPtr hWnd = new WindowInteropHelper(this).EnsureHandle();
-            NativeHelper.SetWindowLongPtrW(hWnd, GWL_EXSTYLE, new IntPtr(NativeHelper.GetWindowLongPtrW(hWnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE));
+            if(ensureUseStyle is true) this.Hide();
+            nint hWnd = new WindowInteropHelper(this).EnsureHandle();
+            _ = NativeHelper.SetWindowLongPtrW(hWnd, GWL_EXSTYLE, new nint(NativeHelper.GetWindowLongPtrW(hWnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE));
+            if(ensureUseStyle is true) this.Show();
         }
         protected override void OnClosed(EventArgs e)
         {

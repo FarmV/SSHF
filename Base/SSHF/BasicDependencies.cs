@@ -99,15 +99,17 @@ namespace FVH.SSHF
                 tokenApplicationStartedCallback = 
                  host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStarted.Register(() =>
                  {
-                      fastWindowManager.CreateMainWindow().Wait();
-                  
-                      requestCompleteAppStartedDisposeInput.OnNext(false);
-                      requestCompleteAppStartedDisposeInput.OnCompleted();
-                      requestCompleteAppStartedDisposeInput.Dispose();
+                     FastWindow mainWindow = fastWindowManager.CreateMainWindow().Result;
 
-                      win32HookManager.RegisterShellHook();
-                  
-                      tokenApplicationStartedCallback?.Dispose();
+                     _ = dispatcher.Invoke(() => System.Windows.Application.Current.MainWindow = mainWindow);
+
+                     requestCompleteAppStartedDisposeInput.OnNext(false);
+                     requestCompleteAppStartedDisposeInput.OnCompleted();
+                     requestCompleteAppStartedDisposeInput.Dispose();
+
+                     win32HookManager.RegisterShellHook();
+
+                     tokenApplicationStartedCallback?.Dispose();
                  });
 
                 CancellationTokenRegistration? tokenApplicationApplicationStopped = null;

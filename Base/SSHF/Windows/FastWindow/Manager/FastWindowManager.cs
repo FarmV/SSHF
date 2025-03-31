@@ -77,7 +77,7 @@ namespace FVH.SSHF.FastWindowArea
             ArgumentNullException.ThrowIfNull(_activeFastWindow);
             return _currentShortcutsFastWindow!;
         }
-        internal async Task CreateMainWindow()
+        internal async Task<FastWindow> CreateMainWindow()
         {
             if(IsInitialize is true) throw new InvalidOperationException("Object already initialized created");
             IsInitialize = true;
@@ -90,6 +90,7 @@ namespace FVH.SSHF.FastWindowArea
             _activeFastWindow = firstFastWindow;
 
             _currentShortcutsFastWindow = GetDefaultShortcuts();
+            return firstFastWindow.FastWindow;
         }
         internal void SetNewShortcuts(KeyboardShortcut[] shortcuts) => _currentShortcutsFastWindow = shortcuts;
         internal KeyboardShortcut[] GetDefaultShortcuts() =>
