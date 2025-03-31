@@ -24,11 +24,10 @@ namespace FVH.SSHF.FastWindowArea
         public FastWindow()
         {
             InitializeComponent();
-            this.Title = NameWindow;
-
-           // if(this.ShowInTaskbar == false) throw new InvalidOperationException("ShowInTaskbar in wpf + SetWindowLongPtrW leads to violation of Z order of windows in windows (+1 window)");
-
+            this.Title = NameWindow;          
             SetStyleWindow();
+
+            this.Loaded += (s, e) => this.ShowInTaskbar = false; // ShowInTaskbar in the constructor defected?
 
 #if OneFastWindowNotTopMost
             this.Topmost = false;
