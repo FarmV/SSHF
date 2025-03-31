@@ -50,7 +50,7 @@ namespace FVH.SSHF.FastWindowArea
             _observerMsScreenClipExecuting = observerMsScreenClipExecuting;
             _disposables.Add(observerMsScreenClipExecuting.IsExecutingProcessScreenClip.ObserveOnThreadPool().SubscribeAwait(async (bool isExecuting,CancellationToken _) =>
              {
-                 if(isExecuting is true) await HideAllWindow2(DelayHideWindow);
+                 if(isExecuting is true) await HideAllWindow(DelayHideWindow);
                  else { await ShowAllWindowExcludingActiveWindow(); }
              },awaitOperation: AwaitOperation.ThrottleFirstLast,configureAwait:false));
 
@@ -162,7 +162,7 @@ namespace FVH.SSHF.FastWindowArea
 
             return Task.CompletedTask;
         }
-        private async Task HideAllWindow2(int delayHide = 0)
+        private async Task HideAllWindow(int delayHide = 0)
         {
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
 
