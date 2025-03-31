@@ -40,7 +40,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
                 return;
             }
             ((FastWindow)System.Windows.Application.Current.MainWindow).ShowInTaskbar = true;
-            ((FastWindow)System.Windows.Application.Current.MainWindow).SetStyleWindow(ensureUseStyle:true); // переустанавливает стиль снова стиль главного окна
+            ((FastWindow)System.Windows.Application.Current.MainWindow).SetStyleWindow(ensureUseStyle:true); // переустановить  стиль главного окна, так как вызов MessageBox.Show переопределяет стиль
             _blockRepeatInvokeMessageBox = false;
         }
         public void Dispose()
