@@ -38,6 +38,12 @@ namespace FVH.SSHF.FastWindowArea
         }
         private void NotifyKeyboardEvent(ref Background.Input.KeyboardEventArgs e)
         {
+            if(e.Type == Background.Input.KeyboardEventArgs.TypePhysicallyEvent.ForceClearState)
+            {
+                _mainWindowViewModel.SetDragMoveCondition(true);
+                _mainWindowViewModel.SetDropCondition(false);
+                return;
+            }                      
             if(e.Key == VKeys.VK_LCONTROL)
             {
                 if(_mainWindowViewModel.VisibleCondition.CurrentValue == Visibility.Hidden)

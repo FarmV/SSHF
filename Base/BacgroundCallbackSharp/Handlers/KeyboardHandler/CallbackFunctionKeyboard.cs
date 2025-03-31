@@ -140,6 +140,9 @@ namespace FVH.Background.Input
                 _currentPressLogicKeys.Clear();
                 _activeCombination = Array.Empty<VKeys>();
                 _isCombinationActive = false;
+
+                NotifyKeyboardEvent?.Invoke(ref e);
+                return;
             }
             if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.Up) 
             {
