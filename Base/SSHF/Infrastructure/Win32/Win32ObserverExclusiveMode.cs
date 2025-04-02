@@ -105,7 +105,7 @@ namespace FVH.SSHF.Infrastructure.Win32
         _proxyInputHandlerWindow.Dispatcher.Invoke(() =>
         {
            _proxyInputHandlerWindow.AddHook(ShellHookMessageWorker);
-            HWND hwnd = new HWND(_proxyInputHandlerWindow.Handle);
+            nint hwnd = _proxyInputHandlerWindow.Handle;
             bool res = RegisterShellHookWindow(hwnd);
             if(res is false) throw new Win32Exception();
         });
@@ -232,10 +232,12 @@ namespace FVH.SSHF.Infrastructure.Win32
 
             return hwnd;
         }
-        [DllImport("user32")]
-        private static extern bool RegisterShellHookWindow(HWND hwnd);
-        [DllImport("user32")]
-        private static extern bool DeregisterShellHookWindow(HWND hwnd);
+        [LibraryImport("user32")]
+        [return:MarshalAs(UnmanagedType.Bool)]
+        private static partial bool RegisterShellHookWindow(nint hwnd);
+        [LibraryImport("user32")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool DeregisterShellHookWindow(nint hwnd);
         /// <summary>
         /// Если сообщение успешно зарегистрировано, возвращаемое значение - идентификатор сообщения в диапазоне от 0xC000(49152) до 0xFFFF(65535).
         /// При неудачном выполнении функции возвращаемое значение равно нулю.
@@ -271,7 +273,7 @@ namespace FVH.SSHF.Infrastructure.Win32
         [LibraryImport("user32")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool SetWindowPos(nint handle, nint handle2, int x, int y, int cx, int cy, int flag);
-        [DllImport("user32")]
-        private static extern uint GetWindowThreadProcessId(HWND hWnd,out uint lpdwProcessId);
+        [LibraryImport("user32")]
+        private static partial uint GetWindowThreadProcessId(nint hWnd,out uint lpdwProcessId);
     }
 }

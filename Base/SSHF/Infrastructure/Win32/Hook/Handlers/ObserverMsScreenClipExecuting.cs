@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 using R3;
 
@@ -22,14 +23,15 @@ namespace FVH.SSHF.Infrastructure.Win32
         }
         internal void CheckAndSetStateMsScreenClipExecuting(ref nint handleWindow)
         {
-            void ProcessExitedEvent(object? proc, EventArgs _)
+            void ProcessExitedEvent(object? proc, EventArgs __)
             {
+                _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
                 if(proc is not Process pr) throw new InvalidCastException();
                 pr.Exited -= ProcessExitedEvent;
                 pr.Dispose();
                 IsExecutingProcessScreenClip.OnNext(false);
             }
-            _ = GetWindowThreadProcessId(new HWND(handleWindow), out uint procID);
+            _ = GetWindowThreadProcessId(handleWindow, out uint procID);
             Process pr = System.Diagnostics.Process.GetProcessById((int)procID);
             if(pr.MainModule is null)
             {
@@ -48,7 +50,7 @@ namespace FVH.SSHF.Infrastructure.Win32
                 IsExecutingProcessScreenClip.OnNext(true);
             }
         }              
-        [DllImport("user32")]
-        private static extern uint GetWindowThreadProcessId(HWND hWnd, out uint lpdwProcessId);
+        [LibraryImport("user32")]
+        private static partial uint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);
     }
 }
