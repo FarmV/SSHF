@@ -15,13 +15,10 @@ namespace FVH.SSHF.FastWindowArea
     {
         private bool _isDispose = false;
         private readonly FastWindowViewModel _mainWindowViewModel;
-        private readonly R3.CompositeDisposable _disposables;
-        private readonly IDisposable? _keyboardHandlerSubscription;
         private readonly WaitingInputProvider _provider;
         internal FastWindowExternalConditions(FastWindowViewModel mainWindowViewModel, WaitingInputProvider provider)
         {
             _mainWindowViewModel = mainWindowViewModel;
-            _disposables = new R3.CompositeDisposable();
 
             _provider = provider;
 
@@ -33,8 +30,6 @@ namespace FVH.SSHF.FastWindowArea
             if(_isDispose is true) return;
             _isDispose = true;
             _provider.NotifyKeyboardEvent -= NotifyKeyboardEvent;
-            _keyboardHandlerSubscription?.Dispose();
-            _disposables?.Dispose();
         }
         private void NotifyKeyboardEvent(ref Background.Input.KeyboardEventArgs e)
         {
