@@ -13,15 +13,15 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
         private const int SM_CXICON = 11; //ширина
         private bool _disposed = false;
         public readonly int[] _sizeIcon = [16, 20, 24, 30, 32, 36, 40, 48, 60, 64, 72, 80, 96, 128, 256, 512];
-        private readonly DpiHandler _dpiHendler;
+        private readonly DpiHandler _dpiHandler;
         private readonly Stream _iconAppResource;
         public event EventHandler<Icon>? ActualSizeIcon;
         public DPIIconHandler(Stream resourceIcon, int[]? sizesIcon = null)
         {
             _sizeIcon = sizesIcon ?? _sizeIcon;
             _iconAppResource = resourceIcon;
-            _dpiHendler = new DpiHandler();
-            _dpiHendler.DPIChange += DpiHandler_DPIChange;
+            _dpiHandler = new DpiHandler();
+            _dpiHandler.DPIChange += DpiHandler_DPIChange;
         }
         [LibraryImport("user32", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.I4)]
@@ -81,8 +81,8 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
         {
             if (_disposed is not true)
             {
-                _dpiHendler.DPIChange -= DpiHandler_DPIChange;
-                _dpiHendler.Dispose();
+                _dpiHandler.DPIChange -= DpiHandler_DPIChange;
+                _dpiHandler.Dispose();
                 _disposed = true;
             }
         }
