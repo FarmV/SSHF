@@ -1,17 +1,24 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
+using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 
-using FVH.SSHF.FastWindowArea;
+using ControlzEx.Theming;
 
-using R3;
+using MahApps.Metro.Controls;
 
 namespace FVH.SSHF.Infrastructure.TrayIconManagement
 {
-    internal  class TrayIcon : IDisposable
+    internal partial class TrayIcon : IDisposable
     {
         private bool _disposed;
         private bool _blockRepeatInvokeMessageBox = false;
@@ -26,33 +33,28 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
                 Visible = true
             };
             _dpiCorrector.ActualSizeIcon += ActualSizeIconLogic;
-            _taskbarIcon.MouseDown += TaskbarIcon_MouseDown;          
-        }
-        private void TaskbarIcon_MouseDown(object? sender, MouseEventArgs e) 
+            _taskbarIcon.MouseDown += TaskbarIconMouseDownEvent;
+        }       
+        private void TaskbarIconMouseDownEvent(object? sender, MouseEventArgs e)
         {
-            if (_blockRepeatInvokeMessageBox is true) return;
+            if(_blockRepeatInvokeMessageBox is true) return;
             _blockRepeatInvokeMessageBox = true;
-            ((FastWindow)System.Windows.Application.Current.MainWindow).ShowInTaskbar = false;// чтобы получить модальное окно без отображение в панели задач 
-            if (System.Windows.MessageBox.Show(System.Windows.Application.Current.MainWindow, "Закрыть приложение?", "Запрос SSHF", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) is MessageBoxResult.Yes)
-            {
-                // владельцем обязательно должно быть главное окно, так как нужно перестанавливать стиль
-                System.Windows.Application.Current.Dispatcher.Invoke(System.Windows.Application.Current.Shutdown);
-                return;
-            }
-            ((FastWindow)System.Windows.Application.Current.MainWindow).ShowInTaskbar = true;
-            ((FastWindow)System.Windows.Application.Current.MainWindow).SetStyleWindow(ensureUseStyle:true); // переустановить  стиль главного окна, так как вызов MessageBox.Show переопределяет стиль
-            _blockRepeatInvokeMessageBox = false;
+            MetroWindow dialogWindow = CreateDialogExit();
+            dialogWindow.Closed += (_, __) => _blockRepeatInvokeMessageBox = false;
+       
+            dialogWindow.Show();
+            _ = dialogWindow.Activate();        
         }
         public void Dispose()
         {
-            if (_disposed is true) return;
+            if(_disposed is true) return;
             _dpiCorrector.Dispose();
             _taskbarIcon.Dispose();
             _disposed = true;
         }
         private void ActualSizeIconLogic(object? _, System.Drawing.Icon newSizeIcon)
         {
-            _taskbarIcon.MouseDown -= TaskbarIcon_MouseDown;
+            _taskbarIcon.MouseDown -= TaskbarIconMouseDownEvent;
             _taskbarIcon.Visible = false;
             _taskbarIcon.Dispose();
             Thread.Sleep(450); // NotifyIcon.Dispose() Возвращает управление раньше, чем фактически освободит ресурсы.
@@ -61,7 +63,151 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
                 Icon = newSizeIcon,
                 Visible = true
             };
-            _taskbarIcon.MouseDown += TaskbarIcon_MouseDown;
+            _taskbarIcon.MouseDown += TaskbarIconMouseDownEvent;
+        }
+        private MetroWindow CreateDialogExit()
+        {          
+            MetroWindow dialogWindow = new MetroWindow
+            {
+                Title = "Запрос SSHF",
+                SizeToContent = SizeToContent.Manual,
+                ResizeMode = ResizeMode.NoResize,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                WindowStyle = WindowStyle.None,
+                Topmost = true,
+                AllowsTransparency = true,
+                WindowTransitionsEnabled = false,
+
+                Height = 200,
+                Width = 300,
+
+                TitleBarHeight = 32,
+                TitleCharacterCasing = System.Windows.Controls.CharacterCasing.Normal,
+                TitleForeground = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R = 230, G= 230, B = 230, A = 255}),
+                WindowTitleBrush = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R = 42, G = 42, B = 42, A = 255 }),
+                NonActiveWindowTitleBrush = null, 
+                              
+                BorderThickness = new Thickness(2),
+                BorderBrush = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R =215, G= 186, B = 125 , A = 72}),
+                NonActiveBorderBrush = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R = 197, G= 197, B = 197 , A = 72}),
+
+                Background = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R =42, G = 42, B = 42, A = 255 }),
+
+                GlowBrush = null,
+                NonActiveGlowBrush = null,
+
+                Icon = new IconBitmapDecoder(Resource.AppIcon, BitmapCreateOptions.DelayCreation, BitmapCacheOption.Default).Frames[0]
+            };
+            DataTemplate template = new DataTemplate();
+            FrameworkElementFactory factory = new FrameworkElementFactory(typeof(TextBlock));
+
+            factory.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding());
+            factory.SetValue(TextBlock.FontSizeProperty, 18.0);
+            factory.SetValue(TextBlock.FontFamilyProperty, new FontFamily("Segoe UI")); 
+            factory.SetValue(TextBlock.FontWeightProperty, FontWeights.SemiBold); 
+            factory.SetValue(TextBlock.MarginProperty, new Thickness(10, 0, 0, 0));
+            factory.SetValue(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center); 
+
+            template.VisualTree = factory;
+            dialogWindow.TitleTemplate = template;
+            
+            Grid grid = new Grid { Margin = new Thickness(5,0,5,0) }; 
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); 
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); 
+
+            grid.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
+            grid.VerticalAlignment = VerticalAlignment.Center;
+            
+            TextBlock messageTextBlock = new TextBlock
+            {
+                Text = "Закрыть приложение?",
+                HorizontalAlignment =  System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(0, 0, 0, 30),
+                FontSize = 24,
+                FontFamily = new FontFamily("Segoe UI") 
+            };
+            messageTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color() { R = 240, G = 240, B = 240, A = 240 });
+            Grid.SetRow(messageTextBlock, 0);
+            grid.Children.Add(messageTextBlock);
+            StackPanel buttonPanel = new StackPanel
+            {
+                Orientation = System.Windows.Controls.Orientation.Horizontal,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+            Grid.SetRow(buttonPanel, 1);
+            _ = grid.Children.Add(buttonPanel);
+            System.Windows.Controls.Button yesButton = new System.Windows.Controls.Button
+            {
+                Content = "Да",
+                Width = 105,
+                Height = 40,
+                Margin = new Thickness(5,5,18,5),
+                IsTabStop = true,
+                TabIndex = 1    
+            };
+            yesButton.Click += (_, __) =>
+            {
+                System.Windows.Application.Current.Shutdown();
+                dialogWindow.Close();
+                _blockRepeatInvokeMessageBox = false;
+            };
+            _ = buttonPanel.Children.Add(yesButton);
+            System.Windows.Controls.Button noButton = new System.Windows.Controls.Button
+            {
+                Content = "Нет",
+                Width = 105,
+                Height = 40,
+                Margin = new Thickness(18,5,5,5),
+                IsCancel = true,
+                IsDefault = true,
+                IsTabStop = true,
+                TabIndex = 0
+            };
+            noButton.Click += (_, __) =>
+            {
+                dialogWindow.Close();
+                _blockRepeatInvokeMessageBox = false;
+            };
+            _ = buttonPanel.Children.Add(noButton);
+
+            dialogWindow.Content = grid;
+
+            foreach(string uriResource in Resource.StandartUriPack) dialogWindow.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(uriResource) });
+
+            dialogWindow.Loaded += (_, __) =>
+            {
+                WindowButtonCommands windowButtonCommands = dialogWindow.FindChild<WindowButtonCommands>();
+                Style darkButtonStyle = (Style)dialogWindow.Resources["CustomDarkMetroWindowButtonStyle"];
+                windowButtonCommands.LightCloseButtonStyle = darkButtonStyle;
+                windowButtonCommands.DarkCloseButtonStyle = darkButtonStyle;
+
+               _ = noButton.Focus();
+            };
+
+            NativeHelper.SetStyleWindow(dialogWindow);
+
+            return dialogWindow;
+        }
+        private static partial class NativeHelper
+        {
+            internal static void SetStyleWindow(Window window,bool ensureUseStyle = false)
+            {
+                if(ensureUseStyle is true) window.Hide();
+                nint hWnd = new WindowInteropHelper(window).EnsureHandle();
+                _ = SetWindowLongPtrW(hWnd, GWL_EXSTYLE, new nint(GetWindowLongPtrW(hWnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW ));
+                if(ensureUseStyle is true) window.Show();
+            }
+            private const int GWL_EXSTYLE = -20;
+            private const long WS_EX_TOOLWINDOW = 0x00000080; 
+            private const long WS_EX_NOACTIVATE = 0x08000000L;
+            [LibraryImport("user32")]
+            [return: MarshalAs(UnmanagedType.SysInt)]
+            internal static partial nint SetWindowLongPtrW(nint hWnd, int nIndex, nint dwNewLong);
+            [LibraryImport("user32")]
+            [return: MarshalAs(UnmanagedType.SysInt)]
+            internal static partial nint GetWindowLongPtrW(nint hWnd, int nIndex);
         }
     }
 }
