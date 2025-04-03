@@ -28,13 +28,6 @@
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
-	
-	<ItemGroup>
-	  <Compile Remove="Windows\NotificationWindow\**" />
-	  <EmbeddedResource Remove="Windows\NotificationWindow\**" />
-	  <None Remove="Windows\NotificationWindow\**" />
-	  <Page Remove="Windows\NotificationWindow\**" />
-	</ItemGroup>
 			
 	<ItemGroup Label="Nuget Dependencies">
 		<PackageReference Include="MahApps.Metro" Version="2.4.10" />
