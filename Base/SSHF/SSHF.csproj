@@ -35,11 +35,7 @@
 	  <None Remove="Windows\NotificationWindow\**" />
 	  <Page Remove="Windows\NotificationWindow\**" />
 	</ItemGroup>
-	
-	<ItemGroup>
-	  <Compile Remove="DesktopNotification.cs" />
-	</ItemGroup>
-		
+			
 	<ItemGroup Label="Nuget Dependencies">
 		<PackageReference Include="MahApps.Metro" Version="2.4.10" />
 		<PackageReference Include="MahApps.Metro.IconPacks" Version="5.1.0" />
