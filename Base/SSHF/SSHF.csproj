@@ -53,9 +53,9 @@
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
-	
+		
 	<ItemGroup Label="Other Dependencies">
-	    <ProjectReference Include="..\BacgroundCallbackSharp\BackgroundCallbackSharp.csproj" />
+	  <ProjectReference Include="..\BackgroundCallbackSharp\BackgroundCallbackSharp.csproj" />
 	</ItemGroup>
 	
 	<ItemGroup Label="Included ressources">
@@ -76,7 +76,8 @@
 	  <None Update="Properties\Settings.settings">
 	    <Generator>SettingsSingleFileGenerator</Generator>
 	    <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-	  </None>
+	  </None>	
 	</ItemGroup>
-	
+
+
 </Project>

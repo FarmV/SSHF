@@ -6,12 +6,6 @@ using System.Threading;
 using System.Windows.Controls.Ribbon;
 using System.Windows.Threading;
 
-using Windows.Win32;
-using Windows.Win32.Graphics.DirectDraw;
-
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-
-using HRESULT = Windows.Win32.Foundation.HRESULT;
 namespace FVH.SSHF.Infrastructure.Win32
 {
     internal partial class Win32ExclusiveModeChecker : IDisposable
@@ -21,13 +15,13 @@ namespace FVH.SSHF.Infrastructure.Win32
         private const int DD_OK = 0;
         private const int DDERR_EXCLUSIVEMODEALREADYSET = unchecked((int)0x88760245);
         private bool _isDispose = false;
-        private readonly IDirectDraw7 _idd7;
+        private readonly Windows.Win32.Graphics.DirectDraw.IDirectDraw7 _idd7;
         internal Win32ExclusiveModeChecker()
         {
             if(Type.GetTypeFromCLSID(CLSID_DirectDraw7) is not Type directDraw7) throw new ArgumentNullException(nameof(directDraw7));
-            if(Activator.CreateInstance(directDraw7) is not IDirectDraw7 iDirectDraw7) throw new ArgumentNullException(nameof(iDirectDraw7));
+            if(Activator.CreateInstance(directDraw7) is not Windows.Win32.Graphics.DirectDraw.IDirectDraw7 iDirectDraw7) throw new ArgumentNullException(nameof(iDirectDraw7));
             Guid emptyInitialize = Guid.Empty;
-            HRESULT resultInitialize = iDirectDraw7.Initialize(ref emptyInitialize);
+            Windows.Win32.Foundation.HRESULT resultInitialize = Windows.Win32.Graphics_DirectDraw_IDirectDraw7_Extensions.Initialize(iDirectDraw7, ref emptyInitialize);
             if(resultInitialize != DD_OK) Marshal.ThrowExceptionForHR(resultInitialize);
 
             _idd7 = iDirectDraw7;
@@ -43,15 +37,6 @@ namespace FVH.SSHF.Infrastructure.Win32
         internal bool CheckExclusiveMode(Dispatcher staDispatcher) => staDispatcher.Invoke(() =>
         {
             bool isExclusiveMode = _idd7.TestCooperativeLevel() == DDERR_EXCLUSIVEMODEALREADYSET;
-
-//            if(isExclusiveMode is true)
-//            {
-//#if DEBUG
-//                Debug.WriteLine($"{DateTime.Now.ToString("mm:ss.ffffff")}========D3DKMTCheckExclusiveOwnership=>{D3DKMTCheckExclusiveOwnership()}====");                
-//                Debug.WriteLine($"{DateTime.Now.ToString("mm:ss.ffffff")}");
-//                App.Stopwatch.Restart();
-//#endif
-//            }
             return isExclusiveMode;
         });
         [DllImport("Kernel32")]
