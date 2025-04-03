@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
+    <RootNamespace>FVH.Background.Input</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <UseWPF>True</UseWPF>
+	<AllowUnsafeBlocks>True</AllowUnsafeBlocks>	  
+	  
+	<Version>0.3.0</Version>
+	<Copyright>https://github.com/FarmV</Copyright>
+	<Product>Background input LL hook</Product>
+	<Description>Handler background input LL hook</Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+  </PropertyGroup>
+	
+  <ItemGroup>
+	  <InternalsVisibleTo Include="SSHF" />
+  </ItemGroup>
+
+</Project>
