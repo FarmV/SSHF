@@ -155,14 +155,37 @@ namespace FVH.SSHF.Infrastructure
                                     if(_window.Topmost != true) _window.Topmost = true;
                                 });
 #endif
-                                if(model.VisibleCondition.CurrentValue is Visibility.Hidden) model.ShowWindow.Execute(R3.Unit.Default);
-                               
+                                System.Windows.Media.Matrix transform = default;
+                                System.Windows.Media.Matrix fromDevice = default;
+                                double logicalWidth  = default;
+                                double logicalHeight  = default;
                                 _window.Dispatcher.Invoke(() =>
                                 {
-                                    SetWindowPos(_handleWindow, HWND_TOP, Convert.ToInt32(currentPointCursor.X /*- OFFSET_CURSOR*/ - _window.Width / 2 ), Convert.ToInt32(currentPointCursor.Y /*- OFFSET_CURSOR*/ - _window.Height / 2),
-                                    IGNORE_SIZE_WINDOW, IGNORE_SIZE_WINDOW, SWP_NOSIZE | NOT_MESSAGE_WM_WINDOWPOSCHANGING);
+                                    PresentationSource source = PresentationSource.FromVisual(_window);
+                                    transform = source.CompositionTarget.TransformToDevice;
+                                    fromDevice = PresentationSource.FromVisual(_window).CompositionTarget.TransformFromDevice;
+
+                                    logicalWidth = _window.ActualWidth;
+                                    logicalHeight = _window.ActualHeight;
                                 });
-                            }                        
+
+                                Point logical = fromDevice.Transform(currentPointCursor);
+                                Point logicalCursorPos = transform.Transform(currentPointCursor);
+
+                                Vector physicalSize = transform.Transform(new Vector(logicalWidth, logicalHeight));
+
+                                double physicalWidth = physicalSize.X;
+                                double physicalHeight = physicalSize.Y;
+
+                                int desiredX = Convert.ToInt32(logicalCursorPos.X - physicalWidth / 2);
+                                int desiredY = Convert.ToInt32(logicalCursorPos.Y - physicalHeight / 2);
+
+                                _window.Dispatcher.Invoke(() =>
+                                {
+                                    SetWindowPos(_handleWindow, HWND_TOP, desiredX, desiredY,
+                                    IGNORE_SIZE_WINDOW, IGNORE_SIZE_WINDOW, SWP_NOSIZE | NOT_MESSAGE_WM_WINDOWPOSCHANGING);
+                                });                             
+                            }
                         }
                     }
                     if(Win32TimePeriod.TimeEndPeriod(Win32TimePeriod.MinimumTimerResolution) is not Win32TimePeriod.TIMERR_NOERROR) throw new InvalidOperationException("Failed to change the timer range");
@@ -190,6 +213,8 @@ namespace FVH.SSHF.Infrastructure
                  UpdateWindowPositionRelativeToCursor();               
             }           
         }
+        [DllImport("User32")]
+        private static extern bool GetWindowRect(nint hwnd, out RECT LPRECT);
         [LibraryImport("User32")]
         [return: MarshalAs(UnmanagedType.I2)]
         private static partial short GetKeyState(int nVirtKey);
