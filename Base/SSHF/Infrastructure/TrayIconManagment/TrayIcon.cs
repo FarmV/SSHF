@@ -1,18 +1,12 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
 
-using ControlzEx.Theming;
+using FVH.SSHF.Infrastructure.TrayIconManagement;
 
 using MahApps.Metro.Controls;
 
@@ -24,6 +18,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
         private volatile bool _blockRepeatInvokeMessageBox = false;
         private readonly DPIIconHandler _dpiCorrector;
         private NotifyIcon _taskbarIcon;
+        private NotifyIcon? _old;
         public TrayIcon(Stream resourceIcon, int[]? sizesIcon = null)
         {
             _dpiCorrector = new DPIIconHandler(resourceIcon, sizesIcon);
@@ -53,14 +48,14 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
             if(_disposed is true) return;
             _dpiCorrector.Dispose();
             _taskbarIcon.Dispose();
+            _old?.Dispose();
             _disposed = true;
         }
         private void ActualSizeIconLogic(object? _, System.Drawing.Icon newSizeIcon)
         {
             _taskbarIcon.MouseDown -= TaskbarIconMouseDownEvent;
-            _taskbarIcon.Visible = false;
-            _taskbarIcon.Dispose();
-            Thread.Sleep(450); // NotifyIcon.Dispose() Возвращает управление раньше, чем фактически освободит ресурсы? нужно тестировать
+            _old = _taskbarIcon;
+            _old.Dispose();
             _taskbarIcon = new NotifyIcon
             {
                 Icon = newSizeIcon,
@@ -86,15 +81,15 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
 
                 TitleBarHeight = 32,
                 TitleCharacterCasing = System.Windows.Controls.CharacterCasing.Normal,
-                TitleForeground = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R = 230, G= 230, B = 230, A = 255}),
-                WindowTitleBrush = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R = 42, G = 42, B = 42, A = 255 }),
+                TitleForeground = new SolidColorBrush(new Color(){ R = 230, G= 230, B = 230, A = 255}),
+                WindowTitleBrush = new SolidColorBrush(new Color(){ R = 42, G = 42, B = 42, A = 255 }),
                 NonActiveWindowTitleBrush = null,
 
                 BorderThickness = new Thickness(2),
-                BorderBrush = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R =215, G= 186, B = 125 , A = 72}),
-                NonActiveBorderBrush = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R = 197, G= 197, B = 197 , A = 72}),
+                BorderBrush = new SolidColorBrush(new Color(){ R =215, G= 186, B = 125 , A = 72}),
+                NonActiveBorderBrush = new SolidColorBrush(new Color(){ R = 197, G= 197, B = 197 , A = 72}),
 
-                Background = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R =42, G = 42, B = 42, A = 255 }),
+                Background = new SolidColorBrush(new Color(){ R =42, G = 42, B = 42, A = 255 }),
 
                 GlowBrush = null,
                 NonActiveGlowBrush = null,
@@ -109,8 +104,8 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
             factory.SetValue(TextBlock.FontSizeProperty, 18.0);
             factory.SetValue(TextBlock.FontFamilyProperty, new FontFamily("Segoe UI"));
             factory.SetValue(TextBlock.FontWeightProperty, FontWeights.SemiBold);
-            factory.SetValue(TextBlock.MarginProperty, new Thickness(10, 0, 0, 0));
-            factory.SetValue(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center);
+            factory.SetValue(FrameworkElement.MarginProperty, new Thickness(10, 0, 0, 0));
+            factory.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
 
             template.VisualTree = factory;
             dialogWindow.TitleTemplate = template;
@@ -131,7 +126,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
                 FontSize = 24,
                 FontFamily = new FontFamily("Segoe UI")
             };
-            messageTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color() { R = 240, G = 240, B = 240, A = 240 });
+            messageTextBlock.Foreground = new SolidColorBrush(new Color() { R = 240, G = 240, B = 240, A = 240 });
             Grid.SetRow(messageTextBlock, 0);
             _ = grid.Children.Add(messageTextBlock);
             StackPanel buttonPanel = new StackPanel
