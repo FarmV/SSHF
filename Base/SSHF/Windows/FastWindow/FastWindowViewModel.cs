@@ -20,7 +20,6 @@ namespace FVH.SSHF.FastWindowArea
         private readonly WPFDpiCorrector _dpiCorrector;
         private readonly WPFDropImageFile _setImage;
         private readonly BindableReactiveProperty<ImageSource?> _imageBackground = new BindableReactiveProperty<ImageSource?>();
-
         private CancellationTokenSource _updateWindowCancellationToken = new CancellationTokenSource();
         private readonly BindableReactiveProperty<bool> _blockRefresh = new BindableReactiveProperty<bool>();
         private bool _isCancellingUpdate = false;
@@ -47,7 +46,7 @@ namespace FVH.SSHF.FastWindowArea
             {
                 if(BlockRefresh.CurrentValue is true) return;
                 await WindowUpdate();
-            }, AwaitOperation.Parallel);
+            }, AwaitOperation.Drop);
             StopWindowUpdater = new R3.ReactiveCommand(executeAsync: async (_, _) => await StopUpdateWindow(), AwaitOperation.Drop);
             SetNewImage = new R3.ReactiveCommand(executeAsync: async (_, _) => await SetNewBackgroundImage(), AwaitOperation.Drop);
             SwitchBlockRefreshWindow = new ReactiveCommand((_) => SwitchBlockRefresh());
@@ -64,6 +63,8 @@ namespace FVH.SSHF.FastWindowArea
                 DropWindowImage(data);   
             });                      
             MsScreenClipInvoke = new ReactiveCommand(executeAsync: async (_, _) => await InvokeMsScreenClip(), AwaitOperation.Drop);
+
+            _ = dpiCorrector.ChangeDpiCurrentWindow.Subscribe((DpiScale dpiScale) => SetNewImageAndWindowSizeDPI(ref dpiScale));
         }
         public R3.ReactiveCommand RefreshWindowInvoke { get; private init; }
         public R3.ReactiveCommand StopWindowUpdater { get; private init; }
@@ -128,10 +129,19 @@ namespace FVH.SSHF.FastWindowArea
             _updateWindowCancellationToken = new CancellationTokenSource();
             _isCancellingUpdate = false;          
         }
+        private void SetNewImageAndWindowSizeDPI(ref readonly DpiScale dpiScale)
+        {
+            if(_imageBackground.CurrentValue == default) return;
+            double height = _imageBackground.Value!.Height / dpiScale.DpiScaleY;
+            double width = _imageBackground.Value!.Width / dpiScale.DpiScaleX;
+            _imageBackground.ForceNotify();
+            _height.Value = height;
+            _width.Value = width;
+        }
         private async Task SetNewBackgroundImage()
         {
             if(await _imageProvider.GetImageFromClipboard() is not ImageSource image) return;
-            DpiSacaleMonitor dpi = _dpiCorrector.GetCurrentDPI();
+            DpiScale dpi = _dpiCorrector.GetCurrentDPI();
 
             double height = image.Height / dpi.DpiScaleY;
             double width = image.Width / dpi.DpiScaleX;
@@ -166,7 +176,6 @@ namespace FVH.SSHF.FastWindowArea
         {
            if(WindowPositionUpdater.IsUpdateWindow is true) await StopUpdateWindow();
            MsScreenClip.Invoke();
-        //   Thread.Sleep(200); // Чтобы окно оставалось в скриншоте, но убралось, не мешало композиции
            HideWindow.Execute(Unit.Default);
         }      
     }

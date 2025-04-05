@@ -21,7 +21,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
     internal partial class TrayIcon : IDisposable
     {
         private bool _disposed;
-        private bool _blockRepeatInvokeMessageBox = false;
+        private volatile bool _blockRepeatInvokeMessageBox = false;
         private readonly DPIIconHandler _dpiCorrector;
         private NotifyIcon _taskbarIcon;
         public TrayIcon(Stream resourceIcon, int[]? sizesIcon = null)
@@ -34,16 +34,19 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
             };
             _dpiCorrector.ActualSizeIcon += ActualSizeIconLogic;
             _taskbarIcon.MouseDown += TaskbarIconMouseDownEvent;
-        }       
-        private void TaskbarIconMouseDownEvent(object? sender, MouseEventArgs e)
+        }
+        private void TaskbarIconMouseDownEvent(object? sender, MouseEventArgs e) // суда может поасть поток DPI Handler
         {
-            if(_blockRepeatInvokeMessageBox is true) return;
-            _blockRepeatInvokeMessageBox = true;
-            MetroWindow dialogWindow = CreateDialogExit();
-            dialogWindow.Closed += (_, __) => _blockRepeatInvokeMessageBox = false;
-       
-            dialogWindow.Show();
-            _ = dialogWindow.Activate();        
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                if(_blockRepeatInvokeMessageBox is true) return;
+                _blockRepeatInvokeMessageBox = true;
+                MetroWindow dialogWindow = CreateDialogExit();
+                dialogWindow.Closed += (_, __) => _blockRepeatInvokeMessageBox = false;
+
+                dialogWindow.Show();
+                _ = dialogWindow.Activate();
+            });
         }
         public void Dispose()
         {
@@ -57,7 +60,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
             _taskbarIcon.MouseDown -= TaskbarIconMouseDownEvent;
             _taskbarIcon.Visible = false;
             _taskbarIcon.Dispose();
-            Thread.Sleep(450); // NotifyIcon.Dispose() Возвращает управление раньше, чем фактически освободит ресурсы.
+            Thread.Sleep(450); // NotifyIcon.Dispose() Возвращает управление раньше, чем фактически освободит ресурсы? нужно тестировать
             _taskbarIcon = new NotifyIcon
             {
                 Icon = newSizeIcon,
@@ -66,8 +69,8 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
             _taskbarIcon.MouseDown += TaskbarIconMouseDownEvent;
         }
         private MetroWindow CreateDialogExit()
-        {          
-            MetroWindow dialogWindow = new MetroWindow
+        {
+            MetroWindow dialogWindow = new MetroWindow()
             {
                 Title = "Запрос SSHF",
                 SizeToContent = SizeToContent.Manual,
@@ -85,8 +88,8 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
                 TitleCharacterCasing = System.Windows.Controls.CharacterCasing.Normal,
                 TitleForeground = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R = 230, G= 230, B = 230, A = 255}),
                 WindowTitleBrush = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R = 42, G = 42, B = 42, A = 255 }),
-                NonActiveWindowTitleBrush = null, 
-                              
+                NonActiveWindowTitleBrush = null,
+
                 BorderThickness = new Thickness(2),
                 BorderBrush = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R =215, G= 186, B = 125 , A = 72}),
                 NonActiveBorderBrush = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color(){ R = 197, G= 197, B = 197 , A = 72}),
@@ -98,26 +101,27 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
 
                 Icon = new IconBitmapDecoder(Resource.AppIcon, BitmapCreateOptions.DelayCreation, BitmapCacheOption.Default).Frames[0]
             };
+
             DataTemplate template = new DataTemplate();
             FrameworkElementFactory factory = new FrameworkElementFactory(typeof(TextBlock));
 
             factory.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding());
             factory.SetValue(TextBlock.FontSizeProperty, 18.0);
-            factory.SetValue(TextBlock.FontFamilyProperty, new FontFamily("Segoe UI")); 
-            factory.SetValue(TextBlock.FontWeightProperty, FontWeights.SemiBold); 
+            factory.SetValue(TextBlock.FontFamilyProperty, new FontFamily("Segoe UI"));
+            factory.SetValue(TextBlock.FontWeightProperty, FontWeights.SemiBold);
             factory.SetValue(TextBlock.MarginProperty, new Thickness(10, 0, 0, 0));
-            factory.SetValue(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center); 
+            factory.SetValue(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center);
 
             template.VisualTree = factory;
             dialogWindow.TitleTemplate = template;
-            
-            Grid grid = new Grid { Margin = new Thickness(5,0,5,0) }; 
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); 
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); 
+
+            Grid grid = new Grid { Margin = new Thickness(5,0,5,0) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
             grid.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
             grid.VerticalAlignment = VerticalAlignment.Center;
-            
+
             TextBlock messageTextBlock = new TextBlock
             {
                 Text = "Закрыть приложение?",
@@ -125,11 +129,11 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
                 VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, 0, 0, 30),
                 FontSize = 24,
-                FontFamily = new FontFamily("Segoe UI") 
+                FontFamily = new FontFamily("Segoe UI")
             };
             messageTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(new System.Windows.Media.Color() { R = 240, G = 240, B = 240, A = 240 });
             Grid.SetRow(messageTextBlock, 0);
-            grid.Children.Add(messageTextBlock);
+            _ = grid.Children.Add(messageTextBlock);
             StackPanel buttonPanel = new StackPanel
             {
                 Orientation = System.Windows.Controls.Orientation.Horizontal,
@@ -145,7 +149,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
                 Height = 40,
                 Margin = new Thickness(5,5,18,5),
                 IsTabStop = true,
-                TabIndex = 1    
+                TabIndex = 1
             };
             yesButton.Click += (_, __) =>
             {
@@ -183,31 +187,11 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
                 windowButtonCommands.LightCloseButtonStyle = darkButtonStyle;
                 windowButtonCommands.DarkCloseButtonStyle = darkButtonStyle;
 
-               _ = noButton.Focus();
+                _ = noButton.Focus();
             };
 
-            NativeHelper.SetStyleWindow(dialogWindow);
 
             return dialogWindow;
-        }
-        private static partial class NativeHelper
-        {
-            internal static void SetStyleWindow(Window window,bool ensureUseStyle = false)
-            {
-                if(ensureUseStyle is true) window.Hide();
-                nint hWnd = new WindowInteropHelper(window).EnsureHandle();
-                _ = SetWindowLongPtrW(hWnd, GWL_EXSTYLE, new nint(GetWindowLongPtrW(hWnd, GWL_EXSTYLE) | WS_EX_TOOLWINDOW ));
-                if(ensureUseStyle is true) window.Show();
-            }
-            private const int GWL_EXSTYLE = -20;
-            private const long WS_EX_TOOLWINDOW = 0x00000080; 
-            private const long WS_EX_NOACTIVATE = 0x08000000L;
-            [LibraryImport("user32")]
-            [return: MarshalAs(UnmanagedType.SysInt)]
-            internal static partial nint SetWindowLongPtrW(nint hWnd, int nIndex, nint dwNewLong);
-            [LibraryImport("user32")]
-            [return: MarshalAs(UnmanagedType.SysInt)]
-            internal static partial nint GetWindowLongPtrW(nint hWnd, int nIndex);
         }
     }
 }
