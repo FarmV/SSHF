@@ -47,7 +47,7 @@ namespace FVH.SSHF.FastWindowArea
             {
                 if(BlockRefresh.CurrentValue is true) return;
                 await WindowUpdate();
-            }, AwaitOperation.Parallel);
+            }, AwaitOperation.Drop);
             StopWindowUpdater = new R3.ReactiveCommand(executeAsync: async (_, _) => await StopUpdateWindow(), AwaitOperation.Drop);
             SetNewImage = new R3.ReactiveCommand(executeAsync: async (_, _) => await SetNewBackgroundImage(), AwaitOperation.Drop);
             SwitchBlockRefreshWindow = new ReactiveCommand((_) => SwitchBlockRefresh());
@@ -64,6 +64,11 @@ namespace FVH.SSHF.FastWindowArea
                 DropWindowImage(data);   
             });                      
             MsScreenClipInvoke = new ReactiveCommand(executeAsync: async (_, _) => await InvokeMsScreenClip(), AwaitOperation.Drop);
+
+            _ = dpiCorrector.ChangeDpiCurrentWindow.Subscribe((DpiScale dpiScale) =>
+            {
+
+            });
         }
         public R3.ReactiveCommand RefreshWindowInvoke { get; private init; }
         public R3.ReactiveCommand StopWindowUpdater { get; private init; }
