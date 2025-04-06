@@ -30,7 +30,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
             _dpiCorrector.ActualSizeIcon += ActualSizeIconLogic;
             _taskbarIcon.MouseDown += TaskbarIconMouseDownEvent;
         }
-        private void TaskbarIconMouseDownEvent(object? sender, MouseEventArgs e) // суда может поасть поток DPI Handler
+        private void TaskbarIconMouseDownEvent(object? sender, MouseEventArgs e) // суда может зайти поток DPI Handler
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
