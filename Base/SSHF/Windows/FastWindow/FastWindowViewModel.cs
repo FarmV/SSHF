@@ -129,7 +129,7 @@ namespace FVH.SSHF.FastWindowArea
             _updateWindowCancellationToken = new CancellationTokenSource();
             _isCancellingUpdate = false;          
         }
-        private void SetNewImageAndWindowSizeDPI(ref readonly DpiScale dpiScale)
+        private void SetNewImageAndWindowSizeDPI(ref readonly DpiScale dpiScale) //todo обдумать нужно ли и как трансформировать
         {
             if(_imageBackground.CurrentValue == default) return;
             double height = _imageBackground.Value!.Height / dpiScale.DpiScaleY;
