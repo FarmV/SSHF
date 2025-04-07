@@ -1,19 +1,18 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Resources;
 using System.Windows.Threading;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
+
+using FVH.SSHF.Infrastructure.Win32;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using R3;
-
-using FVH.SSHF.Infrastructure.Win32;
-using FVH.SSHF.FastWindowArea;
 
 namespace FVH.SSHF
 {
@@ -190,5 +189,44 @@ namespace FVH.SSHF
             //AppHelper.DebugExceptionFormat(ref message, new StackTrace());
             //TimeoutException Test = new TimeoutException(message); FormatEx
         }
+#if DEBUG
+        [Conditional("DEBUG")]
+        private static void GetMessageNTSTATUSEx(uint ntStatusValue, ref string? messageEx)
+        {
+            const string ModuleNameTableErrorCodes = "ntdll";
+            nint handle = GetModuleHandleW(ModuleNameTableErrorCodes);
+
+            _ = FormatMessageW(
+                FORMAT_MESSAGE_OPTIONS.FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                 FORMAT_MESSAGE_OPTIONS.FORMAT_MESSAGE_FROM_HMODULE |
+                  FORMAT_MESSAGE_OPTIONS.FORMAT_MESSAGE_IGNORE_INSERTS,
+                   handle,
+                    ntStatusValue,
+                     0 /*Язык по умолчанию*/,
+                       out nint lpBuffer,
+                       0 /*Минимальный размер(не используется с FORMAT_MESSAGE_ALLOCATE_BUFFER*//*,*/
+                        /* Аргументы для вставки (не используются)*/);
+
+            messageEx = Marshal.PtrToStringUni(lpBuffer)!;
+
+            _ = LocalFree(lpBuffer);
+        }
+        [LibraryImport("Kernel32")]
+        private static partial nint LocalFree(nint hMem);
+        [LibraryImport("Kernel32")]
+        private static partial nint GetModuleHandleW([MarshalAs(UnmanagedType.LPWStr)] string lpModuleName);
+        [LibraryImport("Kernel32")]
+        private static partial uint FormatMessageW(FORMAT_MESSAGE_OPTIONS dwFlags, nint lpSource, uint dwMessageId, uint dwLanguageId, out nint lpBuffer, uint nSize, [Optional] nint Arguments);
+        [Flags]
+        internal enum FORMAT_MESSAGE_OPTIONS : uint
+        {
+            FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100,
+            FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000,
+            FORMAT_MESSAGE_FROM_HMODULE = 0x00000800,
+            FORMAT_MESSAGE_FROM_STRING = 0x00000400,
+            FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000,
+            FORMAT_MESSAGE_IGNORE_INSERTS = 0x00000200,
+        }
     }
+#endif
 }   
