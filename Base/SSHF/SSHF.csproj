@@ -16,7 +16,7 @@
 		<DebugType>embedded</DebugType>
 		<ApplicationIcon>Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
 		
-		<Version>0.8.8</Version>		
+		<Version>0.8.9</Version>		
 		<Product>Screenshot Helper by FarmV</Product>
 		<Description>Screenshot Helper by FarmV</Description>
 		<Copyright>https://github.com/FarmV/SSHF</Copyright>
