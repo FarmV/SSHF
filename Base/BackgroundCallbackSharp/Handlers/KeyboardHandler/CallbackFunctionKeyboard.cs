@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Immutable;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -25,7 +26,7 @@ namespace FVH.Background.Input
         private readonly List<GroupFunctions> _globalCallbackList;
         private readonly LowLevelKeyboard _lowLevelHook;
         private readonly Dispatcher _toCallbackDispatcher;
-        private readonly HashSet<VKeys> _currentPressLogicKeys;
+        private HashSet<VKeys> _currentPressLogicKeys;
         internal event LowLevelKeyboard.KeyboardEventHandler? NotifyKeyboardEvent;
         public CallbackFunctionKeyboard(Dispatcher toCallbackDispatcher)
         {
@@ -138,6 +139,7 @@ namespace FVH.Background.Input
             if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.ForceClearState)
             {
                 _currentPressLogicKeys.Clear();
+                _currentPressLogicKeys = e.CopyToSynchronizePhysischeStateKeys!;
                 _activeCombination = Array.Empty<VKeys>();
                 _isCombinationActive = false;
 
@@ -215,15 +217,21 @@ namespace FVH.Background.Input
             private WinEventDelegate? _desktopSwitchDelegate;
             private KeyboardHookHandler? _lowLevelKeyboardHandler;
             private readonly HashSet<VKeys> KeyDownPhysicallyProcessed;
+            private readonly System.Windows.Threading.DispatcherTimer _timerSynchronize;
             internal delegate void KeyboardEventHandler(ref KeyboardEventArgs args);
             internal event KeyboardEventHandler? KeyAction;
-            internal LowLevelKeyboard() => KeyDownPhysicallyProcessed = new HashSet<VKeys>();
+            internal LowLevelKeyboard() 
+            {
+                KeyDownPhysicallyProcessed = new HashSet<VKeys>();
+                const int MillisecondsSynchronizeTime = 1500;
+                _timerSynchronize = new DispatcherTimer(TimeSpan.FromMilliseconds(MillisecondsSynchronizeTime), DispatcherPriority.Send, SynchronizeStateKeys, Dispatcher.FromThread(Thread.CurrentThread));
+            }
             ~LowLevelKeyboard() => Dispose();
             public void Dispose() 
             {
                 if(_isDispose is true) return;
-                UninstallHook();
                 _isDispose = true;
+                UninstallHook();
                 GC.SuppressFinalize(this);
             }       
             internal void InstallHook()
@@ -271,17 +279,23 @@ namespace FVH.Background.Input
                 _ = UnhookWinEvent(_hDesktopSwitchHook);
                 _hDesktopSwitchHook = nint.Zero;
             }
-            private nint LowLevelKeyboardProc(int nCode, WMEvent wParam, nint lParam)
+            private void SynchronizeStateKeys(object? sender, EventArgs e)
             {
+                _timerSynchronize.Stop();
+                if(KeyDownPhysicallyProcessed.Count is 0) return;
+                else { EnsureKeyboardStateSync(); }
+            }
+            private nint LowLevelKeyboardProc(int nCode, WMEvent wParam, nint lParam)
+            {                
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 nint KeyDown(ref readonly TagKBDLLHOOKSTRUCT keyboardStruct)
-                {   
+                {
+                    if(_timerSynchronize.IsEnabled is true) _timerSynchronize.Stop();
+                    _timerSynchronize.Start();
                     KeyboardEventArgs keyboardEventDown = new KeyboardEventArgs(KeyboardEventArgs.TypePhysicallyEvent.Down, isDownRepeat: KeyDownPhysicallyProcessed.Contains(keyboardStruct.VkCode))
                     {
                         Key = ref keyboardStruct.VkCode
                     };
-
-                    if(keyboardStruct.VkCode == VKeys.VK_DELETE) return (nint)1;
 
                     KeyAction!.Invoke(ref keyboardEventDown);
 
@@ -294,7 +308,6 @@ namespace FVH.Background.Input
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 nint KeyUP(ref readonly TagKBDLLHOOKSTRUCT keyboardStruct)
                 {
-                    if(keyboardStruct.VkCode == VKeys.VK_DELETE) return (nint)1;
                     KeyboardEventArgs keyboardEventUP = new KeyboardEventArgs(KeyboardEventArgs.TypePhysicallyEvent.Up)
                     {
                         Key = ref keyboardStruct.VkCode,
@@ -339,10 +352,11 @@ namespace FVH.Background.Input
                 }
                 if(isForce is true)
                 {
-                    VKeys vKeys = VKeys.VK_F24;
-                    KeyboardEventArgs keyboardEventDown = new KeyboardEventArgs(KeyboardEventArgs.TypePhysicallyEvent.ForceClearState, isDownRepeat:false)
+                    VKeys vKeys = 0;
+                    KeyboardEventArgs keyboardEventDown = new KeyboardEventArgs(KeyboardEventArgs.TypePhysicallyEvent.ForceClearState, isDownRepeat: false)
                     {
-                        Key = ref vKeys
+                        Key = ref vKeys,
+                        CopyToSynchronizePhysischeStateKeys = KeyDownPhysicallyProcessed.ToHashSet()
                     };
                     KeyAction!.Invoke(ref keyboardEventDown);
                 }
@@ -391,7 +405,7 @@ namespace FVH.Background.Input
         {
             Down = 1,
             Up = 2,
-            ForceClearState
+            ForceClearState = 3
         }
         internal KeyboardEventArgs(TypePhysicallyEvent ev, bool breakLogicKey = false, bool isDownRepeat = false)
         {
@@ -403,5 +417,6 @@ namespace FVH.Background.Input
         internal readonly TypePhysicallyEvent Type;
         internal readonly bool IsDownRepeat;
         internal bool BreakLogicKey;
+        internal HashSet<VKeys>? CopyToSynchronizePhysischeStateKeys;
    }
 }
