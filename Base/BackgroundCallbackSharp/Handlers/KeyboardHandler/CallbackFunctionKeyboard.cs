@@ -139,7 +139,7 @@ namespace FVH.Background.Input
             if(e.Type == KeyboardEventArgs.TypePhysicallyEvent.ForceClearState)
             {
                 _currentPressLogicKeys.Clear();
-                _currentPressLogicKeys = e.CopyToSynchronizePhysischeStateKeys!;
+                _currentPressLogicKeys = e.CopyToSynchronizePhysicsStateKeys!;
                 _activeCombination = Array.Empty<VKeys>();
                 _isCombinationActive = false;
 
@@ -344,7 +344,9 @@ namespace FVH.Background.Input
                 bool isForce = false;
                 foreach(VKeys vkCodeDown in KeyDownPhysicallyProcessed)
                 {
-                    if((GetAsyncKeyState((int)vkCodeDown) & 0x8000) is 0)
+                    const int KeyPressedMask = 0x8000;
+                    const int KeyNotPressed = 0;
+                    if((GetAsyncKeyState((int)vkCodeDown) & KeyPressedMask) is KeyNotPressed)
                     {
                         _ = KeyDownPhysicallyProcessed.Remove(vkCodeDown);
                         isForce = true;
@@ -356,7 +358,7 @@ namespace FVH.Background.Input
                     KeyboardEventArgs keyboardEventDown = new KeyboardEventArgs(KeyboardEventArgs.TypePhysicallyEvent.ForceClearState, isDownRepeat: false)
                     {
                         Key = ref vKeys,
-                        CopyToSynchronizePhysischeStateKeys = KeyDownPhysicallyProcessed.ToHashSet()
+                        CopyToSynchronizePhysicsStateKeys = KeyDownPhysicallyProcessed.ToHashSet()
                     };
                     KeyAction!.Invoke(ref keyboardEventDown);
                 }
@@ -417,6 +419,6 @@ namespace FVH.Background.Input
         internal readonly TypePhysicallyEvent Type;
         internal readonly bool IsDownRepeat;
         internal bool BreakLogicKey;
-        internal HashSet<VKeys>? CopyToSynchronizePhysischeStateKeys;
+        internal HashSet<VKeys>? CopyToSynchronizePhysicsStateKeys;
    }
 }
