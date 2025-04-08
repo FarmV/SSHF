@@ -22,7 +22,7 @@ namespace FVH.SSHF
     {
         private const int ErrorUnhandled = 100_001;
         private const int ErrorCreateMutex = 100_002;
-        private static int s_applicationExitCode = 0;
+        private volatile static int s_applicationExitCode = 0;
         private static Mutex? s_mutexSingleInstance;
         private readonly IHost _program;
         private readonly IServiceProvider _serviceProvider;
@@ -52,6 +52,7 @@ namespace FVH.SSHF
         private static void Main(string[]? args)
         {
             if(CreateMutexForSingleProgram() is false) { Environment.ExitCode = ErrorCreateMutex; return; }
+
             _ = Native.SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); // обязательно до new System.Windows.Application(); иначе контекст сбрасывается
 
             const int ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
@@ -67,7 +68,6 @@ namespace FVH.SSHF
             _ = application.Run();
             Environment.ExitCode = s_applicationExitCode;
         }
-
         private static void ApplicationStartupEvent(object sender, StartupEventArgs e)
         {          
             Dispatcher dispatcher = Dispatcher.FromThread(Thread.CurrentThread);
@@ -222,6 +222,6 @@ namespace FVH.SSHF
             FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000,
             FORMAT_MESSAGE_IGNORE_INSERTS = 0x00000200,
         }
-    }
 #endif
+    }
 }   
