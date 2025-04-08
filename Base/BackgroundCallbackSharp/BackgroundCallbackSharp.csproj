@@ -9,7 +9,7 @@
     <UseWPF>True</UseWPF>
 	<AllowUnsafeBlocks>True</AllowUnsafeBlocks>	  
 	  
-	<Version>0.3.0</Version>
+	<Version>0.3.1</Version>
 	<Copyright>https://github.com/FarmV</Copyright>
 	<Product>Background input LL hook</Product>
 	<Description>Handler background input LL hook</Description>
