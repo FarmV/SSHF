@@ -9,6 +9,7 @@ using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
 using R3;
 using System.Windows.Threading;
+using System.Windows.Media.Imaging;
 
 
 namespace FVH.SSHF.FastWindowArea
@@ -122,14 +123,16 @@ namespace FVH.SSHF.FastWindowArea
                 if(System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, timeout) is not true) 
                 {
                     string msEx = $"Safety timeout {nameof(StopUpdateWindow)}";
+#if DEBUG
                     AppHelper.DebugExceptionFormat(ref msEx, new System.Diagnostics.StackTrace());
+#endif
                     throw new TimeoutException(msEx);
                 }; 
             });
             _updateWindowCancellationToken = new CancellationTokenSource();
             _isCancellingUpdate = false;          
         }
-        private void SetNewImageAndWindowSizeDPI(ref readonly DpiScale dpiScale)
+        private void SetNewImageAndWindowSizeDPI(ref readonly DpiScale dpiScale) //todo обдумать нужно ли и как трансформировать
         {
             if(_imageBackground.CurrentValue == default) return;
             double height = _imageBackground.Value!.Height / dpiScale.DpiScaleY;
@@ -140,11 +143,11 @@ namespace FVH.SSHF.FastWindowArea
         }
         private async Task SetNewBackgroundImage()
         {
-            if(await _imageProvider.GetImageFromClipboard() is not ImageSource image) return;
+            if(await _imageProvider.GetImageFromClipboard() is not BitmapSource image) return;
             DpiScale dpi = _dpiCorrector.GetCurrentDPI();
 
-            double height = image.Height / dpi.DpiScaleY;
-            double width = image.Width / dpi.DpiScaleX;
+            double height = image.PixelHeight / dpi.DpiScaleY;
+            double width = image.PixelWidth / dpi.DpiScaleX;
             ImageSource currentImage = image;
 
             if(_height.Value != height) _height.Value = height;

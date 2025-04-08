@@ -30,8 +30,10 @@
     ShowMinButton        = "False"
     ShowCloseButton      = "False"
     ShowMaxRestoreButton = "False"
-    NonActiveBorderBrush = "Transparent"   
-    
+    NonActiveBorderBrush = "Transparent"  
+       
+    UseLayoutRounding    = "True"
+    SnapsToDevicePixels  = "True"
    >
 
     <Window.Resources>

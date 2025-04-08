@@ -13,10 +13,10 @@ using FVH.Background.Input.Infrastructure.Interfaces;
 
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
-using FVH.SSHF.Infrastructure.TrayIconManagement;
 using FVH.SSHF.Infrastructure.Input;
 using FVH.SSHF.Infrastructure.Win32;
 using FVH.SSHF.FastWindowArea;
+using FVH.SSHF.Infrastructure.TrayIconManagement;
 
 
 namespace FVH.SSHF

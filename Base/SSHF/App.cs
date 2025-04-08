@@ -1,41 +1,37 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Resources;
 using System.Windows.Threading;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
+
+using FVH.SSHF.Infrastructure.Win32;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using R3;
 
-using FVH.SSHF.Infrastructure.Win32;
-using FVH.SSHF.FastWindowArea;
+using Windows.ApplicationModel;
 
 namespace FVH.SSHF
 {
     internal partial class App
     {
-        private const string MutexNameSingleInstance = "FVH.SSHF.SingleProgramInstance";
-        private const int ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
-        internal const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = (nint)(-4);
         private const int ErrorUnhandled = 100_001;
         private const int ErrorCreateMutex = 100_002;
-        private static int s_applicationExitCode = 0;
+        private volatile static int s_applicationExitCode = 0;
         private static Mutex? s_mutexSingleInstance;
         private readonly IHost _program;
         private readonly IServiceProvider _serviceProvider;
-
+        internal const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = (nint)(-4);
         internal const string UiThreadName = "FVH Main Thread";
-
-        internal static bool DesignerMode = true;
+        internal volatile static bool DesignerMode = true;
 #if DEBUG
         internal static TraceSwitch Trace;        
         internal static App? GetDEBUG { get; private set; }
-
         internal static Stopwatch Stopwatch = new Stopwatch();
         static App() => Trace = new TraceSwitch("Debug", "Debugging only") { Level = TraceLevel.Off };
 #endif
@@ -54,14 +50,12 @@ namespace FVH.SSHF
 
         [STAThread]
         private static void Main(string[]? args)
-        {          
-            if(CreateMutexForSingleProgram() is false)
-            {
-                Environment.ExitCode = ErrorCreateMutex;
-                return;
-            }
+        {
+            if(CreateMutexForSingleProgram() is false) { Environment.ExitCode = ErrorCreateMutex; return; }
+
             _ = Native.SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); // обязательно до new System.Windows.Application(); иначе контекст сбрасывается
 
+            const int ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
             _ = Native.SetPriorityClass(Native.GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
 
             Thread.CurrentThread.Name = UiThreadName;
@@ -74,7 +68,6 @@ namespace FVH.SSHF
             _ = application.Run();
             Environment.ExitCode = s_applicationExitCode;
         }
-
         private static void ApplicationStartupEvent(object sender, StartupEventArgs e)
         {          
             Dispatcher dispatcher = Dispatcher.FromThread(Thread.CurrentThread);
@@ -85,9 +78,9 @@ namespace FVH.SSHF
 
             _ = Start(e.Args).ContinueWith((Task task) => EmergencyAppTermination(task.Exception!), TaskContinuationOptions.OnlyOnFaulted);
         }
-
         private static async Task Start(string[]? args)
-        {       
+        {
+            DesignerMode = false;
             Thread uiThread = Thread.CurrentThread;
             async Task StartAsync()
             {                             
@@ -118,6 +111,7 @@ namespace FVH.SSHF
         }
         private static bool CreateMutexForSingleProgram()
         {
+            const string MutexNameSingleInstance = "FVH.SSHF.SingleProgramInstance";
             bool mutexWasCreated;
             try { s_mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out mutexWasCreated); }
             catch { return false; }
@@ -170,6 +164,7 @@ namespace FVH.SSHF
             else res = Win32MMCSS.StopTimeCriticalSectionUI();
             return res;
         }
+#if DEBUG
         [Conditional("DEBUG")]
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void DebugExceptionFormat(ref string messageEx, StackTrace stackTrace,
@@ -190,5 +185,43 @@ namespace FVH.SSHF
             //AppHelper.DebugExceptionFormat(ref message, new StackTrace());
             //TimeoutException Test = new TimeoutException(message); FormatEx
         }
+        [Conditional("DEBUG")]
+        private static void GetMessageNTSTATUSEx(uint ntStatusValue, ref string? messageEx)
+        {
+            const string ModuleNameTableErrorCodes = "ntdll";
+            nint handle = GetModuleHandleW(ModuleNameTableErrorCodes);
+
+            _ = FormatMessageW(
+                FORMAT_MESSAGE_OPTIONS.FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                 FORMAT_MESSAGE_OPTIONS.FORMAT_MESSAGE_FROM_HMODULE |
+                  FORMAT_MESSAGE_OPTIONS.FORMAT_MESSAGE_IGNORE_INSERTS,
+                   handle,
+                    ntStatusValue,
+                     0 /*Язык по умолчанию*/,
+                       out nint lpBuffer,
+                       0 /*Минимальный размер(не используется с FORMAT_MESSAGE_ALLOCATE_BUFFER*//*,*/
+                        /* Аргументы для вставки (не используются)*/);
+
+            messageEx = Marshal.PtrToStringUni(lpBuffer)!;
+
+            _ = LocalFree(lpBuffer);
+        }
+        [LibraryImport("Kernel32")]
+        private static partial nint LocalFree(nint hMem);
+        [LibraryImport("Kernel32")]
+        private static partial nint GetModuleHandleW([MarshalAs(UnmanagedType.LPWStr)] string lpModuleName);
+        [LibraryImport("Kernel32")]
+        private static partial uint FormatMessageW(FORMAT_MESSAGE_OPTIONS dwFlags, nint lpSource, uint dwMessageId, uint dwLanguageId, out nint lpBuffer, uint nSize, [Optional] nint Arguments);
+        [Flags]
+        internal enum FORMAT_MESSAGE_OPTIONS : uint
+        {
+            FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100,
+            FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000,
+            FORMAT_MESSAGE_FROM_HMODULE = 0x00000800,
+            FORMAT_MESSAGE_FROM_STRING = 0x00000400,
+            FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000,
+            FORMAT_MESSAGE_IGNORE_INSERTS = 0x00000200,
+        }
+#endif
     }
 }   

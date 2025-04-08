@@ -16,7 +16,7 @@
 		<DebugType>embedded</DebugType>
 		<ApplicationIcon>Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
 		
-		<Version>0.8.7</Version>		
+		<Version>0.8.8</Version>		
 		<Product>Screenshot Helper by FarmV</Product>
 		<Description>Screenshot Helper by FarmV</Description>
 		<Copyright>https://github.com/FarmV/SSHF</Copyright>
@@ -41,7 +41,6 @@
 		<PackageReference Include="R3Extensions.WPF" Version="1.2.9" />
 		<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.162">
 		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
 		
