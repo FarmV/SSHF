@@ -131,13 +131,6 @@ namespace FVH.SSHF.Infrastructure.Win32
                     case HSHELL.WINDOWREPLACED:
                     break;
                     case HSHELL.WINDOWCREATED:
-                         var r13 =  SetWindowPos (lParam, 0 , 0, 0, 700, 700, 0x0002);
-                         
-                         uint treadID = GetWindowThreadProcessId(new HWND(lParam),out uint procID);
-                         Process pr = System.Diagnostics.Process.GetProcessById((int)procID);
-                         
-
-
 
                     break;
                     case HSHELL.WINDOWDESTROYED:
@@ -166,8 +159,6 @@ namespace FVH.SSHF.Infrastructure.Win32
                     break;
                     case HSHELL.APPCOMMAND_DELETE:
                          CheckAndSetStateExcusiveMode();
-
-                        var r =  SetWindowPos (7147458, 0 , 0, 0, 700, 700, 0x0002);
                     break;
                     case HSHELL.APPCOMMAND_DWM_FLIP3D:
                          CheckAndSetStateExcusiveMode();
@@ -179,57 +170,6 @@ namespace FVH.SSHF.Infrastructure.Win32
                     break;
                 }
             }
-
-
-            //if(isWM_SHELLHOOKMESSAGE && wParam == (nint)HSHELL.REDRAW)
-            //{
-            //    if(ExcusiveMode.Value == true)
-            //    {
-            //        CheckAndSetStateExcusiveMode();   // todo логирование?         
-            //    }
-            //}
-//            else if(isWM_SHELLHOOKMESSAGE && wParam == (nint)HSHELL.RUDEAPPACTIVATED && lParam != 0)
-//            {
-//#if DEBUG
-//                #region DEBUG
-//                if(App.Trace.Level is not TraceLevel.Off)
-//                {
-//                    string wParamHSHELL;
-//                    void DebugPrint(TraceLevel level) =>
-//                    Debug.WriteLine
-//                    (
-//                       message: $"{nameof(WM_SHELLHOOKMESSAGE).Trim('_')}, TraceLevel - {level} => {nameof(wParam)} = {wParamHSHELL}, {nameof(lParam)} = {lParam}",
-//                       category: $"{typeof(Win32ObserverExclusiveMode)}.{nameof(ShellHookMessageWorker)}"
-//                    );
-//                    if(Enum.TryParse(wParam.ToString(), out HSHELL result))
-//                    {
-//                        wParamHSHELL = result.ToString();
-//                        if(Enum.IsDefined(result) is false) wParamHSHELL = $"{wParam} - Unknown";
-//                    }
-//                    else
-//                    {
-//                        wParamHSHELL = $"{wParam} - Unknown";
-//                        if(App.Trace.Level >= TraceLevel.Error) DebugPrint(TraceLevel.Error);
-//                    }
-//                    if(App.Trace.Level >= TraceLevel.Warning && wParamHSHELL.Contains("Unknown")) DebugPrint(TraceLevel.Warning);
-//                    if(App.Trace.Level >= TraceLevel.Info) DebugPrint(TraceLevel.Info);
-//                }
-//                #endregion
-//#endif          
-//                if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is false) Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread();
-//                CheckAndSetStateExcusiveMode();
-
-//            }
-//            else if(isWM_SHELLHOOKMESSAGE)
-//            {
-
-//            }
-
-            //var res = (uint)msg == WM_SHELLHOOKMESSAGE;
-            //Debug.Write($"msg is WM_SHELLHOOKMESSAGE = {res}");
-            //if(res is false) Debug.Write($" {(uint)msg}{Environment.NewLine}");
-            //else Debug.Write($" msg is number: {(HSHELL)wParam}{Environment.NewLine}");
-
             return hwnd;
         }
         [LibraryImport("user32")]
