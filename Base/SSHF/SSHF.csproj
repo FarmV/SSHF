@@ -16,10 +16,12 @@
 		<DebugType>embedded</DebugType>
 		<ApplicationIcon>Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
 		
-		<Version>0.8.9</Version>		
+		<Version>0.8.12</Version>		
 		<Product>Screenshot Helper by FarmV</Product>
 		<Description>Screenshot Helper by FarmV</Description>
 		<Copyright>https://github.com/FarmV/SSHF</Copyright>
+
+		<PublishProfile>DEV\PublishProfiles\Win64_SelfContained_SingleFile.pubxml</PublishProfile>
 	</PropertyGroup>
 	
 	<PropertyGroup Label="IDE Settings">		
@@ -27,21 +29,31 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<NoWarn>$(NoWarn);IDE0200</NoWarn>
+		<AppDesignerFolder>DEV</AppDesignerFolder>
 	</PropertyGroup>
+
+	<ItemGroup Label="IDE Settings logical directory structure 1 hide">
+		<None Update="NativeMethods.json"	   Visible="false" />
+		<None Update="NativeMethods.txt"	   Visible="false" />
+		<AdditionalFiles Update="app.manifest" Visible="false" />
+	</ItemGroup>
 	
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
-			
+	<ItemGroup Label="IDE Settings logical directory structure 2 add">
+		<None Include="NativeMethods.json"			   Link="DEV\CsWin32\NativeMethods.json"/>
+		<None Include="NativeMethods.txt"		       Link="DEV\CsWin32\NativeMethods.txt"/>		
+		<None Include="app.manifest"				   Link="DEV\app.manifest"/>
+		<None Include="Properties\launchSettings.json" Link="DEV\launchSettings.json"/>
+	</ItemGroup>
+					
 	<ItemGroup Label="Nuget Dependencies">
-		<PackageReference Include="MahApps.Metro" Version="2.4.10" />
-		<PackageReference Include="MahApps.Metro.IconPacks" Version="5.1.0" />
+		<PackageReference Include="MahApps.Metro"				 Version="2.4.10" />
+		<PackageReference Include="MahApps.Metro.IconPacks"		 Version="5.1.0" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4" />
-		<PackageReference Include="System.Drawing.Common" Version="9.0.4" />
-		<PackageReference Include="R3" Version="1.3.0" />
-		<PackageReference Include="R3Extensions.WPF" Version="1.3.0" />
-		<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.183">
-		  <PrivateAssets>all</PrivateAssets>
-		</PackageReference>
+		<PackageReference Include="System.Drawing.Common"		 Version="9.0.4" />
+		<PackageReference Include="R3"						     Version="1.3.0" />
+		<PackageReference Include="R3Extensions.WPF"			 Version="1.3.0" />
+		<PackageReference Include="Microsoft.Windows.CsWin32"	 Version="0.3.183" PrivateAssets="all"/>
 	</ItemGroup>
 		
 	<ItemGroup Label="Other Dependencies">
@@ -49,24 +61,7 @@
 	</ItemGroup>
 	
 	<ItemGroup Label="Included ressources">
-		<Resource Include="Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-		</Resource>
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <Compile Update="Properties\Settings.Designer.cs">
-	    <DesignTimeSharedInput>True</DesignTimeSharedInput>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>Settings.settings</DependentUpon>
-	  </Compile>
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <None Update="Properties\Settings.settings">
-	    <Generator>SettingsSingleFileGenerator</Generator>
-	    <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-	  </None>	
+		<Resource Include="Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico" CopyToOutputDirectory="Never"/>
 	</ItemGroup>
 	
 </Project>

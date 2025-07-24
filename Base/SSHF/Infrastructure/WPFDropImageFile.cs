@@ -44,7 +44,7 @@ namespace FVH.SSHF.Infrastructure
             {
                 ClearTmpFile();
             }), null, 300_000, Timeout.Infinite);
-            _clearTmpTimer.Dispose();
+            _clearTmpTimer.Dispose(); //to fixTimer
         }
         private void ClearTmpFile()
         {

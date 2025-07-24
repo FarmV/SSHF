@@ -17,15 +17,15 @@ namespace FVH.SSHF.Infrastructure
         private const string MahAppsStylesControls = @"pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml";
         private const string MahAppsStylesFonts = @"pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml";
         private const string MahAppsSSHSBaseAccentTheme = @"pack://application:,,,/MahApps.Metro;component/Styles/Themes/Dark.Mauve.xaml";
-        private const string OverridingStyles = @"pack://application:,,,/OverridingStyles.xaml";
+        private const string OverridingStyles = @"pack://application:,,,/Infrastructure/Resources/OverridingStyles.xaml";
 
-        internal static string[] StandartUriPack = new[]
-        {
+        internal static string[] StandardUriPack =
+        [
             MahAppsStylesControls,
             MahAppsStylesFonts,
             MahAppsSSHSBaseAccentTheme,
             OverridingStyles
-        };
+        ];
 
         internal static Uri AppIcon = GetResourceUriApp(IconPathResource);
         internal static Uri GetResourceUriApp(string resourcePath) => new Uri(string.Format("pack://application:,,,/{0};component/{1}", Assembly.GetExecutingAssembly().GetName().Name, resourcePath));
