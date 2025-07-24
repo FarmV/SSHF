@@ -173,7 +173,7 @@ namespace FVH.SSHF.Infrastructure.TrayIconManagement
 
             dialogWindow.Content = grid;
 
-            foreach(string uriResource in Resource.StandartUriPack) dialogWindow.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(uriResource) });
+            foreach(string uriResource in Resource.StandardUriPack) dialogWindow.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(uriResource) });
 
             dialogWindow.Loaded += (_, __) =>
             {

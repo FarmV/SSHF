@@ -362,4 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /.claudiaideconfig
-/Base/CONVENTIONS.txt
+
+**/Directory.Build.targets
+**/launchSettings.json
+!Win64_SelfContained_SingleFile.pubxml

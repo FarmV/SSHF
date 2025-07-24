@@ -16,7 +16,8 @@ namespace FVH.SSHF.Infrastructure
             if(IsEnableProcessHost() is true) return;
             ProcessStartInfo processStartInfo = new ProcessStartInfo
             {
-                FileName = UriScheme,
+                FileName = "explorer.exe",
+                Arguments = "ms-screenclip:",
                 UseShellExecute = true
             };
             System.Diagnostics.Process.Start(processStartInfo);

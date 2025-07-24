@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -8,13 +10,12 @@ using System.Windows;
 using System.Windows.Resources;
 using System.Windows.Threading;
 
-using FVH.SSHF.Infrastructure.Win32;
-
+using R3;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using R3;
 
-using Windows.ApplicationModel;
+using FVH.SSHF.Infrastructure.Win32;
+
 
 namespace FVH.SSHF
 {
@@ -22,6 +23,7 @@ namespace FVH.SSHF
     {
         private const int ErrorUnhandled = 100_001;
         private const int ErrorCreateMutex = 100_002;
+        private const int ErrorTimeoutBaseApp = 100_003;
         private volatile static int s_applicationExitCode = 0;
         private static Mutex? s_mutexSingleInstance;
         private readonly IHost _program;
@@ -48,11 +50,17 @@ namespace FVH.SSHF
 #endif
         internal static StreamResourceInfo GetResource(Uri uriResource) => System.Windows.Application.GetResourceStream(uriResource);
 
+        static partial void ExtensionStartLogic(string[]? args);
+
         [STAThread]
         private static void Main(string[]? args)
         {
-            if(CreateMutexForSingleProgram() is false) { Environment.ExitCode = ErrorCreateMutex; return; }
+            args ??= [];
 
+            ExtensionStartLogic(args);
+
+            if(CreateMutexForSingleProgram() is false) { Environment.ExitCode = ErrorCreateMutex; return; }
+           
             _ = Native.SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); // обязательно до new System.Windows.Application(); иначе контекст сбрасывается
 
             const int ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
@@ -124,19 +132,19 @@ namespace FVH.SSHF
             internal static partial nint SetThreadDpiAwarenessContext(nint dpiContext);
             [LibraryImport("user32", SetLastError = true)]
             internal static partial nint GetThreadDpiAwarenessContext();
-            [LibraryImport("Kernel32")]
+            [LibraryImport("kernel32")]
             internal static partial nint GetCurrentProcess();
-            [LibraryImport("Kernel32")]
+            [LibraryImport("kernel32")]
             internal static partial uint GetPriorityClass(nint hProcess);
-            [LibraryImport("Kernel32")]
+            [LibraryImport("kernel32")]
             [return: MarshalAs(UnmanagedType.Bool)]
             internal static partial bool SetPriorityClass(nint hProcess, uint dwPriorityClass);
-            [LibraryImport("Kernel32")]
+            [LibraryImport("kernel32")]
             internal static partial int GetThreadPriority(nint hThread);
-            [LibraryImport("Kernel32")]
+            [LibraryImport("kernel32")]
             internal static partial nint GetCurrentThread();
         }
-    }
+    } 
     internal static partial class AppHelper
     {
         private static readonly Win32MMCSS win32MMCSS;
