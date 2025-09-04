@@ -32,7 +32,7 @@ namespace FVH.SSHF
         internal const string UiThreadName = "FVH Main Thread";
         internal volatile static bool DesignerMode = true;
 #if DEBUG
-        internal static TraceSwitch Trace;        
+        internal static TraceSwitch Trace;
         internal static App? GetDEBUG { get; private set; }
         internal static Stopwatch Stopwatch = new Stopwatch();
         static App() => Trace = new TraceSwitch("Debug", "Debugging only") { Level = TraceLevel.Off };
@@ -60,7 +60,7 @@ namespace FVH.SSHF
             ExtensionStartLogic(args);
 
             if(CreateMutexForSingleProgram() is false) { Environment.ExitCode = ErrorCreateMutex; return; }
-           
+      
             _ = Native.SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); // обязательно до new System.Windows.Application(); иначе контекст сбрасывается
 
             const int ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
@@ -74,10 +74,13 @@ namespace FVH.SSHF
             application.Startup += ApplicationStartupEvent;
 
             _ = application.Run();
+
+            AppHelper.DisposeUnchecked();
+
             Environment.ExitCode = s_applicationExitCode;
         }
         private static void ApplicationStartupEvent(object sender, StartupEventArgs e)
-        {          
+        {
             Dispatcher dispatcher = Dispatcher.FromThread(Thread.CurrentThread);
             WpfProviderInitializer.SetDefaultObservableSystem(EmergencyAppTermination, DispatcherPriority.Send, dispatcher);
             Application.Current.DispatcherUnhandledException += (object _, DispatcherUnhandledExceptionEventArgs ev) => { ev.Handled = true; EmergencyAppTermination(ev.Exception); };
@@ -90,19 +93,19 @@ namespace FVH.SSHF
         {
             DesignerMode = false;
             Thread uiThread = Thread.CurrentThread;
-            async Task StartAsync()
-            {                             
-                IHost thisProgram = await BasicDependencies.ConfigureDependencies(uiThread, args).ConfigureAwait(false);
-                App app = new App(thisProgram);           
-                Dispatcher.FromThread(uiThread).Invoke(() => System.Windows.Application.Current.Exit += app.Shutdown);         
-                await app._program.StartAsync().ConfigureAwait(false);
-            }
-            await Task.Run(StartAsync).ConfigureAwait(false);         
+
+            IHost thisProgram = await Task.Run(async () => await BasicDependencies.ConfigureDependencies(uiThread, args).ConfigureAwait(false)).ConfigureAwait(false);
+
+            App app = new App(thisProgram);
+
+            Dispatcher.FromThread(uiThread).Invoke(() => System.Windows.Application.Current.Exit += app.Shutdown);
+
+            await app._program.StartAsync().ConfigureAwait(false);
         }
         private void Shutdown(object _, ExitEventArgs e)
         {
-            s_applicationExitCode = e.ApplicationExitCode;            
-            _program.StopAsync().GetAwaiter().GetResult();          
+            s_applicationExitCode = e.ApplicationExitCode;
+            _program.StopAsync().GetAwaiter().GetResult();
             s_mutexSingleInstance?.Dispose();
         }
         internal static void EmergencyAppTermination(Exception ex)
@@ -120,12 +123,22 @@ namespace FVH.SSHF
         private static bool CreateMutexForSingleProgram()
         {
             const string MutexNameSingleInstance = "FVH.SSHF.SingleProgramInstance";
-            bool mutexWasCreated;
-            try { s_mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out mutexWasCreated); }
+            try
+            {
+                s_mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out bool createdNew);
+                if(createdNew is false)
+                {
+                    try
+                    {
+                        bool acquired = s_mutexSingleInstance.WaitOne(0);
+                        if(acquired is false) return false;
+                    }
+                    catch(AbandonedMutexException) { }
+                }
+            }
             catch { return false; }
-            if(mutexWasCreated is false) return false;
             return true;
-        }      
+        }
         internal static partial class Native
         {
             [LibraryImport("user32", SetLastError = true)]
@@ -144,7 +157,7 @@ namespace FVH.SSHF
             [LibraryImport("kernel32")]
             internal static partial nint GetCurrentThread();
         }
-    } 
+    }
     internal static partial class AppHelper
     {
         private static readonly Win32MMCSS win32MMCSS;
@@ -172,6 +185,8 @@ namespace FVH.SSHF
             else res = Win32MMCSS.StopTimeCriticalSectionUI();
             return res;
         }
+        internal static void DisposeUnchecked() => win32MMCSS.Dispose();
+
 #if DEBUG
         [Conditional("DEBUG")]
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -232,4 +247,4 @@ namespace FVH.SSHF
         }
 #endif
     }
-}   
+}
