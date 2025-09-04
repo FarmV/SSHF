@@ -29,13 +29,11 @@ namespace FVH.SSHF
             internal static ValueTask<IHost> ConfigureDependencies(Thread uiThread, string[]? args = null) 
             {
                 Dispatcher uiDispatcher = Dispatcher.FromThread(uiThread) is not Dispatcher dispatcher ? throw new InvalidOperationException() : dispatcher;
-
-                Win32MMCSS win32MMCSS = new Win32MMCSS(uiDispatcher);
-
+             
                 AggregatorInputConditions aggregatorInputCondition = new AggregatorInputConditions();
-                R3.BehaviorSubject<bool> requestCompleteAppStartedDisposeInput = new R3.BehaviorSubject<bool>(true);
+                R3.BehaviorSubject<bool> requestCompleteAppStartDisposeInput = new R3.BehaviorSubject<bool>(true);
                 R3.BehaviorSubject<bool> requestExternalDisposeInput = new R3.BehaviorSubject<bool>(false);
-                Observable<bool> combineConditionsDisposeInput = requestExternalDisposeInput.CombineLatest(requestCompleteAppStartedDisposeInput, (bool AppStarted, bool disposeInput) => AppStarted || disposeInput);
+                Observable<bool> combineConditionsDisposeInput = requestExternalDisposeInput.CombineLatest(requestCompleteAppStartDisposeInput, (bool AppStarted, bool disposeInput) => AppStarted || disposeInput);
 
                 ObserverExclusiveMode observerExclusiveMode = new ObserverExclusiveMode(uiDispatcher);
                 ObserverMsScreenClipExecuting observerMsScreenClipExecuting = new ObserverMsScreenClipExecuting();
@@ -44,8 +42,8 @@ namespace FVH.SSHF
                 
                 aggregatorInputCondition.AddIObservable(observerExclusiveMode.ExcusiveMode);
                 aggregatorInputCondition.AddIObservable(combineConditionsDisposeInput);
-             
-                IGetImage iGetImage = new ImageProvider();
+
+                ImageProvider ImageProvider = new ImageProvider();
 
                 R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>? listIInvokeShortcutsBehaviorSubject = null;
 
@@ -55,7 +53,7 @@ namespace FVH.SSHF
                 WaitingInputProvider? waitingInput = new WaitingInputProvider(uiDispatcher, aggregatorInputCondition.InputConditionsBehaviorSubject, delegateListIInvokeShortcutsBehaviorSubject);
 
                 FastWindowManager fastWindowManager = uiDispatcher.Invoke(
-                 () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(iGetImage), waitingInput, observerMsScreenClipExecuting));
+                 () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(ImageProvider), waitingInput, observerMsScreenClipExecuting));
                 if(args?.Length > 0)
                 {
                     if(args.SingleOrDefault(x => x == "--SCR_NotBR") is not null)
@@ -70,23 +68,21 @@ namespace FVH.SSHF
                 TrayIcon trayIcon = CreateAnIconInTheNotificationArea(uiDispatcher);
 
                 IHost host = Host.CreateDefaultBuilder(args).ConfigureAppConfiguration((_, configuration) =>
-                { configuration.Sources.Clear(); }).ConfigureServices((__, container) =>
-                 {
-                     _ = container.AddSingleton<Win32MMCSS>(win32MMCSS);
-                     _ = container.AddSingleton<Dispatcher>(uiDispatcher);
-                     _ = container.AddSingleton<AggregatorInputConditions>(aggregatorInputCondition);
-                     _ = container.AddSingleton<IGetImage>(iGetImage);
-                     _ = container.AddSingleton<FastWindowManager>(fastWindowManager);
-                     _ = container.AddSingleton<WaitingInputProvider>(waitingInput);
-                     _ = container.AddSingleton<TrayIcon>(trayIcon);
-
-                     _ = container.AddSingleton<ObserverExclusiveMode>(observerExclusiveMode);
-                     _ = container.AddSingleton<HookManager>(win32HookManager);
-                 }).Build();
+                {   configuration.Sources.Clear(); }).ConfigureServices((__, container) =>
+                    {
+                        _ = container.AddSingleton<Dispatcher>(uiDispatcher);
+                        _ = container.AddSingleton<AggregatorInputConditions>(aggregatorInputCondition);
+                        _ = container.AddSingleton<ImageProvider>(ImageProvider);
+                        _ = container.AddSingleton<FastWindowManager>(fastWindowManager);
+                        _ = container.AddSingleton<WaitingInputProvider>(waitingInput);
+                        _ = container.AddSingleton<TrayIcon>(trayIcon);
+                    
+                        _ = container.AddSingleton<ObserverExclusiveMode>(observerExclusiveMode);
+                        _ = container.AddSingleton<HookManager>(win32HookManager);
+                }   ).Build();
 
                 CompositeDisposable disposablesDependencies =
                 [
-                     win32MMCSS,
                      aggregatorInputCondition,
                      observerExclusiveMode,
                      fastWindowManager,
@@ -103,9 +99,9 @@ namespace FVH.SSHF
 
                      _ = dispatcher.Invoke(() => System.Windows.Application.Current.MainWindow = mainWindow);
 
-                     requestCompleteAppStartedDisposeInput.OnNext(false);
-                     requestCompleteAppStartedDisposeInput.OnCompleted();
-                     requestCompleteAppStartedDisposeInput.Dispose();
+                     requestCompleteAppStartDisposeInput.OnNext(false);
+                     requestCompleteAppStartDisposeInput.OnCompleted();
+                     requestCompleteAppStartDisposeInput.Dispose();
 
                      win32HookManager.RegisterShellHook();
 
@@ -123,7 +119,7 @@ namespace FVH.SSHF
                 return ValueTask.FromResult(host);
             }
             private static TrayIcon CreateAnIconInTheNotificationArea(Dispatcher uiDispatcher) => uiDispatcher.Invoke(() => _ = new TrayIcon(App.GetResource(Resource.AppIcon).Stream));
-            private static FastWindowViewModelDependencies CreateFastWindowViewModelDependencies(IGetImage imageProvider) => _ = new FastWindowViewModelDependencies(imageProvider);
+            private static FastWindowViewModelDependencies CreateFastWindowViewModelDependencies(ImageProvider imageProvider) => _ = new FastWindowViewModelDependencies(imageProvider);
         }
     }
 }
