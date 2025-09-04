@@ -16,7 +16,7 @@ namespace FVH.SSHF.FastWindowArea
 {
     public partial class FastWindowViewModel  
     {
-        private readonly IGetImage _imageProvider;
+        private readonly ImageProvider _imageProvider;
         private readonly IWindowPositionUpdater _windowPositionUpdater;
         private readonly WPFDpiCorrector _dpiCorrector;
         private readonly WPFDropImageFile _setImage;
@@ -36,7 +36,7 @@ namespace FVH.SSHF.FastWindowArea
         {
             if(App.DesignerMode is not true) throw new InvalidOperationException("Empty class constructor for designer only");
         }
-        public FastWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, WPFDpiCorrector dpiCorrector, WPFDropImageFile setImage)
+        public FastWindowViewModel(ImageProvider imageProvider, IWindowPositionUpdater windowPositionUpdater, WPFDpiCorrector dpiCorrector, WPFDropImageFile setImage)
         {           
             _imageProvider = imageProvider;
             _windowPositionUpdater = windowPositionUpdater;
@@ -170,10 +170,10 @@ namespace FVH.SSHF.FastWindowArea
         private Task DragMove() => _windowPositionUpdater.DragMove();       
         private void DropWindowImage(object ev)
         {
-            if(_imageBackground.Value is not ImageSource img) return;
+            if(_imageBackground.Value is not BitmapSource bitmapSource) return;
             if(_windowPositionUpdater.IsUpdateWindow is true) return;      
-            if(Mouse.LeftButton is not MouseButtonState.Pressed) return;
-            _setImage.SaveImageFromDrop(ev, img);
+            if(Mouse.LeftButton is not MouseButtonState.Pressed) return;           
+            _setImage.SaveImageFromDrop(ev, bitmapSource);
         }
         private async Task InvokeMsScreenClip() 
         {
