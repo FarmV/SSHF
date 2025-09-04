@@ -1,114 +1,131 @@
 ﻿using System;
+using System.Buffers;
+using System.Buffers.Binary;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq.Expressions;
+using System.Numerics;
+using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
+using System.Runtime.Serialization;
+using System.Security;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+
+using MahApps.Metro.Controls;
+
+using Microsoft.VisualBasic;
+
+using Windows.Graphics.Imaging;
+using Windows.Win32;
+using Windows.Win32.Foundation;
+using Windows.Win32.System.Com;
+using Windows.Win32.UI.Shell;
+
+using WinRT;
+using WinRT.Interop;
+
+using static System.Windows.Forms.DataFormats;
+using static FVH.SSHF.Infrastructure.VirtualFileDragDrop;
 
 namespace FVH.SSHF.Infrastructure
 {
-    public class WPFDropImageFile : IDisposable
+    
+    public sealed class WPFDropImageFile : IDisposable
     {
-        private readonly Window _window;
         internal bool IsDisposed = false;
-        private string _fileTmpPath = string.Empty;
-        private DataObject _dropData;
-        private Timer? _clearTmpTimer;
-        private BitmapSource? _previousImage;
+        private string _lastFileName = string.Empty;
+        private readonly Window _window;
+        private readonly VirtualFileDragDrop _dragDropHandler;
+        private BitmapSource? _lastDropImage;
+        private MemoryStream? _lastImageStream;
+
         public WPFDropImageFile(Window window)
         {
             _window = window;
-            _dropData = new DataObject();
+            _dragDropHandler = new VirtualFileDragDrop();
         }
         public void Dispose()
         {
             if(IsDisposed) return;
             IsDisposed = true;
-            ClearTmpFile();
-            _clearTmpTimer?.Dispose();
-            GC.SuppressFinalize(this);
+            _lastImageStream?.Dispose();
         }
-        public void SaveImageFromDrop(object ev, ImageSource image)
-        {
-            if (image is not BitmapSource bitSource) throw new InvalidCastException();
-            SaveBitmapSourceFromDrop(ev, bitSource);
-        }
-        private void CreateTMPFile(string name)
-        {
-            ClearTmpFile();
-            _fileTmpPath = Path.ChangeExtension($"{Path.GetTempPath()}{name}", "png");
-            File.Create(_fileTmpPath).Dispose();
-            File.SetAttributes(_fileTmpPath, FileAttributes.Temporary);
-            _clearTmpTimer = new Timer(new TimerCallback((_) =>
-            {
-                ClearTmpFile();
-            }), null, 300_000, Timeout.Infinite);
-            _clearTmpTimer.Dispose(); //to fixTimer
-        }
-        private void ClearTmpFile()
-        {
-            if (_fileTmpPath is null) return;
-            if (File.Exists(_fileTmpPath) is true) File.Delete(_fileTmpPath);
-        }
-        private void SetDataObject()
-        {
-            string[] arrayDrops = new string[] { _fileTmpPath };
-            DataObject dataObject = new DataObject(DataFormats.FileDrop, arrayDrops);
-            dataObject.SetData(DataFormats.StringFormat, dataObject);
-            _dropData = dataObject;
-        }
-        private void SaveBitmapSourceFromDrop(object ev, BitmapSource image)
-        {
-            if (ev is not MouseEventArgs) return;
 
-            if (CompareBitmapSources(_previousImage, image) is false)
+        public void SaveImageFromDrop(object ev, BitmapSource image)
+        {
+            if(ev is not MouseEventArgs) return;
+
+            if(CompareBitmapSources(_lastDropImage, image) is false)
             {
-                _previousImage = image;
+                _lastDropImage = image;
+
+                _lastImageStream?.Dispose();
+                _lastImageStream = new MemoryStream();
+                PngBitmapEncoder encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(image));
+                encoder.Save(_lastImageStream);
 
                 string random = Path.GetRandomFileName().ToUpper();
+                _lastFileName = $"{Path.GetFileNameWithoutExtension(Path.GetRandomFileName())}.png";
+            }
 
-                CreateTMPFile($"{random.Remove(random.Length - 4)}.png");
-                using FileStream createFile = new FileStream(_fileTmpPath, FileMode.Truncate);
-                BitmapEncoder encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(image));
-                encoder.Save(createFile);
-                SetDataObject();
-            }
-            else
-            {
-                DragDrop.DoDragDrop(_window, _dropData, DragDropEffects.Copy);
-            }
+            if(_lastImageStream is null) return;
+
+            _lastImageStream.Position = 0;
+
+            _dragDropHandler.InitiateDrop(_lastImageStream, _lastFileName);
         }
-        private bool CompareBitmapSources(BitmapSource? bitmapSource1, BitmapSource? bitmapSource2)
+       
+        private static unsafe bool CompareBitmapSources(BitmapSource? bitmapSource1, BitmapSource? bitmapSource2)
         {
-            if (bitmapSource1 is not BitmapSource || bitmapSource2 is not BitmapSource) return false;
-            if (bitmapSource1.PixelWidth != bitmapSource2.PixelWidth || bitmapSource1.PixelHeight != bitmapSource2.PixelHeight) return false;
+            if(bitmapSource1 is null || bitmapSource2 is null) return false;
+            if(ReferenceEquals(bitmapSource1, bitmapSource2)) return true;
 
-            PixelFormat pixelFormat1 = bitmapSource1.Format;
-            PixelFormat pixelFormat2 = bitmapSource2.Format;
+            if(bitmapSource1.PixelWidth != bitmapSource2.PixelWidth ||
+                bitmapSource1.PixelHeight != bitmapSource2.PixelHeight ||
+                bitmapSource1.Format != bitmapSource2.Format)
+            {
+                return false;
+            }
 
-            if (pixelFormat1 != pixelFormat2) return false;
-
-            int bytesPerPixel = (pixelFormat1.BitsPerPixel + 7) / 8;
-
+            int bytesPerPixel = (bitmapSource1.Format.BitsPerPixel + 7) / 8;
             int stride = bitmapSource1.PixelWidth * bytesPerPixel;
             int size = bitmapSource1.PixelHeight * stride;
 
-            byte[] pixels1 = new byte[size];
-            byte[] pixels2 = new byte[size];
+            byte[]? array1 = null;
+            byte[]? array2 = null;
 
-            bitmapSource1.CopyPixels(pixels1, stride, 0);
-
-            bitmapSource2.CopyPixels(pixels2, stride, 0);
-
-            for (int i = 0; i < size; i++)
+            try
             {
-                if (pixels1[i] != pixels2[i]) return false;
-            }
+                Span<byte> pixels1Buffer = size <= 1024 ? stackalloc byte[size] : (array1 = ArrayPool<byte>.Shared.Rent(size));
+                Span<byte> pixels2Buffer = size <= 1024 ? stackalloc byte[size] : (array2 = ArrayPool<byte>.Shared.Rent(size));
 
-            return true;
+                pixels1Buffer = pixels1Buffer.Slice(0, size);
+                pixels2Buffer = pixels2Buffer.Slice(0, size);
+
+                fixed(byte* pPixels1 = pixels1Buffer, pPixels2 = pixels2Buffer)
+                {
+                    bitmapSource1.CopyPixels(new Int32Rect(0, 0, bitmapSource1.PixelWidth, bitmapSource1.PixelHeight), (nint)pPixels1, size, stride);
+
+                    bitmapSource2.CopyPixels(new Int32Rect(0, 0, bitmapSource2.PixelWidth, bitmapSource2.PixelHeight), (nint)pPixels2, size, stride);
+                }
+
+                return pixels1Buffer.SequenceEqual(pixels2Buffer);
+            }
+            finally
+            {
+                if(array1 is not null) ArrayPool<byte>.Shared.Return(array1);
+                if(array2 is not null) ArrayPool<byte>.Shared.Return(array2);
+            }
         }
     }
 }
-
