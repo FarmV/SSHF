@@ -99,7 +99,10 @@ namespace FVH.SSHF
             if(previousState is not State.Running) return;
             
             _shutdownMode = mode;
+
             _cts.Cancel(); 
+
+            _ = _workSignal.Release();
 
             try {  await _threadCompletionTask.WaitAsync(timeout); }
             finally { _ = Interlocked.Exchange<State>(ref _state, State.Disposed); _cts.Dispose(); }
