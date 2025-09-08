@@ -29,7 +29,7 @@ namespace FVH.SSHF
         private readonly IHost _program;
         private readonly IServiceProvider _serviceProvider;
         internal const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = (nint)(-4);
-        internal const string UiThreadName = "FVH Main Thread";
+        internal const string UiThreadName = "FVH: Main Thread";
         internal volatile static bool DesignerMode = true;
 #if DEBUG
         internal static TraceSwitch Trace;
@@ -69,22 +69,27 @@ namespace FVH.SSHF
             Thread.CurrentThread.Name = UiThreadName;
 
             System.Windows.Application application = new System.Windows.Application();
-            application.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            application.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
 
             application.Startup += ApplicationStartupEvent;
 
             _ = application.Run();
-
+        
             AppHelper.DisposeUnchecked();
+
+            s_mutexSingleInstance?.Dispose();
 
             Environment.ExitCode = s_applicationExitCode;
         }
+
         private static void ApplicationStartupEvent(object sender, StartupEventArgs e)
         {
             Dispatcher dispatcher = Dispatcher.FromThread(Thread.CurrentThread);
-            WpfProviderInitializer.SetDefaultObservableSystem(EmergencyAppTermination, DispatcherPriority.Send, dispatcher);
-            Application.Current.DispatcherUnhandledException += (object _, DispatcherUnhandledExceptionEventArgs ev) => { ev.Handled = true; EmergencyAppTermination(ev.Exception); };
             AppDomain.CurrentDomain.UnhandledException += (_, e) => EmergencyAppTermination((Exception)e.ExceptionObject);
+            Application.Current.DispatcherUnhandledException += (object _, DispatcherUnhandledExceptionEventArgs ev) => { ev.Handled = true; EmergencyAppTermination(ev.Exception); };
+            TaskScheduler.UnobservedTaskException += (_, ev) => { ev.SetObserved(); EmergencyAppTermination(ev.Exception); };
+            WpfProviderInitializer.SetDefaultObservableSystem(EmergencyAppTermination, DispatcherPriority.Send, dispatcher);
+
             RuntimeHelpers.RunClassConstructor(typeof(AppHelper).TypeHandle); // Инициализация статического конструктора
 
             _ = Start(e.Args).ContinueWith((Task task) => EmergencyAppTermination(task.Exception!), TaskContinuationOptions.OnlyOnFaulted);
@@ -106,12 +111,10 @@ namespace FVH.SSHF
         {
             s_applicationExitCode = e.ApplicationExitCode;
             _program.StopAsync().GetAwaiter().GetResult();
-            s_mutexSingleInstance?.Dispose();
         }
         internal static void EmergencyAppTermination(Exception ex)
         {
             s_applicationExitCode = ErrorUnhandled;
-            Application.Current.Shutdown(ErrorUnhandled);
 #if DEBUG
             Debug.WriteLine($"{Environment.NewLine}{ex.StackTrace}");
             Type typeEx = ex.GetType();
@@ -119,6 +122,8 @@ namespace FVH.SSHF
             Debug.WriteLine($"{Environment.NewLine}{typeEx.FullName}");
             Debug.WriteLine(ex.Message);
 #endif
+            if(Debugger.IsAttached) Debugger.Break();
+            Application.Current.Shutdown(ErrorUnhandled);
         }
         private static bool CreateMutexForSingleProgram()
         {

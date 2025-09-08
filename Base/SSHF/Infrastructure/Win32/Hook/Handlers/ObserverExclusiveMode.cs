@@ -17,7 +17,7 @@ namespace FVH.SSHF.Infrastructure.Win32
         internal ObserverExclusiveMode(Dispatcher dispatcher)
         {
             _dispatcher = dispatcher;
-            _exclusiveModeChecker = _dispatcher.Invoke(()=> _ = new Win32ExclusiveModeChecker());
+            _exclusiveModeChecker = _dispatcher.Invoke(() => _ = new Win32ExclusiveModeChecker());
 
             ExcusiveMode = new R3.BehaviorSubject<bool>(false);
 

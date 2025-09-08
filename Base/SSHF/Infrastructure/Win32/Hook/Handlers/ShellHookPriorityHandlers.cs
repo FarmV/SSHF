@@ -22,7 +22,7 @@
                 case HSHELL.WINDOWACTIVATED:
                 break;
                 case HSHELL.RUDEAPPACTIVATED:
-                      if(lParam is not 0) _observerExclusiveMode.CheckAndSetStateExcusiveMode();
+                      /*if(lParam is not 0)*/ _observerExclusiveMode.CheckAndSetStateExcusiveMode();
                 break;
                 case HSHELL.WINDOWREPLACING:
                 break;
