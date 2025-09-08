@@ -98,7 +98,7 @@ namespace FVH.SSHF
                 tokenApplicationStartedCallback =
                  host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStarted.Register(() =>
                  {
-                     FastWindow mainWindow = fastWindowManager.CreateMainWindow().Result;
+                     FastWindow mainWindow = fastWindowManager.CreateMainWindow().GetAwaiter().GetResult();
 
                      _ = uiDispatcher.Invoke(() => System.Windows.Application.Current.MainWindow = mainWindow);
 
@@ -139,7 +139,7 @@ namespace FVH.SSHF
                             });
                             if (exceptions is not null) Throw(exceptions); [DoesNotReturn] static void Throw(List<System.Exception> listException) => throw new AggregateException(listException);
                         })
-                        { IsBackground = false, Name = "PostAsyncCleaner" };
+                        { IsBackground = false, Name = $"FVH: PostAsyncCleaner" };
                         threadCleaner.UnsafeStart();
                     }
                     

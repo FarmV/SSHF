@@ -19,7 +19,7 @@ namespace FVH.SSHF.Infrastructure.Input
     internal class WaitingInputProvider : IDisposable
     {
         private bool _isDisposed = false;
-        private bool _isInstallHook = true;
+        private bool _isInstallHook = false;
         private bool _isInit = false;
         private readonly R3.BehaviorSubject<bool> _subjectRequestSwitchInput;
         private readonly Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> _subjectListGlobalShortcuts;
@@ -43,7 +43,8 @@ namespace FVH.SSHF.Infrastructure.Input
 #if DEBUG
             CurrentStatusSubscribeInput = new R3.BehaviorSubject<bool>(false);
 #endif
-            IDisposable subscribeSetInput = _subjectRequestSwitchInput.ObserveOn(workerContext).Subscribe((bool requestSubOrUnSub) => InputRequestChecker(requestSubOrUnSub), onCompleted: (Result _) =>  Dispose());
+            IDisposable subscribeSetInput = _subjectRequestSwitchInput.SkipWhile((bool x) => x is true).// Не нужно вызывать UninstallHook раньше подписки, хотя там и защита - это логически неверно.
+                ObserveOn(workerContext).Subscribe((bool requestSubOrUnSub) => InputRequestChecker(requestSubOrUnSub), onCompleted: (Result _) =>  Dispose());
 
             _disposablesSubscribe = R3.Disposable.Combine(subscribeSetInput);
         }      
