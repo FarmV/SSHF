@@ -6,8 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 
-using ABI.System;
-
 using FVH.Background.Input.Infrastructure.Interfaces;
 using FVH.SSHF.FastWindowArea;
 using FVH.SSHF.Infrastructure;
@@ -20,8 +18,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using R3;
-
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrayNotify;
 
 
 namespace FVH.SSHF
