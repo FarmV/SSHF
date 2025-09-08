@@ -53,11 +53,11 @@ namespace FVH.SSHF.Infrastructure.Input
               {
                   lastValue = condition;
                   OnNextCondition(conditionObservable, condition);
-                  tcs.TrySetResult();
+                  _ = tcs.TrySetResult();
               }, onCompleted: (Result r) =>
               {
                   Release(conditionObservable);
-                  tcs.TrySetResult();
+                  _ = tcs.TrySetResult();
               });
             tcs.Task.Wait();
 

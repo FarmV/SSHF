@@ -27,6 +27,7 @@ namespace FVH.Background.Input
         private readonly Dispatcher _toCallbackDispatcher;
         private readonly Dispatcher _inputDispatcher;
         private readonly CallbackFunctionKeyboard _callbackFunctionKeyboard;
+        private readonly SemaphoreSlim _semaphoreHook = new SemaphoreSlim(initialCount: 1, maxCount: 1);
 
         internal event LowLevelKeyboard.KeyboardEventHandler? NotifyKeyboardEvent;
         public Input(Dispatcher toCallbackDispatcher)
@@ -50,21 +51,19 @@ namespace FVH.Background.Input
             _inputDispatcher.InvokeShutdown();
             GC.SuppressFinalize(this);
         }
-        public void InstallHook()
+        public void InstallHookToInputDispatcher()
         {
             ObjectDisposedException.ThrowIf(_isDispose, this);
-            _inputDispatcher.Invoke(() =>
-            {
-                _callbackFunctionKeyboard.InstallHook();
-            });
+            _semaphoreHook.Wait();
+            try { _inputDispatcher.Invoke(_callbackFunctionKeyboard.InstallHook); } 
+            finally { _ = _semaphoreHook.Release(); }
         }
-        public void UninstallHook()
+        public void UninstallHookToInputDispatcher()
         {
             ObjectDisposedException.ThrowIf(_isDispose, this);
-            _inputDispatcher.Invoke(() =>
-            {
-                _callbackFunctionKeyboard.UninstallHook();
-            });
+            _semaphoreHook.Wait();
+            try { _inputDispatcher.Invoke(_callbackFunctionKeyboard.UninstallHook); }
+            finally { _ = _semaphoreHook.Release(); }
         }
         public Task<bool> ContainsKeyCombination(VKeys[] keyCombo) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.ContainsKeyCombination(keyCombo));
         public Task AddCallbackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null, Func<bool>? canExecute = null) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.AddCallbackTask(keyCombo, callbackTask, identifier, canExecute));

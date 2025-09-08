@@ -26,6 +26,7 @@ namespace FVH.SSHF.FastWindowArea
         private readonly Dictionary<int, OneFastWindow> _fastWindows;
         private readonly BehaviorSubject<IEnumerable<KeyboardShortcut>> _currentStatusShortcutsFastWindow;
         private readonly WaitingInputProvider _waitingInputProvider;
+        private readonly ObserverExclusiveMode _observerExclusiveMode;
         private readonly ObserverMsScreenClipExecuting _observerMsScreenClipExecuting;
         private OneFastWindow? _firstFastWindow;
         private OneFastWindow? _activeFastWindow;
@@ -38,6 +39,7 @@ namespace FVH.SSHF.FastWindowArea
             Dispatcher dispatcher,
             Func<FastWindowViewModelDependencies> getFastWindowViewModelDependencies,
             WaitingInputProvider waitingInputProvider,
+            ObserverExclusiveMode observerExclusiveMode,
             ObserverMsScreenClipExecuting observerMsScreenClipExecuting
         )
         {
@@ -49,17 +51,19 @@ namespace FVH.SSHF.FastWindowArea
 
             _observerMsScreenClipExecuting = observerMsScreenClipExecuting;
             _disposables.Add(observerMsScreenClipExecuting.IsExecutingProcessScreenClip.ObserveOnThreadPool().SubscribeAwait(async (bool isExecuting,CancellationToken _) =>
-             {
+            {
                  if(isExecuting is true) await HideAllWindow(DelayHideWindow);
                  else { await ShowAllWindowExcludingActiveWindow(); }
-             },awaitOperation: AwaitOperation.ThrottleFirstLast,configureAwait:false));
+            },awaitOperation: AwaitOperation.ThrottleFirstLast,configureAwait:false));
+
+            _observerExclusiveMode = observerExclusiveMode;
 
             _currentStatusShortcutsFastWindow = new BehaviorSubject<IEnumerable<KeyboardShortcut>>(GetDefaultShortcuts());
 
             _waitingInputProvider = waitingInputProvider;
 
-            _disposables.Add(_waitingInputProvider.CurrentStatusSubscribeInput.ObserveOnThreadPool().Skip(1).
-             SubscribeAwait(onNextAsync: async (bool next, CancellationToken _) => await IfInputDispose(next), AwaitOperation.ThrottleFirstLast));
+            _disposables.Add(_observerExclusiveMode.ExcusiveMode.ObserveOnThreadPool().
+             SubscribeAwait(onNextAsync: async (bool next, CancellationToken _) => await IfExclusiveMode(next), AwaitOperation.Sequential));
         }
         public void Dispose()
         {
@@ -211,9 +215,9 @@ namespace FVH.SSHF.FastWindowArea
 
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is true) _ = SynchronizationContext.Current.StopSafeUITimeCriticalSection();
         }
-        private async Task IfInputDispose(bool statusSubscribeInput)
+        private async Task IfExclusiveMode(bool isExcluseveMode)
         {
-            if(statusSubscribeInput is true) return;
+            if(isExcluseveMode is false) return;
 
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
                         
