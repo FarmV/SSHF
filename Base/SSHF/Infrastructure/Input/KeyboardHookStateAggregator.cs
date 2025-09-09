@@ -22,7 +22,7 @@ namespace FVH.SSHF.Infrastructure.Input
             _isAppInitialized     = new BehaviorSubject<bool>(false); 
             _isNotInExclusiveMode = new BehaviorSubject<bool>(true);
 
-            Observable<bool> notInExclusiveModeStream = isInExclusiveModeSource.Select(isInExclusiveMode => !isInExclusiveMode);
+            Observable<bool> notInExclusiveModeStream = isInExclusiveModeSource.Select(isInExclusiveMode => isInExclusiveMode is false);
 
             _exclusiveModeSubscription = notInExclusiveModeStream.Subscribe
             (
@@ -31,7 +31,7 @@ namespace FVH.SSHF.Infrastructure.Input
                 result    => _isNotInExclusiveMode.OnCompleted(result)
             );
 
-            HookCanBeActive = _isAppInitialized.CombineLatest(_isNotInExclusiveMode, (initialized, notExclusive) => initialized && notExclusive).ToReadOnlyReactiveProperty(false); 
+            HookCanBeActive = _isAppInitialized.CombineLatest(_isNotInExclusiveMode, (initialized, notExclusive) => initialized && notExclusive).ToReadOnlyReactiveProperty(initialValue: false); 
         }
         public void NotifyAppInitialized()
         {
