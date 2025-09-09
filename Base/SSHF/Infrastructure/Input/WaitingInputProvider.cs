@@ -27,9 +27,6 @@ namespace FVH.SSHF.Infrastructure.Input
         private readonly IDisposable _subscription;
         private readonly Dispatcher _dispatcher;
 
-#if DEBUG
-        internal readonly R3.BehaviorSubject<bool> CurrentStatusSubscribeInput;
-#endif
         internal event FVH.Background.Input.CallbackFunctionKeyboard.LowLevelKeyboard.KeyboardEventHandler? NotifyKeyboardEvent;
         internal WaitingInputProvider(Dispatcher toCallbackDispatcher, Observable<bool> hookCanBeActive, Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> listGlobalShortcutsAsObservable, SynchronizationContext workerContext)
         {
@@ -40,23 +37,18 @@ namespace FVH.SSHF.Infrastructure.Input
 
             _input = new Background.Input.Input(toCallbackDispatcher);
             _input.NotifyKeyboardEvent += InputNotifyKeyboardEvent;
-#if DEBUG
-            CurrentStatusSubscribeInput = new R3.BehaviorSubject<bool>(false);
-#endif
+
             _subscription =  _hookCanBeActive.ObserveOn(workerContext).Subscribe((bool shouldBeActive) => UpdateHookActivity(shouldBeActive),onCompleted: (Result _) => Dispose());
 
         }      
         public void Dispose()
         {
             if(_isDisposed is true) return;
+            _isDisposed = true;
+
             _subscription.Dispose();
             _input.NotifyKeyboardEvent -= InputNotifyKeyboardEvent;
             _input?.Dispose();
-#if DEBUG
-            CurrentStatusSubscribeInput.OnCompleted(Result.Success);
-            CurrentStatusSubscribeInput.Dispose();
-#endif
-            _isDisposed = true;
         }
         public void RegisterShortcuts()
         {
@@ -86,21 +78,13 @@ namespace FVH.SSHF.Infrastructure.Input
             {
                 _input.InstallHookToInputDispatcher();
                 _isHookActive = true;
-#if DEBUG
-                _ = Task.Run(() => CurrentStatusSubscribeInput.OnNext(_isHookActive));
-#endif
             }
             else 
             {
                 _input.UninstallHookToInputDispatcher();
-#if DEBUG                  
-                if(App.Stopwatch.ElapsedMilliseconds != 0) Debug.WriteLine($"{App.Stopwatch.ElapsedMilliseconds}");
-#endif
+
                 _dispatcher.Invoke(() => { if(Thread.CurrentThread.InUIThreadTimeCriticalSection()) Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread(); });
                 _isHookActive = false;
-#if DEBUG                  
-                _ = Task.Run(() => CurrentStatusSubscribeInput.OnNext(_isHookActive));
-#endif
             }
         }
     }     
