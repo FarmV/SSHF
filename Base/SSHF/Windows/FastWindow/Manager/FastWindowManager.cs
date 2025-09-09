@@ -26,7 +26,6 @@ namespace FVH.SSHF.FastWindowArea
         private readonly Dictionary<int, OneFastWindow> _fastWindows;
         private readonly BehaviorSubject<IEnumerable<KeyboardShortcut>> _currentStatusShortcutsFastWindow;
         private readonly WaitingInputProvider _waitingInputProvider;
-        private readonly ObserverExclusiveMode _observerExclusiveMode;
         private readonly ObserverMsScreenClipExecuting _observerMsScreenClipExecuting;
         private OneFastWindow? _firstFastWindow;
         private OneFastWindow? _activeFastWindow;
@@ -39,7 +38,7 @@ namespace FVH.SSHF.FastWindowArea
             Dispatcher dispatcher,
             Func<FastWindowViewModelDependencies> getFastWindowViewModelDependencies,
             WaitingInputProvider waitingInputProvider,
-            ObserverExclusiveMode observerExclusiveMode,
+            Observable<bool> isInExclusiveModeSource,
             ObserverMsScreenClipExecuting observerMsScreenClipExecuting
         )
         {
@@ -56,13 +55,11 @@ namespace FVH.SSHF.FastWindowArea
                  else { await ShowAllWindowExcludingActiveWindow(); }
             },awaitOperation: AwaitOperation.ThrottleFirstLast,configureAwait:false));
 
-            _observerExclusiveMode = observerExclusiveMode;
-
             _currentStatusShortcutsFastWindow = new BehaviorSubject<IEnumerable<KeyboardShortcut>>(GetDefaultShortcuts());
 
             _waitingInputProvider = waitingInputProvider;
 
-            _disposables.Add(_observerExclusiveMode.ExcusiveMode.ObserveOnThreadPool().
+            _disposables.Add(isInExclusiveModeSource.ObserveOnThreadPool().
              SubscribeAwait(onNextAsync: async (bool next, CancellationToken _) => await IfExclusiveMode(next), AwaitOperation.Sequential));
         }
         public void Dispose()

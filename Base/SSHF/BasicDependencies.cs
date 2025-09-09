@@ -13,6 +13,7 @@ using FVH.SSHF.Infrastructure.Input;
 using FVH.SSHF.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure.TrayIconManagement;
 using FVH.SSHF.Infrastructure.Win32;
+using FVH.SSHF.Infrastructure.Win32.FVH.SSHF.Infrastructure.Win32;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -33,30 +34,23 @@ namespace FVH.SSHF
 
                 TheThreadWorkerContext theThreadWorkerContext = new TheThreadWorkerContext(); // IAsyncDisposable
 
-                AggregatorInputConditions aggregatorInputCondition = new AggregatorInputConditions();
-                R3.BehaviorSubject<bool> requestCompleteAppStartDisposeInput = new R3.BehaviorSubject<bool>(true);
-                R3.BehaviorSubject<bool> requestExternalDisposeInput = new R3.BehaviorSubject<bool>(false);
-                Observable<bool> combineConditionsDisposeInput = requestExternalDisposeInput.CombineLatest(requestCompleteAppStartDisposeInput, (bool AppStarted, bool disposeInput) => AppStarted || disposeInput);
-
                 ObserverExclusiveMode observerExclusiveMode = new ObserverExclusiveMode(uiDispatcher);
                 ObserverMsScreenClipExecuting observerMsScreenClipExecuting = new ObserverMsScreenClipExecuting();
                 ShellHookPriorityHandlers shellHookPriorityHandlers = new ShellHookPriorityHandlers(observerExclusiveMode, observerMsScreenClipExecuting);
                 HookManager win32HookManager = new HookManager(uiDispatcher,shellHookPriorityHandlers);
 
-                aggregatorInputCondition.AddIObservable(observerExclusiveMode.ExcusiveMode);
-                aggregatorInputCondition.AddIObservable(combineConditionsDisposeInput);
-
-                ImageProvider ImageProvider = new ImageProvider();
+                KeyboardHookStateAggregator keyboardHookStateAggregator = new KeyboardHookStateAggregator(observerExclusiveMode.IsInExclusiveMode);
 
                 R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>? listIInvokeShortcutsBehaviorSubject = null;
 
                 Func<BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> delegateListIInvokeShortcutsBehaviorSubject =
                  new Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>>(() => listIInvokeShortcutsBehaviorSubject!);
 
-                WaitingInputProvider? waitingInputProvider = new WaitingInputProvider(uiDispatcher, aggregatorInputCondition.InputConditionsBehaviorSubject, delegateListIInvokeShortcutsBehaviorSubject,theThreadWorkerContext.Context);
+                WaitingInputProvider? waitingInputProvider = new WaitingInputProvider(uiDispatcher, keyboardHookStateAggregator.HookCanBeActive, delegateListIInvokeShortcutsBehaviorSubject,theThreadWorkerContext.Context);
 
+                ImageProvider ImageProvider = new ImageProvider();
                 FastWindowManager fastWindowManager = uiDispatcher.Invoke(
-                 () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(ImageProvider), waitingInputProvider ,observerExclusiveMode, observerMsScreenClipExecuting));
+                 () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(ImageProvider), waitingInputProvider, observerExclusiveMode.IsInExclusiveMode, observerMsScreenClipExecuting));
                 if(args?.Length > 0)
                 {
                     if(args.SingleOrDefault(x => x == "--SCR_NotBR") is not null)
@@ -74,7 +68,7 @@ namespace FVH.SSHF
                 {   configuration.Sources.Clear(); }).ConfigureServices((__, container) =>
                     {
                         _ = container.AddSingleton<Dispatcher>(uiDispatcher);
-                        _ = container.AddSingleton<AggregatorInputConditions>(aggregatorInputCondition);
+                        _ = container.AddSingleton<KeyboardHookStateAggregator>(keyboardHookStateAggregator);
                         _ = container.AddSingleton<ImageProvider>(ImageProvider);
                         _ = container.AddSingleton<FastWindowManager>(fastWindowManager);
                         _ = container.AddSingleton<WaitingInputProvider>(waitingInputProvider);
@@ -86,7 +80,7 @@ namespace FVH.SSHF
 
                 CompositeDisposable disposablesDependencies =
                 [
-                     aggregatorInputCondition,
+                     keyboardHookStateAggregator,
                      observerExclusiveMode,
                      fastWindowManager,
                      waitingInputProvider,
@@ -101,12 +95,10 @@ namespace FVH.SSHF
                      FastWindow mainWindow = fastWindowManager.CreateMainWindow().GetAwaiter().GetResult();
 
                      _ = uiDispatcher.Invoke(() => System.Windows.Application.Current.MainWindow = mainWindow);
-
-                     requestCompleteAppStartDisposeInput.OnNext(false);
-                     requestCompleteAppStartDisposeInput.OnCompleted();
-                     requestCompleteAppStartDisposeInput.Dispose();
-
+                   
                      uiDispatcher.Invoke(waitingInputProvider.RegisterShortcuts);
+
+                     keyboardHookStateAggregator.NotifyAppInitialized();
 
                      win32HookManager.RegisterShellHook();
 
