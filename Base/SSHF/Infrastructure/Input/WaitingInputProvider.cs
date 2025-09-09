@@ -35,7 +35,6 @@ namespace FVH.SSHF.Infrastructure.Input
             _input.NotifyKeyboardEvent += InputNotifyKeyboardEvent;
 
             _subscription =  _hookCanBeActive.ObserveOn(workerContext).Subscribe((bool shouldBeActive) => UpdateHookActivity(shouldBeActive),onCompleted: (Result _) => Dispose());
-
         }      
         public void Dispose()
         {
@@ -79,7 +78,7 @@ namespace FVH.SSHF.Infrastructure.Input
             {
                 _input.UninstallHookToInputDispatcher();
 
-                _dispatcher.Invoke(() => { if(Thread.CurrentThread.InUIThreadTimeCriticalSection()) Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread(); });
+                _dispatcher.Invoke(() => { if(Thread.CurrentThread.InUIThreadTimeCriticalSection()) _ = Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread(); });
                 _isHookActive = false;
             }
         }
