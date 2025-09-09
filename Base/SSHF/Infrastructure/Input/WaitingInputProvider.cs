@@ -79,7 +79,7 @@ namespace FVH.SSHF.Infrastructure.Input
             {
                 _input.UninstallHookToInputDispatcher();
 
-                _dispatcher.Invoke(() => { if(Thread.CurrentThread.InUIThreadTimeCriticalSection()) Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread(); });
+                _dispatcher.Invoke(() => { if(Thread.CurrentThread.InUIThreadTimeCriticalSection()) _ = Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread(); });
                 _isHookActive = false;
             }
         }
