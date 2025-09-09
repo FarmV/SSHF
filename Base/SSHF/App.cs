@@ -84,8 +84,8 @@ namespace FVH.SSHF
 
         private static void ApplicationStartupEvent(object sender, StartupEventArgs e)
         {
-            Dispatcher dispatcher = Dispatcher.FromThread(Thread.CurrentThread);
-            AppDomain.CurrentDomain.UnhandledException += (_, e) => EmergencyAppTermination((Exception)e.ExceptionObject);
+            Dispatcher dispatcher =                             Dispatcher.FromThread(Thread.CurrentThread);
+            AppDomain.CurrentDomain.UnhandledException +=       (_, e) => EmergencyAppTermination((Exception)e.ExceptionObject);
             Application.Current.DispatcherUnhandledException += (object _, DispatcherUnhandledExceptionEventArgs ev) => { ev.Handled = true; EmergencyAppTermination(ev.Exception); };
             TaskScheduler.UnobservedTaskException += (_, ev) => { ev.SetObserved(); EmergencyAppTermination(ev.Exception); };
             WpfProviderInitializer.SetDefaultObservableSystem(EmergencyAppTermination, DispatcherPriority.Send, dispatcher);

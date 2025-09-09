@@ -7,47 +7,75 @@ using R3;
 
 namespace FVH.SSHF.Infrastructure.Win32
 {
-    internal partial class ObserverExclusiveMode : IDisposable
+    using R3;
+
+    using System;
+    using System.Threading;
+    using System.Windows.Threading;
+
+    namespace FVH.SSHF.Infrastructure.Win32
     {
-        private bool _isDispose = false;
-        private bool _isExcusiveMode = false;
-        internal Win32ExclusiveModeChecker _exclusiveModeChecker;
-        internal readonly R3.BehaviorSubject<bool> ExcusiveMode;
-        private readonly Dispatcher _dispatcher;
-        internal ObserverExclusiveMode(Dispatcher dispatcher)
+        internal sealed class ObserverExclusiveMode : IDisposable
         {
-            _dispatcher = dispatcher;
-            _exclusiveModeChecker = _dispatcher.Invoke(() => _ = new Win32ExclusiveModeChecker());
-
-            ExcusiveMode = new R3.BehaviorSubject<bool>(false);
-
-            ArgumentNullException.ThrowIfNull(_exclusiveModeChecker);
-        }
-        public void Dispose()
-        {
-            if(_isDispose) return;
-            _isDispose = true;
-            ExcusiveMode.OnCompleted(Result.Success);
-            ExcusiveMode.Dispose();
-            _dispatcher.Invoke(() => _exclusiveModeChecker.Dispose());
-        }
-        internal void CheckAndSetStateExcusiveMode()
-        {
-            bool isExcusiveMode = false;
-            if(ExcusiveMode.Value == false)
+            private bool _isDisposed = false;
+            private readonly Win32ExclusiveModeChecker _exclusiveModeChecker;
+            private readonly Dispatcher _dispatcher;
+            private readonly BehaviorSubject<bool> _exclusiveModeSubject;
+            public ReadOnlyReactiveProperty<bool> IsInExclusiveMode { get; }
+            internal ObserverExclusiveMode(Dispatcher dispatcher)
             {
-                TimeSpan empiricalTimeoutSpinWait = TimeSpan.FromMilliseconds(25); // Предполагаемая задержка между получение фокуса окна и установкой режима
-                _ = SpinWait.SpinUntil(() =>
-                {
-                    isExcusiveMode = _exclusiveModeChecker.CheckExclusiveMode(_dispatcher);
-                    return isExcusiveMode is true;
-                }, empiricalTimeoutSpinWait);
-            }
-            else { isExcusiveMode = _exclusiveModeChecker.CheckExclusiveMode(_dispatcher); }
+                _dispatcher = dispatcher;
+                _exclusiveModeChecker = _dispatcher.Invoke(() => new Win32ExclusiveModeChecker());
 
-            _isExcusiveMode = isExcusiveMode;
-            if(_isExcusiveMode is true) { if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is false) _ = Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread(); }
-            ExcusiveMode.OnNext(_isExcusiveMode);
-        }                               
+                _exclusiveModeSubject = new BehaviorSubject<bool>(false);
+                IsInExclusiveMode = _exclusiveModeSubject.ToReadOnlyReactiveProperty();
+
+                ArgumentNullException.ThrowIfNull(_exclusiveModeChecker);
+            }
+            internal void CheckAndSetStateExcusiveMode()
+            {
+                bool wasInExclusiveMode = _exclusiveModeSubject.Value;
+                bool isInExclusiveMode;
+
+                if(wasInExclusiveMode is false)
+                {
+                    TimeSpan empiricalTimeoutSpinWait = TimeSpan.FromMilliseconds(25);
+                  
+                    _ =  SpinWait.SpinUntil(() =>
+                    {
+                        isInExclusiveMode = _exclusiveModeChecker.CheckExclusiveMode(_dispatcher);
+                        return isInExclusiveMode;
+                    }, empiricalTimeoutSpinWait);
+
+                    isInExclusiveMode = _exclusiveModeChecker.CheckExclusiveMode(_dispatcher);
+                }
+                else
+                {
+                    isInExclusiveMode = _exclusiveModeChecker.CheckExclusiveMode(_dispatcher);
+                }
+             
+                if(isInExclusiveMode != wasInExclusiveMode)
+                {
+                    if(isInExclusiveMode)
+                    {
+                        _ = _dispatcher.Invoke(Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread);
+                    }
+
+                    _exclusiveModeSubject.OnNext(isInExclusiveMode);
+                }
+            }
+            public void Dispose()
+            {
+                if(_isDisposed) return;
+                _isDisposed = true;
+
+                _exclusiveModeSubject.OnCompleted(); 
+                _exclusiveModeSubject.Dispose();
+
+                IsInExclusiveMode.Dispose();
+
+                _dispatcher.Invoke(() => _exclusiveModeChecker.Dispose());
+            }
+        }
     }
 }

@@ -1,17 +1,11 @@
-﻿namespace FVH.SSHF.Infrastructure.Win32
-{
-    internal class ShellHookPriorityHandlers 
-    {
-        readonly ObserverExclusiveMode _observerExclusiveMode;
-        readonly ObserverMsScreenClipExecuting _observerMsScreenClipExecuting;
+﻿using FVH.SSHF.Infrastructure.Win32.FVH.SSHF.Infrastructure.Win32;
 
-        public ShellHookPriorityHandlers(
-            ObserverExclusiveMode win32ObserverExclusiveMode, 
-            ObserverMsScreenClipExecuting observerMsScreenClipExecuting)
-        {
-            _observerExclusiveMode = win32ObserverExclusiveMode;
-            _observerMsScreenClipExecuting = observerMsScreenClipExecuting;
-        }
+namespace FVH.SSHF.Infrastructure.Win32
+{
+    internal class ShellHookPriorityHandlers(ObserverExclusiveMode win32ObserverExclusiveMode, ObserverMsScreenClipExecuting observerMsScreenClipExecuting)
+    {
+        readonly ObserverExclusiveMode         _observerExclusiveMode         = win32ObserverExclusiveMode;
+        readonly ObserverMsScreenClipExecuting _observerMsScreenClipExecuting = observerMsScreenClipExecuting;
 
         internal void ShellHookHandler(HSHELL wParam, ref nint lParam, ref bool handled)
         {
