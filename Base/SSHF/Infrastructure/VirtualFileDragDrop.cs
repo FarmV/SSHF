@@ -16,9 +16,9 @@ namespace FVH.SSHF.Infrastructure
         private const int S_FALSE         = 0x1;
         private const int E_NOTIMPL       = unchecked((int)0x80004001);
         private const int E_POINTER       = unchecked((int)0x80004003);
-        private const int E_FAIL         = unchecked((int)0x80004005);
-        private const int DV_E_FORMATETC = unchecked((int)0x80040064);
-        private const int E_INVALIDARG   = unchecked((int)0x80070057);
+        private const int E_FAIL          = unchecked((int)0x80004005);
+        private const int DV_E_FORMATETC  = unchecked((int)0x80040064);
+        private const int E_INVALIDARG    = unchecked((int)0x80070057);
 
         private static readonly ushort s_fileGroupDescriptorFormatId;
         private static readonly ushort s_fileContentsFormatId;
@@ -28,8 +28,8 @@ namespace FVH.SSHF.Infrastructure
         private static readonly Guid IID_IDropSource;
         private static readonly Guid IID_IStream;
 
+        private const int  MAX_PATH        = 260;
         private const char NULL_TERMINATOR = '\0';
-        private const int  MAX_PATH = 260;
 
         private static readonly StrategyBasedComWrappers s_localComWrappers;
 
@@ -53,24 +53,29 @@ namespace FVH.SSHF.Infrastructure
 
             nint pUnkDataObject = s_localComWrappers.GetOrCreateComInterfaceForObject(dataObject, CreateComInterfaceFlags.None);
             nint pUnkDropSource = s_localComWrappers.GetOrCreateComInterfaceForObject(dropSource, CreateComInterfaceFlags.None);
-          
-            if(pUnkDataObject == nint.Zero || pUnkDropSource == nint.Zero) Throw(); [DoesNotReturn] static void Throw() => throw new ArgumentNullException(message: "pUnkDataObject or pUnkDropSource is null", null);
+
+            if(pUnkDataObject == nint.Zero) ThrowArgumentNull(nameof(pUnkDataObject));
+            if(pUnkDropSource == nint.Zero) ThrowArgumentNull(nameof(pUnkDropSource));
 
             IDataObject.Native* pDataObj = null;
             IDropSource.Native* pDropSrc = null;
 
-            int hr1;
-            fixed(Guid* pIID = &IID_IDataObject)
-                hr1 = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)
-                    ((void**)((ComInterfaceDispatch*)pUnkDataObject)->Vtable)[0])((ComInterfaceDispatch*)pUnkDataObject, pIID, (void**)&pDataObj);
-
-            int hr2;
-            fixed(Guid* pIID = &IID_IDropSource)
-                hr2 = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)
-                    ((void**)((ComInterfaceDispatch*)pUnkDropSource)->Vtable)[0])((ComInterfaceDispatch*)pUnkDropSource, pIID, (void**)&pDropSrc);
-
             try
             {
+                int hResultQI_DataObject;
+                fixed(Guid* pIID = &IID_IDataObject)
+                    hResultQI_DataObject = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)
+                        ((void**)((ComInterfaceDispatch*)pUnkDataObject)->Vtable)[0])((ComInterfaceDispatch*)pUnkDataObject, pIID, (void**)&pDataObj);
+
+                if(hResultQI_DataObject < 0) ThrowQueryInterface(nameof(IDataObject), hResultQI_DataObject);
+
+                int hResultQI_DropSource;
+                fixed(Guid* pIID = &IID_IDropSource)
+                    hResultQI_DropSource = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)
+                        ((void**)((ComInterfaceDispatch*)pUnkDropSource)->Vtable)[0])((ComInterfaceDispatch*)pUnkDropSource, pIID, (void**)&pDropSrc);
+
+                if(hResultQI_DropSource < 0) ThrowQueryInterface(nameof(IDropSource), hResultQI_DropSource);
+
                 const uint allowedEffects = (uint)DROPEFFECT.DROPEFFECT_COPY;
                 uint performedEffect = 0;
 
@@ -78,24 +83,27 @@ namespace FVH.SSHF.Infrastructure
 
                 if(hrDoDragDrop < 0)
                 {
-                    if(hrDoDragDrop == E_POINTER)
+#if DEBUG
+                    if(Debugger.IsAttached)
                     {
-                        if(Debugger.IsAttached is true) Debugger.Break();
+                        if(hrDoDragDrop == E_POINTER)    Debugger.Break();
+                        if(hrDoDragDrop == E_INVALIDARG) Debugger.Break();
+
+                        Debugger.Break();
                     }
-                    if(hrDoDragDrop == E_INVALIDARG)
-                    {
-                        if(Debugger.IsAttached is true) Debugger.Break();
-                    }
+#endif
+                    ThrowDoDragDrop(hrDoDragDrop);
                 }
             }
             finally
             {
                 if(pUnkDataObject != nint.Zero) _ = Marshal.Release(pUnkDataObject);
                 if(pUnkDropSource != nint.Zero) _ = Marshal.Release(pUnkDropSource);
-            }
+            }     
+            [DoesNotReturn] static void ThrowArgumentNull(string pointerName)                  => throw new ArgumentNullException(pointerName, $"Failed to create COM interface pointer for {pointerName}.");
+            [DoesNotReturn] static void ThrowQueryInterface(string interfaceName, int hResult) => throw new COMException($"QueryInterface failed for interface '{interfaceName}' with HRESULT: 0x{hResult:X8}.", hResult);
+            [DoesNotReturn] static void ThrowDoDragDrop(int hResult)                           => throw new COMException($"DoDragDrop function failed with HRESULT: 0x{hResult:X8}.", hResult);
         }
-
-        private const nint test = 0;
         [GeneratedComClass]
         private unsafe partial class DataObject(MemoryStream imageStream, string fileName, StrategyBasedComWrappers localComWrappers) : IDataObject/*, ICustomQueryInterface*/
         {
