@@ -532,7 +532,6 @@ namespace FVH.SSHF.Infrastructure
         public unsafe partial interface IAdviseSink : IUnknown { public struct NativeNotImplemented { } }
         [GeneratedComInterface, Guid("00000105-0000-0000-C000-000000000046")]
         public unsafe partial interface IEnumSTATDATA : IUnknown { public struct NativeNotImplemented { } }
-
         [GeneratedComInterface, Guid("00000103-0000-0000-C000-000000000046")]
         public unsafe partial interface IEnumFORMATETC : IUnknown
         {
@@ -768,18 +767,18 @@ namespace FVH.SSHF.Infrastructure
         private const uint GMEM_MOVEABLE = 0x0002;
         private const uint GMEM_ZEROINIT = 0x0040;
         private const int E_OUTOFMEMORY = unchecked((int)0x8007000E);
-        [LibraryImport("kernel32", SetLastError = true)]
+        [LibraryImport("kernel32")]
         private static partial nint GlobalAlloc(uint uFlags, nuint dwBytes);
-        [LibraryImport("kernel32", SetLastError = true)]
+        [LibraryImport("kernel32")]
         private static partial nint GlobalFree(nint hMem);
-        [LibraryImport("kernel32", SetLastError = true)]
+        [LibraryImport("kernel32")]
         private static unsafe partial void* GlobalLock(nint hMem);
-        [LibraryImport("kernel32", SetLastError = true)]
+        [LibraryImport("kernel32")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool GlobalUnlock(nint hMem);
-        [LibraryImport("ole32", SetLastError = true)]
+        [LibraryImport("ole32")]
         private static unsafe partial void* CoTaskMemAlloc(nuint cb);
-        [LibraryImport("ole32", SetLastError = true)]
+        [LibraryImport("ole32")]
         private static unsafe partial int DoDragDrop(IDataObject.Native* pDataObj, IDropSource.Native* pDropSource, uint dwOKEffects, uint* pdwEffect);
     }
 }
