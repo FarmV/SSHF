@@ -66,13 +66,7 @@ namespace FVH.SSHF.Infrastructure
 
                 pUnkDropSource = s_localComWrappers.GetOrCreateComInterfaceForObject(dropSource, CreateComInterfaceFlags.None);
                 if(pUnkDropSource == nint.Zero) ThrowArgumentNull(nameof(dropSource));
-
-                int hrCreate;
-                const nint NoAggregation = 0;
-                fixed(Guid* pClsid = &CLSID_DragDropHelper, pIid = &IID_IDragSourceHelper2) hrCreate = CoCreateInstance(pClsid, (IUnknown.Native*)NoAggregation, CLSCTX_INPROC_SERVER, pIid, (IUnknown.Native**)&pDragSourceHelper2);
-                
-                if(hrCreate < S_OK) ThrowCoCreateInstance("DragDropHelper", hrCreate);
-
+             
                 IDataObject.Native* pDataObj;
                 int hResultQI_DataObject;
                 fixed(Guid* pIID = &IID_IDataObject) hResultQI_DataObject = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnkDataObject)->Vtable)[0])) ((ComInterfaceDispatch*)pUnkDataObject, pIID, (void**)&pDataObj);
@@ -85,6 +79,11 @@ namespace FVH.SSHF.Infrastructure
 
                 if(options.HBitmap != nint.Zero)
                 {
+                    int hrCreate;
+                    const nint NoAggregation = 0;
+                    fixed(Guid* pClsid = &CLSID_DragDropHelper, pIid = &IID_IDragSourceHelper2) hrCreate = CoCreateInstance(pClsid, (IUnknown.Native*)NoAggregation, CLSCTX_INPROC_SERVER, pIid, (IUnknown.Native**)&pDragSourceHelper2);
+                    if(hrCreate < S_OK) ThrowCoCreateInstance("DragDropHelper", hrCreate);
+
                     SIZE bitmapSize = GetBitmapSize(options.HBitmap);
                     SHDRAGIMAGE dragImageInfo = new()
                     {
