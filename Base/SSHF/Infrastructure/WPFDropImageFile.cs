@@ -1,40 +1,12 @@
 ﻿using System;
 using System.Buffers;
-using System.Buffers.Binary;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
-using System.Linq.Expressions;
-using System.Numerics;
-using System.Reflection;
-using System.Runtime.InteropServices.ComTypes;
-using System.Runtime.Serialization;
-using System.Security;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
-
-using MahApps.Metro.Controls;
-
-using Microsoft.VisualBasic;
-
-using Windows.Graphics.Imaging;
-using Windows.Win32;
-using Windows.Win32.Foundation;
-using Windows.Win32.System.Com;
-using Windows.Win32.UI.Shell;
-
-using WinRT;
-using WinRT.Interop;
-
-using static System.Windows.Forms.DataFormats;
-using static FVH.SSHF.Infrastructure.VirtualFileDragDrop;
 
 namespace FVH.SSHF.Infrastructure
 {
@@ -59,7 +31,31 @@ namespace FVH.SSHF.Infrastructure
             IsDisposed = true;
             _lastImageStream?.Dispose();
         }
+        //public void SaveImageFromDrop(object ev, BitmapSource image)
+        //{
+        //    if(ev is not MouseEventArgs) return;
 
+        //    if(CompareBitmapSources(_lastDropImage, image) is false)
+        //    {
+        //        _lastDropImage = image;
+
+        //        _lastImageStream?.Dispose();
+        //        _lastImageStream = new MemoryStream();
+        //        PngBitmapEncoder encoder = new PngBitmapEncoder();
+        //        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(image));
+        //        encoder.Save(_lastImageStream);
+
+        //        string random = Path.GetRandomFileName().ToUpper();
+        //        _lastFileName = $"{Path.GetFileNameWithoutExtension(Path.GetRandomFileName())}.png";
+        //    }
+
+        //    if(_lastImageStream is null) return;
+
+        //    _lastImageStream.Position = 0;
+
+         
+        //    _dragDropHandler.InitiateDrop(_lastImageStream, _lastFileName);
+        //}
         public void SaveImageFromDrop(object ev, BitmapSource image)
         {
             if(ev is not MouseEventArgs) return;
@@ -67,24 +63,30 @@ namespace FVH.SSHF.Infrastructure
             if(CompareBitmapSources(_lastDropImage, image) is false)
             {
                 _lastDropImage = image;
-
                 _lastImageStream?.Dispose();
                 _lastImageStream = new MemoryStream();
-                PngBitmapEncoder encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(image));
-                encoder.Save(_lastImageStream);
 
-                string random = Path.GetRandomFileName().ToUpper();
+                PngBitmapEncoder encoder = new PngBitmapEncoder();
+
+                BitmapFrame frame = BitmapFrame.Create(image, null, null, null);
+                encoder.Frames.Add(frame);
+
+                encoder.Save(_lastImageStream);
                 _lastFileName = $"{Path.GetFileNameWithoutExtension(Path.GetRandomFileName())}.png";
             }
 
-            if(_lastImageStream is null) return;
+            if(_lastImageStream is null || _lastDropImage is null) return;
 
             _lastImageStream.Position = 0;
 
-            _dragDropHandler.InitiateDrop(_lastImageStream, _lastFileName);
+            _dragDropHandler.InitiateDrop(_lastImageStream, _lastFileName, _lastDropImage, new VirtualFileDragDrop.DragDropOptions { OwnerWindow = new System.Windows.Interop.WindowInteropHelper(_window).Handle ,
+                CursorOffset = new VirtualFileDragDrop.POINT
+                {
+                    x = image.PixelWidth / 2,
+                    y = image.PixelHeight / 2
+                }
+            });
         }
-       
         private static unsafe bool CompareBitmapSources(BitmapSource? bitmapSource1, BitmapSource? bitmapSource2)
         {
             if(bitmapSource1 is null || bitmapSource2 is null) return false;
@@ -128,4 +130,5 @@ namespace FVH.SSHF.Infrastructure
             }
         }
     }
-}
+
+    }
