@@ -3,6 +3,8 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -10,8 +12,8 @@ using System.Windows.Media.Imaging;
 
 namespace FVH.SSHF.Infrastructure
 {
-    
-    public sealed class WPFDropImageFile : IDisposable
+
+    public sealed partial class WPFDropImageFile : IDisposable
     {
         internal bool IsDisposed = false;
         private string _lastFileName = string.Empty;
@@ -31,34 +33,16 @@ namespace FVH.SSHF.Infrastructure
             IsDisposed = true;
             _lastImageStream?.Dispose();
         }
-        //public void SaveImageFromDrop(object ev, BitmapSource image)
-        //{
-        //    if(ev is not MouseEventArgs) return;
-
-        //    if(CompareBitmapSources(_lastDropImage, image) is false)
-        //    {
-        //        _lastDropImage = image;
-
-        //        _lastImageStream?.Dispose();
-        //        _lastImageStream = new MemoryStream();
-        //        PngBitmapEncoder encoder = new PngBitmapEncoder();
-        //        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(image));
-        //        encoder.Save(_lastImageStream);
-
-        //        string random = Path.GetRandomFileName().ToUpper();
-        //        _lastFileName = $"{Path.GetFileNameWithoutExtension(Path.GetRandomFileName())}.png";
-        //    }
-
-        //    if(_lastImageStream is null) return;
-
-        //    _lastImageStream.Position = 0;
-
-         
-        //    _dragDropHandler.InitiateDrop(_lastImageStream, _lastFileName);
-        //}
+   
+        private static nint _hookHandle = nint.Zero;
         public void SaveImageFromDrop(object ev, BitmapSource image)
         {
             if(ev is not MouseEventArgs) return;
+
+            
+            _ = Win32TimePeriod.TimeBeginPeriod(Win32TimePeriod.MinimumTimerResolution);
+            Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread();
+
 
             if(CompareBitmapSources(_lastDropImage, image) is false)
             {
@@ -79,12 +63,14 @@ namespace FVH.SSHF.Infrastructure
 
             _lastImageStream.Position = 0;
 
-            _dragDropHandler.InitiateDrop(_lastImageStream, _lastFileName, _lastDropImage, new VirtualFileDragDrop.DragDropOptions { OwnerWindow = new System.Windows.Interop.WindowInteropHelper(_window).Handle ,
+            _dragDropHandler.InitiateDrop(_lastImageStream, _lastFileName, new VirtualFileDragDrop.DragDropOptions
+            {
                 CursorOffset = new VirtualFileDragDrop.POINT
                 {
                     x = image.PixelWidth / 2,
                     y = image.PixelHeight / 2
-                }
+                },
+                HBitmap = VirtualFileDragDrop.Helper.CreateHBitmapFromBitmapSource(image)
             });
         }
         private static unsafe bool CompareBitmapSources(BitmapSource? bitmapSource1, BitmapSource? bitmapSource2)
@@ -128,7 +114,6 @@ namespace FVH.SSHF.Infrastructure
                 if(array1 is not null) ArrayPool<byte>.Shared.Return(array1);
                 if(array2 is not null) ArrayPool<byte>.Shared.Return(array2);
             }
-        }
+        }   
     }
-
-    }
+}
