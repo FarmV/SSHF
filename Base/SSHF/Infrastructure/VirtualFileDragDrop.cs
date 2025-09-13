@@ -1,10 +1,18 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.IO;
+using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
+using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+
+using ControlzEx.Standard;
 
 using static System.Runtime.InteropServices.ComWrappers;
 
@@ -20,97 +28,239 @@ namespace FVH.SSHF.Infrastructure
         private const int DV_E_FORMATETC  = unchecked((int)0x80040064);
         private const int E_INVALIDARG    = unchecked((int)0x80070057);
 
-        private static readonly ushort s_fileGroupDescriptorFormatId;
-        private static readonly ushort s_fileContentsFormatId;
+        private static readonly ushort s_fileGroupDescriptorFormatId = (ushort)RegisterClipboardFormatW("FileGroupDescriptorW");
+        private static readonly ushort s_fileContentsFormatId        = (ushort)RegisterClipboardFormatW("FileContents");
+        private static readonly ushort s_dragImageBitsFormatId       = (ushort)RegisterClipboardFormatW("DragImageBits");
+        private static readonly ushort s_dragContextFormatId         = (ushort)RegisterClipboardFormatW("DragContext");
 
-        private static readonly Guid IID_IEnumFORMATETC;
-        private static readonly Guid IID_IDataObject;
-        private static readonly Guid IID_IDropSource;
-        private static readonly Guid IID_IStream;
+        private static readonly Guid IID_IEnumFORMATETC     = typeof(IEnumFORMATETC).GUID;
+        private static readonly Guid IID_IDataObject        = typeof(IDataObject).GUID;
+        private static readonly Guid IID_IDropSource        = typeof(IDropSource).GUID;
+        private static readonly Guid IID_IStream            = typeof(IStream).GUID;
+        private static readonly Guid IID_IDragSourceHelper2 = typeof(IDragSourceHelper2).GUID;
+        private static readonly Guid IID_IDragSourceHelper  = typeof(IDragSourceHelper).GUID;
+        private static readonly Guid CLSID_DragDropHelper   = new Guid("4657278A-411B-11d2-839A-00C04FD918D0");
 
         private const int  MAX_PATH        = 260;
         private const char NULL_TERMINATOR = '\0';
 
-        private static readonly StrategyBasedComWrappers s_localComWrappers;
+        private static readonly StrategyBasedComWrappers s_localComWrappers = new StrategyBasedComWrappers();
 
-        static VirtualFileDragDrop()
-        {
-            IID_IEnumFORMATETC = typeof(IEnumFORMATETC).GUID;
-            IID_IDataObject    = typeof(IDataObject).GUID;
-            IID_IDropSource    = typeof(IDropSource).GUID;
-            IID_IStream        = typeof(IStream).GUID;
-
-            s_fileGroupDescriptorFormatId = (ushort)RegisterClipboardFormatW("FileGroupDescriptorW");
-            s_fileContentsFormatId        = (ushort)RegisterClipboardFormatW("FileContents");
-
-            s_localComWrappers = new StrategyBasedComWrappers();
-        }
         public VirtualFileDragDrop() { }
-        public unsafe void InitiateDrop(MemoryStream imageStream, string fileName)
+ 
+        private static partial class Helper
         {
-            DataObject dataObject = new DataObject(imageStream, fileName, s_localComWrappers);
-            DropSource dropSource = new DropSource();
+            public static unsafe nint CreateHBitmapFromBitmapSource(BitmapSource bitmapSource)
+            {
+                // 1. Получаем пиксели в нужном формате (BGRA32)
+                var convertedBitmap = new FormatConvertedBitmap(bitmapSource, PixelFormats.Bgra32, null, 0);
+                int width = convertedBitmap.PixelWidth;
+                int height = convertedBitmap.PixelHeight;
+                int stride = width * 4;
+                byte[] pixels = new byte[height * stride];
+                convertedBitmap.CopyPixels(pixels, stride, 0);
 
-            nint pUnkDataObject = s_localComWrappers.GetOrCreateComInterfaceForObject(dataObject, CreateComInterfaceFlags.None);
-            nint pUnkDropSource = s_localComWrappers.GetOrCreateComInterfaceForObject(dropSource, CreateComInterfaceFlags.None);
+                // 2. Готовим BITMAPINFOHEADER
+                BITMAPINFOHEADER bmiHeader = new()
+                {
+                    biSize = (uint)sizeof(BITMAPINFOHEADER),
+                    biWidth = width,
+                    biHeight = -height, // <-- ВАЖНО: top-down DIB, первая строка - верхняя
+                    biPlanes = 1,
+                    biBitCount = 32,
+                    biCompression = 0 // BI_RGB
+                };
 
-            if(pUnkDataObject == nint.Zero) ThrowArgumentNull(nameof(pUnkDataObject));
-            if(pUnkDropSource == nint.Zero) ThrowArgumentNull(nameof(pUnkDropSource));
+                nint pBits = nint.Zero; // Указатель на пиксельные данные, которые создаст система
 
-            IDataObject.Native* pDataObj = null;
-            IDropSource.Native* pDropSrc = null;
+                // 3. Создаем DIB Section. Это даст нам и HBITMAP, и указатель на его память.
+                nint hBitmap = CreateDIBSection(nint.Zero, &bmiHeader,DIB_RGB_COLORS,&pBits, nint.Zero, 0);
+
+                if(hBitmap == nint.Zero)
+                {
+                    // Не удалось создать битмап, возвращаем 0
+                    return nint.Zero;
+                }
+
+                // 4. Копируем наши пиксели в память, выделенную системой для битмапа.
+                fixed(byte* pPixels = pixels)
+                {
+                    Unsafe.CopyBlock((void*)pBits, pPixels, (uint)pixels.Length);
+                }
+
+                return hBitmap;
+            }
+            [LibraryImport("gdi32")]
+            private static unsafe partial nint CreateDIBSection(
+    nint hdc,
+    BITMAPINFOHEADER* pbmi,
+    uint usage,
+    nint* ppvBits,
+    nint hSection,
+    uint offset);
+            [DllImport("gdi32.dll")]
+            private static extern nint CreateCompatibleDC(nint hdc);
+
+            [DllImport("gdi32.dll")]
+            private static extern nint CreateCompatibleBitmap(nint hdc, int cx, int cy);
+
+            [DllImport("gdi32.dll")]
+            private static extern nint SelectObject(nint hdc, nint h);
+
+            [DllImport("gdi32.dll")]
+            private static extern int SetDIBits(nint hdc, nint hbmp, uint uStartScan, uint cScanLines, void* lpvBits, BITMAPINFO* lpbmi, uint fuColorUse);
+
+            [DllImport("gdi32.dll")]
+            private static extern bool DeleteDC(nint hdc);
+            [DllImport("user32.dll")]
+            private static extern nint GetDC(nint hWnd);
+
+            [DllImport("user32.dll")]
+            private static extern int ReleaseDC(nint hWnd, nint hDC);
+
+            private const uint DIB_RGB_COLORS = 0;
+
+            [StructLayout(LayoutKind.Sequential)]
+            private struct BITMAPINFOHEADER
+            {
+                public uint biSize;
+                public int biWidth;
+                public int biHeight;
+                public ushort biPlanes;
+                public ushort biBitCount;
+                public uint biCompression;
+                public uint biSizeImage;
+                public int biXPelsPerMeter;
+                public int biYPelsPerMeter;
+                public uint biClrUsed;
+                public uint biClrImportant;
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            private struct BITMAPINFO
+            {
+                public BITMAPINFOHEADER bmiHeader;
+            }       
+            // Константы
+            private const int DRAGDROP_S_CANCEL = 0x00040101;
+            private const int DRAGDROP_S_DROP = 0x00040100;
+        }
+        public unsafe void InitiateDrop(MemoryStream imageStream, string fileName, BitmapSource bitmapSource, DragDropOptions? options)
+        {
+            nint pUnkDataObject = nint.Zero;
+            nint pUnkDropSource = nint.Zero;
+            IDragSourceHelper2.Native* pDragSourceHelper2 = null;
+
+            nint hBitmap = Helper.CreateHBitmapFromBitmapSource(bitmapSource);
+
+            DataObject? dataObject = null;
 
             try
             {
+                dataObject = new DataObject(imageStream, fileName, s_localComWrappers);
+                DropSource dropSource = new DropSource();
+
+                pUnkDataObject = s_localComWrappers.GetOrCreateComInterfaceForObject(dataObject, CreateComInterfaceFlags.None);
+                if(pUnkDataObject == nint.Zero) ThrowArgumentNull(nameof(dataObject));
+
+                pUnkDropSource = s_localComWrappers.GetOrCreateComInterfaceForObject(dropSource, CreateComInterfaceFlags.None);
+                if(pUnkDropSource == nint.Zero) ThrowArgumentNull(nameof(dropSource));
+
+                int hrCreate;
+                const nint NoAggregation = 0;
+                fixed(Guid* pClsid = &CLSID_DragDropHelper, pIid = &IID_IDragSourceHelper2) hrCreate = CoCreateInstance(pClsid, (IUnknown.Native*)NoAggregation, CLSCTX_INPROC_SERVER, pIid, (IUnknown.Native**)&pDragSourceHelper2);
+                
+                if(hrCreate < S_OK) ThrowCoCreateInstance("DragDropHelper", hrCreate);
+
+                IDataObject.Native* pDataObj;
                 int hResultQI_DataObject;
-                fixed(Guid* pIID = &IID_IDataObject)
-                    hResultQI_DataObject = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)
-                        ((void**)((ComInterfaceDispatch*)pUnkDataObject)->Vtable)[0])((ComInterfaceDispatch*)pUnkDataObject, pIID, (void**)&pDataObj);
+                fixed(Guid* pIID = &IID_IDataObject) hResultQI_DataObject = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnkDataObject)->Vtable)[0])) ((ComInterfaceDispatch*)pUnkDataObject, pIID, (void**)&pDataObj);
+                if(hResultQI_DataObject < S_OK) ThrowQueryInterface(nameof(IDataObject), hResultQI_DataObject);
 
-                if(hResultQI_DataObject < 0) ThrowQueryInterface(nameof(IDataObject), hResultQI_DataObject);
-
+                IDropSource.Native* pDropSrc;
                 int hResultQI_DropSource;
-                fixed(Guid* pIID = &IID_IDropSource)
-                    hResultQI_DropSource = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)
-                        ((void**)((ComInterfaceDispatch*)pUnkDropSource)->Vtable)[0])((ComInterfaceDispatch*)pUnkDropSource, pIID, (void**)&pDropSrc);
+                fixed(Guid* pIID = &IID_IDropSource) hResultQI_DropSource = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnkDropSource)->Vtable)[0]))((ComInterfaceDispatch*)pUnkDropSource, pIID, (void**)&pDropSrc);
+                if(hResultQI_DropSource < S_OK) ThrowQueryInterface(nameof(IDropSource), hResultQI_DropSource);
 
-                if(hResultQI_DropSource < 0) ThrowQueryInterface(nameof(IDropSource), hResultQI_DropSource);
+                SIZE bitmapSize = GetBitmapSize(hBitmap);
+                SHDRAGIMAGE dragImageInfo = new()
+                {
+                    sizeDragImage  = bitmapSize,
+                    hbmpDragImage  = hBitmap,
+                    ptOffset       = new POINT { x = bitmapSize.cx / 2, y = bitmapSize.cy / 2 },
+                    crColorKey     = 0xFFFFFFFF
+                };
+
+                IDragSourceHelper2 dragSourceHelper = (IDragSourceHelper2)s_localComWrappers.GetOrCreateObjectForComInstance((nint)pDragSourceHelper2, CreateObjectFlags.None);
+
+                int hrInit = dragSourceHelper.InitializeFromBitmap(&dragImageInfo, pDataObj);
+                if(hrInit < S_OK) ThrowInitializeFromBitmap(hrInit);
 
                 const uint allowedEffects = (uint)DROPEFFECT.DROPEFFECT_COPY;
                 uint performedEffect = 0;
-
                 int hrDoDragDrop = DoDragDrop(pDataObj, pDropSrc, allowedEffects, &performedEffect);
 
-                if(hrDoDragDrop < 0)
+                if(hrDoDragDrop < S_OK)
                 {
 #if DEBUG
                     if(Debugger.IsAttached)
                     {
-                        if(hrDoDragDrop == E_POINTER)    Debugger.Break();
+                        if(hrDoDragDrop == E_POINTER) Debugger.Break();
                         if(hrDoDragDrop == E_INVALIDARG) Debugger.Break();
-
                         Debugger.Break();
                     }
 #endif
                     ThrowDoDragDrop(hrDoDragDrop);
-                }
+                }   
             }
             finally
             {
-                if(pUnkDataObject != nint.Zero) _ = Marshal.Release(pUnkDataObject);
+                if(pDragSourceHelper2 is not null) _ = Marshal.Release((nint)(IUnknown.Native*)pDragSourceHelper2);
+
                 if(pUnkDropSource != nint.Zero) _ = Marshal.Release(pUnkDropSource);
-            }     
+                
+                if(pUnkDataObject != nint.Zero) _ = Marshal.Release(pUnkDataObject);
+
+               dataObject?.Dispose();
+            }
             [DoesNotReturn] static void ThrowArgumentNull(string pointerName)                  => throw new ArgumentNullException(pointerName, $"Failed to create COM interface pointer for {pointerName}.");
             [DoesNotReturn] static void ThrowQueryInterface(string interfaceName, int hResult) => throw new COMException($"QueryInterface failed for interface '{interfaceName}' with HRESULT: 0x{hResult:X8}.", hResult);
             [DoesNotReturn] static void ThrowDoDragDrop(int hResult)                           => throw new COMException($"DoDragDrop function failed with HRESULT: 0x{hResult:X8}.", hResult);
+            [DoesNotReturn] static void ThrowCoCreateInstance(string className, int hResult)   => throw new COMException($"CoCreateInstance failed for '{className}' with HRESULT: 0x{hResult:X8}.", hResult);
+            [DoesNotReturn] static void ThrowInitializeFromBitmap(int hResult)                 => throw new COMException($"IDragSourceHelper::InitializeFromBitmap failed with HRESULT: 0x{hResult:X8}.", hResult);
+        }
+        private static unsafe SIZE GetBitmapSize(nint hBitmap)
+        {
+            BITMAP bmp = default;
+        
+            int bytesWritten = GetObjectW(hBitmap, sizeof(BITMAP), &bmp);
+
+            if(bytesWritten is 0) ThrowGetObjectFailed(); [DoesNotReturn] static void ThrowGetObjectFailed() => throw new InvalidOperationException("Win32 function 'GetObjectW' failed to retrieve bitmap information.");
+
+            return new SIZE { cx = bmp.bmWidth, cy = bmp.bmHeight };
+        }
+        private static unsafe nint CreateHBITMAPFromStream(MemoryStream stream)
+        {
+            // TODO: Реализовать сложную логику через WIC (Windows Imaging Component)
+            // 1. Создать IWICImagingFactory.
+            // 2. Создать IWICStream и инициализировать его из MemoryStream.
+            // 3. Создать IWICBitmapDecoder из стрима.
+            // 4. Получить IWICBitmapFrameDecode.
+            // 5. Создать IWICFormatConverter и конвертировать в PixelFormats.Bgra32.
+            // 6. Создать HBITMAP из IWICBitmapSource.
+
+            return nint.Zero; // Заглушка
         }
         [GeneratedComClass]
-        private unsafe partial class DataObject(MemoryStream imageStream, string fileName, StrategyBasedComWrappers localComWrappers) : IDataObject/*, ICustomQueryInterface*/
+        private unsafe partial class DataObject(MemoryStream imageStream, string fileName, StrategyBasedComWrappers localComWrappers) : IDataObject, IDisposable /*ICustomQueryInterface*/
         {
             private const    int                       OLE_E_ADVISENOTSUPPORTED = unchecked((int)0x80040003);
+            private const    int                       DV_E_TYMED               = unchecked((int)0x80040069);
             private readonly string                   _fileName         = fileName;
             private readonly MemoryStream             _imageStream      = imageStream;
             private readonly StrategyBasedComWrappers _localComWrappers = localComWrappers;
+            private STGMEDIUM? _dragImageBitsMedium;
+            private STGMEDIUM? _dragContextMedium;
 
             public int EnumFormatEtc(uint dwDirection, IEnumFORMATETC.Native** ppenumFormatEtc)
             {
@@ -121,27 +271,47 @@ namespace FVH.SSHF.Infrastructure
                 const uint DATADIR_GET = 1;
                 if(dwDirection is not DATADIR_GET) return E_NOTIMPL;
 
-                FORMATETC[] supportedFormats = new FORMATETC[]
-                    {
-                        // 1. "Манифест" (FileGroupDescriptorW).
-                        new FORMATETC()
-                        {
-                            cfFormat = s_fileGroupDescriptorFormatId,
-                            dwAspect = DVASPECT.DVASPECT_CONTENT,
-                            lindex   = -1, // Относится ко всем файлам в группе
-                            tymed    = TYMED.TYMED_HGLOBAL
-                        },
-                        // 2. "Содержимое" (FileContents).
-                        new FORMATETC()
-                        {
-                            cfFormat = s_fileContentsFormatId,
-                            dwAspect = DVASPECT.DVASPECT_CONTENT,
-                            lindex   = 0,  // Относится к первому (и единственному) файлу
-                            tymed    = TYMED.TYMED_ISTREAM
-                        }
-                    };
+                Span<FORMATETC> supportedFormatsSpan = stackalloc FORMATETC[4];
+                int formatCount = 0;
 
-                EnumFormatEtc enumerator = new EnumFormatEtc(supportedFormats, _localComWrappers);
+                supportedFormatsSpan[formatCount++] = new FORMATETC()
+                {
+                    cfFormat = s_fileGroupDescriptorFormatId,
+                    dwAspect = DVASPECT.DVASPECT_CONTENT,
+                    lindex = -1,
+                    tymed = TYMED.TYMED_HGLOBAL
+                };
+                supportedFormatsSpan[formatCount++] = new FORMATETC()
+                {
+                    cfFormat = s_fileContentsFormatId,
+                    dwAspect = DVASPECT.DVASPECT_CONTENT,
+                    lindex = 0,
+                    tymed = TYMED.TYMED_ISTREAM
+                };
+                if(_dragImageBitsMedium.HasValue)
+                {
+                    supportedFormatsSpan[formatCount++] = new FORMATETC()
+                    {
+                        cfFormat = s_dragImageBitsFormatId,
+                        dwAspect = DVASPECT.DVASPECT_CONTENT,
+                        lindex = -1,
+                        tymed = _dragImageBitsMedium.Value.tymed
+                    };
+                }
+                if(_dragContextMedium.HasValue)
+                {
+                    supportedFormatsSpan[formatCount++] = new FORMATETC()
+                    {
+                        cfFormat = s_dragContextFormatId,
+                        dwAspect = DVASPECT.DVASPECT_CONTENT,
+                        lindex = -1,
+                        tymed = _dragContextMedium.Value.tymed
+                    };
+                }
+
+                FORMATETC[] finalFormats = supportedFormatsSpan.Slice(0, formatCount).ToArray();
+
+                EnumFormatEtc enumerator = new EnumFormatEtc(finalFormats, _localComWrappers);
 
                 nint pointerIUnknown = _localComWrappers.GetOrCreateComInterfaceForObject(enumerator, CreateComInterfaceFlags.None);
                 if(pointerIUnknown == nint.Zero) return E_FAIL;
@@ -155,17 +325,69 @@ namespace FVH.SSHF.Infrastructure
             }
             public int GetData(FORMATETC* pFormatetc, STGMEDIUM* pMedium)
             {
+                Debug.WriteLine($"GetData called for format: {pFormatetc->cfFormat}");
                 if(pMedium is null) return E_POINTER;
                 *pMedium = default;
 
                 switch(pFormatetc->cfFormat)
                 {
+                    case ushort formatId when formatId == s_dragImageBitsFormatId && _dragImageBitsMedium.HasValue: return CopyCachedStgMedium(_dragImageBitsMedium.Value, pMedium);
+                    case ushort formatId when formatId == s_dragContextFormatId   && _dragContextMedium.HasValue:   return CopyCachedStgMedium(_dragContextMedium.Value, pMedium);
+
                     case ushort formatId when formatId == s_fileGroupDescriptorFormatId: return CreateFileGroupDescriptor(pMedium);
                     case ushort formatId when formatId == s_fileContentsFormatId:        return CreateFileContents(pMedium);
                     default: return DV_E_FORMATETC;
                 }
             }
-            public int QueryGetData(FORMATETC* pFormatetc) =>pFormatetc->cfFormat == s_fileGroupDescriptorFormatId || pFormatetc->cfFormat == s_fileContentsFormatId ? S_OK : DV_E_FORMATETC;                         
+            private unsafe int CopyCachedStgMedium(in STGMEDIUM source, STGMEDIUM* pDestination)
+            {
+                STGMEDIUM destinationMedium = default;
+
+                switch(source.tymed)
+                {
+                    case TYMED.TYMED_HGLOBAL:
+                    const int default_GMEM_MOVEABLE = 0;
+                    nint hDuplicated = OleDuplicateData(source.hGlobal, 0, default_GMEM_MOVEABLE);
+                    if(hDuplicated == nint.Zero) return E_OUTOFMEMORY;
+
+                    destinationMedium.tymed = TYMED.TYMED_HGLOBAL;
+                    destinationMedium.hGlobal = hDuplicated;
+                    destinationMedium.pUnkForRelease = null;
+                    break;
+
+                    case TYMED.TYMED_ISTREAM:
+                    if(source.pstm == null) return E_POINTER;
+
+                    IStream sourceStream = (IStream)s_localComWrappers.GetOrCreateObjectForComInstance((nint)source.pstm, CreateObjectFlags.None);
+                    IStream.Native* pClonedStream = null;
+
+                    int hrClone = sourceStream.Clone(&pClonedStream);
+                    if(hrClone < S_OK) return hrClone;
+
+                    destinationMedium.tymed = TYMED.TYMED_ISTREAM;
+                    destinationMedium.pstm = pClonedStream;
+                    destinationMedium.pUnkForRelease = null;
+                    break;
+
+                    default:
+                    return DV_E_TYMED;
+                }
+
+                *pDestination = destinationMedium;
+                return S_OK;
+            }
+            public int QueryGetData(FORMATETC* pFormatetc)
+            {
+                Debug.WriteLine($"QueryGetData called for format: {pFormatetc->cfFormat}");
+
+                switch(pFormatetc->cfFormat) 
+                {
+                    case ushort formatId when formatId == s_fileGroupDescriptorFormatId || formatId == s_fileContentsFormatId: return S_OK;
+                    case ushort formatId when formatId == s_dragImageBitsFormatId       && _dragImageBitsMedium.HasValue:      return S_OK;
+                    case ushort formatId when formatId == s_dragContextFormatId         && _dragContextMedium.HasValue:        return S_OK;
+                    default: return DV_E_FORMATETC;
+                }
+            }
             public int GetDataHere(FORMATETC* pFormatetc, STGMEDIUM* pMedium) => S_OK;
             public int GetCanonicalFormatEtc(FORMATETC* pFormatetcIn, FORMATETC* pFormatetcOut)
             {
@@ -175,7 +397,68 @@ namespace FVH.SSHF.Infrastructure
                 const int DATA_E_FORMATETC = unchecked((int)0x80040064);
                 return DATA_E_FORMATETC;
             }
-            public int SetData(FORMATETC* pFormatetc, STGMEDIUM* pMedium, [MarshalAs(UnmanagedType.Bool)] bool fRelease) => _ = E_NOTIMPL;
+            public int SetData(FORMATETC* pFormatetc, STGMEDIUM* pMedium, [MarshalAs(UnmanagedType.Bool)] bool fRelease) 
+            {
+                return pFormatetc->cfFormat switch
+                {
+                    ushort formatId when formatId == s_dragImageBitsFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _dragImageBitsMedium),
+                    ushort formatId when formatId == s_dragContextFormatId   => HandleSetData(pFormatetc, pMedium, fRelease, ref _dragContextMedium),
+                    _ => E_NOTIMPL
+                };
+            }
+            private int HandleSetData(FORMATETC* pFormatetc, STGMEDIUM* pMedium, bool fRelease, ref STGMEDIUM? fieldToStore)
+            {
+                const int notSupportedTYMED = 0;
+                const TYMED SUPPORTED_TYMEDS = TYMED.TYMED_HGLOBAL | TYMED.TYMED_ISTREAM;
+                    
+                if((pFormatetc->tymed & SUPPORTED_TYMEDS) is notSupportedTYMED)
+                {
+#if DEBUG
+                    if(Debugger.IsAttached is true) Debugger.Break();                    
+#endif
+                    return DV_E_TYMED;
+                }
+                
+                STGMEDIUM mediumToStore;
+
+                if(fRelease) mediumToStore = *pMedium;
+                else
+                {
+                    if(pMedium->tymed == TYMED.TYMED_ISTREAM)
+                    {
+                        if(pMedium->pstm is null) return E_POINTER;
+
+                        IStream.Native* pClonedStream = null;
+
+                        IStream stream  =(IStream)s_localComWrappers.GetOrCreateObjectForComInstance((nint)pMedium->pstm, CreateObjectFlags.None);
+
+                        int hrClone = stream.Clone(&pClonedStream);
+                        if(hrClone < S_OK) return hrClone;
+
+                        mediumToStore = new STGMEDIUM { tymed = TYMED.TYMED_ISTREAM, pstm = pClonedStream };
+                    }
+                    else
+                    {
+                        const int default_GMEM_MOVEABLE = 0;
+                        nint hDuplicated = OleDuplicateData(pMedium->hGlobal, pFormatetc->cfFormat, default_GMEM_MOVEABLE);
+                        if(hDuplicated == nint.Zero) return E_OUTOFMEMORY;
+
+                        mediumToStore = new STGMEDIUM
+                        {
+                            tymed = TYMED.TYMED_HGLOBAL,
+                            hGlobal = hDuplicated,
+                            pUnkForRelease = null
+                        };
+                    }
+                }
+
+                if(fieldToStore.HasValue is true) { STGMEDIUM oldValue = fieldToStore.Value; ReleaseStgMedium(&oldValue); }
+ 
+                fieldToStore = mediumToStore;
+
+                return S_OK;
+            }
+
             public int DAdvise(FORMATETC* pFormatetc, uint advf, IAdviseSink.NativeNotImplemented* pAdvSink, uint* pdwConnection)
             {
                 if(pdwConnection is not null) *pdwConnection = 0;
@@ -262,11 +545,34 @@ namespace FVH.SSHF.Infrastructure
 
                 return S_OK;
             }
+            private bool _isDisposed = false;
+            public void Dispose()
+            {
+                if(_isDisposed) return;
+                _isDisposed = true;
+
+                if(_dragImageBitsMedium.HasValue)
+                {
+                    STGMEDIUM medium = _dragImageBitsMedium.Value;
+                    ReleaseStgMedium(&medium);
+                }
+                if(_dragContextMedium.HasValue)
+                {
+                    STGMEDIUM medium = _dragContextMedium.Value;
+                    ReleaseStgMedium(&medium);
+                }
+
+
+            }
             //public CustomQueryInterfaceResult GetInterface(ref Guid iid, out nint ppv)
             //{
             //    ppv = default;
             //    return CustomQueryInterfaceResult.NotHandled;
             //}
+            [LibraryImport("ole32")]
+            private static unsafe partial void ReleaseStgMedium(STGMEDIUM* pmedium);
+            [LibraryImport("ole32")]
+            private static partial nint OleDuplicateData(nint hSrc, ushort cfFormat, uint uiFlags);
         }
         [GeneratedComClass]
         private unsafe partial class EnumFormatEtc(VirtualFileDragDrop.FORMATETC[] formats, StrategyBasedComWrappers localComWrappers) : IEnumFORMATETC
@@ -594,6 +900,58 @@ namespace FVH.SSHF.Infrastructure
             int DragLeaveTarget();
             new struct Native { }
         }
+        [GeneratedComInterface, Guid("DE5BF786-477A-11d2-839A-00C04FD918D0")]
+        public unsafe partial interface IDragSourceHelper : IUnknown
+        {
+            [PreserveSig]
+            int InitializeFromBitmap(SHDRAGIMAGE* pshdi, IDataObject.Native* pDataObject);
+            [PreserveSig]
+            int InitializeFromWindow(nint hwnd, POINT* ppt, IDataObject.Native* pDataObject);
+            new struct Native { }
+        }
+        [GeneratedComInterface, Guid("83E07D0D-0C5F-4163-BF1A-60B274051E40")]
+        public unsafe partial interface IDragSourceHelper2 : IDragSourceHelper
+        {
+            [PreserveSig]
+            int SetFlags(uint dwFlags);
+            new struct Native { }
+        }
+        public readonly struct DragDropOptions
+        {
+            public nint OwnerWindow { get; init; }
+            public POINT CursorOffset { get; init; }
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct BITMAP
+        {
+            public int bmType;          // Не используется
+            public int bmWidth;         // Ширина битмапа в пикселях
+            public int bmHeight;        // Высота битмапа в пикселях
+            public int bmWidthBytes;    // Количество байт в одной строке пикселей
+            public ushort bmPlanes;     // Не используется
+            public ushort bmBitsPixel;  // Количество бит на пиксель
+            public nint bmBits;         // Указатель на пиксельные данные (не используется GetObjectW)
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        public unsafe struct SHDRAGIMAGE
+        {
+            public SIZE sizeDragImage;
+            public POINT ptOffset;
+            public nint hbmpDragImage;
+            public uint crColorKey;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int x;
+            public int y;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SIZE
+        {
+            public int cx;
+            public int cy;
+        }
         [StructLayout(LayoutKind.Sequential)]
         public struct POINTL
         {
@@ -780,6 +1138,11 @@ namespace FVH.SSHF.Infrastructure
         private static unsafe partial void* CoTaskMemAlloc(nuint cb);
         [LibraryImport("ole32")]
         private static unsafe partial int DoDragDrop(IDataObject.Native* pDataObj, IDropSource.Native* pDropSource, uint dwOKEffects, uint* pdwEffect);
+        [LibraryImport("ole32")]
+        private static unsafe partial int CoCreateInstance(Guid* rclsid, IUnknown.Native* pUnkOuter, uint dwClsContext, Guid* riid, IUnknown.Native** ppv);
+        private const uint CLSCTX_INPROC_SERVER = 0x1;
+        [LibraryImport("gdi32.dll")]
+        private static partial int GetObjectW(nint hGdiObject, int cbBuffer, void* lpvObject);
     }
 }
 
