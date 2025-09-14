@@ -1,19 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
 using System.IO;
-using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
-using System.Threading;
-using System.Windows;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-
-using ControlzEx.Standard;
 
 using static System.Runtime.InteropServices.ComWrappers;
 
@@ -28,11 +21,22 @@ namespace FVH.SSHF.Infrastructure
         private const int E_FAIL          = unchecked((int)0x80004005);
         private const int DV_E_FORMATETC  = unchecked((int)0x80040064);
         private const int E_INVALIDARG    = unchecked((int)0x80070057);
+        // Base
+        private static readonly ushort s_fileGroupDescriptorFormatId        = (ushort)RegisterClipboardFormatW("FileGroupDescriptorW");
+        private static readonly ushort s_fileContentsFormatId               = (ushort)RegisterClipboardFormatW("FileContents");
 
-        private static readonly ushort s_fileGroupDescriptorFormatId = (ushort)RegisterClipboardFormatW("FileGroupDescriptorW");
-        private static readonly ushort s_fileContentsFormatId        = (ushort)RegisterClipboardFormatW("FileContents");
-        private static readonly ushort s_dragImageBitsFormatId       = (ushort)RegisterClipboardFormatW("DragImageBits");
-        private static readonly ushort s_dragContextFormatId         = (ushort)RegisterClipboardFormatW("DragContext");
+        private static readonly ushort s_dragImageBitsFormatId              = (ushort)RegisterClipboardFormatW("DragImageBits");
+        private static readonly ushort s_dragContextFormatId                = (ushort)RegisterClipboardFormatW("DragContext");
+
+        private static readonly ushort s_isShowingLayeredFormatId           = (ushort)RegisterClipboardFormatW("IsShowingLayered");
+        private static readonly ushort s_dragWindowFormatId                 = (ushort)RegisterClipboardFormatW("DragWindow");
+        private static readonly ushort s_dropDescriptionFormatId            = (ushort)RegisterClipboardFormatW("DropDescription");
+        private static readonly ushort s_disableDragTextFormatId            = (ushort)RegisterClipboardFormatW("DisableDragText");
+        private static readonly ushort s_isShowingTextFormatId              = (ushort)RegisterClipboardFormatW("IsShowingText");
+
+        private static readonly ushort s_targetClsidFormatId                = (ushort)RegisterClipboardFormatW("TargetCLSID");
+        private static readonly ushort s_performedDropEffectFormatId        = (ushort)RegisterClipboardFormatW("Performed DropEffect");
+        private static readonly ushort s_logicalPerformedDropEffectFormatId = (ushort)RegisterClipboardFormatW("Logical Performed DropEffect");
 
         private static readonly Guid IID_IEnumFORMATETC     = typeof(IEnumFORMATETC).GUID;
         private static readonly Guid IID_IDataObject        = typeof(IDataObject).GUID;
@@ -47,7 +51,8 @@ namespace FVH.SSHF.Infrastructure
 
         private static readonly StrategyBasedComWrappers s_localComWrappers = new StrategyBasedComWrappers();
 
-        public VirtualFileDragDrop() { }       
+        public VirtualFileDragDrop() { }
+                     
         public unsafe void InitiateDrop(MemoryStream imageStream, string fileName, DragDropOptions options)
         {
             nint pUnkDataObject = nint.Zero;
@@ -94,9 +99,14 @@ namespace FVH.SSHF.Infrastructure
                     };
 
                     IDragSourceHelper2 dragSourceHelper = (IDragSourceHelper2)s_localComWrappers.GetOrCreateObjectForComInstance((nint)pDragSourceHelper2, CreateObjectFlags.None);
+                    
+                   int hrInit = dragSourceHelper.InitializeFromBitmap(&dragImageInfo, pDataObj);
+                   if(hrInit < S_OK) ThrowInitializeFromBitmap(hrInit);
 
-                    int hrInit = dragSourceHelper.InitializeFromBitmap(&dragImageInfo, pDataObj);
-                    if(hrInit < S_OK) ThrowInitializeFromBitmap(hrInit);
+                    //const uint DSH_ALLOWDROPDESCRIPTIONTEXT = 0x0001;
+                    //int hrSetFlags = dragSourceHelper.SetFlags(DSH_ALLOWDROPDESCRIPTIONTEXT); //
+				    //if(hrSetFlags < 0) System.Diagnostics.Debugger.Break();
+
                 }
 
                 const uint allowedEffects = (uint)DROPEFFECT.DROPEFFECT_COPY;
@@ -232,19 +242,58 @@ namespace FVH.SSHF.Infrastructure
             private readonly string                   _fileName         = fileName;
             private readonly MemoryStream             _imageStream      = imageStream;
             private readonly StrategyBasedComWrappers _localComWrappers = localComWrappers;
+
+            private bool _isDisposed = false;
+
             private STGMEDIUM? _dragImageBitsMedium;
             private STGMEDIUM? _dragContextMedium;
+
+            private STGMEDIUM? _isShowingLayeredMedium;
+            private STGMEDIUM? _dragWindowMedium;
+            private STGMEDIUM? _dropDescriptionMedium;
+            private STGMEDIUM? _disableDragTextMedium;
+            private STGMEDIUM? _isShowingTextMedium;
+
+            private STGMEDIUM? _targetClsidMedium;
+            private STGMEDIUM? _performedDropEffectMedium;
+            private STGMEDIUM? _logicalPerformedDropEffectMedium;
+
+            public void Dispose()
+            {
+                if(_isDisposed) return;
+                _isDisposed = true;
+
+                ReleaseMediumIfAvailable(ref _dragImageBitsMedium);
+                ReleaseMediumIfAvailable(ref _dragContextMedium);
+                ReleaseMediumIfAvailable(ref _isShowingLayeredMedium);
+                ReleaseMediumIfAvailable(ref _dragWindowMedium);
+                ReleaseMediumIfAvailable(ref _dropDescriptionMedium);
+                ReleaseMediumIfAvailable(ref _disableDragTextMedium);
+                ReleaseMediumIfAvailable(ref _isShowingTextMedium);
+                ReleaseMediumIfAvailable(ref _targetClsidMedium);
+                ReleaseMediumIfAvailable(ref _performedDropEffectMedium);
+                ReleaseMediumIfAvailable(ref _logicalPerformedDropEffectMedium);
+
+                static void ReleaseMediumIfAvailable(ref STGMEDIUM? medium)
+                {
+                    if(medium.HasValue)
+                    {
+                        STGMEDIUM toRelease = medium.Value;
+                        ReleaseStgMedium(&toRelease);
+                        medium = null;
+                    }
+                }
+            }
 
             public int EnumFormatEtc(uint dwDirection, IEnumFORMATETC.Native** ppenumFormatEtc)
             {
                 if(ppenumFormatEtc is null) return E_POINTER;
-
                 *ppenumFormatEtc = (IEnumFORMATETC.Native*)null;
 
                 const uint DATADIR_GET = 1;
                 if(dwDirection is not DATADIR_GET) return E_NOTIMPL;
 
-                Span<FORMATETC> supportedFormatsSpan = stackalloc FORMATETC[4];
+                Span<FORMATETC> supportedFormatsSpan = stackalloc FORMATETC[12];
                 int formatCount = 0;
 
                 supportedFormatsSpan[formatCount++] = new FORMATETC()
@@ -261,26 +310,17 @@ namespace FVH.SSHF.Infrastructure
                     lindex = 0,
                     tymed = TYMED.TYMED_ISTREAM
                 };
-                if(_dragImageBitsMedium.HasValue)
-                {
-                    supportedFormatsSpan[formatCount++] = new FORMATETC()
-                    {
-                        cfFormat = s_dragImageBitsFormatId,
-                        dwAspect = DVASPECT.DVASPECT_CONTENT,
-                        lindex = -1,
-                        tymed = _dragImageBitsMedium.Value.tymed
-                    };
-                }
-                if(_dragContextMedium.HasValue)
-                {
-                    supportedFormatsSpan[formatCount++] = new FORMATETC()
-                    {
-                        cfFormat = s_dragContextFormatId,
-                        dwAspect = DVASPECT.DVASPECT_CONTENT,
-                        lindex = -1,
-                        tymed = _dragContextMedium.Value.tymed
-                    };
-                }
+
+                AddFormatIfAvailable(ref formatCount, supportedFormatsSpan, s_dragImageBitsFormatId,              _dragImageBitsMedium);
+                AddFormatIfAvailable(ref formatCount, supportedFormatsSpan, s_dragContextFormatId,                _dragContextMedium);
+                AddFormatIfAvailable(ref formatCount, supportedFormatsSpan, s_isShowingLayeredFormatId,           _isShowingLayeredMedium);
+                AddFormatIfAvailable(ref formatCount, supportedFormatsSpan, s_dragWindowFormatId,                 _dragWindowMedium);
+                AddFormatIfAvailable(ref formatCount, supportedFormatsSpan, s_dropDescriptionFormatId,            _dropDescriptionMedium);
+                AddFormatIfAvailable(ref formatCount, supportedFormatsSpan, s_disableDragTextFormatId,            _disableDragTextMedium);
+                AddFormatIfAvailable(ref formatCount, supportedFormatsSpan, s_isShowingTextFormatId,              _isShowingTextMedium);
+                AddFormatIfAvailable(ref formatCount, supportedFormatsSpan, s_targetClsidFormatId,                _targetClsidMedium);
+                AddFormatIfAvailable(ref formatCount, supportedFormatsSpan, s_performedDropEffectFormatId,        _performedDropEffectMedium);
+                AddFormatIfAvailable(ref formatCount, supportedFormatsSpan, s_logicalPerformedDropEffectFormatId, _logicalPerformedDropEffectMedium);
 
                 FORMATETC[] finalFormats = supportedFormatsSpan.Slice(0, formatCount).ToArray();
 
@@ -295,9 +335,20 @@ namespace FVH.SSHF.Infrastructure
                 _ = Marshal.Release(pointerIUnknown);
 
                 return hr;
+
+                static void AddFormatIfAvailable(ref int formatCount, Span<FORMATETC> formats, ushort formatId, STGMEDIUM? medium)
+                {
+                    if(medium.HasValue is false) return;
+
+                    formats[formatCount++] = new FORMATETC()
+                    {
+                        cfFormat = formatId,
+                        dwAspect = DVASPECT.DVASPECT_CONTENT,
+                        lindex = -1,
+                        tymed = medium.Value.tymed
+                    };
+                }
             }
-
-
             public int GetData(FORMATETC* pFormatetc, STGMEDIUM* pMedium)
             {
                 if(pMedium is null) return E_POINTER;
@@ -305,11 +356,20 @@ namespace FVH.SSHF.Infrastructure
 
                 switch(pFormatetc->cfFormat)
                 {
-                    case ushort formatId when formatId == s_dragImageBitsFormatId && _dragImageBitsMedium.HasValue: return CopyCachedStgMedium(_dragImageBitsMedium.Value, pMedium);
-                    case ushort formatId when formatId == s_dragContextFormatId   && _dragContextMedium.HasValue:   return CopyCachedStgMedium(_dragContextMedium.Value, pMedium);
-
                     case ushort formatId when formatId == s_fileGroupDescriptorFormatId: return CreateFileGroupDescriptor(pMedium);
                     case ushort formatId when formatId == s_fileContentsFormatId:        return CreateFileContents(pMedium);
+
+                    case ushort formatId when formatId == s_dragImageBitsFormatId && _dragImageBitsMedium.HasValue:                           return CopyCachedStgMedium(_dragImageBitsMedium.Value, pMedium);
+                    case ushort formatId when formatId == s_dragContextFormatId && _dragContextMedium.HasValue:                               return CopyCachedStgMedium(_dragContextMedium.Value, pMedium);
+                    case ushort formatId when formatId == s_isShowingLayeredFormatId && _isShowingLayeredMedium.HasValue:                     return CopyCachedStgMedium(_isShowingLayeredMedium.Value, pMedium);
+                    case ushort formatId when formatId == s_dragWindowFormatId && _dragWindowMedium.HasValue:                                 return CopyCachedStgMedium(_dragWindowMedium.Value, pMedium);
+                    case ushort formatId when formatId == s_dropDescriptionFormatId && _dropDescriptionMedium.HasValue:                       return CopyCachedStgMedium(_dropDescriptionMedium.Value, pMedium);
+                    case ushort formatId when formatId == s_disableDragTextFormatId && _disableDragTextMedium.HasValue:                       return CopyCachedStgMedium(_disableDragTextMedium.Value, pMedium);
+                    case ushort formatId when formatId == s_isShowingTextFormatId && _isShowingTextMedium.HasValue:                           return CopyCachedStgMedium(_isShowingTextMedium.Value, pMedium);
+                    case ushort formatId when formatId == s_targetClsidFormatId && _targetClsidMedium.HasValue:                               return CopyCachedStgMedium(_targetClsidMedium.Value, pMedium);
+                    case ushort formatId when formatId == s_performedDropEffectFormatId && _performedDropEffectMedium.HasValue:               return CopyCachedStgMedium(_performedDropEffectMedium.Value, pMedium);
+                    case ushort formatId when formatId == s_logicalPerformedDropEffectFormatId && _logicalPerformedDropEffectMedium.HasValue: return CopyCachedStgMedium(_logicalPerformedDropEffectMedium.Value, pMedium);
+
                     default: return DV_E_FORMATETC;
                 }
             }
@@ -348,10 +408,20 @@ namespace FVH.SSHF.Infrastructure
             public int QueryGetData(FORMATETC* pFormatetc)
             {
                 switch(pFormatetc->cfFormat) 
-                {
-                    case ushort formatId when formatId == s_fileGroupDescriptorFormatId || formatId == s_fileContentsFormatId: return S_OK;
-                    case ushort formatId when formatId == s_dragImageBitsFormatId       && _dragImageBitsMedium.HasValue:      return S_OK;
-                    case ushort formatId when formatId == s_dragContextFormatId         && _dragContextMedium.HasValue:        return S_OK;
+                {   //Base
+                    case ushort formatId when formatId == s_fileGroupDescriptorFormatId || formatId == s_fileContentsFormatId:                return S_OK;
+                    //Dynamic
+                    case ushort formatId when formatId == s_dragImageBitsFormatId && _dragImageBitsMedium.HasValue:                           return S_OK;
+                    case ushort formatId when formatId == s_dragContextFormatId && _dragContextMedium.HasValue:                               return S_OK;
+                    case ushort formatId when formatId == s_isShowingLayeredFormatId && _isShowingLayeredMedium.HasValue:                     return S_OK;
+                    case ushort formatId when formatId == s_dragWindowFormatId && _dragWindowMedium.HasValue:                                 return S_OK;
+                    case ushort formatId when formatId == s_dropDescriptionFormatId && _dropDescriptionMedium.HasValue:                       return S_OK;
+                    case ushort formatId when formatId == s_disableDragTextFormatId && _disableDragTextMedium.HasValue:                       return S_OK;
+                    case ushort formatId when formatId == s_isShowingTextFormatId && _isShowingTextMedium.HasValue:                           return S_OK;
+                    case ushort formatId when formatId == s_targetClsidFormatId && _targetClsidMedium.HasValue:                               return S_OK;
+                    case ushort formatId when formatId == s_performedDropEffectFormatId && _performedDropEffectMedium.HasValue:               return S_OK;
+                    case ushort formatId when formatId == s_logicalPerformedDropEffectFormatId && _logicalPerformedDropEffectMedium.HasValue: return S_OK;
+
                     default: return DV_E_FORMATETC;
                 }
             }
@@ -368,140 +438,165 @@ namespace FVH.SSHF.Infrastructure
             {
                 return pFormatetc->cfFormat switch
                 {
-                    ushort formatId when formatId == s_dragImageBitsFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _dragImageBitsMedium),
-                    ushort formatId when formatId == s_dragContextFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _dragContextMedium),
+                    ushort id when id == s_dragImageBitsFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _dragImageBitsMedium),
+                    ushort id when id == s_dragContextFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _dragContextMedium),
+                    ushort id when id == s_isShowingLayeredFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _isShowingLayeredMedium),
+                    ushort id when id == s_dragWindowFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _dragWindowMedium),
+                    ushort id when id == s_dropDescriptionFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _dropDescriptionMedium),
+                    ushort id when id == s_disableDragTextFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _disableDragTextMedium),
+                    ushort id when id == s_isShowingTextFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _isShowingTextMedium),
+                    ushort id when id == s_targetClsidFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _targetClsidMedium),
+                    ushort id when id == s_performedDropEffectFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _performedDropEffectMedium),
+                    ushort id when id == s_logicalPerformedDropEffectFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _logicalPerformedDropEffectMedium),
                     _ => E_NOTIMPL
                 };
             }
 
-            //public unsafe int SetData(FORMATETC* pFormatetc, STGMEDIUM* pMedium, [MarshalAs(UnmanagedType.Bool)] bool fRelease)
-            //{
-            //    // --- НАЧАЛО ОТЛАДОЧНОЙ ЛОГИКИ ---
 
-            //    // 1. Получаем имя формата
-            //    string formatName = GetClipboardFormatName(pFormatetc->cfFormat);
-
-            //    // 2. Выводим основную информацию
-            //    Debug.WriteLine("--- IDataObject::SetData Called ---");
-            //    Debug.WriteLine($"  Format: '{formatName}' (ID: {pFormatetc->cfFormat})");
-            //    Debug.WriteLine($"  Tymed: {pMedium->tymed}");
-            //    Debug.WriteLine($"  fRelease Flag: {fRelease}");
-
-            //    // 3. Пытаемся извлечь и вывести сами данные
-            //    try
-            //    {
-            //        switch(pMedium->tymed)
-            //        {
-            //            case TYMED.TYMED_HGLOBAL when pMedium->hGlobal != nint.Zero:
+            //            public unsafe int SetData(FORMATETC* pFormatetc, STGMEDIUM* pMedium, [MarshalAs(UnmanagedType.Bool)] bool fRelease)
             //            {
-            //                nuint size = GlobalSize(pMedium->hGlobal);
-            //                Debug.WriteLine($"  Data Info: HGLOBAL of size {size} bytes.");
+            //#if DEBUG
+            //                // --- НАЧАЛО ОТЛАДОЧНОЙ ЛОГИКИ ---
 
-            //                // Попытаемся прочитать первые 16 байт (если они есть)
-            //                void* pData = GlobalLock(pMedium->hGlobal);
-            //                if(pData is not null)
+            //                // 1. Получаем имя формата
+            //                string formatName = GetClipboardFormatName(pFormatetc->cfFormat);
+
+            //                // 2. Выводим основную информацию
+            //                Debug.WriteLine("--- IDataObject::SetData Called ---");
+            //                Debug.WriteLine($"  Format: '{formatName}' (ID: {pFormatetc->cfFormat})");
+            //                Debug.WriteLine($"  Tymed: {pMedium->tymed}");
+            //                Debug.WriteLine($"  fRelease Flag: {fRelease}");
+
+            //                // 3. Пытаемся извлечь и вывести сами данные
+            //                try
             //                {
-            //                    try
+            //                    switch(pMedium->tymed)
             //                    {
-            //                        int bytesToRead = (int)Math.Min(size, 16);
-            //                        var dataSpan = new ReadOnlySpan<byte>(pData, bytesToRead);
-            //                        Debug.WriteLine($"    - First {bytesToRead} bytes: {Convert.ToHexString(dataSpan)}");
-
-            //                        // Если размер равен 16, это может быть GUID
-            //                        if(size == 16)
+            //                        case TYMED.TYMED_HGLOBAL when pMedium->hGlobal != nint.Zero:
             //                        {
-            //                            Debug.WriteLine($"    - Interpreted as GUID: {*(Guid*)pData}");
+            //                            nuint size = GlobalSize(pMedium->hGlobal);
+            //                            Debug.WriteLine($"  Data Info: HGLOBAL of size {size} bytes.");
+            //                            void* pData = GlobalLock(pMedium->hGlobal);
+            //                            if(pData is not null)
+            //                            {
+            //                                try
+            //                                {
+            //                                    int bytesToRead = (int)Math.Min(size, 32);
+            //                                    var dataSpan = new ReadOnlySpan<byte>(pData, bytesToRead);
+            //                                    Debug.WriteLine($"    - First {bytesToRead} bytes: {Convert.ToHexString(dataSpan)}");
+            //                                    if(size == 16) Debug.WriteLine($"    - Interpreted as GUID: {*(Guid*)pData}");
+            //                                }
+            //                                finally
+            //                                {
+            //                                    _ = GlobalUnlock(pMedium->hGlobal);
+            //                                }
+            //                            }
             //                        }
+            //                        break;
+
+            //                        case TYMED.TYMED_ISTREAM when pMedium->pstm is not null:
+            //                        {
+            //                            var stream = (IStream)_localComWrappers.GetOrCreateObjectForComInstance((nint)pMedium->pstm, CreateObjectFlags.None);
+            //                            STATSTG stat = default;
+            //                            int hr = stream.Stat(&stat, STATFLAG.STATFLAG_NONAME);
+            //                            if(hr == S_OK) Debug.WriteLine($"  Data Info: IStream of size {stat.cbSize} bytes.");
+            //                            else Debug.WriteLine($"  Data Info: IStream (failed to get stats, HRESULT: 0x{hr:X8}).");
+            //                        }
+            //                        break;
             //                    }
-            //                    finally
-            //                    {
-            //                        _ = GlobalUnlock(pMedium->hGlobal);
-            //                    }
             //                }
-            //            }
-            //            break;
-
-            //            case TYMED.TYMED_ISTREAM when pMedium->pstm is not null:
-            //            {
-            //                var stream = (IStream)s_localComWrappers.GetOrCreateObjectForComInstance((nint)pMedium->pstm, CreateObjectFlags.None);
-            //                STATSTG stat = default;
-            //                int hr = stream.Stat(&stat, STATFLAG.STATFLAG_NONAME);
-            //                if(hr == S_OK)
+            //                catch(Exception ex)
             //                {
-            //                    Debug.WriteLine($"  Data Info: IStream of size {stat.cbSize} bytes.");
+            //                    Debug.WriteLine($"  [DEBUG ERROR] Failed to inspect data: {ex.Message}");
             //                }
-            //                else
+
+            //                // 4. Пытаемся обработать данные и логируем действие
+            //                int result = pFormatetc->cfFormat switch
             //                {
-            //                    Debug.WriteLine($"  Data Info: IStream (failed to get stats, HRESULT: 0x{hr:X8}).");
+            //                    ushort id when id == s_dragImageBitsFormatId => StoreData("Storing DragImageBits", ref _dragImageBitsMedium),
+            //                    ushort id when id == s_dragContextFormatId => StoreData("Storing DragContext", ref _dragContextMedium),
+            //                    ushort id when id == s_isShowingLayeredFormatId => StoreData("Storing IsShowingLayered", ref _isShowingLayeredMedium),
+            //                    ushort id when id == s_dragWindowFormatId => StoreData("Storing DragWindow", ref _dragWindowMedium),
+            //                    ushort id when id == s_dropDescriptionFormatId => StoreData("Storing DropDescription", ref _dropDescriptionMedium),
+            //                    ushort id when id == s_disableDragTextFormatId => StoreData("Storing DisableDragText", ref _disableDragTextMedium),
+            //                    ushort id when id == s_isShowingTextFormatId => StoreData("Storing IsShowingText", ref _isShowingTextMedium),
+            //                    ushort id when id == s_targetClsidFormatId => StoreData("Storing TargetCLSID", ref _targetClsidMedium),
+            //                    ushort id when id == s_performedDropEffectFormatId => StoreData("Storing PerformedDropEffect", ref _performedDropEffectMedium),
+            //                    ushort id when id == s_logicalPerformedDropEffectFormatId => StoreData("Storing LogicalPerformedDropEffect", ref _logicalPerformedDropEffectMedium),
+            //                    _ => IgnoreData()
+            //                };
+
+            //                Debug.WriteLine("-------------------------------------");
+            //                return result;
+
+            //                // --- ЛОКАЛЬНЫЕ ХЕЛПЕРЫ ДЛЯ ОТЛАДКИ ---
+            //                int StoreData(string action, ref STGMEDIUM? field)
+            //                {
+            //                    Debug.WriteLine($"  Action: {action}.");
+            //                    return HandleSetData(pFormatetc, pMedium, fRelease, ref field);
             //                }
-            //            }
-            //            break;
 
-            //            // Можно добавить обработку других TYMED, если понадобится
-            //            default:
-            //            Debug.WriteLine("  Data Info: Unhandled or empty TYMED.");
-            //            break;
-            //        }
-            //    }
-            //    catch(Exception ex)
-            //    {
-            //        // Логируем, если наша собственная отладочная логика упала
-            //        Debug.WriteLine($"  [DEBUG ERROR] Failed to inspect data: {ex.Message}");
-            //    }
-            //    Debug.WriteLine("-------------------------------------");
-
+            //                int IgnoreData()
+            //                {
+            //                    Debug.WriteLine("  Action: Ignoring (format not handled). Returning E_NOTIMPL.");
+            //                    return E_NOTIMPL;
+            //                }
+            //#else
+            //    // Это твой рабочий код, который будет использоваться в Release-сборке
             //    return pFormatetc->cfFormat switch
             //    {
-            //        ushort formatId when formatId == s_dragImageBitsFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _dragImageBitsMedium),
-            //        ushort formatId when formatId == s_dragContextFormatId => HandleSetData(pFormatetc, pMedium, fRelease, ref _dragContextMedium),
+            //        ushort id when id == s_dragImageBitsFormatId              => HandleSetData(pFormatetc, pMedium, fRelease, ref _dragImageBitsMedium),
+            //        // ... все остальные 9 форматов ...
             //        _ => E_NOTIMPL
             //    };
+            //#endif
+            //            }
 
-            //// --- КОНЕЦ ОТЛАДОЧНОЙ ЛОГИКИ ---
+            //#if DEBUG
+            //            // --- P/INVOKE, НЕОБХОДИМЫЕ ДЛЯ ОТЛАДОЧНОЙ ЛОГИКИ ---
+            //            private static string GetClipboardFormatName(ushort format)
+            //            {
+            //                char[] buffer = new char[260];
+            //                int length;
+            //                fixed(char* pBuffer = buffer)
+            //                {
+            //                    length = GetClipboardFormatNameW(format, pBuffer, buffer.Length);
+            //                }
+            //                if(length > 0) return new string(buffer, 0, length);
+            //                return $"Unknown (ID: {format})";
+            //            }
 
-            //    // Возвращаем E_NOTIMPL, чтобы не влиять на основной поток выполнения,
-            //    // пока мы только наблюдаем.
-            //    return E_NOTIMPL;
-            //}
-            //private static string GetClipboardFormatName(ushort format)
-            //{
-            //    // (Ваша реализация с GetClipboardFormatNameW)
-            //    // ...
-            //    // Для примера, заглушка:
-            //    if(format == 0) return "CF_NONE";
-            //    char[] buffer = new char[256];
-            //    int result = GetClipboardFormatNameW(format, buffer, buffer.Length);
-            //    if(result > 0) return new string(buffer, 0, result);
-            //    return $"Unknown (ID: {format})";
-            //}
+            //            [LibraryImport("user32", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
+            //            private static unsafe partial int GetClipboardFormatNameW(uint format, char* lpszFormatName, int cchMaxCount);
 
-            //[LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16)]
-            //private static partial int GetClipboardFormatNameW(uint format, [Out] char[] lpszFormatName, int cchMaxCount);
-            //[LibraryImport("kernel32")]
-            //private static partial nuint GlobalSize(nint hMem);
+            //            [LibraryImport("kernel32")]
+            //            private static partial nuint GlobalSize(nint hMem);
 
-            //[LibraryImport("kernel32")]
-            //private static unsafe partial void* GlobalLock(nint hMem);
+            //            [LibraryImport("kernel32")]
+            //            private static unsafe partial void* GlobalLock(nint hMem);
 
-            //[LibraryImport("kernel32")]
-            //[return: MarshalAs(UnmanagedType.Bool)]
-            //private static partial bool GlobalUnlock(nint hMem);
+            //            [LibraryImport("kernel32")]
+            //            [return: MarshalAs(UnmanagedType.Bool)]
+            //            private static partial bool GlobalUnlock(nint hMem);
+            //#endif
+
+
             private int HandleSetData(FORMATETC* pFormatetc, STGMEDIUM* pMedium, bool fRelease, ref STGMEDIUM? fieldToStore)
             {
                 const int notSupportedTYMED = 0;
                 const TYMED SUPPORTED_TYMEDS = TYMED.TYMED_HGLOBAL | TYMED.TYMED_ISTREAM;
-                    
+
                 if((pFormatetc->tymed & SUPPORTED_TYMEDS) is notSupportedTYMED)
                 {
 #if DEBUG
-                    if(Debugger.IsAttached is true) Debugger.Break();                    
+                    if(Debugger.IsAttached is true) Debugger.Break();
 #endif
                     return DV_E_TYMED;
                 }
-                
+
                 STGMEDIUM mediumToStore;
 
-                if(fRelease) mediumToStore = *pMedium;
+                if(fRelease is true) mediumToStore = *pMedium;
                 else
                 {
                     if(pMedium->tymed == TYMED.TYMED_ISTREAM)
@@ -533,7 +628,7 @@ namespace FVH.SSHF.Infrastructure
                 }
 
                 if(fieldToStore.HasValue is true) { STGMEDIUM oldValue = fieldToStore.Value; ReleaseStgMedium(&oldValue); }
- 
+
                 fieldToStore = mediumToStore;
 
                 return S_OK;
@@ -624,26 +719,7 @@ namespace FVH.SSHF.Infrastructure
                 pMedium->pUnkForRelease = (IUnknown.Native*)null;
 
                 return S_OK;
-            }
-            private bool _isDisposed = false;
-            public void Dispose()
-            {
-                if(_isDisposed) return;
-                _isDisposed = true;
-
-                if(_dragImageBitsMedium.HasValue)
-                {
-                    STGMEDIUM medium = _dragImageBitsMedium.Value;
-                    ReleaseStgMedium(&medium);
-                }
-                if(_dragContextMedium.HasValue)
-                {
-                    STGMEDIUM medium = _dragContextMedium.Value;
-                    ReleaseStgMedium(&medium);
-                }
-
-
-            }
+            }         
             //public CustomQueryInterfaceResult GetInterface(ref Guid iid, out nint ppv)
             //{
             //    ppv = default;
@@ -1226,5 +1302,3 @@ namespace FVH.SSHF.Infrastructure
         private static partial int GetObjectW(nint hGdiObject, int cbBuffer, void* lpvObject);
     }
 }
-
-
