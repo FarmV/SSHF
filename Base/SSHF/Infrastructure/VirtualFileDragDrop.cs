@@ -377,8 +377,12 @@ namespace FVH.SSHF.Infrastructure
             }
             public int QueryGetData(FORMATETC* pFormatetc)
             {
-                switch(pFormatetc->cfFormat) 
-                {   //Base
+                const ushort CF_HDROP = 15;
+                switch(pFormatetc->cfFormat)
+                {   //Expected unsupported format
+                    case ushort formatId when formatId == CF_HDROP:                   return DV_E_FORMATETC;
+                    case ushort formatId when formatId == s_shellIdListArrayFormatId: return DV_E_FORMATETC;
+                    //Base
                     case ushort formatId when formatId == s_fileGroupDescriptorFormatId || formatId == s_fileContentsFormatId:          return S_OK;
                     //Dynamic
                     case ushort formatId when formatId == s_dragImageBitsFormatId              && _dragImageBits.HasValue:              return S_OK;
@@ -386,7 +390,7 @@ namespace FVH.SSHF.Infrastructure
                     case ushort formatId when formatId == s_isShowingLayeredFormatId           && _isShowingLayered.HasValue:           return S_OK;
                     case ushort formatId when formatId == s_dragWindowFormatId                 && _dragWindow.HasValue:                 return S_OK;
                     case ushort formatId when formatId == s_dropDescriptionFormatId            && _dropDescription.HasValue:            return S_OK;
-                    case ushort formatId when formatId == s_disableDragTextFormatId            && _disableDragText.HasValue:                return S_OK;
+                    case ushort formatId when formatId == s_disableDragTextFormatId            && _disableDragText.HasValue:            return S_OK;
                     case ushort formatId when formatId == s_isShowingTextFormatId              && _isShowingText.HasValue:              return S_OK;
                     case ushort formatId when formatId == s_targetClsidFormatId                && _targetClsid.HasValue:                return S_OK;
                     case ushort formatId when formatId == s_performedDropEffectFormatId        && _performedDropEffect.HasValue:        return S_OK;
@@ -394,7 +398,7 @@ namespace FVH.SSHF.Infrastructure
 
                     default:
 #if DEBUG
-                    LogUnsupportedFormat(pFormatetc);
+                        LogUnsupportedFormat(pFormatetc);
 #endif
                     return DV_E_FORMATETC;
                 }
