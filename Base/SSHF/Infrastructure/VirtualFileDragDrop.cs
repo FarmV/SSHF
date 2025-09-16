@@ -379,12 +379,12 @@ namespace FVH.SSHF.Infrastructure
             {
                 const ushort CF_HDROP = 15;
                 switch(pFormatetc->cfFormat)
-                {   //Expected unsupported format
+                {   // Expected unsupported format
                     case ushort formatId when formatId == CF_HDROP:                   return DV_E_FORMATETC;
                     case ushort formatId when formatId == s_shellIdListArrayFormatId: return DV_E_FORMATETC;
-                    //Base
+                    // Base
                     case ushort formatId when formatId == s_fileGroupDescriptorFormatId || formatId == s_fileContentsFormatId:          return S_OK;
-                    //Dynamic
+                    // Dynamic
                     case ushort formatId when formatId == s_dragImageBitsFormatId              && _dragImageBits.HasValue:              return S_OK;
                     case ushort formatId when formatId == s_dragContextFormatId                && _dragContext.HasValue:                return S_OK;
                     case ushort formatId when formatId == s_isShowingLayeredFormatId           && _isShowingLayered.HasValue:           return S_OK;
