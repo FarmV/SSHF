@@ -334,7 +334,7 @@ namespace FVH.SSHF.Infrastructure
                     case ushort formatId when formatId == s_isShowingLayeredFormatId && _isShowingLayered.HasValue:                     return CopyCachedStgMedium(_isShowingLayered.Value, pMedium);
                     case ushort formatId when formatId == s_dragWindowFormatId && _dragWindow.HasValue:                                 return CopyCachedStgMedium(_dragWindow.Value, pMedium);
                     case ushort formatId when formatId == s_dropDescriptionFormatId && _dropDescription.HasValue:                       return CopyCachedStgMedium(_dropDescription.Value, pMedium);
-                    case ushort formatId when formatId == s_disableDragTextFormatId && _disableDragText.HasValue:                           return CopyCachedStgMedium(_disableDragText.Value, pMedium);
+                    case ushort formatId when formatId == s_disableDragTextFormatId && _disableDragText.HasValue:                       return CopyCachedStgMedium(_disableDragText.Value, pMedium);
                     case ushort formatId when formatId == s_isShowingTextFormatId && _isShowingText.HasValue:                           return CopyCachedStgMedium(_isShowingText.Value, pMedium);
                     case ushort formatId when formatId == s_targetClsidFormatId && _targetClsid.HasValue:                               return CopyCachedStgMedium(_targetClsid.Value, pMedium);
                     case ushort formatId when formatId == s_performedDropEffectFormatId && _performedDropEffect.HasValue:               return CopyCachedStgMedium(_performedDropEffect.Value, pMedium);
@@ -546,7 +546,7 @@ namespace FVH.SSHF.Infrastructure
 
                         IStream.Native* pClonedStream = null;
 
-                        IStream stream  =(IStream)s_localComWrappers.GetOrCreateObjectForComInstance((nint)pMedium->pstm, CreateObjectFlags.None);
+                        IStream stream  = (IStream)s_localComWrappers.GetOrCreateObjectForComInstance((nint)pMedium->pstm, CreateObjectFlags.None);
 
                         int hrClone = stream.Clone(&pClonedStream);
                         if(hrClone < S_OK) return hrClone;
@@ -1218,7 +1218,7 @@ namespace FVH.SSHF.Infrastructure
         [LibraryImport("ole32")]
         private static unsafe partial int CoCreateInstance(Guid* rclsid, IUnknown.Native* pUnkOuter, uint dwClsContext, Guid* riid, IUnknown.Native** ppv);
         private const uint CLSCTX_INPROC_SERVER = 0x1;
-        [LibraryImport("gdi32.dll")]
+        [LibraryImport("gdi32")]
         private static partial int GetObjectW(nint hGdiObject, int cbBuffer, void* lpvObject);
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
