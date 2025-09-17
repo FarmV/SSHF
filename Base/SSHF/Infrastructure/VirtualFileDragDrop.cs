@@ -1263,7 +1263,7 @@ namespace FVH.SSHF.Infrastructure
             public ushort tdPortNameOffset;
             public ushort tdExtDevmodeOffset;
         }
-        public enum STGTY : int
+        public enum STGTY 
         {
             STGTY_STORAGE   = 1,
             STGTY_STREAM    = 2,
