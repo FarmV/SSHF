@@ -1363,7 +1363,6 @@ namespace FVH.SSHF.Infrastructure
         private static unsafe partial int CoCreateInstance(Guid* rclsid, IUnknown.Native* pUnkOuter, uint dwClsContext, Guid* riid, IUnknown.Native** ppv);
         [LibraryImport("gdi32")]
         private static partial int GetObjectW(nint hGdiObject, int cbBuffer, void* lpvObject);
-
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private unsafe struct DROPDESCRIPTION
         {
