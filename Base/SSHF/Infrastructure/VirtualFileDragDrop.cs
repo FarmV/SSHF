@@ -16,13 +16,15 @@ namespace FVH.SSHF.Infrastructure
 {
     internal sealed unsafe partial class VirtualFileDragDrop
     {
-        private const int S_OK            = 0x00000000;
-        private const int S_FALSE         = 0x1;
-        private const int E_NOTIMPL       = unchecked((int)0x80004001);
-        private const int E_POINTER       = unchecked((int)0x80004003);
-        private const int E_FAIL          = unchecked((int)0x80004005);
-        private const int DV_E_FORMATETC  = unchecked((int)0x80040064);
-        private const int E_INVALIDARG    = unchecked((int)0x80070057);
+        private const int  S_OK            = 0x00000000;
+        private const int  S_FALSE         = 0x1;
+        private const int  E_NOTIMPL       = unchecked((int)0x80004001);
+        private const int  E_POINTER       = unchecked((int)0x80004003);
+        private const int  E_FAIL          = unchecked((int)0x80004005);
+        private const int  DV_E_FORMATETC  = unchecked((int)0x80040064);
+        private const int  E_INVALIDARG    = unchecked((int)0x80070057);
+        private const int  MAX_PATH        = 260;
+        private const char NULL_TERMINATOR = '\0';
         // Base
         private static readonly ushort s_fileGroupDescriptorFormatId        = (ushort)RegisterClipboardFormatW("FileGroupDescriptorW");
         private static readonly ushort s_fileContentsFormatId               = (ushort)RegisterClipboardFormatW("FileContents");
@@ -44,8 +46,6 @@ namespace FVH.SSHF.Infrastructure
         // Filter supported
         private static readonly ushort s_shellIdListArrayFormatId           = (ushort)RegisterClipboardFormatW("Shell IDList Array");
 
-
-
         private static readonly Guid IID_IEnumFORMATETC     = typeof(IEnumFORMATETC).GUID;
         private static readonly Guid IID_IDataObject        = typeof(IDataObject).GUID;
         private static readonly Guid IID_IDropSource        = typeof(IDropSource).GUID;
@@ -53,9 +53,6 @@ namespace FVH.SSHF.Infrastructure
         private static readonly Guid IID_IDragSourceHelper2 = typeof(IDragSourceHelper2).GUID;
         private static readonly Guid IID_IDragSourceHelper  = typeof(IDragSourceHelper).GUID;
         private static readonly Guid CLSID_DragDropHelper   = new Guid("4657278A-411B-11d2-839A-00C04FD918D0");
-
-        private const int  MAX_PATH        = 260;
-        private const char NULL_TERMINATOR = '\0';
 
         private static readonly StrategyBasedComWrappers s_localComWrappers = new StrategyBasedComWrappers();
 
