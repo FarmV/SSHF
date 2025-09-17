@@ -46,12 +46,12 @@ namespace FVH.SSHF.Infrastructure
         // Filter supported
         private static readonly ushort s_shellIdListArrayFormatId           = (ushort)RegisterClipboardFormatW("Shell IDList Array");
 
-        private static readonly Guid IID_IEnumFORMATETC     = typeof(IEnumFORMATETC).GUID;
-        private static readonly Guid IID_IDataObject        = typeof(IDataObject).GUID;
-        private static readonly Guid IID_IDropSource        = typeof(IDropSource).GUID;
-        private static readonly Guid IID_IStream            = typeof(IStream).GUID;
+        private static readonly Guid IID_IEnumFORMATETC     = typeof(IEnumFORMATETC)    .GUID;
+        private static readonly Guid IID_IDataObject        = typeof(IDataObject)       .GUID;
+        private static readonly Guid IID_IDropSource        = typeof(IDropSource)       .GUID;
+        private static readonly Guid IID_IStream            = typeof(IStream)           .GUID;
         private static readonly Guid IID_IDragSourceHelper2 = typeof(IDragSourceHelper2).GUID;
-        private static readonly Guid IID_IDragSourceHelper  = typeof(IDragSourceHelper).GUID;
+        private static readonly Guid IID_IDragSourceHelper  = typeof(IDragSourceHelper) .GUID;
         private static readonly Guid CLSID_DragDropHelper   = new Guid("4657278A-411B-11d2-839A-00C04FD918D0");
 
         private static readonly StrategyBasedComWrappers s_localComWrappers = new StrategyBasedComWrappers();
@@ -60,9 +60,13 @@ namespace FVH.SSHF.Infrastructure
                      
         public unsafe void InitiateDrop(MemoryStream imageStream, string fileName, DragDropOptions options)
         {
+            const int IUnknown_QueryInterface_VTableIndex = 0;
+
             nint pUnkDataObject = nint.Zero;
             nint pUnkDropSource = nint.Zero;
             IDragSourceHelper2.Native* pDragSourceHelper2 = null;
+            IDataObject.Native* pDataObj  = null;
+            IDropSource.Native* pDropSrc  = null;
          
             DataObject? dataObject = null;
 
@@ -77,14 +81,12 @@ namespace FVH.SSHF.Infrastructure
                 pUnkDropSource = s_localComWrappers.GetOrCreateComInterfaceForObject(dropSource, CreateComInterfaceFlags.None);
                 if(pUnkDropSource == nint.Zero) ThrowArgumentNull(nameof(dropSource));
              
-                IDataObject.Native* pDataObj;
                 int hResultQI_DataObject;
-                fixed(Guid* pIID = &IID_IDataObject) hResultQI_DataObject = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnkDataObject)->Vtable)[0])) ((ComInterfaceDispatch*)pUnkDataObject, pIID, (void**)&pDataObj);
+                fixed(Guid* pIID = &IID_IDataObject) hResultQI_DataObject = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnkDataObject)->Vtable)[IUnknown_QueryInterface_VTableIndex])) ((ComInterfaceDispatch*)pUnkDataObject, pIID, (void**)&pDataObj);
                 if(hResultQI_DataObject < S_OK) ThrowQueryInterface(nameof(IDataObject), hResultQI_DataObject);
 
-                IDropSource.Native* pDropSrc;
                 int hResultQI_DropSource;
-                fixed(Guid* pIID = &IID_IDropSource) hResultQI_DropSource = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnkDropSource)->Vtable)[0]))((ComInterfaceDispatch*)pUnkDropSource, pIID, (void**)&pDropSrc);
+                fixed(Guid* pIID = &IID_IDropSource) hResultQI_DropSource = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnkDropSource)->Vtable)[IUnknown_QueryInterface_VTableIndex]))((ComInterfaceDispatch*)pUnkDropSource, pIID, (void**)&pDropSrc);
                 if(hResultQI_DropSource < S_OK) ThrowQueryInterface(nameof(IDropSource), hResultQI_DropSource);
 
                 if(options.HBitmap != nint.Zero)
@@ -128,13 +130,13 @@ namespace FVH.SSHF.Infrastructure
             }
             finally
             {
-                if(pDragSourceHelper2 is not null) _ = Marshal.Release((nint)(IUnknown.Native*)pDragSourceHelper2);
-
+                if(pDragSourceHelper2 is not null) _ = Marshal.Release((nint)pDragSourceHelper2);
+                if(pDropSrc is not null)           _ = Marshal.Release((nint)pDropSrc);
+                if(pDataObj is not null)           _ = Marshal.Release((nint)pDataObj);
                 if(pUnkDropSource != nint.Zero)    _ = Marshal.Release(pUnkDropSource);
-                
                 if(pUnkDataObject != nint.Zero)    _ = Marshal.Release(pUnkDataObject);
 
-               dataObject?.Dispose();
+                dataObject?.Dispose();
             }
             [DoesNotReturn] static void ThrowArgumentNull(string pointerName)                  => throw new ArgumentNullException(pointerName, $"Failed to create COM interface pointer for {pointerName}.");
             [DoesNotReturn] static void ThrowQueryInterface(string interfaceName, int hResult) => throw new COMException($"QueryInterface failed for interface '{interfaceName}' with HRESULT: 0x{hResult:X8}.", hResult);
@@ -319,12 +321,13 @@ namespace FVH.SSHF.Infrastructure
                 nint pointerIUnknown = _localComWrappers.GetOrCreateComInterfaceForObject(enumerator, CreateComInterfaceFlags.None);
                 if(pointerIUnknown == nint.Zero) return E_FAIL;
 
-                int hr;
-                fixed(Guid* pIID = &IID_IEnumFORMATETC) hr = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)((void**)((ComInterfaceDispatch*)pointerIUnknown)->Vtable)[0])((ComInterfaceDispatch*)pointerIUnknown, pIID, (void**)ppenumFormatEtc);
+                const int IUnknown_QueryInterface_VTableIndex = 0;
+                int hResultQI_EnumFormatEtc;
+                fixed(Guid* pIID = &IID_IEnumFORMATETC) hResultQI_EnumFormatEtc = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)((void**)((ComInterfaceDispatch*)pointerIUnknown)->Vtable)[IUnknown_QueryInterface_VTableIndex])((ComInterfaceDispatch*)pointerIUnknown, pIID, (void**)ppenumFormatEtc);
 
                 _ = Marshal.Release(pointerIUnknown);
 
-                return hr;
+                return hResultQI_EnumFormatEtc;
 
                 static void AddFormatIfAvailable(ref int formatCount, Span<FORMATETC> formats, ushort formatId, STGMEDIUM? medium)
                 {
@@ -544,27 +547,39 @@ namespace FVH.SSHF.Infrastructure
 
                 IStream.Native* pStream       = null;
                 IStream.Native* pClonedStream = null;
-                int hr;
+                int hResult;
 
                 try
                 {
                     const int IUnknown_QueryInterface_VTableIndex = 0;
-                    fixed(Guid* pIID = &IID_IStream) hr = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnknown)->Vtable)[IUnknown_QueryInterface_VTableIndex]))((ComInterfaceDispatch*)pUnknown, pIID, (void**)&pStream);
-                   
-                    if(hr is not S_OK) return hr;
+                    int hResultQI_IStream;
+                    fixed(Guid* pIID = &IID_IStream) hResultQI_IStream = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnknown)->Vtable)[IUnknown_QueryInterface_VTableIndex]))((ComInterfaceDispatch*)pUnknown, pIID, (void**)&pStream);
+                    
+                    if(hResultQI_IStream is not S_OK)
+                    {
+                        hResult = hResultQI_IStream;
+                        return hResult;
+                    }
 
                     const int IStream_Clone_VTableIndex = 13;
-                    hr = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, IStream.Native**, int>)(((void**)((ComInterfaceDispatch*)pStream)->Vtable)[IStream_Clone_VTableIndex]))((ComInterfaceDispatch*)pStream, &pClonedStream);
+                    int hResultClone = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, IStream.Native**, int>)(((void**)((ComInterfaceDispatch*)pStream)->Vtable)[IStream_Clone_VTableIndex]))((ComInterfaceDispatch*)pStream, &pClonedStream);
 
-                    if(hr is not S_OK) return hr;
+                    if(hResultClone is not S_OK)
+                    {
+                        if(pClonedStream is not null) _ = Marshal.Release((nint)pClonedStream);
+                        hResult = hResultClone;
+                        return hResult;
+                    }
 
-
-                    pMedium->tymed          = TYMED.TYMED_ISTREAM;
-                    pMedium->pstm           = pClonedStream;
+                    pMedium->tymed = TYMED.TYMED_ISTREAM;
+                    pMedium->pstm = pClonedStream;
                     pMedium->pUnkForRelease = (IUnknown.Native*)pClonedStream;
+
+                    pClonedStream = null;
                 }
                 finally
                 {
+                    if(pClonedStream is not null) _ = Marshal.Release((nint)pClonedStream);
                     if(pStream is not null) _ = Marshal.Release((nint)pStream);
                     _ = Marshal.Release(pUnknown);
                 }
@@ -636,12 +651,17 @@ namespace FVH.SSHF.Infrastructure
 
                         IStream.Native* pClonedStream = null;
 
-                        IStream stream  = (IStream)s_localComWrappers.GetOrCreateObjectForComInstance((nint)pMedium->pstm, CreateObjectFlags.None);
+                        const int IStream_Clone_VTableIndex = 13;
+                        int hrClone = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, IStream.Native**, int>)(((void**)((ComInterfaceDispatch*)pMedium->pstm)->Vtable)[IStream_Clone_VTableIndex]))((ComInterfaceDispatch*)pMedium->pstm, &pClonedStream);
 
-                        int hrClone = stream.Clone(&pClonedStream);
                         if(hrClone < S_OK) return hrClone;
 
-                        mediumToStore = new STGMEDIUM { tymed = TYMED.TYMED_ISTREAM, pstm = pClonedStream };
+                        mediumToStore = new STGMEDIUM 
+                        { 
+                            tymed          = TYMED.TYMED_ISTREAM, 
+                            pstm           = pClonedStream,
+                            pUnkForRelease = (IUnknown.Native*)pClonedStream
+                        };
                     }
                     else
                     {
@@ -768,13 +788,14 @@ namespace FVH.SSHF.Infrastructure
                 nint pUnknown = _localComWrappers.GetOrCreateComInterfaceForObject(cloneInstance, CreateComInterfaceFlags.None);
                 if(pUnknown == nint.Zero) return E_FAIL;
 
-                int hr;
+                const int IUnknown_QueryInterface_VTableIndex = 0;
+                int hResultQI_IEnumFORMATETC;
                 fixed(Guid* pIID = &IID_IEnumFORMATETC)
                 {
-                    hr =/*QueryInterface*/((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*/*implicitThis*/, Guid*/*riid*/, void**/*ppvObject*/, int/*HRESULT*/>)((void**)((ComInterfaceDispatch*)pUnknown)->Vtable)[0])((ComInterfaceDispatch*)pUnknown, pIID, (void**)ppEnum);
+                    hResultQI_IEnumFORMATETC =/*QueryInterface*/((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*/*implicitThis*/, Guid*/*riid*/, void**/*ppvObject*/, int/*HRESULT*/>)((void**)((ComInterfaceDispatch*)pUnknown)->Vtable)[IUnknown_QueryInterface_VTableIndex])((ComInterfaceDispatch*)pUnknown, pIID, (void**)ppEnum);
                 }
                 _ = Marshal.Release(pUnknown);
-                return hr;
+                return hResultQI_IEnumFORMATETC;
             }
             public int Next(uint celt, FORMATETC* rgelt, uint* pceltFetched)
             {
@@ -974,11 +995,12 @@ namespace FVH.SSHF.Infrastructure
                 nint pUnknown = _localComWrappers.GetOrCreateComInterfaceForObject(cloneInstance, CreateComInterfaceFlags.None);
                 if(pUnknown == nint.Zero) return E_FAIL;
 
-                int hr;
-                try { fixed(Guid* pIID = &IID_IStream) hr = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnknown)->Vtable)[0]))((ComInterfaceDispatch*)pUnknown, pIID, (void**)ppstm); }
+                const int IUnknown_QueryInterface_VTableIndex = 0;
+                int hResultQI_IStream;
+                try { fixed(Guid* pIID = &IID_IStream) hResultQI_IStream = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnknown)->Vtable)[IUnknown_QueryInterface_VTableIndex]))((ComInterfaceDispatch*)pUnknown, pIID, (void**)ppstm); }
                 finally { _ = Marshal.Release(pUnknown); }
 
-                return hr;
+                return hResultQI_IStream;
             }
         }
         [GeneratedComClass]
