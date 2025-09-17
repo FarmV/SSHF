@@ -8,6 +8,8 @@ using System.Runtime.InteropServices.Marshalling;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
+using MahApps.Metro.Controls;
+
 using static System.Runtime.InteropServices.ComWrappers;
 
 namespace FVH.SSHF.Infrastructure
@@ -24,21 +26,25 @@ namespace FVH.SSHF.Infrastructure
         // Base
         private static readonly ushort s_fileGroupDescriptorFormatId        = (ushort)RegisterClipboardFormatW("FileGroupDescriptorW");
         private static readonly ushort s_fileContentsFormatId               = (ushort)RegisterClipboardFormatW("FileContents");
-
+        // Extension
+        private static readonly ushort s_pngFormatId                        = (ushort)RegisterClipboardFormatW("PNG");
+        private static readonly ushort s_preferredDropEffectFormatId        = (ushort)RegisterClipboardFormatW("Preferred DropEffect");
+        // Dynamic IDragSourceHelper
         private static readonly ushort s_dragImageBitsFormatId              = (ushort)RegisterClipboardFormatW("DragImageBits");
         private static readonly ushort s_dragContextFormatId                = (ushort)RegisterClipboardFormatW("DragContext");
-
+        // Dynamic DoDragDrop
         private static readonly ushort s_isShowingLayeredFormatId           = (ushort)RegisterClipboardFormatW("IsShowingLayered");
         private static readonly ushort s_dragWindowFormatId                 = (ushort)RegisterClipboardFormatW("DragWindow");
         private static readonly ushort s_dropDescriptionFormatId            = (ushort)RegisterClipboardFormatW("DropDescription");
         private static readonly ushort s_disableDragTextFormatId            = (ushort)RegisterClipboardFormatW("DisableDragText");
         private static readonly ushort s_isShowingTextFormatId              = (ushort)RegisterClipboardFormatW("IsShowingText");
-
         private static readonly ushort s_targetClsidFormatId                = (ushort)RegisterClipboardFormatW("TargetCLSID");
         private static readonly ushort s_performedDropEffectFormatId        = (ushort)RegisterClipboardFormatW("Performed DropEffect");
         private static readonly ushort s_logicalPerformedDropEffectFormatId = (ushort)RegisterClipboardFormatW("Logical Performed DropEffect");
-        //Filter supported
+        // Filter supported
         private static readonly ushort s_shellIdListArrayFormatId           = (ushort)RegisterClipboardFormatW("Shell IDList Array");
+
+
 
         private static readonly Guid IID_IEnumFORMATETC     = typeof(IEnumFORMATETC).GUID;
         private static readonly Guid IID_IDataObject        = typeof(IDataObject).GUID;
@@ -99,14 +105,10 @@ namespace FVH.SSHF.Infrastructure
                         ptOffset       = new POINT { x = bitmapSize.cx / 2, y = bitmapSize.cy / 2 },
                         crColorKey     = 0xffffffffu // CLR_NONE
                     };
-
-                    IDragSourceHelper2 dragSourceHelper = (IDragSourceHelper2)s_localComWrappers.GetOrCreateObjectForComInstance((nint)pDragSourceHelper2, CreateObjectFlags.None);
-
-                    //const uint allowedEffects = (uint)DROPEFFECT.DROPEFFECT_COPY;
-                    //uint performedEffect = 0;
-                    //int hrDoDragDrop = DoDragDrop(pDataObj, pDropSrc, allowedEffects, &performedEffect);   // Shell Not Support (hrInitializeFromBitmap == E_NOTIMPL)
-
-                    int hrInitializeFromBitmap = dragSourceHelper.InitializeFromBitmap(&dragImageInfo, pDataObj);
+         
+                    const int IDragSourceHelper_InitializeFromBitmap_VTableIndex = 3;
+                    int hrInitializeFromBitmap = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, SHDRAGIMAGE*, IDataObject.Native*, int>)(((void**)((ComInterfaceDispatch*)pDragSourceHelper2)->Vtable)[IDragSourceHelper_InitializeFromBitmap_VTableIndex]))((ComInterfaceDispatch*)pDragSourceHelper2, &dragImageInfo, pDataObj);
+          
                     if(hrInitializeFromBitmap < S_OK) ThrowInitializeFromBitmap(hrInitializeFromBitmap);
                 }
             
@@ -131,9 +133,9 @@ namespace FVH.SSHF.Infrastructure
             {
                 if(pDragSourceHelper2 is not null) _ = Marshal.Release((nint)(IUnknown.Native*)pDragSourceHelper2);
 
-                if(pUnkDropSource != nint.Zero) _ = Marshal.Release(pUnkDropSource);
+                if(pUnkDropSource != nint.Zero)    _ = Marshal.Release(pUnkDropSource);
                 
-                if(pUnkDataObject != nint.Zero) _ = Marshal.Release(pUnkDataObject);
+                if(pUnkDataObject != nint.Zero)    _ = Marshal.Release(pUnkDataObject);
 
                dataObject?.Dispose();
             }
@@ -142,7 +144,6 @@ namespace FVH.SSHF.Infrastructure
             [DoesNotReturn] static void ThrowDoDragDrop(int hResult)                           => throw new COMException($"DoDragDrop function failed with HRESULT: 0x{hResult:X8}.", hResult);
             [DoesNotReturn] static void ThrowCoCreateInstance(string className, int hResult)   => throw new COMException($"CoCreateInstance failed for '{className}' with HRESULT: 0x{hResult:X8}.", hResult);
             [DoesNotReturn] static void ThrowInitializeFromBitmap(int hResult)                 => throw new COMException($"IDragSourceHelper::InitializeFromBitmap failed with HRESULT: 0x{hResult:X8}.", hResult);
-
             static unsafe SIZE GetBitmapSize(nint hBitmap)
             {
                 BITMAP bmp = default;
@@ -205,13 +206,13 @@ namespace FVH.SSHF.Infrastructure
             }        
         }
         [GeneratedComClass]
-        private unsafe partial class DataObject(MemoryStream imageStream, string fileName, StrategyBasedComWrappers localComWrappers) : IDataObject, IDisposable /*ICustomQueryInterface*/
+        private unsafe partial class DataObject : IDataObject, IDisposable /*ICustomQueryInterface*/
         {
             private const    int                       OLE_E_ADVISENOTSUPPORTED = unchecked((int)0x80040003);
             private const    int                       DV_E_TYMED               = unchecked((int)0x80040069);
-            private readonly string                   _fileName         = fileName;
-            private readonly MemoryStream             _imageStream      = imageStream;
-            private readonly StrategyBasedComWrappers _localComWrappers = localComWrappers;
+            private readonly string                   _fileName;
+            private readonly StrategyBasedComWrappers _localComWrappers;
+            private readonly ReadOnlyMemoryComStream  _comStream;
 
             private bool _isDisposed = false;
 
@@ -227,6 +228,14 @@ namespace FVH.SSHF.Infrastructure
             private STGMEDIUM? _targetClsid;
             private STGMEDIUM? _performedDropEffect;
             private STGMEDIUM? _logicalPerformedDropEffect;
+
+            public DataObject(MemoryStream imageStream, string fileName, StrategyBasedComWrappers localComWrappers)
+            {
+                _localComWrappers = localComWrappers;
+                _fileName = fileName;
+
+                _comStream = new ReadOnlyMemoryComStream(imageStream, fileName, localComWrappers);
+            }
 
             public void Dispose()
             {
@@ -263,21 +272,35 @@ namespace FVH.SSHF.Infrastructure
                 const uint DATADIR_GET = 1;
                 if(dwDirection is not DATADIR_GET) return E_NOTIMPL;
 
-                Span<FORMATETC> supportedFormatsSpan = stackalloc FORMATETC[12];
+                Span<FORMATETC> supportedFormatsSpan = stackalloc FORMATETC[14];
                 int formatCount = 0;
 
                 supportedFormatsSpan[formatCount++] = new FORMATETC()
                 {
-                    cfFormat = s_fileGroupDescriptorFormatId,
+                    cfFormat = s_pngFormatId,
+                    dwAspect = DVASPECT.DVASPECT_CONTENT,
+                    lindex   = -1,
+                    tymed    = TYMED.TYMED_HGLOBAL
+                };
+                supportedFormatsSpan[formatCount++] = new FORMATETC()
+                {
+                    cfFormat = s_preferredDropEffectFormatId, 
                     dwAspect = DVASPECT.DVASPECT_CONTENT,
                     lindex = -1,
                     tymed = TYMED.TYMED_HGLOBAL
                 };
                 supportedFormatsSpan[formatCount++] = new FORMATETC()
                 {
+                    cfFormat = s_fileGroupDescriptorFormatId,
+                    dwAspect = DVASPECT.DVASPECT_CONTENT,
+                    lindex   = -1,
+                    tymed    = TYMED.TYMED_HGLOBAL
+                };
+                supportedFormatsSpan[formatCount++] = new FORMATETC()
+                {
                     cfFormat = s_fileContentsFormatId,
                     dwAspect = DVASPECT.DVASPECT_CONTENT,
-                    lindex = 0,
+                    lindex   = 0,
                     tymed = TYMED.TYMED_ISTREAM
                 };
 
@@ -325,10 +348,13 @@ namespace FVH.SSHF.Infrastructure
                 *pMedium = default;
 
                 switch(pFormatetc->cfFormat)
-                {
+                {   // Extension
+                    case ushort formatId when formatId == s_preferredDropEffectFormatId: return CreatePreferredDropEffect(pMedium);
+                    case ushort formatId when formatId == s_pngFormatId:                 return CreatePngData(pMedium);
+                    // Base
                     case ushort formatId when formatId == s_fileGroupDescriptorFormatId: return CreateFileGroupDescriptor(pMedium);
                     case ushort formatId when formatId == s_fileContentsFormatId:        return CreateFileContents(pMedium);
-
+                    // Dynamic
                     case ushort formatId when formatId == s_dragImageBitsFormatId && _dragImageBits.HasValue:                           return CopyCachedStgMedium(_dragImageBits.Value, pMedium);
                     case ushort formatId when formatId == s_dragContextFormatId && _dragContext.HasValue:                               return CopyCachedStgMedium(_dragContext.Value, pMedium);
                     case ushort formatId when formatId == s_isShowingLayeredFormatId && _isShowingLayered.HasValue:                     return CopyCachedStgMedium(_isShowingLayered.Value, pMedium);
@@ -353,28 +379,34 @@ namespace FVH.SSHF.Infrastructure
                         const int default_GMEM_MOVEABLE = 0;
                         nint hDuplicated = OleDuplicateData(source.hGlobal, 0, default_GMEM_MOVEABLE);
                         if(hDuplicated == nint.Zero) return E_OUTOFMEMORY;
-
+                        
                         destinationMedium.tymed = TYMED.TYMED_HGLOBAL;
                         destinationMedium.hGlobal = hDuplicated;
                         destinationMedium.pUnkForRelease = null;
                     break;
-                        
-                    case TYMED.TYMED_ISTREAM:                       
+
+                    case TYMED.TYMED_ISTREAM:
                         IStream.Native* pSourceStream = source.pstm;
                         if(pSourceStream is null) return E_POINTER;
+                        
+                        IStream.Native* pClonedStream = null;
+                        
+                        const int IStream_Clone_VTableIndex = 13; // IStream::Clone находится на 14-й позиции в VTable (индекс 13)
+                        int hrClone = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, IStream.Native**, int>)(((void**)((ComInterfaceDispatch*)pSourceStream)->Vtable)[IStream_Clone_VTableIndex]))((ComInterfaceDispatch*)pSourceStream, &pClonedStream);
 
-                         _ = Marshal.AddRef((nint)pSourceStream);
+                        if(hrClone is not S_OK) return hrClone;
 
-                        *pDestination = source;
-
-                    return S_OK;
+                        destinationMedium.tymed = TYMED.TYMED_ISTREAM;
+                        destinationMedium.pstm = pClonedStream;
+                        destinationMedium.pUnkForRelease = (IUnknown.Native*)pClonedStream;
+                    break;
 
                     default: return DV_E_TYMED;
                 }
 
                 *pDestination = destinationMedium;
                 return S_OK;
-            }
+            }    
             public int QueryGetData(FORMATETC* pFormatetc)
             {
                 const ushort CF_HDROP = 15;
@@ -382,6 +414,9 @@ namespace FVH.SSHF.Infrastructure
                 {   // Expected unsupported format
                     case ushort formatId when formatId == CF_HDROP:                   return DV_E_FORMATETC;
                     case ushort formatId when formatId == s_shellIdListArrayFormatId: return DV_E_FORMATETC;
+                    // Extension
+                    case ushort formatId when formatId == s_pngFormatId:                                                                return S_OK;
+                    case ushort formatId when formatId == s_preferredDropEffectFormatId:                                                return S_OK;
                     // Base
                     case ushort formatId when formatId == s_fileGroupDescriptorFormatId || formatId == s_fileContentsFormatId:          return S_OK;
                     // Dynamic
@@ -458,24 +493,29 @@ namespace FVH.SSHF.Infrastructure
 
                 FILEDESCRIPTORW fileDescriptor;
 
-                fileDescriptor.dwFlags = FD_FLAGS.FD_FILESIZE | FD_FLAGS.FD_ATTRIBUTES /*| FD_FLAGS.FD_PROGRESSUI*/;
+                fileDescriptor.dwFlags          = FD_FLAGS.FD_FILESIZE | FD_FLAGS.FD_ATTRIBUTES;
                 fileDescriptor.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
 
-                ulong streamLength           = (ulong)_imageStream.Length;
+                STATSTG statstg;
+                _ = _comStream.Stat(&statstg, STATFLAG.STATFLAG_DEFAULT);
+
+                ulong streamLength = statstg.cbSize;
+             
+                CoTaskMemFree((void*)statstg.pwcsName);
+
                 fileDescriptor.nFileSizeLow  = (uint)streamLength;
                 fileDescriptor.nFileSizeHigh = (uint)(streamLength >> 32);
+
 
                 FILEDESCRIPTORW* pDescriptor = &fileDescriptor;
                 char* pDestName              = pDescriptor->cFileName;
                 int charCountToCopy          = Math.Min(_fileName.Length, MAX_PATH - 1);
-                uint byteCountToCopy         = (uint)(charCountToCopy * sizeof(char));
 
-                fixed(char* pSourceName    = _fileName) Unsafe.CopyBlock(pDestName, pSourceName, byteCountToCopy);
+                _fileName.CopyTo(new Span<char>(pDestName, charCountToCopy));
                 pDestName[charCountToCopy] = NULL_TERMINATOR;
 
                 nuint totalSize = (nuint)FILEGROUPDESCRIPTORW.SizeOfUnchecked(fileCount);
-
-                nint hGlobal = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, totalSize);
+                nint hGlobal    = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, totalSize);
                 if(hGlobal is 0) return E_OUTOFMEMORY;
 
                 void* pLockedMemory = GlobalLock(hGlobal);
@@ -494,31 +534,84 @@ namespace FVH.SSHF.Infrastructure
                 }
                 finally { _ = GlobalUnlock(hGlobal); }
 
-                pMedium->tymed = TYMED.TYMED_HGLOBAL;
-                pMedium->hGlobal = hGlobal;
+                pMedium->tymed          = TYMED.TYMED_HGLOBAL;
+                pMedium->hGlobal        = hGlobal;
                 pMedium->pUnkForRelease = (IUnknown.Native*)null;
 
                 return S_OK;
             }
             private unsafe int CreateFileContents(STGMEDIUM* pMedium)
             {
-                ReadOnlyMemoryComStream comStream = new ReadOnlyMemoryComStream(_imageStream, _fileName, _localComWrappers);
-
-                nint pUnknown = _localComWrappers.GetOrCreateComInterfaceForObject(comStream, CreateComInterfaceFlags.None);
+                nint pUnknown = _localComWrappers.GetOrCreateComInterfaceForObject(_comStream, CreateComInterfaceFlags.None);
                 if(pUnknown == nint.Zero) return E_FAIL;
 
-                IStream.Native* pStream = null;
-
+                IStream.Native* pStream       = null;
+                IStream.Native* pClonedStream = null;
                 int hr;
-                fixed(Guid* pIID = &IID_IStream) hr = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)((void**)((ComInterfaceDispatch*)pUnknown)->Vtable)[0])((ComInterfaceDispatch*)pUnknown, pIID, (void**)&pStream);
 
-                _ = Marshal.Release(pUnknown);
+                try
+                {
+                    const int IUnknown_QueryInterface_VTableIndex = 0;
+                    fixed(Guid* pIID = &IID_IStream) hr = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnknown)->Vtable)[IUnknown_QueryInterface_VTableIndex]))((ComInterfaceDispatch*)pUnknown, pIID, (void**)&pStream);
+                   
+                    if(hr is not S_OK) return hr;
 
-                if(hr is not S_OK) return hr;
+                    const int IStream_Clone_VTableIndex = 13;
+                    hr = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, IStream.Native**, int>)(((void**)((ComInterfaceDispatch*)pStream)->Vtable)[IStream_Clone_VTableIndex]))((ComInterfaceDispatch*)pStream, &pClonedStream);
 
-                pMedium->tymed          = TYMED.TYMED_ISTREAM;
-                pMedium->pstm           = pStream;
-                pMedium->pUnkForRelease = (IUnknown.Native*)pStream; 
+                    if(hr is not S_OK) return hr;
+
+
+                    pMedium->tymed          = TYMED.TYMED_ISTREAM;
+                    pMedium->pstm           = pClonedStream;
+                    pMedium->pUnkForRelease = (IUnknown.Native*)pClonedStream;
+                }
+                finally
+                {
+                    if(pStream is not null) _ = Marshal.Release((nint)pStream);
+                    _ = Marshal.Release(pUnknown);
+                }
+
+                return S_OK;
+            }
+            private unsafe int CreatePngData(STGMEDIUM* pMedium)
+            {
+                STATSTG statstg;
+                _ = _comStream.Stat(&statstg, STATFLAG.STATFLAG_NONAME);
+                ulong streamLength = statstg.cbSize;
+
+                nint hGlobal = GlobalAlloc(GMEM_MOVEABLE, (nuint)streamLength);
+                if(hGlobal is 0) return E_OUTOFMEMORY;
+
+                void* pLockedMemory = GlobalLock(hGlobal);
+                if(pLockedMemory is null)
+                {
+                    _ = GlobalFree(hGlobal);
+                    return E_FAIL;
+                }
+
+                int hr = S_OK;
+                try
+                {
+                    _ = _comStream.Seek(0, (uint)SeekOrigin.Begin, null);
+
+                    uint bytesRead = 0;
+                    hr = _comStream.Read((byte*)pLockedMemory, (uint)streamLength, &bytesRead);
+
+                    if(hr is not S_OK || bytesRead < streamLength) hr = E_FAIL;
+
+                }
+                finally { _ = GlobalUnlock(hGlobal); }
+
+                if(hr is not S_OK)
+                {
+                    _ = GlobalFree(hGlobal);
+                    return hr;
+                }
+
+                pMedium->tymed = TYMED.TYMED_HGLOBAL;
+                pMedium->hGlobal = hGlobal;
+                pMedium->pUnkForRelease = (IUnknown.Native*)null;
 
                 return S_OK;
             }
@@ -574,7 +667,33 @@ namespace FVH.SSHF.Infrastructure
 
                 return S_OK;
             }
+            private unsafe int CreatePreferredDropEffect(STGMEDIUM* pMedium)
+            {
+                nuint sizeInBytes = sizeof(uint);
 
+                nint hGlobal = GlobalAlloc(GMEM_MOVEABLE, sizeInBytes);
+                if(hGlobal is 0) return E_OUTOFMEMORY;
+
+                void* pLockedMemory = GlobalLock(hGlobal);
+                if(pLockedMemory is null)
+                {
+                    _ = GlobalFree(hGlobal);
+                    return E_FAIL;
+                }
+
+                try
+                {
+                    const uint DROPEFFECT_COPY = 1;
+                    *(uint*)pLockedMemory = DROPEFFECT_COPY;
+                }
+                finally { _ = GlobalUnlock(hGlobal); }
+
+                pMedium->tymed          = TYMED.TYMED_HGLOBAL;
+                pMedium->hGlobal        = hGlobal;
+                pMedium->pUnkForRelease = (IUnknown.Native*)null;
+
+                return S_OK;
+            }
 #if DEBUG
             private static unsafe void LogUnsupportedFormat(FORMATETC* pFormatetc, [CallerMemberName]string? message = null)
             {
@@ -633,6 +752,8 @@ namespace FVH.SSHF.Infrastructure
             private static unsafe partial void ReleaseStgMedium(STGMEDIUM* pmedium);
             [LibraryImport("ole32")]
             private static partial nint OleDuplicateData(nint hSrc, ushort cfFormat, uint uiFlags);
+            [LibraryImport("ole32")]
+            private static unsafe partial void CoTaskMemFree(void* pv);
         }
         [GeneratedComClass]
         private unsafe partial class EnumFormatEtc(VirtualFileDragDrop.FORMATETC[] formats, StrategyBasedComWrappers localComWrappers) : IEnumFORMATETC
@@ -702,55 +823,86 @@ namespace FVH.SSHF.Infrastructure
             }
         }
         [GeneratedComClass]
-        private sealed unsafe partial class ReadOnlyMemoryComStream(MemoryStream managedStream, string streamName, StrategyBasedComWrappers localComWrappers) : IStream
+        private sealed unsafe partial class ReadOnlyMemoryComStream : IStream
         {
             private const int STG_E_ACCESSDENIED                        = unchecked((int)0x80030005);
             private const int STG_E_INVALIDFUNCTION                     = unchecked((int)0x80030001);
             private const int STG_E_READFAULT                           = unchecked((int)0x8003001D);
             private const int STG_E_INVALIDFLAG                         = unchecked((int)0x800300FF);
-            private readonly string _streamName                         = streamName;
-            private readonly MemoryStream _managedStream                = managedStream;
-            private readonly StrategyBasedComWrappers _localComWrappers = localComWrappers;
-            // --- ISequentialStream Methods ---
+            private readonly string                   _streamName;
+            private readonly StrategyBasedComWrappers _localComWrappers;
+            private readonly ArraySegment<byte>       _buffer;
+            private          long                     _position;
+
+            public ReadOnlyMemoryComStream(MemoryStream managedStream, string streamName, StrategyBasedComWrappers localComWrappers)
+            {
+                _localComWrappers = localComWrappers;
+                _streamName       = streamName;
+                _position         = managedStream.Position; 
+
+                if(managedStream.TryGetBuffer(out _buffer) is false) _buffer = new ArraySegment<byte>(managedStream.ToArray());                
+            }
+            private ReadOnlyMemoryComStream(ArraySegment<byte> buffer, long position, string streamName, StrategyBasedComWrappers localComWrappers)
+            {
+                _buffer           = buffer;
+                _position         = position;
+                _streamName       = streamName;
+                _localComWrappers = localComWrappers;
+            }
             [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-            public unsafe int Read(byte* pv, uint cb, uint* pcbRead) // ~ примерно 2 гигабайта для Span ~ int.MaxValue
+            public unsafe int Read(byte* pv, uint cb, uint* pcbRead)
             {
                 if(pv is null) return E_POINTER;
+                if(pcbRead is not null) *pcbRead = 0;
+                if(cb is 0) return S_OK;
 
-                switch(cb)
-                {
-                    case 0:
-                    if(pcbRead is not null) *pcbRead = 0;
-                    return S_OK;
-                    case > int.MaxValue:
-                    return E_FAIL;
-                }
+                long remainingBytes = _buffer.Count - _position;
+                if(remainingBytes <= 0) return S_FALSE; 
 
-                Span<byte> buffer = new Span<byte>(pv, (int)cb);
+                int bytesToRead = (int)Math.Min(cb, (ulong)remainingBytes);
 
-                int totalBytesRead = _managedStream.Read(buffer);
+                Span<byte> source = _buffer.AsSpan((int)_position, bytesToRead);
 
-                switch(pcbRead)
-                {
-                    case not null:
-                    *pcbRead = (uint)totalBytesRead;
-                    return totalBytesRead < cb ? S_FALSE : S_OK;
-                    default:
-                    if(totalBytesRead < cb) return STG_E_READFAULT;
-                    else return S_OK;
-                }
+                Span<byte> destination = new Span<byte>(pv, bytesToRead);
+
+                source.CopyTo(destination);
+
+                _position += bytesToRead;
+
+                if(pcbRead is not null) *pcbRead = (uint)bytesToRead;
+                
+                return (bytesToRead < cb) ? S_FALSE : S_OK;
             }
             public int Write(byte* pv, uint cb, uint* pcbWritten) => _ = STG_E_ACCESSDENIED;
-            // --- IStream Methods ---
             public int Seek(long dlibMove, uint dwOrigin, ulong* plibNewPosition)
             {
-                if(plibNewPosition is null) return E_POINTER;
+                long newPosition;
+                long streamLength = _buffer.Count;
 
-                if(dwOrigin > (uint)System.IO.SeekOrigin.End) return STG_E_INVALIDFUNCTION;
+                switch((SeekOrigin)dwOrigin)
+                {
+                    case SeekOrigin.Begin:
+                    newPosition = dlibMove;
+                    break;
 
-                long newPosition = _managedStream.Seek(dlibMove, (SeekOrigin)dwOrigin);
-                *plibNewPosition = (ulong)newPosition;
+                    case SeekOrigin.Current:
+                    newPosition = _position + dlibMove;
+                    break;
 
+                    case SeekOrigin.End:
+                    newPosition = streamLength + dlibMove;
+                    break;
+
+                    default:
+                    return STG_E_INVALIDFUNCTION;
+                }
+
+                if(newPosition < 0) return E_FAIL;
+
+                _position = newPosition;
+
+                if(plibNewPosition is not null) *plibNewPosition = (ulong)_position;
+                
                 return S_OK;
             }
             public int SetSize(ulong libNewSize) => _ = STG_E_ACCESSDENIED;
@@ -760,38 +912,28 @@ namespace FVH.SSHF.Infrastructure
                 if(pcbRead is not null) *pcbRead = 0;
                 if(pcbWritten is not null) *pcbWritten = 0;
 
-                if(_managedStream.TryGetBuffer(out ArraySegment<byte> sourceBuffer) is false)
-                {
-                    const int STG_E_INVALIDPOINTER = unchecked((int)0x80030009);
-                    return STG_E_INVALIDPOINTER;
-                }
+                long remainingBytes = _buffer.Count - _position;
+                long bytesToCopy    = (long)Math.Min(cb, (ulong)remainingBytes);
 
-                long remainingBytes = _managedStream.Length - _managedStream.Position;
-
-                long bytesToCopy = (long)Math.Min(cb, (ulong)remainingBytes);
                 if(bytesToCopy <= 0) return S_OK;
 
                 uint bytesWrittenInStep = 0;
                 int hr;
-                fixed(byte* pSource = MemoryExtensions.AsSpan<byte>(sourceBuffer, (int)_managedStream.Position, (int)bytesToCopy))
-                    hr = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, byte*, uint, uint*, int>)(((void**)((ComInterfaceDispatch*)pstm)->Vtable)[4]))((ComInterfaceDispatch*)pstm, pSource, (uint)bytesToCopy, &bytesWrittenInStep);
-
+                fixed(byte* pSource = _buffer.AsSpan((int)_position, (int)bytesToCopy))
+                {
+                    const int ISequentialStream_Write_VTableIndex = 4;
+                    hr = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, byte*, uint, uint*, int>)(((void**)((ComInterfaceDispatch*)pstm)->Vtable)[ISequentialStream_Write_VTableIndex]))((ComInterfaceDispatch*)pstm, pSource, (uint)bytesToCopy, &bytesWrittenInStep);
+                }
                 if(hr is not S_OK) return hr;
 
-                if(bytesWrittenInStep < bytesToCopy)
-                {
-                    if(pcbRead is not null) *pcbRead = bytesWrittenInStep;
-                    if(pcbWritten is not null) *pcbWritten = bytesWrittenInStep;
-                    const int STG_E_WRITEFAULT             = unchecked((int)0x8003001E);
-                    return STG_E_WRITEFAULT;
-                }
+                _position += bytesWrittenInStep;
 
-                _managedStream.Position += bytesToCopy;
+                if(pcbRead is not null) *pcbRead = bytesWrittenInStep;
+                if(pcbWritten is not null) *pcbWritten = bytesWrittenInStep;
 
-                if(pcbRead is not null) *pcbRead = (ulong)bytesToCopy;
-                if(pcbWritten is not null) *pcbWritten = (ulong)bytesToCopy;
+                const int STG_E_WRITEFAULT = unchecked((int)0x8003001E);
 
-                return S_OK;
+                return (bytesWrittenInStep < bytesToCopy) ? STG_E_WRITEFAULT : S_OK;
             }
             public int Commit(uint grfCommitFlags) => _ = S_OK;
             public int Revert() => _ = S_OK;
@@ -804,41 +946,41 @@ namespace FVH.SSHF.Infrastructure
                 *pstatstg = default;
 
                 pstatstg->type = STGTY.STGTY_STREAM;
-                pstatstg->cbSize = (ulong)_managedStream.Length;
+                pstatstg->cbSize = (ulong)_buffer.Count;
 
                 switch(grfStatFlag)
                 {
                     case STATFLAG.STATFLAG_DEFAULT:
                     case STATFLAG.STATFLAG_NOOPEN:
-                    nuint sizeInBytes = (nuint)(_streamName.Length + 1) * (nuint)sizeof(char);
-                    char* pName = (char*)CoTaskMemAlloc(sizeInBytes);
-                    if(pName is null) return E_OUTOFMEMORY;
+                        nuint sizeInBytes = (nuint)(_streamName.Length + 1) * sizeof(char);
+                        char* pName = (char*)CoTaskMemAlloc(sizeInBytes);
+                        if(pName is null) return E_OUTOFMEMORY;
+        
+                        _streamName.CopyTo(new Span<char>(pName, _streamName.Length));
+                        pName[_streamName.Length] = NULL_TERMINATOR; 
 
-                    fixed(char* pSourceName = _streamName) Unsafe.CopyBlock(pName, pSourceName, (uint)sizeInBytes - sizeof(char));
-                    pName[_streamName.Length] = NULL_TERMINATOR;
-
-                    pstatstg->pwcsName = (nint)pName;
+                        pstatstg->pwcsName = (nint)pName;
                     return S_OK;
+
                     case STATFLAG.STATFLAG_NONAME: return S_OK;
+
                     default: return STG_E_INVALIDFLAG;
                 }
             }
             public int Clone(IStream.Native** ppstm)
             {
                 if(ppstm is null) return E_POINTER;
-                *ppstm = (IStream.Native*)null;
+                *ppstm = null;
 
-                ReadOnlyMemoryComStream cloneInstance = new ReadOnlyMemoryComStream(_managedStream, _streamName, _localComWrappers);
-
-                cloneInstance._managedStream.Position = this._managedStream.Position;
+                ReadOnlyMemoryComStream cloneInstance = new ReadOnlyMemoryComStream(_buffer, _position, _streamName, _localComWrappers);
 
                 nint pUnknown = _localComWrappers.GetOrCreateComInterfaceForObject(cloneInstance, CreateComInterfaceFlags.None);
                 if(pUnknown == nint.Zero) return E_FAIL;
 
                 int hr;
-                fixed(Guid* pIID = &IID_IStream) hr = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)((void**)((ComInterfaceDispatch*)pUnknown)->Vtable)[0])((ComInterfaceDispatch*)pUnknown, pIID, (void**)ppstm);
+                try { fixed(Guid* pIID = &IID_IStream) hr = ((delegate* unmanaged[MemberFunction]<ComInterfaceDispatch*, Guid*, void**, int>)(((void**)((ComInterfaceDispatch*)pUnknown)->Vtable)[0]))((ComInterfaceDispatch*)pUnknown, pIID, (void**)ppstm); }
+                finally { _ = Marshal.Release(pUnknown); }
 
-                _ = Marshal.Release(pUnknown);
                 return hr;
             }
         }
@@ -1188,7 +1330,7 @@ namespace FVH.SSHF.Infrastructure
             DROPIMAGE_COPY = 1,
             /// <summary>A move operation drop image.</summary>
             DROPIMAGE_MOVE = 2,
-            /// <summary>A link operation drop image (e.g., an arrow).</summary>
+            /// <summary>A link operation drop iGiveFeedbackmage (e.g., an arrow).</summary>
             DROPIMAGE_LINK = 4,
             /// <summary>A label decoration drop image.</summary>
             DROPIMAGE_LABEL = 6,
