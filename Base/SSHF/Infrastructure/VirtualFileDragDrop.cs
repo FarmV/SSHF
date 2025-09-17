@@ -1344,7 +1344,7 @@ namespace FVH.SSHF.Infrastructure
         private static partial uint RegisterClipboardFormatW([MarshalAs(UnmanagedType.LPWStr)] string lpszFormat);
         private const uint GMEM_MOVEABLE = 0x0002;
         private const uint GMEM_ZEROINIT = 0x0040;
-        private const int E_OUTOFMEMORY = unchecked((int)0x8007000E);
+        private const int  E_OUTOFMEMORY = unchecked((int)0x8007000E);
         [LibraryImport("kernel32")]
         private static partial nint GlobalAlloc(uint uFlags, nuint dwBytes);
         [LibraryImport("kernel32")]
@@ -1358,9 +1358,9 @@ namespace FVH.SSHF.Infrastructure
         private static unsafe partial void* CoTaskMemAlloc(nuint cb);
         [LibraryImport("ole32")]
         private static unsafe partial int DoDragDrop(IDataObject.Native* pDataObj, IDropSource.Native* pDropSource, uint dwOKEffects, uint* pdwEffect);
+        private const uint CLSCTX_INPROC_SERVER = 0x1;
         [LibraryImport("ole32")]
         private static unsafe partial int CoCreateInstance(Guid* rclsid, IUnknown.Native* pUnkOuter, uint dwClsContext, Guid* riid, IUnknown.Native** ppv);
-        private const uint CLSCTX_INPROC_SERVER = 0x1;
         [LibraryImport("gdi32")]
         private static partial int GetObjectW(nint hGdiObject, int cbBuffer, void* lpvObject);
 
