@@ -10,15 +10,16 @@
 	</PropertyGroup>
 		
 	<PropertyGroup Label = "Application" >
-		<PublishProfile						 >DEV\PublishProfiles\Win64_SelfContained_SingleFile.pubxml</PublishProfile>		
-		<ApplicationManifest				 >app.manifest</ApplicationManifest>
-		<DebugType							 >embedded</DebugType>
-		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>						
-		<Version							 >0.8.12</Version>		
-		<Product							 >Screenshot Helper by FarmV</Product>
-		<Description						 >Screenshot Helper by FarmV</Description>
-		<Copyright							 >https://github.com/FarmV/SSHF</Copyright>
-		<ApplicationIcon					 >Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
+		<PublishProfile								 >DEV\PublishProfiles\Win64_SelfContained_SingleFile.pubxml</PublishProfile>		
+		<ApplicationManifest						 >app.manifest</ApplicationManifest>
+		<DebugType									 >embedded</DebugType>
+		<IncludeNativeLibrariesForSelfExtract		 >true</IncludeNativeLibrariesForSelfExtract>						
+		<Version									 >0.8.12</Version>
+		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+		<Product									 >Screenshot Helper by FarmV</Product>
+		<Description								 >Screenshot Helper by FarmV</Description>
+		<Copyright									 >https://github.com/FarmV/SSHF</Copyright>
+		<ApplicationIcon							 >Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<PropertyGroup Label = "IDE Settings" >		
