@@ -365,4 +365,4 @@ FodyWeavers.xsd
 
 **/Directory.Build.targets
 **/launchSettings.json
-!Win64_SelfContained_SingleFile.pubxml
+!DEV/PublishProfiles/*.pubxml
