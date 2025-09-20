@@ -62,6 +62,33 @@
 	<ItemGroup Label="Included ressources">
 		<Resource Include="Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico" CopyToOutputDirectory="Never" />
 	</ItemGroup>
+	
+	<Target Name="GenerateVersionedManifest" BeforeTargets="BeforeBuild">
+		<PropertyGroup>
+			<_VersionedManifestFile>$(IntermediateOutputPath)versioned.app.manifest</_VersionedManifestFile>
+		</PropertyGroup>
 
+		<Copy SourceFiles="$(ApplicationManifest)" DestinationFiles="$(_VersionedManifestFile)" />
+
+		<XmlPoke XmlInputPath="$(_VersionedManifestFile)"
+				 Query="//*[local-name()='assemblyIdentity']/@version"
+				 Value="$(Version).0" />
+
+		<XmlPoke XmlInputPath="$(_VersionedManifestFile)"
+				 Query="//*[local-name()='assemblyIdentity']/@name"
+				 Value="$(AssemblyName)" />
+
+		<XmlPoke XmlInputPath="$(_VersionedManifestFile)"
+				 Query="//*[local-name()='assemblyIdentity']/@processorArchitecture"
+				 Value="amd64" />
+
+		<XmlPoke XmlInputPath="$(_VersionedManifestFile)"
+				 Query="//*[local-name()='assemblyIdentity']/@type"
+				 Value="win32" />
+
+		<PropertyGroup>
+			<ApplicationManifest>$(_VersionedManifestFile)</ApplicationManifest>
+		</PropertyGroup>
+	</Target>
 
 </Project>
