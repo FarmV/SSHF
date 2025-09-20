@@ -30,13 +30,13 @@
 	</PropertyGroup>
 	
 	<ItemGroup Label = "IDE Settings logical directory structure" >
-		<AdditionalFiles Update  = "app.manifest"  Visible="false" />
-		<None			 Include = "app.manifest"  Link="DEV\app.manifest" />
+		<AdditionalFiles Update  = "app.manifest"  Visible = "false" />
+		<None			 Include = "app.manifest"  Link    = "DEV\app.manifest" />
 		
 		<None		     Include = "Properties\launchSettings.json" Link = "DEV\launchSettings.json" />
 		
 		<AdditionalFiles Update  = "NativeMethods.json" Visible = "false" />
-		<None			 Include = "NativeMethods.json" Link = "DEV\CsWin32\NativeMethods.json" />
+		<None			 Include = "NativeMethods.json" Link    = "DEV\CsWin32\NativeMethods.json" />
 		
 		<AdditionalFiles Update  = "NativeMethods.txt"   Visible = "false" />
 		<None			 Include = "NativeMethods.txt"   Link    = "DEV\CsWin32\NativeMethods.txt" />
