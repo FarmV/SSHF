@@ -1,6 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" >
+﻿<Project Sdk = "Microsoft.NET.Sdk" >
 
-	<PropertyGroup Label="Application Base ">
+	<PropertyGroup Label = "Application Base" >
 		<OutputType                >WinExe</OutputType>
 		<PlatformTarget			   >x64</PlatformTarget>		
 		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
@@ -9,7 +9,7 @@
 		<UseWindowsForms		   >true</UseWindowsForms>
 	</PropertyGroup>
 		
-	<PropertyGroup Label="Application" >
+	<PropertyGroup Label = "Application" >
 		<PublishProfile						 >DEV\PublishProfiles\Win64_SelfContained_SingleFile.pubxml</PublishProfile>		
 		<ApplicationManifest				 >app.manifest</ApplicationManifest>
 		<DebugType							 >embedded</DebugType>
@@ -21,69 +21,68 @@
 		<ApplicationIcon					 >Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
 	</PropertyGroup>
 
-	<PropertyGroup Label="IDE Settings" >		
-		<RootNamespace	  >FVH.SSHF</RootNamespace>
-		<Nullable	      >enable</Nullable>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<AppDesignerFolder>DEV</AppDesignerFolder>
-		<NoWarn			  >$(NoWarn);IDE0200;IDE0350</NoWarn>
+	<PropertyGroup Label = "IDE Settings" >		
+		<RootNamespace	   >FVH.SSHF</RootNamespace>
+		<Nullable	       >enable</Nullable>
+		<AllowUnsafeBlocks >true</AllowUnsafeBlocks>
+		<AppDesignerFolder >DEV</AppDesignerFolder>
+		<NoWarn			   >$(NoWarn);IDE0200;IDE0350</NoWarn>
 	</PropertyGroup>
 	
-	<ItemGroup Label="IDE Settings logical directory structure">
-		<AdditionalFiles Update="app.manifest" Visible="false" />
-		<None			 Include="app.manifest" Link="DEV\app.manifest" />
+	<ItemGroup Label = "IDE Settings logical directory structure" >
+		<AdditionalFiles Update  = "app.manifest"  Visible="false" />
+		<None			 Include = "app.manifest"  Link="DEV\app.manifest" />
 		
-		<None		     Include="Properties\launchSettings.json" Link="DEV\launchSettings.json" />
+		<None		     Include = "Properties\launchSettings.json" Link = "DEV\launchSettings.json" />
 		
-		<AdditionalFiles Update="NativeMethods.json"  Visible="false" />
-		<None			 Include="NativeMethods.json" Link="DEV\CsWin32\NativeMethods.json" />
+		<AdditionalFiles Update  = "NativeMethods.json" Visible = "false" />
+		<None			 Include = "NativeMethods.json" Link = "DEV\CsWin32\NativeMethods.json" />
 		
-		<AdditionalFiles Update="NativeMethods.txt"   Visible="false" />
-		<None			 Include="NativeMethods.txt" Link="DEV\CsWin32\NativeMethods.txt" />
+		<AdditionalFiles Update  = "NativeMethods.txt"   Visible = "false" />
+		<None			 Include = "NativeMethods.txt"   Link    = "DEV\CsWin32\NativeMethods.txt" />
 	</ItemGroup>
-	
 						
-	<ItemGroup Label="Nuget Dependencies">
-		<PackageReference Include="MahApps.Metro"				 Version="2.4.10" />
-		<PackageReference Include="MahApps.Metro.IconPacks"		 Version="6.1.0" />
-		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
-		<PackageReference Include="System.Drawing.Common"		 Version="9.0.8" />
-		<PackageReference Include="R3"							 Version="1.3.0" />
-		<PackageReference Include="R3Extensions.WPF"			 Version="1.3.0" />
-		<PackageReference Include="Microsoft.Windows.CsWin32"	 Version="0.3.183" PrivateAssets="all" />
+	<ItemGroup Label = "Nuget Dependencies" >
+		<PackageReference Include = "MahApps.Metro"				   Version="2.4.10" />
+		<PackageReference Include = "MahApps.Metro.IconPacks"	   Version="6.1.0" />
+		<PackageReference Include = "Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+		<PackageReference Include = "Microsoft.Extensions.Hosting" Version="9.0.8" />
+		<PackageReference Include = "System.Drawing.Common"		   Version="9.0.8" />
+		<PackageReference Include = "R3"					       Version="1.3.0" />
+		<PackageReference Include = "R3Extensions.WPF"			   Version="1.3.0" />
+		<PackageReference Include = "Microsoft.Windows.CsWin32"	   Version="0.3.183" PrivateAssets="all" />
 	</ItemGroup>
 		
-	<ItemGroup Label="Other Dependencies">
-	  <ProjectReference Include="..\BackgroundCallbackSharp\BackgroundCallbackSharp.csproj" />
+	<ItemGroup Label = "Other Dependencies">
+	  <ProjectReference Include = "..\BackgroundCallbackSharp\BackgroundCallbackSharp.csproj" />
 	</ItemGroup>
 	
-	<ItemGroup Label="Included ressources">
-		<Resource Include="Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico" CopyToOutputDirectory="Never" />
+	<ItemGroup Label = "Included ressources">
+		<Resource Include = "Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico" CopyToOutputDirectory="Never" />
 	</ItemGroup>
 	
-	<Target Name="GenerateVersionedManifest" BeforeTargets="BeforeBuild">
+	<Target Name = "GenerateVersionedManifest" BeforeTargets = "BeforeBuild">
 		<PropertyGroup>
 			<_VersionedManifestFile>$(IntermediateOutputPath)versioned.app.manifest</_VersionedManifestFile>
 		</PropertyGroup>
 
-		<Copy SourceFiles="$(ApplicationManifest)" DestinationFiles="$(_VersionedManifestFile)" />
+		<Copy SourceFiles = "$(ApplicationManifest)" DestinationFiles = "$(_VersionedManifestFile)" />
 
-		<XmlPoke XmlInputPath="$(_VersionedManifestFile)"
-				 Query="//*[local-name()='assemblyIdentity']/@version"
-				 Value="$(Version).0" />
+		<XmlPoke XmlInputPath = "$(_VersionedManifestFile)"
+				 Query = "//*[local-name()='assemblyIdentity']/@version"
+				 Value = "$(Version).0" />
 
-		<XmlPoke XmlInputPath="$(_VersionedManifestFile)"
-				 Query="//*[local-name()='assemblyIdentity']/@name"
-				 Value="$(AssemblyName)" />
+		<XmlPoke XmlInputPath = "$(_VersionedManifestFile)"
+				 Query = "//*[local-name()='assemblyIdentity']/@name"
+				 Value = "$(AssemblyName)" />
 
-		<XmlPoke XmlInputPath="$(_VersionedManifestFile)"
-				 Query="//*[local-name()='assemblyIdentity']/@processorArchitecture"
-				 Value="amd64" />
+		<XmlPoke XmlInputPath = "$(_VersionedManifestFile)"
+				 Query = "//*[local-name()='assemblyIdentity']/@processorArchitecture"
+				 Value = "amd64" />
 
-		<XmlPoke XmlInputPath="$(_VersionedManifestFile)"
-				 Query="//*[local-name()='assemblyIdentity']/@type"
-				 Value="win32" />
+		<XmlPoke XmlInputPath = "$(_VersionedManifestFile)"
+				 Query = "//*[local-name()='assemblyIdentity']/@type"
+				 Value = "win32" />
 
 		<PropertyGroup>
 			<ApplicationManifest>$(_VersionedManifestFile)</ApplicationManifest>
