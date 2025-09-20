@@ -22,6 +22,7 @@
 		<DebugType									 >embedded</DebugType>
 		<SelfContained								 >true</SelfContained>
 		<PublishSingleFile							 >true</PublishSingleFile>
+		<EnableCompressionInSingleFile			     >true</EnableCompressionInSingleFile>
 		<PublishReadyToRun							 >true</PublishReadyToRun>
 		<IncludeNativeLibrariesForSelfExtract		 >true</IncludeNativeLibrariesForSelfExtract>
 		<PublishTrimmed								 >false</PublishTrimmed>
