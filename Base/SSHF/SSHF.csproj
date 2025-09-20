@@ -41,7 +41,6 @@
 		<AdditionalFiles Update="NativeMethods.txt"   Visible="false" />
 		<None			 Include="NativeMethods.txt" Link="DEV\CsWin32\NativeMethods.txt" />
 	</ItemGroup>
-	
 						
 	<ItemGroup Label="Nuget Dependencies">
 		<PackageReference Include="MahApps.Metro"				 Version="2.4.10" />
