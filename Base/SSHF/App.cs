@@ -116,11 +116,22 @@ namespace FVH.SSHF
         {
             s_applicationExitCode = ErrorUnhandled;
 #if DEBUG
-            Debug.WriteLine($"{Environment.NewLine}{ex.StackTrace}");
-            Type typeEx = ex.GetType();
+            static void DumpException(Exception exception, int level)
+            {
+                string indent = new string(' ', level * 2);
+                Debug.WriteLine($"{Environment.NewLine}{indent}{exception.GetType().FullName}");
+                Debug.WriteLine($"{indent}{exception.Message}");
+                Debug.WriteLine($"{indent}{exception.StackTrace}");
 
-            Debug.WriteLine($"{Environment.NewLine}{typeEx.FullName}");
-            Debug.WriteLine(ex.Message);
+                if(exception is AggregateException aggregate)
+                {
+                    foreach(Exception inner in aggregate.InnerExceptions) DumpException(inner, level + 1);
+                }
+                else if(exception.InnerException is Exception innerEx) DumpException(innerEx, level + 1);
+                
+            }
+
+            DumpException(ex, 0);
 #endif
             if(Debugger.IsAttached) Debugger.Break();
             Application.Current.Shutdown(ErrorUnhandled);
