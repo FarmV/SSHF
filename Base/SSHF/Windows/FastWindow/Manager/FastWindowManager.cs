@@ -60,7 +60,7 @@ namespace FVH.SSHF.FastWindowArea
             _waitingInputProvider = waitingInputProvider;
 
             _disposables.Add(isInExclusiveModeSource.ObserveOnThreadPool().
-             SubscribeAwait(onNextAsync: async (bool next, CancellationToken _) => await IfExclusiveMode(next), AwaitOperation.Sequential));
+             SubscribeAwait(onNextAsync: async (bool next, CancellationToken token) => await IfExclusiveMode(next, token), AwaitOperation.Switch));
         }
         public void Dispose()
         {
@@ -212,9 +212,11 @@ namespace FVH.SSHF.FastWindowArea
 
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is true) _ = SynchronizationContext.Current.StopSafeUITimeCriticalSection();
         }
-        private async Task IfExclusiveMode(bool isExcluseveMode)
+        private async Task IfExclusiveMode(bool isExclusiveMode, CancellationToken token)
         {
-            if(isExcluseveMode is false) return;
+            if(isExclusiveMode is false) return;
+
+            if(token.IsCancellationRequested is true) return;
 
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
                         
