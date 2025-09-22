@@ -13,10 +13,10 @@ using FVH.SSHF.Infrastructure.Input;
 using FVH.SSHF.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure.TrayIconManagement;
 using FVH.SSHF.Infrastructure.Win32;
-using FVH.SSHF.Infrastructure.Win32.FVH.SSHF.Infrastructure.Win32;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 using R3;
 
@@ -32,14 +32,14 @@ namespace FVH.SSHF
             {
                 if(Dispatcher.FromThread(uiThread) is not Dispatcher uiDispatcher) ThrowNotDispatcher(); [DoesNotReturn] static void ThrowNotDispatcher() => throw new InvalidOperationException();
 
-                TheThreadWorkerContext theThreadWorkerContext = new TheThreadWorkerContext(); // IAsyncDisposable
+                TheThreadWorkerContext theThreadWorkerContext               = new TheThreadWorkerContext(); // IAsyncDisposable
 
-                ObserverExclusiveMode observerExclusiveMode = new ObserverExclusiveMode(uiDispatcher);
+                ObserverExclusiveMode observerExclusiveMode                 = new ObserverExclusiveMode(uiDispatcher);
                 ObserverMsScreenClipExecuting observerMsScreenClipExecuting = new ObserverMsScreenClipExecuting();
-                ShellHookPriorityHandlers shellHookPriorityHandlers = new ShellHookPriorityHandlers(observerExclusiveMode, observerMsScreenClipExecuting);
-                HookManager win32HookManager = new HookManager(uiDispatcher,shellHookPriorityHandlers);
+                ShellHookPriorityHandlers shellHookPriorityHandlers         = new ShellHookPriorityHandlers(observerExclusiveMode, observerMsScreenClipExecuting);
+                HookManager win32HookManager                                = new HookManager(uiDispatcher,shellHookPriorityHandlers);
 
-                KeyboardHookStateAggregator keyboardHookStateAggregator = new KeyboardHookStateAggregator(observerExclusiveMode.IsInExclusiveMode);
+                KeyboardHookStateAggregator keyboardHookStateAggregator     = new KeyboardHookStateAggregator(observerExclusiveMode.IsInExclusiveMode);
 
                 R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>? listIInvokeShortcutsBehaviorSubject = null;
 
@@ -64,19 +64,19 @@ namespace FVH.SSHF
 
                 TrayIcon trayIcon = CreateAnIconInTheNotificationArea(uiDispatcher);
 
-                IHost host = Host.CreateDefaultBuilder(args).ConfigureAppConfiguration((_, configuration) =>
-                {   configuration.Sources.Clear(); }).ConfigureServices((__, container) =>
-                    {
-                        _ = container.AddSingleton<Dispatcher>(uiDispatcher);
-                        _ = container.AddSingleton<KeyboardHookStateAggregator>(keyboardHookStateAggregator);
-                        _ = container.AddSingleton<ImageProvider>(ImageProvider);
-                        _ = container.AddSingleton<FastWindowManager>(fastWindowManager);
-                        _ = container.AddSingleton<WaitingInputProvider>(waitingInputProvider);
-                        _ = container.AddSingleton<TrayIcon>(trayIcon);
+                IHost host = Host.CreateDefaultBuilder(args).ConfigureAppConfiguration((_, configuration) => { configuration.Sources.Clear(); }).ConfigureLogging((ILoggingBuilder builder) => builder.ClearProviders()).
+                ConfigureServices((__, container) =>
+                {
+                    _ = container.AddSingleton<Dispatcher>                 (uiDispatcher);
+                    _ = container.AddSingleton<KeyboardHookStateAggregator>(keyboardHookStateAggregator);
+                    _ = container.AddSingleton<ImageProvider>              (ImageProvider);
+                    _ = container.AddSingleton<FastWindowManager>          (fastWindowManager);
+                    _ = container.AddSingleton<WaitingInputProvider>       (waitingInputProvider);
+                    _ = container.AddSingleton<TrayIcon>                   (trayIcon);
 
-                        _ = container.AddSingleton<ObserverExclusiveMode>(observerExclusiveMode);
-                        _ = container.AddSingleton<HookManager>(win32HookManager);
-                    }).Build();
+                    _ = container.AddSingleton<ObserverExclusiveMode>(observerExclusiveMode);
+                    _ = container.AddSingleton<HookManager>(win32HookManager);
+                }).Build();
 
                 CompositeDisposable disposablesDependencies =
                 [
