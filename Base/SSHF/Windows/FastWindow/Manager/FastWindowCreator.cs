@@ -27,7 +27,7 @@ namespace FVH.SSHF.FastWindowArea
 
             fastWindowViewModelDependencies.DpiCorrector = new WPFDpiCorrector(window, _dispatcher);
             fastWindowViewModelDependencies.SetImage = new WPFDropImageFile(window);
-            fastWindowViewModelDependencies.IWindowPositionUpdater = new Win32WPFWindowPositionUpdater(window);
+            fastWindowViewModelDependencies.PositionManager = new Win32WPFWindowPositionManager(window, fastWindowViewModelDependencies.DpiCorrector);
 
             FastWindowViewModel viewModel = await _dispatcher.InvokeAsync(() => CreateViewModelFastWindow(fastWindowViewModelDependencies));
             await _dispatcher.InvokeAsync(() =>
@@ -42,7 +42,7 @@ namespace FVH.SSHF.FastWindowArea
             new FastWindowViewModel
             (
                 fastWindowViewModelDependencies.IGetImage,
-                fastWindowViewModelDependencies.IWindowPositionUpdater!,
+                fastWindowViewModelDependencies.PositionManager!,
                 fastWindowViewModelDependencies.DpiCorrector!,
                 fastWindowViewModelDependencies.SetImage!
             )
