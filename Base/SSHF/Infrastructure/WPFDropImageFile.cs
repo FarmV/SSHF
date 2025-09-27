@@ -36,12 +36,10 @@ namespace FVH.SSHF.Infrastructure
         }
         public void SaveImageFromDrop(object ev, BitmapSource image)
         {
-            if(ev is not MouseEventArgs mouseEventArgs) return;
-
+            if(ev is not MouseEventArgs mouseEventArgs) return; 
             
             _ = Win32TimePeriod.TimeBeginPeriod(Win32TimePeriod.MinimumTimerResolution);
-            Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread();
-
+            _ = Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread();
 
             if(CompareBitmapSources(_lastDropImage, image) is false)
             {
@@ -85,6 +83,7 @@ namespace FVH.SSHF.Infrastructure
                 HBitmap = hBitmap.DangerousGetHandle(),
             });
 
+            _ = Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread();
         }
         private static unsafe bool CompareBitmapSources(BitmapSource? bitmapSource1, BitmapSource? bitmapSource2)
         {
@@ -202,7 +201,6 @@ namespace FVH.SSHF.Infrastructure
         }
         public static (System.Windows.Size targetPixelSize, double dpiScale) GetDragImageTargetSize(Window windowContext, double scaleFactor = 1.5)
         {
-
             PresentationSource? source = PresentationSource.FromVisual(windowContext);
             if(source is null) ThrowSource(); [DoesNotReturn] static void ThrowSource() => throw new InvalidOperationException("Cannot get PresentationSource from window.");
             Matrix matrix = source.CompositionTarget.TransformToDevice;
@@ -214,12 +212,10 @@ namespace FVH.SSHF.Infrastructure
             uint dpi = GetDpiForWindow(hwnd);
             if(dpi is 0) ThrowDpi(); [DoesNotReturn] static void ThrowDpi() => throw new InvalidOperationException("Could not get DPI for window.");
 
-            // Получаем базовый размер иконки для 100% (96 DPI)
             const uint BASE_DPI = 96;
             int baseIconWidth  = GetSystemMetricsForDpi(SM_CXICON, BASE_DPI);
             int baseIconHeight = GetSystemMetricsForDpi(SM_CYICON, BASE_DPI);
 
-            // Целевой размер в пикселях = (базовый_размер * масштаб_DPI) * наш_коэффициент
             double targetWidth  = (baseIconWidth  * dpiScale) * scaleFactor;
             double targetHeight = (baseIconHeight * dpiScale) * scaleFactor;
 
