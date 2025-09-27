@@ -53,7 +53,7 @@ namespace FVH.SSHF.FastWindowArea
                 {
                     if(e.Type == Background.Input.KeyboardEventArgs.TypePhysicallyEvent.Down)
                     {
-                        if(_mainWindowViewModel.WindowPositionUpdater.IsUpdateWindow is false)
+                        if(_mainWindowViewModel.PositionManager.IsUpdateWindow is false)
                         {
                             _mainWindowViewModel.SetDragMoveCondition(false);
                             _mainWindowViewModel.SetDropCondition(true);
@@ -61,7 +61,7 @@ namespace FVH.SSHF.FastWindowArea
                     }
                     else
                     {
-                        if(_mainWindowViewModel.WindowPositionUpdater.IsUpdateWindow is false)
+                        if(_mainWindowViewModel.PositionManager.IsUpdateWindow is false)
                         {
                             _mainWindowViewModel.SetDragMoveCondition(true);
                             _mainWindowViewModel.SetDropCondition(false);
