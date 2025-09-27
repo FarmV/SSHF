@@ -10,7 +10,7 @@ namespace FVH.SSHF
 {
     public class KeyboardShortcut 
     {
-        public KeyboardShortcut(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier, Func<bool>? canExecute = null)
+        public KeyboardShortcut(VKeys[] keyCombo, Func<ValueTask> callbackTask, object? identifier, Func<bool>? canExecute = null)
         {
             KeyCombo.Value = keyCombo;
             CallbackTask = callbackTask;
@@ -19,7 +19,7 @@ namespace FVH.SSHF
             else { CanExecute = canExecute; }
         }
         public readonly BindableReactiveProperty<VKeys[]> KeyCombo = new BindableReactiveProperty<VKeys[]>([]);
-        public Func<Task> CallbackTask
+        public Func<ValueTask> CallbackTask
         {
             get;
             set;
