@@ -85,7 +85,7 @@ namespace FVH.SSHF
                      fastWindowManager,
                      waitingInputProvider,
                      trayIcon,
-                     win32HookManager
+                     win32HookManager,
                 ];
 
                 CancellationTokenRegistration? tokenApplicationStartedCallback = null;
