@@ -36,12 +36,10 @@ namespace FVH.SSHF.Infrastructure
         }
         public void SaveImageFromDrop(object ev, BitmapSource image)
         {
-            if(ev is not MouseEventArgs mouseEventArgs) return;
-
+            if(ev is not MouseEventArgs mouseEventArgs) return; 
             
             _ = Win32TimePeriod.TimeBeginPeriod(Win32TimePeriod.MinimumTimerResolution);
-            Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread();
-
+            _ = Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread();
 
             if(CompareBitmapSources(_lastDropImage, image) is false)
             {
@@ -85,6 +83,7 @@ namespace FVH.SSHF.Infrastructure
                 HBitmap = hBitmap.DangerousGetHandle(),
             });
 
+            _ = Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread();
         }
         private static unsafe bool CompareBitmapSources(BitmapSource? bitmapSource1, BitmapSource? bitmapSource2)
         {
