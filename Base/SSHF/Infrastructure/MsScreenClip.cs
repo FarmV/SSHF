@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FVH.SSHF.Infrastructure
 {
@@ -20,13 +17,13 @@ namespace FVH.SSHF.Infrastructure
                 Arguments = "ms-screenclip:",
                 UseShellExecute = true
             };
-            System.Diagnostics.Process.Start(processStartInfo);
+            _ = System.Diagnostics.Process.Start(processStartInfo);
         }
         internal static bool IsEnableProcessHost()
         {
             Process[] msScreenClipProc = System.Diagnostics.Process.GetProcessesByName(ProcessName);
             if(msScreenClipProc.Length is 0 ) return false;
-            if(msScreenClipProc.Length > 1) throw new ArgumentOutOfRangeException(nameof(msScreenClipProc));
+            if(msScreenClipProc.Length > 1) Throw(); [DoesNotReturn] static void Throw() => throw new ArgumentOutOfRangeException(nameof(msScreenClipProc));
             if
             (
              msScreenClipProc.Length is 1 &&
