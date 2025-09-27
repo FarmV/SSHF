@@ -1,96 +1,86 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 
-using R3;
-
 using FVH.SSHF.Infrastructure.Interfaces;
+
+using R3;
 
 namespace FVH.SSHF.Infrastructure.Input
 {
     internal class WaitingInputProvider : IDisposable
     {
         private bool _isDisposed = false;
-        private bool _statusHookInput = true;
-        private readonly R3.BehaviorSubject<bool> _subjectRequestSwitchInput;
+        private bool _isHookActive = false;
+        private bool _isInit = false;
+        private readonly Observable<bool> _hookCanBeActive;
         private readonly Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> _subjectListGlobalShortcuts;
         private readonly Background.Input.Input _input;
-        private readonly IDisposable _disposablesSubscribe;
-        internal readonly R3.BehaviorSubject<bool> CurrentStatusSubscribeInput;
+        private readonly IDisposable _subscription;
+        private readonly Dispatcher _dispatcher;
+
         internal event FVH.Background.Input.CallbackFunctionKeyboard.LowLevelKeyboard.KeyboardEventHandler? NotifyKeyboardEvent;
-        internal WaitingInputProvider(Dispatcher toCallbackDispatcher, R3.BehaviorSubject<bool> requestInputState, Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> listGlobalShortcutsAsObservable)
+        internal WaitingInputProvider(Dispatcher toCallbackDispatcher, Observable<bool> hookCanBeActive, Func<R3.BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>> listGlobalShortcutsAsObservable, SynchronizationContext workerContext)
         {
-            _subjectRequestSwitchInput = requestInputState;
+            _hookCanBeActive = hookCanBeActive;
             _subjectListGlobalShortcuts = listGlobalShortcutsAsObservable;
 
-            _input = new Background.Input.Input(toCallbackDispatcher);
+            _dispatcher = toCallbackDispatcher;
+
+            _input = new Background.Input.Input(workerContext);
             _input.NotifyKeyboardEvent += InputNotifyKeyboardEvent;
 
-            CurrentStatusSubscribeInput = new R3.BehaviorSubject<bool>(false);
-  
-            IDisposable subscribeSetInput = _subjectRequestSwitchInput.ObserveOn(ObservableSystem.DefaultTimeProvider).
-             Subscribe((bool requestSubOrUnSub) => InputRequestChecker(requestSubOrUnSub), onCompleted: (Result _) =>  Dispose());
-
-            _disposablesSubscribe = R3.Disposable.Combine(subscribeSetInput);
+            _subscription = _hookCanBeActive.ObserveOn(workerContext).Subscribe((bool shouldBeActive) => UpdateHookActivity(shouldBeActive), onCompleted: (Result _) => Dispose());
         }      
         public void Dispose()
         {
             if(_isDisposed is true) return;
-            _disposablesSubscribe.Dispose();
+            _isDisposed = true;
+
+            _subscription.Dispose();
             _input.NotifyKeyboardEvent -= InputNotifyKeyboardEvent;
             _input?.Dispose();
-            CurrentStatusSubscribeInput.OnCompleted(Result.Success);
-            CurrentStatusSubscribeInput.Dispose();
-            _isDisposed = true;
         }
-        private void InputNotifyKeyboardEvent(ref FVH.Background.Input.KeyboardEventArgs ev) => NotifyKeyboardEvent?.Invoke(ref ev);
-        private bool _isInit = false;
-        private void InputRequestChecker(bool requestUninstallHook)
+        public void RegisterShortcuts()
         {
-            void RegisterGlobalShortcuts(BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>> subject) =>            
-            Task.Run(async () => 
-            (await subject.FirstAsync()).ToList().ForEach((IBehaviorSubjectGlobalShortcuts iGlobalShortcutBehaviorSubject) =>
+            ObjectDisposedException.ThrowIf(_isDisposed is true, this);
+            if(_isInit is true) Throw(); [DoesNotReturn] static void Throw() => throw new InvalidOperationException("The object has already been initialized");
+            _isInit = true;
+
+            BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>? list = _subjectListGlobalShortcuts.Invoke();
+
+            Task.Run(async () =>
+            (await list.FirstAsync()).ToList().ForEach((IBehaviorSubjectGlobalShortcuts iGlobalShortcutBehaviorSubject) =>
             {
                 R3.BehaviorSubject<IEnumerable<KeyboardShortcut>> shortcutsAsObservable = iGlobalShortcutBehaviorSubject.GetShortcutsAsObservable();
                 IEnumerable<KeyboardShortcut> keyboardShortcutList = shortcutsAsObservable.FirstAsync().Result;
                 keyboardShortcutList.ToList().ForEach((KeyboardShortcut keyboardShortcut) =>
                 _input.AddCallbackTask(keyboardShortcut.KeyCombo.CurrentValue, keyboardShortcut.CallbackTask, keyboardShortcut.Identifier ?? keyboardShortcut.CallbackTask.Method.Name, keyboardShortcut.CanExecute).Wait());
             })).Wait();
-           
+        }
+        private void InputNotifyKeyboardEvent(ref FVH.Background.Input.KeyboardEventArgs ev) => NotifyKeyboardEvent?.Invoke(ref ev);
+        private void UpdateHookActivity(bool shouldBeActive)
+        {                 
             ObjectDisposedException.ThrowIf(_isDisposed is true, this);
-            
-            switch(requestUninstallHook)
+
+            if(shouldBeActive == _isHookActive) return;
+
+            if(shouldBeActive) 
             {
-                case false:
-                      if(_statusHookInput is true) return;
-                      if(_isInit is false)
-                      {
-                          _isInit = true;
-                          BehaviorSubject<IEnumerable<IBehaviorSubjectGlobalShortcuts>>? list = _subjectListGlobalShortcuts.Invoke();
-                          RegisterGlobalShortcuts(list);
-                      }
-                      
-                      _input.InstallHook();
-                      
-                      _statusHookInput = true;
-                      
-                      CurrentStatusSubscribeInput.OnNext(_statusHookInput);   
-                      break;
-                case true:
-                      if(_statusHookInput is false) return;
-                      _input.UninstallHook();
-#if DEBUG             
-                      Debug.WriteLine($"{App.Stopwatch.ElapsedMilliseconds}");
-#endif                
-                      if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is true) Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread();
-                      _statusHookInput = false;
-                      CurrentStatusSubscribeInput.OnNext(_statusHookInput);
-                break;
+                _input.InstallHookToInputDispatcher();
+                _isHookActive = true;
             }
-        }     
-    }
+            else 
+            {
+                _input.UninstallHookToInputDispatcher();
+
+                _dispatcher.Invoke(() => { if(Thread.CurrentThread.InUIThreadTimeCriticalSection()) _ = Thread.CurrentThread.StopUITimeCriticalSectionThrowIfNotUIThread(); });
+                _isHookActive = false;
+            }
+        }
+    }     
 }

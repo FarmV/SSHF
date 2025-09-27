@@ -1,53 +1,105 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Threading;
+
+using FVH.SSHF;
 
 using R3;
 
-
 namespace FVH.SSHF.Infrastructure.Win32
 {
-    internal partial class ObserverExclusiveMode : IDisposable
+    internal sealed partial class ObserverExclusiveMode : IDisposable
     {
-        private bool _isDispose = false;
-        private bool _isExcusiveMode = false;
-        internal Win32ExclusiveModeChecker _exclusiveModeChecker;
-        internal readonly R3.BehaviorSubject<bool> ExcusiveMode;
-        private readonly Dispatcher _dispatcher;
+        private bool                            _isDisposed       = false;
+        private readonly SemaphoreSlim         _exclusiveModeLock = new SemaphoreSlim(1, 1);
+        private readonly Dispatcher            _dispatcher;
+        private readonly BehaviorSubject<bool> _exclusiveModeSubject;
+        private CancellationTokenSource?       _exclusiveModeConfirmCts;
+        public ReadOnlyReactiveProperty<bool> IsInExclusiveMode { get; }
         internal ObserverExclusiveMode(Dispatcher dispatcher)
         {
             _dispatcher = dispatcher;
-            _exclusiveModeChecker = _dispatcher.Invoke(()=> _ = new Win32ExclusiveModeChecker());
 
-            ExcusiveMode = new R3.BehaviorSubject<bool>(false);
+            _exclusiveModeSubject = new BehaviorSubject<bool>(false);
+            IsInExclusiveMode = _exclusiveModeSubject.ToReadOnlyReactiveProperty();
+        }
+        public async Task CheckAndSetStateExcusiveModeAsync()
+        {
+            if(_exclusiveModeLock.Wait(0) is false) return;
 
-            ArgumentNullException.ThrowIfNull(_exclusiveModeChecker);
+            if(Volatile.Read(ref _isDisposed) is true) return;
+
+            try
+            {
+                bool wasInExclusiveMode = _exclusiveModeSubject.Value;
+                bool isInExclusiveMode  = wasInExclusiveMode;
+
+                isInExclusiveMode = D3DKMTCheckExclusiveOwnership();
+
+                if(isInExclusiveMode != wasInExclusiveMode)
+                {
+                    _exclusiveModeSubject.OnNext(isInExclusiveMode);
+                    for(int i = 0;i < 3;i++)
+                    {
+                        await Task.Delay(48);
+                        bool retry = D3DKMTCheckExclusiveOwnership();
+                        if(retry == isInExclusiveMode) continue;
+                        isInExclusiveMode = retry;
+                    }
+                }
+                else
+                {
+                    for(int i = 0;i < 3;i++)
+                    {
+                        await Task.Delay(48);
+                        bool retry = D3DKMTCheckExclusiveOwnership();
+                        if(retry == isInExclusiveMode) continue;
+                        isInExclusiveMode = retry;
+                    }
+                }
+
+                _exclusiveModeConfirmCts?.Cancel();
+                _exclusiveModeConfirmCts = new CancellationTokenSource();
+                CancellationToken token = _exclusiveModeConfirmCts.Token;
+
+                _ = Task.Delay(48, token).ContinueWith(task =>
+                {
+                    if(task.IsCanceled) return;
+
+                    bool exclusive = D3DKMTCheckExclusiveOwnership();
+                    if(exclusive != _exclusiveModeSubject.Value)
+                    {
+                        if(exclusive is true) _ = _dispatcher.Invoke(Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread);
+
+                        _exclusiveModeSubject.OnNext(exclusive);
+                    }
+                }, TaskScheduler.Default);
+
+                if(isInExclusiveMode != wasInExclusiveMode)
+                {
+                    if(isInExclusiveMode is true) _ = _dispatcher.Invoke(Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread);
+
+                    _exclusiveModeSubject.OnNext(isInExclusiveMode);
+                }
+            }
+            finally { _ = _exclusiveModeLock.Release(); }
         }
         public void Dispose()
         {
-            if(_isDispose) return;
-            _isDispose = true;
-            ExcusiveMode.OnCompleted(Result.Success);
-            ExcusiveMode.Dispose();
-            _dispatcher.Invoke(() => _exclusiveModeChecker.Dispose());
-        }
-        internal void CheckAndSetStateExcusiveMode()
-        {
-            bool isExcusiveMode = false;
-            if(ExcusiveMode.Value == false)
-            {
-                TimeSpan empiricalTimeoutSpinWait = TimeSpan.FromMilliseconds(25); // Предполагаемая задержка между получение фокуса окна и установкой режима
-                _ = SpinWait.SpinUntil(() =>
-                {
-                    isExcusiveMode = _exclusiveModeChecker.CheckExclusiveMode(_dispatcher);
-                    return isExcusiveMode is true;
-                }, empiricalTimeoutSpinWait);
-            }
-            else { isExcusiveMode = _exclusiveModeChecker.CheckExclusiveMode(_dispatcher); }
+            if(Volatile.Read(ref _isDisposed)) return;
+            Volatile.Write(ref _isDisposed, true);
 
-            _isExcusiveMode = isExcusiveMode;
-            if(_isExcusiveMode is true) { if(Thread.CurrentThread.InUIThreadTimeCriticalSection() is false) _ = Thread.CurrentThread.StartUITimeCriticalSectionThrowIfNotUIThread(); }
-            ExcusiveMode.OnNext(_isExcusiveMode);
-        }                               
+            _exclusiveModeSubject.OnCompleted();
+            _exclusiveModeSubject.Dispose();
+
+            _exclusiveModeLock.Dispose();
+            IsInExclusiveMode.Dispose();
+        }
+
+        [LibraryImport("Gdi32")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool D3DKMTCheckExclusiveOwnership();
     }
 }

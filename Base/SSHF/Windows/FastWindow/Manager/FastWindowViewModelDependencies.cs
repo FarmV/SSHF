@@ -8,17 +8,17 @@ namespace FVH.SSHF.FastWindowArea
     internal class FastWindowViewModelDependencies : IDisposable
     {
         internal bool IsDisposed = false;
-        private IGetImage _iGetImage;
-        private IWindowPositionUpdater? _iWindowPositionUpdater;
+        private ImageProvider _iGetImage;
+        private Win32WPFWindowPositionManager? _iWindowPositionUpdater;
         private WPFDpiCorrector? _dpiCorrector;
         private WPFDropImageFile? _setImage;
 
-        internal FastWindowViewModelDependencies(IGetImage imageProvider)
+        internal FastWindowViewModelDependencies(ImageProvider imageProvider)
         {
             _iGetImage = imageProvider;
         }
-        internal IGetImage IGetImage { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _iGetImage; } init => _iGetImage = value; }
-        internal IWindowPositionUpdater? IWindowPositionUpdater { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _iWindowPositionUpdater; } set => _iWindowPositionUpdater = value; }
+        internal ImageProvider IGetImage { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _iGetImage; } init => _iGetImage = value; }
+        internal Win32WPFWindowPositionManager? PositionManager { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _iWindowPositionUpdater; } set => _iWindowPositionUpdater = value; }
         internal WPFDpiCorrector? DpiCorrector { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _dpiCorrector; } set => _dpiCorrector = value; }
         internal WPFDropImageFile? SetImage { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _setImage; } set => _setImage = value; }
         public void Dispose()

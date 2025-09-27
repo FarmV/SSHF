@@ -1,72 +1,105 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk = "Microsoft.NET.Sdk" >
 
-	<PropertyGroup Label="Application Base">
-		<OutputType>WinExe</OutputType>
-		<TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
+	<PropertyGroup Label = "Application Base" >
+		<OutputType                >WinExe</OutputType>
+		<TargetFramework		   >net9.0-windows10.0.17763.0</TargetFramework>
+		<PlatformTarget			   >x64</PlatformTarget>
+		<RuntimeIdentifier		   >win-x64</RuntimeIdentifier>
 		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
-		<PlatformTarget>x64</PlatformTarget>		
-		<UseWPF>true</UseWPF>
-		<UseWindowsForms>true</UseWindowsForms>
+		<UseWPF					   >true</UseWPF>
+		<UseWindowsForms		   >true</UseWindowsForms>			
+	</PropertyGroup>
+		
+	<PropertyGroup Label = "Application" >
+		<Version									 >0.8.13</Version>
+		<IncludeSourceRevisionInInformationalVersion >false</IncludeSourceRevisionInInformationalVersion> <!--gith hash off-->
+		<Product									 >Screenshot Helper by FarmV</Product>
+		<Description								 >Screenshot Helper by FarmV</Description>
+		<Copyright									 >https://github.com/FarmV/SSHF</Copyright>
+		<ApplicationIcon							 >Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
+		<PublishProfile								 >DEV\PublishProfiles\DefaultFolder.pubxml</PublishProfile>		
+		<ApplicationManifest						 >app.manifest</ApplicationManifest>
+		<DebugType									 >embedded</DebugType>
+		<SelfContained								 >true</SelfContained>
+		<PublishSingleFile							 >true</PublishSingleFile>
+		<EnableCompressionInSingleFile			     >true</EnableCompressionInSingleFile>
+		<PublishReadyToRun							 >true</PublishReadyToRun>
+		<IncludeNativeLibrariesForSelfExtract		 >true</IncludeNativeLibrariesForSelfExtract>
+		<PublishTrimmed								 >false</PublishTrimmed>
+	</PropertyGroup>	
+	
+	<PropertyGroup Label = "IDE Settings" >		
+		<RootNamespace	   >FVH.SSHF</RootNamespace>
+		<Nullable	       >enable</Nullable>
+		<AllowUnsafeBlocks >true</AllowUnsafeBlocks>
+		<AppDesignerFolder >DEV</AppDesignerFolder>
+		<NoWarn			   >$(NoWarn);IDE0200;IDE0350</NoWarn>
+	</PropertyGroup>
+	
+	<ItemGroup Label = "IDE Settings logical directory structure" >
+		<AdditionalFiles Update  = "app.manifest"  Visible = "false" />
+		<None			 Include = "app.manifest"  Link    = "DEV\app.manifest" />
+		
+		<None		     Include = "Properties\launchSettings.json" Link = "DEV\launchSettings.json" />
+		
+		<AdditionalFiles Update  = "NativeMethods.json" Visible = "false" />
+		<None			 Include = "NativeMethods.json" Link    = "DEV\CsWin32\NativeMethods.json" />
+		
+		<AdditionalFiles Update  = "NativeMethods.txt"   Visible = "false" />
+		<None			 Include = "NativeMethods.txt"   Link    = "DEV\CsWin32\NativeMethods.txt" />		
+	</ItemGroup>
+	
+	<PropertyGroup Label="Workflow Settings">
+		<AppendTargetFrameworkToOutputPath  >false</AppendTargetFrameworkToOutputPath>
+	    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+	</PropertyGroup>
+						
+	<ItemGroup Label = "Nuget Dependencies" >
+		<PackageReference Include = "MahApps.Metro"				   Version="2.4.11" />
+		<PackageReference Include = "MahApps.Metro.IconPacks"	   Version="6.1.0" />
+		<PackageReference Include = "Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+		<PackageReference Include = "Microsoft.Extensions.Hosting" Version="9.0.9" />
+		<PackageReference Include = "System.Drawing.Common"		   Version="9.0.9" />
+		<PackageReference Include = "R3"					       Version="1.3.0" />
+		<PackageReference Include = "R3Extensions.WPF"			   Version="1.3.0" />
+		<PackageReference Include = "Microsoft.Windows.CsWin32"	   Version="0.3.205" PrivateAssets="all" />
+	</ItemGroup>
+		
+	<ItemGroup Label = "Other Dependencies">
+	  <ProjectReference Include = "..\BackgroundCallbackSharp\BackgroundCallbackSharp.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup Label = "Included ressources">
+		<Resource Include = "Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico" CopyToOutputDirectory="Never" />
+	</ItemGroup>
+	
+	<Target Name = "GenerateVersionedManifest" BeforeTargets = "BeforeBuild">
+		
+		<PropertyGroup>
+			<_VersionedManifestFile>$(IntermediateOutputPath)versioned.app.manifest</_VersionedManifestFile>
+		</PropertyGroup>
 
-		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-	</PropertyGroup>
-		
-	<PropertyGroup Label="Application">
-		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<DebugType>embedded</DebugType>
-		<ApplicationIcon>Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico</ApplicationIcon>
-		
-		<Version>0.8.9</Version>		
-		<Product>Screenshot Helper by FarmV</Product>
-		<Description>Screenshot Helper by FarmV</Description>
-		<Copyright>https://github.com/FarmV/SSHF</Copyright>
-	</PropertyGroup>
-	
-	<PropertyGroup Label="IDE Settings">		
-		<RootNamespace>FVH.SSHF</RootNamespace>
-		<Nullable>enable</Nullable>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<NoWarn>$(NoWarn);IDE0200</NoWarn>
-	</PropertyGroup>
-	
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
-			
-	<ItemGroup Label="Nuget Dependencies">
-		<PackageReference Include="MahApps.Metro" Version="2.4.10" />
-		<PackageReference Include="MahApps.Metro.IconPacks" Version="5.1.0" />
-		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4" />
-		<PackageReference Include="System.Drawing.Common" Version="9.0.4" />
-		<PackageReference Include="R3" Version="1.3.0" />
-		<PackageReference Include="R3Extensions.WPF" Version="1.3.0" />
-		<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.183">
-		  <PrivateAssets>all</PrivateAssets>
-		</PackageReference>
-	</ItemGroup>
-		
-	<ItemGroup Label="Other Dependencies">
-	  <ProjectReference Include="..\BackgroundCallbackSharp\BackgroundCallbackSharp.csproj" />
-	</ItemGroup>
-	
-	<ItemGroup Label="Included ressources">
-		<Resource Include="Infrastructure\Resources\SSHF-S16-32-SS-36-128-Max256-512.ico">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-		</Resource>
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <Compile Update="Properties\Settings.Designer.cs">
-	    <DesignTimeSharedInput>True</DesignTimeSharedInput>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>Settings.settings</DependentUpon>
-	  </Compile>
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <None Update="Properties\Settings.settings">
-	    <Generator>SettingsSingleFileGenerator</Generator>
-	    <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-	  </None>	
-	</ItemGroup>
-	
+		<Copy SourceFiles = "$(ApplicationManifest)" DestinationFiles = "$(_VersionedManifestFile)" />
+
+		<XmlPoke XmlInputPath = "$(_VersionedManifestFile)"
+				 Query = "//*[local-name()='assemblyIdentity']/@version"
+				 Value = "$(Version).0" />
+
+		<XmlPoke XmlInputPath = "$(_VersionedManifestFile)"
+				 Query = "//*[local-name()='assemblyIdentity']/@name"
+				 Value = "$(AssemblyName)" />
+
+		<XmlPoke XmlInputPath = "$(_VersionedManifestFile)"
+				 Query = "//*[local-name()='assemblyIdentity']/@processorArchitecture"
+				 Value = "amd64" />
+
+		<XmlPoke XmlInputPath = "$(_VersionedManifestFile)"
+				 Query = "//*[local-name()='assemblyIdentity']/@type"
+				 Value = "win32" />
+
+		<PropertyGroup>
+			<ApplicationManifest>$(_VersionedManifestFile)</ApplicationManifest>
+		</PropertyGroup>
+	</Target>
+
 </Project>

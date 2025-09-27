@@ -31,24 +31,35 @@ namespace FVH.SSHF.Infrastructure.Win32
                 pr.Dispose();
                 IsExecutingProcessScreenClip.OnNext(false);
             }
-            _ = GetWindowThreadProcessId(handleWindow, out uint procID);
-            Process pr = System.Diagnostics.Process.GetProcessById((int)procID);
-            if(pr.MainModule is null)
-            {
-                pr.Dispose();
-                return;
-            }
-            if(pr.MainModule.FileName == MsScreenClipPath)
-            {
-                if(pr.HasExited is true) return;
-                if(_msScreenClipExecutingSet.Contains(pr) is true) return;
-                _ = _msScreenClipExecutingSet.Add(pr);
-                pr.EnableRaisingEvents = true;
 
-                pr.Exited += ProcessExitedEvent;
+            uint procID = default;
+            try { _ = GetWindowThreadProcessId(handleWindow, out procID); }
+            catch { return; }
+            if(procID == default) return;
 
-                IsExecutingProcessScreenClip.OnNext(true);
+            Process? process = null;
+
+            try
+            {
+                process = System.Diagnostics.Process.GetProcessById((int)procID);
+                if(process.MainModule is null)
+                {
+                    process.Dispose();
+                    return;
+                }
+                if(process.MainModule.FileName == MsScreenClipPath)
+                {
+                    if(process.HasExited is true) return;
+                    if(_msScreenClipExecutingSet.Contains(process) is true) return;
+                    _ = _msScreenClipExecutingSet.Add(process);
+                    process.EnableRaisingEvents = true;
+
+                    process.Exited += ProcessExitedEvent;
+
+                    IsExecutingProcessScreenClip.OnNext(true);
+                }
             }
+            catch(System.ComponentModel.Win32Exception) { process?.Dispose(); }
         }              
         [LibraryImport("user32")]
         private static partial uint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);

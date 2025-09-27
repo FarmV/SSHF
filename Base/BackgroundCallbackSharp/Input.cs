@@ -24,16 +24,17 @@ namespace FVH.Background.Input
         private const int WM_INPUT = 0x00FF;
         private const int THREAD_PRIORITY_TIME_CRITICAL = 15;
         private volatile bool _isDispose = false;
-        private readonly Dispatcher _toCallbackDispatcher;
+        private readonly SynchronizationContext _synchronizationContext;
         private readonly Dispatcher _inputDispatcher;
         private readonly CallbackFunctionKeyboard _callbackFunctionKeyboard;
+        private readonly SemaphoreSlim _semaphoreHook = new SemaphoreSlim(initialCount: 1, maxCount: 1);
 
         internal event LowLevelKeyboard.KeyboardEventHandler? NotifyKeyboardEvent;
-        public Input(Dispatcher toCallbackDispatcher)
+        public Input(SynchronizationContext synchronizationContext)
         {
-            _toCallbackDispatcher = toCallbackDispatcher;
+            _synchronizationContext = synchronizationContext;
             _inputDispatcher = CreateDispatcher();
-            _callbackFunctionKeyboard = _inputDispatcher.Invoke(() => new CallbackFunctionKeyboard(_toCallbackDispatcher));
+            _callbackFunctionKeyboard = _inputDispatcher.Invoke(() => new CallbackFunctionKeyboard(synchronizationContext));
             _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.NotifyKeyboardEvent += SendNotifyKeyboardEvent);
         }
         private void SendNotifyKeyboardEvent(ref KeyboardEventArgs e) => NotifyKeyboardEvent?.Invoke(ref e);
@@ -50,24 +51,22 @@ namespace FVH.Background.Input
             _inputDispatcher.InvokeShutdown();
             GC.SuppressFinalize(this);
         }
-        public void InstallHook()
+        public void InstallHookToInputDispatcher()
         {
             ObjectDisposedException.ThrowIf(_isDispose, this);
-            _inputDispatcher.Invoke(() =>
-            {
-                _callbackFunctionKeyboard.InstallHook();
-            });
+            _semaphoreHook.Wait();
+            try { _inputDispatcher.Invoke(_callbackFunctionKeyboard.InstallHook); } 
+            finally { _ = _semaphoreHook.Release(); }
         }
-        public void UninstallHook()
+        public void UninstallHookToInputDispatcher()
         {
             ObjectDisposedException.ThrowIf(_isDispose, this);
-            _inputDispatcher.Invoke(() =>
-            {
-                _callbackFunctionKeyboard.UninstallHook();
-            });
+            _semaphoreHook.Wait();
+            try { _inputDispatcher.Invoke(_callbackFunctionKeyboard.UninstallHook); }
+            finally { _ = _semaphoreHook.Release(); }
         }
         public Task<bool> ContainsKeyCombination(VKeys[] keyCombo) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.ContainsKeyCombination(keyCombo));
-        public Task AddCallbackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null, Func<bool>? canExecute = null) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.AddCallbackTask(keyCombo, callbackTask, identifier, canExecute));
+        public Task AddCallbackTask(VKeys[] keyCombo, Func<ValueTask> callbackTask, object? identifier = null, Func<bool>? canExecute = null) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.AddCallbackTask(keyCombo, callbackTask, identifier, canExecute));
         public Task<bool> DeleteTaskByAnIdentifier(object identifier) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.DeleteTaskByAnIdentifier(identifier));
         public Task<bool> DeleteInvokeListByKeyCombination(VKeys[] keyCombo) => _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.DeleteInvokeListByKeyCombination(keyCombo));
         public List<GroupFunctions> ReturnGroupRegFunctions() => _inputDispatcher.Invoke(_callbackFunctionKeyboard.ReturnGroupRegFunctions);

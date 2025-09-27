@@ -6,7 +6,7 @@ using System.Windows.Media;
 
 namespace FVH.SSHF.Infrastructure
 {
-    internal class ImageProvider : IGetImage
+    public class ImageProvider 
     {
         public Task<ImageSource?> GetImageFromFile(Uri path) => Task.FromResult<ImageSource?>(ImageFromFile.GetBitmapImage(path));
         public async Task<ImageSource?> GetImageFromClipboard() => await ImageFromClipboard.GetClipboardImage();

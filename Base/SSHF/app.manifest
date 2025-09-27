@@ -1,38 +1,28 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
-	<assemblyIdentity version="0.0.8.0" name="FVH.SSHF.app"/>
-	<trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+﻿<?xml version = "1.0" encoding = "utf-8" ?>
+
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1" >
+	
+	<assemblyIdentity version= "0.0.0.0" name = "FVH.Placeholder" processorArchitecture = "amd64" type = "win32" />
+
+	<trustInfo xmlns = "urn:schemas-microsoft-com:asm.v2" >
 		<security>
-			<requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
-				<!-- 
-        <requestedExecutionLevel  level="asInvoker" uiAccess="false" />
-        <requestedExecutionLevel  level="requireAdministrator" uiAccess="false" />
-        <requestedExecutionLevel  level="highestAvailable" uiAccess="false" />
-        -->
-				<requestedExecutionLevel level="requireAdministrator" uiAccess="true" />
+			<requestedPrivileges xmlns = "urn:schemas-microsoft-com:asm.v3" >
+				<requestedExecutionLevel level = "requireAdministrator" uiAccess = "true" />
 			</requestedPrivileges>
 		</security>
 	</trustInfo>
-
-	<application xmlns="urn:schemas-microsoft-com:asm.v3">
-		<windowsSettings xmlns:ws2="http://schemas.microsoft.com/SMI/2016/WindowsSettings">
+	
+	<application xmlns="urn:schemas-microsoft-com:asm.v3" >
+		<windowsSettings xmlns:ws2="http://schemas-microsoft-com/SMI/2016/WindowsSettings" >
 			<ws2:longPathAware>true</ws2:longPathAware>
 		</windowsSettings>
 	</application>
-	<!-- Windows 10 -->
-	<compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+	<compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1" >
 		<supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
 	</compatibility>
+
+	<!-- optimization search registry -->
+
+	<file name="shell32.dll" loadFrom="%SystemRoot%\System32\shell32.dll" > <comClass description="CLSID_DragDropHelper" clsid="{4657278A-411B-11D2-839A-00C04FD918D0}" threadingModel="Apartment" /></file>
+
 </assembly>
-
-
-
-
-
-
-
-
-
-
-
-

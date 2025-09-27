@@ -46,7 +46,7 @@
         <packageNamespaceBehaviors:EventTrigger EventName="PreviewMouseDoubleClick" >
 
             <packageNamespaceBehaviors:InvokeCommandAction 
-                Command = "{ Binding HideWindow }" 
+                Command = "{ Binding HideWindowCommand  }" 
             ></packageNamespaceBehaviors:InvokeCommandAction>
 
         </packageNamespaceBehaviors:EventTrigger>
@@ -59,8 +59,8 @@
 
             <packageNamespaceBehaviors:EventTrigger EventName="PreviewMouseLeftButtonDown" >
 
-                <packageNamespaceBehaviors:InvokeCommandAction                     
-                    Command = "{ Binding StopWindowUpdater }" 
+                <packageNamespaceBehaviors:InvokeCommandAction 
+                    Command = "{ Binding StopWindowUpdaterCommand   }" 
                 ></packageNamespaceBehaviors:InvokeCommandAction>
 
             </packageNamespaceBehaviors:EventTrigger>
@@ -68,7 +68,7 @@
             <packageNamespaceBehaviors:EventTrigger EventName = "MouseLeftButtonDown" >
 
                 <packageNamespaceBehaviors:InvokeCommandAction 
-                    Command = "{ Binding DragMoveWindow }" 
+                    Command = "{ Binding DragMoveWindowCommand }" 
                 ></packageNamespaceBehaviors:InvokeCommandAction>
 
             </packageNamespaceBehaviors:EventTrigger>
@@ -76,7 +76,7 @@
             <packageNamespaceBehaviors:EventTrigger EventName="PreviewMouseMove" >
 
                 <packageNamespaceBehaviors:InvokeCommandAction                   
-                    Command="{ Binding DropImage }"                                  
+                    Command="{ Binding DropImageCommand }"                                  
                     PassEventArgsToCommand="True"
                 ></packageNamespaceBehaviors:InvokeCommandAction>
 

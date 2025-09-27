@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -8,13 +10,12 @@ using System.Windows;
 using System.Windows.Resources;
 using System.Windows.Threading;
 
-using FVH.SSHF.Infrastructure.Win32;
-
+using R3;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using R3;
 
-using Windows.ApplicationModel;
+using FVH.SSHF.Infrastructure.Win32;
+
 
 namespace FVH.SSHF
 {
@@ -22,15 +23,16 @@ namespace FVH.SSHF
     {
         private const int ErrorUnhandled = 100_001;
         private const int ErrorCreateMutex = 100_002;
+        private const int ErrorTimeoutBaseApp = 100_003;
         private volatile static int s_applicationExitCode = 0;
         private static Mutex? s_mutexSingleInstance;
         private readonly IHost _program;
         private readonly IServiceProvider _serviceProvider;
         internal const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = (nint)(-4);
-        internal const string UiThreadName = "FVH Main Thread";
+        internal const string UiThreadName = "FVH: Main Thread";
         internal volatile static bool DesignerMode = true;
 #if DEBUG
-        internal static TraceSwitch Trace;        
+        internal static TraceSwitch Trace;
         internal static App? GetDEBUG { get; private set; }
         internal static Stopwatch Stopwatch = new Stopwatch();
         static App() => Trace = new TraceSwitch("Debug", "Debugging only") { Level = TraceLevel.Off };
@@ -48,11 +50,17 @@ namespace FVH.SSHF
 #endif
         internal static StreamResourceInfo GetResource(Uri uriResource) => System.Windows.Application.GetResourceStream(uriResource);
 
+        static partial void ExtensionStartLogic(string[]? args);
+
         [STAThread]
         private static void Main(string[]? args)
         {
-            if(CreateMutexForSingleProgram() is false) { Environment.ExitCode = ErrorCreateMutex; return; }
+            args ??= [];
 
+            ExtensionStartLogic(args);
+
+            if(CreateMutexForSingleProgram() is false) { Environment.ExitCode = ErrorCreateMutex; return; }
+      
             _ = Native.SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); // обязательно до new System.Windows.Application(); иначе контекст сбрасывается
 
             const int ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
@@ -61,19 +69,27 @@ namespace FVH.SSHF
             Thread.CurrentThread.Name = UiThreadName;
 
             System.Windows.Application application = new System.Windows.Application();
-            application.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            application.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
 
             application.Startup += ApplicationStartupEvent;
 
             _ = application.Run();
+        
+            AppHelper.DisposeUnchecked();
+
+            s_mutexSingleInstance?.Dispose();
+
             Environment.ExitCode = s_applicationExitCode;
         }
+
         private static void ApplicationStartupEvent(object sender, StartupEventArgs e)
-        {          
-            Dispatcher dispatcher = Dispatcher.FromThread(Thread.CurrentThread);
-            WpfProviderInitializer.SetDefaultObservableSystem(EmergencyAppTermination, DispatcherPriority.Send, dispatcher);
+        {
+            Dispatcher dispatcher =                             Dispatcher.FromThread(Thread.CurrentThread);
+            AppDomain.CurrentDomain.UnhandledException +=       (_, e) => EmergencyAppTermination((Exception)e.ExceptionObject);
             Application.Current.DispatcherUnhandledException += (object _, DispatcherUnhandledExceptionEventArgs ev) => { ev.Handled = true; EmergencyAppTermination(ev.Exception); };
-            AppDomain.CurrentDomain.UnhandledException += (_, e) => EmergencyAppTermination((Exception)e.ExceptionObject);
+            TaskScheduler.UnobservedTaskException += (_, ev) => { ev.SetObserved(); EmergencyAppTermination(ev.Exception); };
+            WpfProviderInitializer.SetDefaultObservableSystem(EmergencyAppTermination, DispatcherPriority.Send, dispatcher);
+
             RuntimeHelpers.RunClassConstructor(typeof(AppHelper).TypeHandle); // Инициализация статического конструктора
 
             _ = Start(e.Args).ContinueWith((Task task) => EmergencyAppTermination(task.Exception!), TaskContinuationOptions.OnlyOnFaulted);
@@ -82,58 +98,79 @@ namespace FVH.SSHF
         {
             DesignerMode = false;
             Thread uiThread = Thread.CurrentThread;
-            async Task StartAsync()
-            {                             
-                IHost thisProgram = await BasicDependencies.ConfigureDependencies(uiThread, args).ConfigureAwait(false);
-                App app = new App(thisProgram);           
-                Dispatcher.FromThread(uiThread).Invoke(() => System.Windows.Application.Current.Exit += app.Shutdown);         
-                await app._program.StartAsync().ConfigureAwait(false);
-            }
-            await Task.Run(StartAsync).ConfigureAwait(false);         
+
+            IHost thisProgram = await Task.Run(async () => await BasicDependencies.ConfigureDependencies(uiThread, args).ConfigureAwait(false)).ConfigureAwait(false);
+
+            App app = new App(thisProgram);
+
+            Dispatcher.FromThread(uiThread).Invoke(() => System.Windows.Application.Current.Exit += app.Shutdown);
+
+            await app._program.StartAsync().ConfigureAwait(false);
         }
         private void Shutdown(object _, ExitEventArgs e)
         {
-            s_applicationExitCode = e.ApplicationExitCode;            
-            _program.StopAsync().GetAwaiter().GetResult();          
-            s_mutexSingleInstance?.Dispose();
+            s_applicationExitCode = e.ApplicationExitCode;
+            _program.StopAsync().GetAwaiter().GetResult();
         }
         internal static void EmergencyAppTermination(Exception ex)
         {
             s_applicationExitCode = ErrorUnhandled;
-            Application.Current.Shutdown(ErrorUnhandled);
 #if DEBUG
-            Debug.WriteLine($"{Environment.NewLine}{ex.StackTrace}");
-            Type typeEx = ex.GetType();
+            static void DumpException(Exception exception, int level)
+            {
+                string indent = new string(' ', level * 2);
+                Debug.WriteLine($"{Environment.NewLine}{indent}{exception.GetType().FullName}");
+                Debug.WriteLine($"{indent}{exception.Message}");
+                Debug.WriteLine($"{indent}{exception.StackTrace}");
 
-            Debug.WriteLine($"{Environment.NewLine}{typeEx.FullName}");
-            Debug.WriteLine(ex.Message);
+                if(exception is AggregateException aggregate)
+                {
+                    foreach(Exception inner in aggregate.InnerExceptions) DumpException(inner, level + 1);
+                }
+                else if(exception.InnerException is Exception innerEx) DumpException(innerEx, level + 1);
+                
+            }
+
+            DumpException(ex, 0);
 #endif
+            if(Debugger.IsAttached) Debugger.Break();
+            Application.Current.Shutdown(ErrorUnhandled);
         }
         private static bool CreateMutexForSingleProgram()
         {
             const string MutexNameSingleInstance = "FVH.SSHF.SingleProgramInstance";
-            bool mutexWasCreated;
-            try { s_mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out mutexWasCreated); }
+            try
+            {
+                s_mutexSingleInstance = new Mutex(true, MutexNameSingleInstance, out bool createdNew);
+                if(createdNew is false)
+                {
+                    try
+                    {
+                        bool acquired = s_mutexSingleInstance.WaitOne(0);
+                        if(acquired is false) return false;
+                    }
+                    catch(AbandonedMutexException) { }
+                }
+            }
             catch { return false; }
-            if(mutexWasCreated is false) return false;
             return true;
-        }      
+        }
         internal static partial class Native
         {
             [LibraryImport("user32", SetLastError = true)]
             internal static partial nint SetThreadDpiAwarenessContext(nint dpiContext);
             [LibraryImport("user32", SetLastError = true)]
             internal static partial nint GetThreadDpiAwarenessContext();
-            [LibraryImport("Kernel32")]
+            [LibraryImport("kernel32")]
             internal static partial nint GetCurrentProcess();
-            [LibraryImport("Kernel32")]
+            [LibraryImport("kernel32")]
             internal static partial uint GetPriorityClass(nint hProcess);
-            [LibraryImport("Kernel32")]
+            [LibraryImport("kernel32")]
             [return: MarshalAs(UnmanagedType.Bool)]
             internal static partial bool SetPriorityClass(nint hProcess, uint dwPriorityClass);
-            [LibraryImport("Kernel32")]
+            [LibraryImport("kernel32")]
             internal static partial int GetThreadPriority(nint hThread);
-            [LibraryImport("Kernel32")]
+            [LibraryImport("kernel32")]
             internal static partial nint GetCurrentThread();
         }
     }
@@ -164,6 +201,8 @@ namespace FVH.SSHF
             else res = Win32MMCSS.StopTimeCriticalSectionUI();
             return res;
         }
+        internal static void DisposeUnchecked() => win32MMCSS.Dispose();
+
 #if DEBUG
         [Conditional("DEBUG")]
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -224,4 +263,4 @@ namespace FVH.SSHF
         }
 #endif
     }
-}   
+}

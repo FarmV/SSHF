@@ -1,34 +1,26 @@
 ﻿using System;
-using System.Windows;
-using System.Threading.Tasks;
-using System.Windows.Input;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
+
 using R3;
-using System.Windows.Threading;
-using System.Windows.Media.Imaging;
 
 
 namespace FVH.SSHF.FastWindowArea
 {
-    public partial class FastWindowViewModel  
+    public partial class FastWindowViewModel
     {
-        private readonly IGetImage _imageProvider;
-        private readonly IWindowPositionUpdater _windowPositionUpdater;
-        private readonly WPFDpiCorrector _dpiCorrector;
-        private readonly WPFDropImageFile _setImage;
-        private readonly BindableReactiveProperty<ImageSource?> _imageBackground = new BindableReactiveProperty<ImageSource?>();
-        private CancellationTokenSource _updateWindowCancellationToken = new CancellationTokenSource();
-        private readonly BindableReactiveProperty<bool> _blockRefresh = new BindableReactiveProperty<bool>();
-        private bool _isCancellingUpdate = false;
-        private readonly BindableReactiveProperty<bool> _dropCondition = new BindableReactiveProperty<bool>(false);
-        private readonly BindableReactiveProperty<bool> _dragMoveCondition = new BindableReactiveProperty<bool>(true);
-        private readonly BindableReactiveProperty<double> _width = new BindableReactiveProperty<double>(0);
-        private readonly BindableReactiveProperty<double> _height = new BindableReactiveProperty<double>(0);
-        private readonly BindableReactiveProperty<Visibility> _visibleCondition = new BindableReactiveProperty<Visibility>(Visibility.Hidden);
+        private readonly ImageProvider     _imageProvider;
+        private readonly WPFDpiCorrector   _dpiCorrector;
+        private readonly WPFDropImageFile  _setImage;
 
 #pragma warning disable CS8618 // Empty class constructor for designer only
         public FastWindowViewModel()
@@ -36,150 +28,167 @@ namespace FVH.SSHF.FastWindowArea
         {
             if(App.DesignerMode is not true) throw new InvalidOperationException("Empty class constructor for designer only");
         }
-        public FastWindowViewModel(IGetImage imageProvider, IWindowPositionUpdater windowPositionUpdater, WPFDpiCorrector dpiCorrector, WPFDropImageFile setImage)
-        {           
+        public FastWindowViewModel(ImageProvider imageProvider, Win32WPFWindowPositionManager positionManager, WPFDpiCorrector dpiCorrector, WPFDropImageFile setImage)
+        {
             _imageProvider = imageProvider;
-            _windowPositionUpdater = windowPositionUpdater;
+            _positionManager = positionManager;
             _dpiCorrector = dpiCorrector;
             _setImage = setImage;
 
-            RefreshWindowInvoke = new R3.ReactiveCommand(executeAsync: async (_, _) => 
-            {
-                if(BlockRefresh.CurrentValue is true) return;
-                await WindowUpdate();
-            }, AwaitOperation.Drop);
-            StopWindowUpdater = new R3.ReactiveCommand(executeAsync: async (_, _) => await StopUpdateWindow(), AwaitOperation.Drop);
-            SetNewImage = new R3.ReactiveCommand(executeAsync: async (_, _) => await SetNewBackgroundImage(), AwaitOperation.Drop);
-            SwitchBlockRefreshWindow = new ReactiveCommand((_) => SwitchBlockRefresh());
-            HideWindow = new R3.ReactiveCommand(executeAsync: async (_,_) => await Hide().ConfigureAwait(false), AwaitOperation.Drop);
-            ShowWindow = new R3.ReactiveCommand((_) => Show());
-            DragMoveWindow = new R3.ReactiveCommand(executeAsync: async (_, _) =>
-            {
-                if(DragMoveCondition.CurrentValue is false) return;
-                await DragMove().ConfigureAwait(false);
-            }, AwaitOperation.Drop);
-            DropImage = new ReactiveCommand<object>((object data) =>
-            {
-                if(DropCondition.Value is false) return;
-                DropWindowImage(data);   
-            });                      
-            MsScreenClipInvoke = new ReactiveCommand(executeAsync: async (_, _) => await InvokeMsScreenClip(), AwaitOperation.Drop);
+            SwitchBlockRefreshCommand = new R3.ReactiveCommand((_) => SwitchBlockRefresh());
 
-            _ = dpiCorrector.ChangeDpiCurrentWindow.Subscribe((DpiScale dpiScale) => SetNewImageAndWindowSizeDPI(ref dpiScale));
+            ShowWindowCommand = new R3.ReactiveCommand((_) => ShowWindow());
+            HideWindowCommand = new R3.ReactiveCommand((_) => HideWindow());
+
+            WindowUpdaterCommand = new R3.ReactiveCommand(async (_, _) => await WindowUpdater(), AwaitOperation.Drop);
+            StopWindowUpdaterCommand = new R3.ReactiveCommand(async (_, _) => await StopUpdateWindow(), AwaitOperation.Drop);
+
+            InvokeMsScreenClipCommand = new R3.ReactiveCommand((_) => InvokeMsScreenClip());
+
+            SetNewImageCommand = new R3.ReactiveCommand(async (_) => await SetNewImage());
+
+            DragMoveWindowCommand = new R3.ReactiveCommand(async (_, _) => await DragMoveWindow(), AwaitOperation.Drop);
+
+            DropImageCommand = new R3.ReactiveCommand<object>(DropImage);
+
+            _ = dpiCorrector.ChangeDpiCurrentWindow.Subscribe((DpiScale dpiScale) => SetNewImageAndWindowSizeDPI(in dpiScale));
         }
-        public R3.ReactiveCommand RefreshWindowInvoke { get; private init; }
-        public R3.ReactiveCommand StopWindowUpdater { get; private init; }
-        public R3.ReactiveCommand SetNewImage { get; private init; }
-        public R3.ReactiveCommand SwitchBlockRefreshWindow { get; private init; }
-        public R3.ReactiveCommand HideWindow { get; private init; }
-        public R3.ReactiveCommand ShowWindow { get; private init; }
-        public R3.ReactiveCommand DragMoveWindow { get; private init; }
-        public R3.ReactiveCommand<object> DropImage { get; private init; }
-        public R3.ReactiveCommand MsScreenClipInvoke { get; private init; }
-        public BindableReactiveProperty<bool> DropCondition => _dropCondition;
-        public void SetDropCondition(bool newCondition)
-        {
-            if(_dropCondition.CurrentValue == newCondition) return;
-            if(Application.Current.Dispatcher.CheckAccess() is true) _dropCondition.Value = newCondition; 
-            else _ = Application.Current.Dispatcher.Invoke(() => _dropCondition.Value = newCondition);
-        }
-        public IWindowPositionUpdater WindowPositionUpdater => _windowPositionUpdater;       
+
+        private readonly BindableReactiveProperty<bool> _blockRefresh = new BindableReactiveProperty<bool>();
         public BindableReactiveProperty<bool> BlockRefresh => _blockRefresh;
-        public BindableReactiveProperty<ImageSource?> BackgroundImage => _imageBackground;     
-        public BindableReactiveProperty<double> Height => _height;
-        public BindableReactiveProperty<double> Width => _width;
-        public BindableReactiveProperty<bool> DragMoveCondition => _dragMoveCondition;
-        public void SetDragMoveCondition(bool newCondition)
+        public void SwitchBlockRefresh() => _blockRefresh.Value = !BlockRefresh.Value;
+        public R3.ReactiveCommand SwitchBlockRefreshCommand { get; private init; }
+
+
+        private readonly BindableReactiveProperty<Visibility>  _visibleCondition = new BindableReactiveProperty<Visibility>(Visibility.Hidden);
+        public BindableReactiveProperty<Visibility> VisibleCondition => _visibleCondition;
+        public void ShowWindow() => Application.Current.Dispatcher.Invoke(new Action(() => VisibleCondition.Value = Visibility.Visible));
+        public void HideWindow() 
         {
-            if(_dragMoveCondition.CurrentValue == newCondition) return;
-            if(Application.Current.Dispatcher.CheckAccess() is true) _dragMoveCondition.Value = newCondition;
-            else _ = Application.Current.Dispatcher.Invoke(() => _dragMoveCondition.Value = newCondition);
+
+            //StackTrace stackTrace = new StackTrace(true);
+            //Debug.WriteLine($"Thread: {Thread.CurrentThread.Name}, ID: {Thread.CurrentThread.ManagedThreadId}");
+            //Debug.WriteLine(stackTrace.ToString());
+
+            Application.Current.Dispatcher.Invoke(new Action(() => VisibleCondition.Value = Visibility.Hidden));
         }
-        public BindableReactiveProperty<Visibility> VisibleCondition => _visibleCondition;       
-        private async Task WindowUpdate()
+        public R3.ReactiveCommand ShowWindowCommand { get; private init; }
+        public R3.ReactiveCommand HideWindowCommand { get; private init; }
+
+
+        private readonly Win32WPFWindowPositionManager   _positionManager;
+        private          CancellationTokenSource  _updateWindowCancellationToken = new CancellationTokenSource();
+        public           Win32WPFWindowPositionManager PositionManager => _positionManager;
+        private          bool                     _isCancellingUpdate            = false;
+        public bool CanExecuteStopRefreshWindow()
         {
-            if(_windowPositionUpdater.IsUpdateWindow is true) return;
+            if(_positionManager.IsUpdateWindow is true && _isCancellingUpdate is false) return true;
+            else { return false; }
+        }
+        public async Task WindowUpdater()
+        {
+            if(BlockRefresh.CurrentValue is true) return;
+            if(_positionManager.IsUpdateWindow is true) return;
             if(_isCancellingUpdate is true) return;
             else
             {
-                if(_updateWindowCancellationToken.IsCancellationRequested is true) throw new InvalidOperationException();
-                if(Application.Current.Dispatcher.CheckAccess() is true) await Task.Run(async () => await _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token)).ConfigureAwait(false);
-                else await _windowPositionUpdater.UpdateWindowPos(_updateWindowCancellationToken.Token);
-            }           
+                if(_updateWindowCancellationToken.IsCancellationRequested is true) Throw(); [DoesNotReturn] static void Throw() => throw new InvalidOperationException();
+                await _positionManager.UpdateWindowPositionRelativeToCursor(_updateWindowCancellationToken.Token);
+            }
         }
-        public bool CanExecuteStopRefreshWindow() 
+        public R3.ReactiveCommand WindowUpdaterCommand { get; private init; }
+        public async Task StopUpdateWindow()
         {
-            if(_windowPositionUpdater.IsUpdateWindow is false || _isCancellingUpdate is true) return false;
-            else { return true; }
-        }
-        private async Task StopUpdateWindow()
-        {
-            if(_windowPositionUpdater.IsUpdateWindow is false || _isCancellingUpdate is true) return;
-            _isCancellingUpdate = true;
-            _updateWindowCancellationToken.Cancel();
-            await Task.Run(() => 
+            if(_positionManager.IsUpdateWindow is false ||  _isCancellingUpdate is true) return;
+            await Task.Run(() =>
             {
+                Volatile.Write(ref _isCancellingUpdate, true);
+                _updateWindowCancellationToken.Cancel();
+
                 TimeSpan timeout = TimeSpan.FromSeconds(10);
-                if(System.Threading.SpinWait.SpinUntil(() => _windowPositionUpdater.IsUpdateWindow is false, timeout) is not true) 
+                if(System.Threading.SpinWait.SpinUntil(() => _positionManager.IsUpdateWindow is false, timeout) is not true)
                 {
                     string msEx = $"Safety timeout {nameof(StopUpdateWindow)}";
 #if DEBUG
-                    AppHelper.DebugExceptionFormat(ref msEx, new System.Diagnostics.StackTrace());
+                    AppHelper.DebugExceptionFormat(ref msEx, new System.Diagnostics.StackTrace(true));
 #endif
-                    throw new TimeoutException(msEx);
-                }; 
-            });
-            _updateWindowCancellationToken = new CancellationTokenSource();
-            _isCancellingUpdate = false;          
+                    Throw(msEx); [DoesNotReturn] static void Throw(string msEx) => throw new TimeoutException(msEx);
+                }
+
+                _updateWindowCancellationToken = new CancellationTokenSource();
+                Volatile.Write(ref _isCancellingUpdate, false);
+            }).ConfigureAwait(false);
         }
-        private void SetNewImageAndWindowSizeDPI(ref readonly DpiScale dpiScale) //todo обдумать нужно ли и как трансформировать
+        public R3.ReactiveCommand StopWindowUpdaterCommand { get; private init; }
+
+        public void InvokeMsScreenClip() => MsScreenClip.Invoke();       
+        public R3.ReactiveCommand InvokeMsScreenClipCommand { get; private init; }
+
+        private readonly BindableReactiveProperty<double>                _height = new BindableReactiveProperty<double>(0);
+        public BindableReactiveProperty<double> Height => _height;
+        private readonly BindableReactiveProperty<double>                _width  = new BindableReactiveProperty<double>(0);
+        public BindableReactiveProperty<double> Width => _width;
+        private readonly BindableReactiveProperty<ImageSource?>          _imageBackground = new BindableReactiveProperty<ImageSource?>();
+        public BindableReactiveProperty<ImageSource?> BackgroundImage => _imageBackground;
+        public async Task<bool> SetNewImage()
+        {
+            if(await _imageProvider.GetImageFromClipboard() is not BitmapSource image) return false;
+            DpiScale dpi = _dpiCorrector.GetCurrentDPI();
+
+            double height = image.PixelHeight / dpi.DpiScaleY;
+            double width  = image.PixelWidth  / dpi.DpiScaleX;
+
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                _height.Value = height;
+                _width.Value = width;
+                _imageBackground.Value = image;
+            });
+            return true;
+        }
+        public R3.ReactiveCommand SetNewImageCommand { get; private init; }
+        private void SetNewImageAndWindowSizeDPI(in DpiScale dpiScale) //todo обдумать нужно ли и как трансформировать
         {
             if(_imageBackground.CurrentValue == default) return;
             double height = _imageBackground.Value!.Height / dpiScale.DpiScaleY;
             double width = _imageBackground.Value!.Width / dpiScale.DpiScaleX;
-            _imageBackground.ForceNotify();
-            _height.Value = height;
-            _width.Value = width;
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                _imageBackground.ForceNotify();
+                _height.Value = height;
+                _width.Value = width;
+            });
         }
-        private async Task SetNewBackgroundImage()
-        {
-            if(await _imageProvider.GetImageFromClipboard() is not BitmapSource image) return;
-            DpiScale dpi = _dpiCorrector.GetCurrentDPI();
 
-            double height = image.PixelHeight / dpi.DpiScaleY;
-            double width = image.PixelWidth / dpi.DpiScaleX;
-            ImageSource currentImage = image;
 
-            if(_height.Value != height) _height.Value = height;
-            if(_width.Value != width) _width.Value = width;
-            if(_imageBackground.Value != currentImage) _imageBackground.Value = currentImage;
-        }
-        private void SwitchBlockRefresh() => _blockRefresh.Value = !BlockRefresh.Value;
-        private async Task Hide()
+        private readonly BindableReactiveProperty<bool>  _dragMoveCondition = new BindableReactiveProperty<bool>(true);
+        public BindableReactiveProperty<bool> DragMoveCondition => _dragMoveCondition;
+        public void SetDragMoveCondition(bool newCondition) => _dragMoveCondition.Value = newCondition;
+        public async ValueTask DragMoveWindow()
         {
-            System.Windows.Threading.Dispatcher dispatcher = Application.Current.Dispatcher;
-            if(dispatcher.CheckAccess() is true) _visibleCondition.Value = Visibility.Hidden;
-            else _ = await dispatcher.InvokeAsync(() => _visibleCondition.Value = Visibility.Hidden, DispatcherPriority.Render);
+            if(DragMoveCondition.CurrentValue is false) return;
+            await _positionManager.DragMove();
         }
-        private void Show()
+        public R3.ReactiveCommand DragMoveWindowCommand { get; private init; }
+
+
+        private readonly BindableReactiveProperty<bool>  _dropCondition = new BindableReactiveProperty<bool>(false);
+        public BindableReactiveProperty<bool> DropCondition => _dropCondition;
+        public void SetDropCondition(bool newCondition)
         {
-            if(MsScreenClip.IsEnableProcessHost() is true) return;
-            if(Application.Current.Dispatcher.CheckAccess() is true) VisibleCondition.Value = Visibility.Visible;
-            else _ = Application.Current.Dispatcher.Invoke(() => VisibleCondition.Value = Visibility.Visible);            
+            if(_dropCondition.CurrentValue == newCondition) return;
+            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => _dropCondition.Value = newCondition));        
         }
-        private Task DragMove() => _windowPositionUpdater.DragMove();       
-        private void DropWindowImage(object ev)
+
+
+        private void DropImage(object ev)
         {
-            if(_imageBackground.Value is not ImageSource img) return;
-            if(_windowPositionUpdater.IsUpdateWindow is true) return;      
+            if(DropCondition.Value is false) return;
+            if(_imageBackground.Value is not BitmapSource bitmapSource) return;
+            if(_positionManager.IsUpdateWindow is true) return;
             if(Mouse.LeftButton is not MouseButtonState.Pressed) return;
-            _setImage.SaveImageFromDrop(ev, img);
+            _setImage.SaveImageFromDrop(ev, bitmapSource);
         }
-        private async Task InvokeMsScreenClip() 
-        {
-           if(WindowPositionUpdater.IsUpdateWindow is true) await StopUpdateWindow();
-           MsScreenClip.Invoke();
-           HideWindow.Execute(Unit.Default);
-        }      
+        public R3.ReactiveCommand<object> DropImageCommand { get; private init; }
     }
 }
