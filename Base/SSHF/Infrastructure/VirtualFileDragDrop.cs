@@ -56,7 +56,7 @@ namespace FVH.SSHF.Infrastructure
 
         public VirtualFileDragDrop() { }
                      
-        public unsafe void InitiateDrop(MemoryStream imageStream, string fileName, DragDropOptions options)
+        public void InitiateDrop(MemoryStream imageStream, string fileName, DragDropOptions options)
         {
             const int IUnknown_QueryInterface_VTableIndex = 0;
 
@@ -99,7 +99,7 @@ namespace FVH.SSHF.Infrastructure
                     {
                         sizeDragImage  = bitmapSize,
                         hbmpDragImage  = options.HBitmap,
-                        ptOffset       = new POINT { x = bitmapSize.cx / 2, y = bitmapSize.cy / 2 },
+                        ptOffset       = options.CursorOffset,
                         crColorKey     = 0xffffffffu // CLR_NONE
                     };
          
@@ -141,7 +141,7 @@ namespace FVH.SSHF.Infrastructure
             [DoesNotReturn] static void ThrowDoDragDrop(int hResult)                           => throw new COMException($"DoDragDrop function failed with HRESULT: 0x{hResult:X8}.", hResult);
             [DoesNotReturn] static void ThrowCoCreateInstance(string className, int hResult)   => throw new COMException($"CoCreateInstance failed for '{className}' with HRESULT: 0x{hResult:X8}.", hResult);
             [DoesNotReturn] static void ThrowInitializeFromBitmap(int hResult)                 => throw new COMException($"IDragSourceHelper::InitializeFromBitmap failed with HRESULT: 0x{hResult:X8}.", hResult);
-            static unsafe SIZE GetBitmapSize(nint hBitmap)
+            static SIZE GetBitmapSize(nint hBitmap)
             {
                 BITMAP bmp = default;
 
@@ -154,7 +154,7 @@ namespace FVH.SSHF.Infrastructure
         }
         public static partial class Helper
         {
-            public static unsafe nint CreateHBitmapFromBitmapSource(BitmapSource bitmapSource)
+            public static nint CreateHBitmapFromBitmapSource(BitmapSource bitmapSource)
             {
                 FormatConvertedBitmap convertedBitmap = new FormatConvertedBitmap(bitmapSource, PixelFormats.Bgra32, null, 0);
                 int width = convertedBitmap.PixelWidth;
@@ -184,7 +184,7 @@ namespace FVH.SSHF.Infrastructure
                 return hBitmap;
             }
             [LibraryImport("gdi32")]
-            private static unsafe partial nint CreateDIBSection(nint hdc, BITMAPINFOHEADER* pbmi, uint usage, nint* ppvBits, nint hSection, uint offset);
+            private static partial nint CreateDIBSection(nint hdc, BITMAPINFOHEADER* pbmi, uint usage, nint* ppvBits, nint hSection, uint offset);
 
             [StructLayout(LayoutKind.Sequential)]
             private struct BITMAPINFOHEADER
@@ -203,7 +203,7 @@ namespace FVH.SSHF.Infrastructure
             }        
         }
         [GeneratedComClass]
-        private unsafe partial class DataObject : IDataObject, IDisposable /*ICustomQueryInterface*/
+        private partial class DataObject : IDataObject, IDisposable /*ICustomQueryInterface*/
         {
             private const    int                       OLE_E_ADVISENOTSUPPORTED = unchecked((int)0x80040003);
             private const    int                       DV_E_TYMED               = unchecked((int)0x80040069);
@@ -367,7 +367,7 @@ namespace FVH.SSHF.Infrastructure
                     default: return DV_E_FORMATETC;
                 }
             }
-            private unsafe int CopyCachedStgMedium(in STGMEDIUM source, STGMEDIUM* pDestination)
+            private int CopyCachedStgMedium(in STGMEDIUM source, STGMEDIUM* pDestination)
             {
                 STGMEDIUM destinationMedium = default;
 
@@ -484,7 +484,7 @@ namespace FVH.SSHF.Infrastructure
 
                 return OLE_E_ADVISENOTSUPPORTED;
             }
-            private unsafe int CreateFileGroupDescriptor(STGMEDIUM* pMedium)
+            private int CreateFileGroupDescriptor(STGMEDIUM* pMedium)
             {
                 const uint FILE_ATTRIBUTE_NORMAL = 0x00000080;
                 const int  fileCount             = 1;
@@ -538,7 +538,7 @@ namespace FVH.SSHF.Infrastructure
 
                 return S_OK;
             }
-            private unsafe int CreateFileContents(STGMEDIUM* pMedium)
+            private int CreateFileContents(STGMEDIUM* pMedium)
             {
                 nint pUnknown = _localComWrappers.GetOrCreateComInterfaceForObject(_comStream, CreateComInterfaceFlags.None);
                 if(pUnknown == nint.Zero) return E_FAIL;
@@ -584,7 +584,7 @@ namespace FVH.SSHF.Infrastructure
 
                 return S_OK;
             }
-            private unsafe int CreatePngData(STGMEDIUM* pMedium)
+            private int CreatePngData(STGMEDIUM* pMedium)
             {
                 STATSTG statstg;
                 _ = _comStream.Stat(&statstg, STATFLAG.STATFLAG_NONAME);
@@ -682,7 +682,7 @@ namespace FVH.SSHF.Infrastructure
 
                 return S_OK;
             }
-            private unsafe int CreatePreferredDropEffect(STGMEDIUM* pMedium)
+            private int CreatePreferredDropEffect(STGMEDIUM* pMedium)
             {
                 nuint sizeInBytes = sizeof(uint);
 
@@ -710,7 +710,7 @@ namespace FVH.SSHF.Infrastructure
                 return S_OK;
             }
 #if DEBUG
-            private static unsafe void LogUnsupportedFormat(FORMATETC* pFormatetc, [CallerMemberName]string? message = null)
+            private static void LogUnsupportedFormat(FORMATETC* pFormatetc, [CallerMemberName]string? message = null)
             {
                 ushort formatId = pFormatetc->cfFormat;
 
@@ -764,14 +764,14 @@ namespace FVH.SSHF.Infrastructure
             private static partial int GetClipboardFormatNameW(uint format, char* lpszFormatName, int cchMaxCount);
 #endif
             [LibraryImport("ole32")]
-            private static unsafe partial void ReleaseStgMedium(STGMEDIUM* pmedium);
+            private static partial void ReleaseStgMedium(STGMEDIUM* pmedium);
             [LibraryImport("ole32")]
             private static partial nint OleDuplicateData(nint hSrc, ushort cfFormat, uint uiFlags);
             [LibraryImport("ole32")]
-            private static unsafe partial void CoTaskMemFree(void* pv);
+            private static partial void CoTaskMemFree(void* pv);
         }
         [GeneratedComClass]
-        private unsafe partial class EnumFormatEtc(VirtualFileDragDrop.FORMATETC[] formats, StrategyBasedComWrappers localComWrappers) : IEnumFORMATETC
+        private partial class EnumFormatEtc(VirtualFileDragDrop.FORMATETC[] formats, StrategyBasedComWrappers localComWrappers) : IEnumFORMATETC
         {
             private readonly FORMATETC[]              _formats          = formats;
             private readonly StrategyBasedComWrappers _localComWrappers = localComWrappers;
@@ -832,7 +832,7 @@ namespace FVH.SSHF.Infrastructure
             }
         }
         [GeneratedComClass]
-        private sealed unsafe partial class ReadOnlyMemoryComStream : IStream
+        private sealed partial class ReadOnlyMemoryComStream : IStream
         {
             private const int STG_E_ACCESSDENIED                        = unchecked((int)0x80030005);
             private const int STG_E_INVALIDFUNCTION                     = unchecked((int)0x80030001);
@@ -859,7 +859,7 @@ namespace FVH.SSHF.Infrastructure
                 _localComWrappers = localComWrappers;
             }
             [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-            public unsafe int Read(byte* pv, uint cb, uint* pcbRead)
+            public int Read(byte* pv, uint cb, uint* pcbRead)
             {
                 if(pv is null) return E_POINTER;
                 if(pcbRead is not null) *pcbRead = 0;
@@ -1011,9 +1011,9 @@ namespace FVH.SSHF.Infrastructure
             public int GiveFeedback(uint dwEffect) => _ = DRAGDROP_S_USEDEFAULTCURSORS;
         }
         [GeneratedComInterface, Guid("00000000-0000-0000-C000-000000000046")]
-        public unsafe partial interface IUnknown { public struct Native { } }
+        public partial interface IUnknown { public struct Native { } }
         [GeneratedComInterface, Guid("0000010E-0000-0000-C000-000000000046")]
-        public unsafe partial interface IDataObject : IUnknown
+        public partial interface IDataObject : IUnknown
         {
             [PreserveSig]
             int GetData(FORMATETC* pFormatetc, STGMEDIUM* pMedium);
@@ -1036,11 +1036,11 @@ namespace FVH.SSHF.Infrastructure
             new struct Native { }
         }
         [GeneratedComInterface, Guid("0000010F-0000-0000-C000-000000000046")]
-        public unsafe partial interface IAdviseSink : IUnknown { public struct NativeNotImplemented { } }
+        public partial interface IAdviseSink : IUnknown { public struct NativeNotImplemented { } }
         [GeneratedComInterface, Guid("00000105-0000-0000-C000-000000000046")]
-        public unsafe partial interface IEnumSTATDATA : IUnknown { public struct NativeNotImplemented { } }
+        public partial interface IEnumSTATDATA : IUnknown { public struct NativeNotImplemented { } }
         [GeneratedComInterface, Guid("00000103-0000-0000-C000-000000000046")]
-        public unsafe partial interface IEnumFORMATETC : IUnknown
+        public partial interface IEnumFORMATETC : IUnknown
         {
             [PreserveSig]
             int Next(uint celt, FORMATETC* rgelt, uint* pceltFetched);
@@ -1053,7 +1053,7 @@ namespace FVH.SSHF.Infrastructure
             new struct Native { }
         }
         [GeneratedComInterface, Guid("0C733A30-2A1C-11CE-ADE5-00AA0044773D")]
-        public unsafe partial interface ISequentialStream : IUnknown
+        public partial interface ISequentialStream : IUnknown
         {
             [PreserveSig]
             int Read(byte* pv, uint cb, uint* pcbRead);
@@ -1061,7 +1061,7 @@ namespace FVH.SSHF.Infrastructure
             int Write(byte* pv, uint cb, uint* pcbWritten);
         }
         [GeneratedComInterface, Guid("0000000C-0000-0000-C000-000000000046")]
-        public unsafe partial interface IStream : ISequentialStream
+        public partial interface IStream : ISequentialStream
         {
             [PreserveSig]
             int Seek(long dlibMove, uint dwOrigin, ulong* plibNewPosition);
@@ -1084,7 +1084,7 @@ namespace FVH.SSHF.Infrastructure
             new struct Native { }
         }
         [GeneratedComInterface, Guid("00000121-0000-0000-C000-000000000046")]
-        public unsafe partial interface IDropSource : IUnknown
+        public partial interface IDropSource : IUnknown
         {
             [PreserveSig]
             int QueryContinueDrag([MarshalAs(UnmanagedType.Bool)] bool fEscapePressed, uint grfKeyState);
@@ -1093,7 +1093,7 @@ namespace FVH.SSHF.Infrastructure
             new struct Native { }
         }
         [GeneratedComInterface, Guid("0000012b-0000-0000-C000-000000000046")]
-        public unsafe partial interface IDropSourceNotify : IUnknown
+        public partial interface IDropSourceNotify : IUnknown
         {
             [PreserveSig]
             int DragEnterTarget(nint hwndTarget);
@@ -1102,7 +1102,7 @@ namespace FVH.SSHF.Infrastructure
             new struct Native { }
         }
         [GeneratedComInterface, Guid("DE5BF786-477A-11d2-839A-00C04FD918D0")]
-        public unsafe partial interface IDragSourceHelper : IUnknown
+        public partial interface IDragSourceHelper : IUnknown
         {
             [PreserveSig]
             int InitializeFromBitmap(SHDRAGIMAGE* pshdi, IDataObject.Native* pDataObject);
@@ -1111,7 +1111,7 @@ namespace FVH.SSHF.Infrastructure
             new struct Native { }
         }
         [GeneratedComInterface, Guid("83E07D0D-0C5F-4163-BF1A-60B274051E40")]
-        public unsafe partial interface IDragSourceHelper2 : IDragSourceHelper
+        public partial interface IDragSourceHelper2 : IDragSourceHelper
         {
             [PreserveSig]
             int SetFlags(uint dwFlags);
@@ -1134,7 +1134,7 @@ namespace FVH.SSHF.Infrastructure
             public nint   bmBits;         // Указатель на пиксельные данные (не используется GetObjectW)
         }
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct SHDRAGIMAGE
+        public struct SHDRAGIMAGE
         {
             public SIZE  sizeDragImage;
             public POINT ptOffset;
@@ -1186,7 +1186,7 @@ namespace FVH.SSHF.Infrastructure
             public Span<T> AsSpan(int length) => MemoryMarshal.CreateSpan(ref this.ElementIndexZero, length);
         }
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct FILEGROUPDESCRIPTORW
+        public struct FILEGROUPDESCRIPTORW
         {
             public uint cItems;
             public VariableLengthInlineArray<FILEDESCRIPTORW> fgd;
@@ -1199,7 +1199,7 @@ namespace FVH.SSHF.Infrastructure
             public int cy;
         }
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct FILEDESCRIPTORW
+        public struct FILEDESCRIPTORW
         {
             public FD_FLAGS dwFlags;
 
@@ -1217,7 +1217,7 @@ namespace FVH.SSHF.Infrastructure
             public fixed char cFileName[VirtualFileDragDrop.MAX_PATH];
         }
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct FORMATETC
+        public struct FORMATETC
         {
             public ushort          cfFormat;
             public DVTARGETDEVICE* ptd;
@@ -1298,7 +1298,7 @@ namespace FVH.SSHF.Infrastructure
             public uint     reserved;
         }
         [StructLayout(LayoutKind.Explicit)]
-        public unsafe struct STGMEDIUM
+        public struct STGMEDIUM
         {
             [FieldOffset(0)]
             public TYMED tymed;
@@ -1350,21 +1350,21 @@ namespace FVH.SSHF.Infrastructure
         [LibraryImport("kernel32")]
         private static partial nint GlobalFree(nint hMem);
         [LibraryImport("kernel32")]
-        private static unsafe partial void* GlobalLock(nint hMem);
+        private static partial void* GlobalLock(nint hMem);
         [LibraryImport("kernel32")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool GlobalUnlock(nint hMem);
         [LibraryImport("ole32")]
-        private static unsafe partial void* CoTaskMemAlloc(nuint cb);
+        private static partial void* CoTaskMemAlloc(nuint cb);
         [LibraryImport("ole32")]
-        private static unsafe partial int DoDragDrop(IDataObject.Native* pDataObj, IDropSource.Native* pDropSource, uint dwOKEffects, uint* pdwEffect);
+        private static partial int DoDragDrop(IDataObject.Native* pDataObj, IDropSource.Native* pDropSource, uint dwOKEffects, uint* pdwEffect);
         private const uint CLSCTX_INPROC_SERVER = 0x1;
         [LibraryImport("ole32")]
-        private static unsafe partial int CoCreateInstance(Guid* rclsid, IUnknown.Native* pUnkOuter, uint dwClsContext, Guid* riid, IUnknown.Native** ppv);
+        private static partial int CoCreateInstance(Guid* rclsid, IUnknown.Native* pUnkOuter, uint dwClsContext, Guid* riid, IUnknown.Native** ppv);
         [LibraryImport("gdi32")]
         private static partial int GetObjectW(nint hGdiObject, int cbBuffer, void* lpvObject);
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        private unsafe struct DROPDESCRIPTION
+        private struct DROPDESCRIPTION
         {
             public DROPIMAGETYPE type;
             public fixed char szMessage[VirtualFileDragDrop.MAX_PATH];
