@@ -9,7 +9,7 @@ namespace FVH.SSHF.FastWindowArea
     {
         internal bool IsDisposed = false;
         private ImageProvider _iGetImage;
-        private IWindowPositionUpdater? _iWindowPositionUpdater;
+        private Win32WPFWindowPositionManager? _iWindowPositionUpdater;
         private WPFDpiCorrector? _dpiCorrector;
         private WPFDropImageFile? _setImage;
 
@@ -18,7 +18,7 @@ namespace FVH.SSHF.FastWindowArea
             _iGetImage = imageProvider;
         }
         internal ImageProvider IGetImage { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _iGetImage; } init => _iGetImage = value; }
-        internal IWindowPositionUpdater? IWindowPositionUpdater { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _iWindowPositionUpdater; } set => _iWindowPositionUpdater = value; }
+        internal Win32WPFWindowPositionManager? PositionManager { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _iWindowPositionUpdater; } set => _iWindowPositionUpdater = value; }
         internal WPFDpiCorrector? DpiCorrector { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _dpiCorrector; } set => _dpiCorrector = value; }
         internal WPFDropImageFile? SetImage { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _setImage; } set => _setImage = value; }
         public void Dispose()

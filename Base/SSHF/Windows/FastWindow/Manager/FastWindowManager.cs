@@ -1,29 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 
-using R3;
+using ABI.System;
 
+using FVH.Background.Input.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Input;
 using FVH.SSHF.Infrastructure.Interfaces;
-using FVH.Background.Input.Infrastructure.Interfaces;
 using FVH.SSHF.Infrastructure.Win32;
+
+using R3;
 
 namespace FVH.SSHF.FastWindowArea
 {
     internal partial class FastWindowManager : IBehaviorSubjectGlobalShortcuts, IDisposable
     {
-        private const int DelayHideWindow = 300;
-        private int _currentIndexFastWindow = 0;
-        private bool _isDisposed = false;
+        private const int DelayHideWindowForMsScreenClip = 750;
+        private int    _currentIndexFastWindow = 0;
+        private bool    _isDisposed = false;
         private readonly R3.CompositeDisposable _disposables;
         private readonly Dispatcher _dispatcher;
         private readonly FastWindowCreator _windowCreator;
         private readonly Dictionary<int, OneFastWindow> _fastWindows;
+        private readonly Lock _lockObjFastWindowsDictionary;
         private readonly BehaviorSubject<IEnumerable<KeyboardShortcut>> _currentStatusShortcutsFastWindow;
         private readonly WaitingInputProvider _waitingInputProvider;
         private readonly ObserverMsScreenClipExecuting _observerMsScreenClipExecuting;
@@ -42,6 +46,7 @@ namespace FVH.SSHF.FastWindowArea
             ObserverMsScreenClipExecuting observerMsScreenClipExecuting
         )
         {
+            _lockObjFastWindowsDictionary = new Lock();
             _dispatcher = dispatcher;
             _fastWindows = new Dictionary<int, OneFastWindow>();
             _windowCreator = new FastWindowCreator(dispatcher, getFastWindowViewModelDependencies);
@@ -51,9 +56,23 @@ namespace FVH.SSHF.FastWindowArea
             _observerMsScreenClipExecuting = observerMsScreenClipExecuting;
             _disposables.Add(observerMsScreenClipExecuting.IsExecutingProcessScreenClip.ObserveOnThreadPool().SubscribeAwait(async (bool isExecuting,CancellationToken _) =>
             {
-                 if(isExecuting is true) await HideAllWindow(DelayHideWindow);
-                 else { await ShowAllWindowExcludingActiveWindow(); }
-            },awaitOperation: AwaitOperation.ThrottleFirstLast,configureAwait:false));
+                if(_activeFastWindow is null) return;
+                if(_activeFastWindow!.FastWindowCommand.IsExecutePresentNewImages is true && isExecuting is true)
+                {
+                    System.TimeSpan empiricalTimeoutSpinWait = System.TimeSpan.FromMilliseconds(32);
+
+                    bool r = SpinWait.SpinUntil(() =>
+                    {
+                        return MsScreenClip.IsEnableProcessHost() is false;
+
+                    }, empiricalTimeoutSpinWait);
+
+                    if(r is true) return;
+
+                }
+                if(isExecuting is true) await HideAllWindow(DelayHideWindowForMsScreenClip);
+                else { await ShowAllWindowExcludingActiveWindow(); }
+            },awaitOperation: AwaitOperation.ThrottleFirstLast, configureAwait: false));
 
             _currentStatusShortcutsFastWindow = new BehaviorSubject<IEnumerable<KeyboardShortcut>>(GetDefaultShortcuts());
 
@@ -66,7 +85,10 @@ namespace FVH.SSHF.FastWindowArea
         {
             if(_isDisposed is true) return;
             _isDisposed = true;
-            Array.ForEach(_fastWindows.Select(value => value.Value).ToArray(), oneFastWindow => oneFastWindow.Dispose());
+            using(_lockObjFastWindowsDictionary.EnterScope())
+            {
+                Array.ForEach(_fastWindows.Select(value => value.Value).ToArray(), oneFastWindow => oneFastWindow.Dispose());
+            }
             _fastWindows.Clear();
             _disposables.Dispose();
         }
@@ -85,7 +107,16 @@ namespace FVH.SSHF.FastWindowArea
 
             OneFastWindow firstFastWindow = await CreateFastWindowAsync();
             _ =_dispatcher.Invoke(() => _ = firstFastWindow.FastWindow.Tag = nameof(_firstFastWindow));
-            _dispatcher.Invoke(() => { if(_fastWindows[1].FastWindow.Tag is not nameof(_firstFastWindow)) throw new InvalidOperationException(); });
+
+
+            _dispatcher.Invoke(() =>
+            {
+                using(_lockObjFastWindowsDictionary.EnterScope())
+                {
+                    if(_fastWindows[1].FastWindow.Tag is not nameof(_firstFastWindow)) throw new InvalidOperationException();
+                }
+            });
+
 
             _firstFastWindow = firstFastWindow;
             _activeFastWindow = firstFastWindow;
@@ -102,7 +133,7 @@ namespace FVH.SSHF.FastWindowArea
                 VKeys.VK_LSHIFT,
                 VKeys.VK_KEY_A
             ],
-            () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.PresentNewImage(), nameof(_activeFastWindow.FastWindowCommand.PresentNewImage)),
+            () => BlockInput is true ? ValueTask.CompletedTask : _activeFastWindow!.FastWindowCommand.PresentNewImage(), nameof(_activeFastWindow.FastWindowCommand.PresentNewImage),() => _activeFastWindow!.FastWindowCommand.IsExecutePresentNewImages is false),
 
             new KeyboardShortcut(
             [
@@ -110,20 +141,20 @@ namespace FVH.SSHF.FastWindowArea
                 VKeys.VK_LSHIFT,
                 VKeys.VK_KEY_S
             ],
-            () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.InvokeMsScreenClip(), nameof(_activeFastWindow.FastWindowCommand.InvokeMsScreenClip)),
+            () => BlockInput is true ? ValueTask.CompletedTask : _activeFastWindow!.FastWindowCommand.InvokeMsScreenClip(), nameof(_activeFastWindow.FastWindowCommand.InvokeMsScreenClip)),
 
             new KeyboardShortcut(
             [
                 VKeys.VK_CONTROL,
                 VKeys.VK_CAPITAL
             ],
-            () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.SwitchBlockRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.SwitchBlockRefreshWindow)),
+            () => BlockInput is true ? ValueTask.CompletedTask : _activeFastWindow!.FastWindowCommand.SwitchBlockRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.SwitchBlockRefreshWindow)),
 
             new KeyboardShortcut(
             [
                 VKeys.VK_LCONTROL
             ],
-            () => BlockInput is true ? Task.CompletedTask : _activeFastWindow!.FastWindowCommand.StopRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.StopRefreshWindow),() => 
+            () => BlockInput is true ? ValueTask.CompletedTask : _activeFastWindow!.FastWindowCommand.StopRefreshWindow(), nameof(_activeFastWindow.FastWindowCommand.StopRefreshWindow),() => 
             {
                 if(BlockInput is true) return false;
                 return _activeFastWindow!.FastWindowCommand.CanExecuteStopRefreshWindow();
@@ -141,58 +172,75 @@ namespace FVH.SSHF.FastWindowArea
                 VKeys.VK_LSHIFT,
                 VKeys.VK_ADD
             ],
-            () => BlockInput is true ? Task.CompletedTask : CreateWindowAsync(), nameof(CreateWindowAsync)),
+            () => BlockInput is true ? ValueTask.CompletedTask : new ValueTask(CreateWindowAsync()), nameof(CreateWindowAsync)),
 
             new KeyboardShortcut(
             [
                 VKeys.VK_LWIN,
                 VKeys.VK_SCROLL,
             ],
-            () => BlockInput is true ? Task.CompletedTask : HideAllWindowAsScreenClip().ContinueWith((Task _) => DisposeAllWindowExcludingFirsWindow()), nameof(HideAllWindowAsScreenClip))
-        ];  
+            () => BlockInput is true ? ValueTask.CompletedTask : new ValueTask(HideAllWindowAsScreenClip().ContinueWith(async (Task t) => 
+            {
+                await t;
+                await Task.Delay(200);
+                await DisposeAllWindowExcludingFirsWindow();
+            })), nameof(HideAllWindowAsScreenClip))
+        ];
         private Task DisposeAllWindowExcludingFirsWindow()
         {
             _activeFastWindow = _firstFastWindow;
 
-            _ = _fastWindows.Remove(1);
+            using(_lockObjFastWindowsDictionary.EnterScope())
+            {
+                _ = _fastWindows.Remove(1);
 
-            _dispatcher.Invoke(() => { foreach(OneFastWindow window in _fastWindows.Values) window.Dispose(); });
-            _fastWindows.Clear();
+                _dispatcher.Invoke(() => { foreach(OneFastWindow window in _fastWindows.Values) window.Dispose(); });
+                _fastWindows.Clear();
 
-            _fastWindows[1] = _firstFastWindow!;
+                _fastWindows[1] = _firstFastWindow!;
+            }
 
             return Task.CompletedTask;
         }
-        private async Task HideAllWindow(int delayHide = 0)
+        private async ValueTask HideAllWindow(int delayHide = 0)
         {
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
 
-            ParallelQuery<Task> taskWindowList = _fastWindows.Values.AsParallel().AsUnordered().Select(async (OneFastWindow one) =>
-            {
-                if(one.FastWindowCommand.MainWindowViewModel.VisibleCondition.CurrentValue == System.Windows.Visibility.Visible)
+            ParallelQuery<Task> taskWindowList;
+            using(_lockObjFastWindowsDictionary.EnterScope()) 
+            { 
+                taskWindowList = _fastWindows.Values.AsParallel().AsUnordered().Select(async (OneFastWindow one) =>
                 {
-                    if(delayHide is not 0) await Task.Delay(delayHide);
-                    await one.FastWindowCommand.HideWindow();
-                }              
-            });
-            await Task.WhenAll(taskWindowList.ToArray());
+                    await Task.Delay(delayHide);
+                    if(one?.FastWindowCommand?.MainWindowViewModel?.PositionManager.IsUpdateWindow is true) await one?.FastWindowCommand?.MainWindowViewModel?.StopUpdateWindow()!;
+                    if(one?.FastWindowCommand?.MainWindowViewModel?.VisibleCondition?.CurrentValue == System.Windows.Visibility.Visible) one?.FastWindowCommand?.MainWindowViewModel?.HideWindow();
 
+                });
+            }
+            await Task.WhenAll(taskWindowList);              
+                    
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is true) _ = SynchronizationContext.Current.StopSafeUITimeCriticalSection();
         }
         private async Task ShowAllWindowExcludingActiveWindow()
         {
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
-
-            ParallelQuery<Task> taskWindowList = _fastWindows.Values.AsParallel().AsUnordered().Select(async (OneFastWindow one) =>
+            
+            ParallelQuery<ValueTask> taskWindowList;
+            using(_lockObjFastWindowsDictionary.EnterScope())
             {
-                if(one.FastWindowCommand.MainWindowViewModel.VisibleCondition.CurrentValue == System.Windows.Visibility.Hidden)
+                taskWindowList = _fastWindows.Values.AsParallel().AsUnordered().Select((OneFastWindow one) =>
                 {
-                    if(one == _activeFastWindow ) return;
-                    await one.FastWindowCommand.ShowWindow();
-                }
-            });
-            await Task.WhenAll(taskWindowList.ToArray());
-
+                     if(one.FastWindowCommand.MainWindowViewModel.VisibleCondition.CurrentValue == System.Windows.Visibility.Hidden)
+                     {
+                         if(one == _activeFastWindow) return ValueTask.CompletedTask;
+                         one.FastWindowCommand.MainWindowViewModel.ShowWindow();
+                     }
+                     return ValueTask.CompletedTask;
+                });
+            }
+            await Task.WhenAll(taskWindowList.Select(vt => vt.AsTask()));
+           
+          
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is true) _ = SynchronizationContext.Current.StopSafeUITimeCriticalSection();
         }
         private async Task HideAllWindowAsScreenClip()
@@ -200,41 +248,45 @@ namespace FVH.SSHF.FastWindowArea
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
 
             MsScreenClip.Invoke();
-            ParallelQuery<Task> taskWindowList = _fastWindows.Values.AsParallel().AsUnordered().Select(async (OneFastWindow one) =>
-            { 
-                if(one.FastWindowCommand.MainWindowViewModel.VisibleCondition.CurrentValue == System.Windows.Visibility.Visible)
+
+            ParallelQuery<Task> taskWindowList;
+
+            using(_lockObjFastWindowsDictionary.EnterScope())
+            {
+                taskWindowList = _fastWindows.Values.AsParallel().AsUnordered().Select(async (OneFastWindow one) =>
                 {
-                    await Task.Delay(DelayHideWindow);
-                    await one.FastWindowCommand.HideWindow();
-                }                          
-            });
+                    if(one.FastWindowCommand.MainWindowViewModel.VisibleCondition.CurrentValue == System.Windows.Visibility.Visible)
+                    {
+                        await Task.Delay(DelayHideWindowForMsScreenClip);
+                        await one.FastWindowCommand.HideWindow();
+                    }
+                });
+            }
             await Task.WhenAll(taskWindowList.ToArray());
+
 
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is true) _ = SynchronizationContext.Current.StopSafeUITimeCriticalSection();
         }
-        private async Task IfExclusiveMode(bool isExclusiveMode, CancellationToken token)
+        private async ValueTask IfExclusiveMode(bool isExclusiveMode, CancellationToken token)
         {
             if(isExclusiveMode is false) return;
 
             if(token.IsCancellationRequested is true) return;
 
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is false) _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
-                        
-            ParallelQuery<Task> taskWindowList = _fastWindows.Values.AsParallel().AsUnordered().Select(async one =>
+
+            List<FastWindowViewModel> listViewModels;
+            using(_lockObjFastWindowsDictionary.EnterScope())
             {
-                Task taskStopRefreshWindow = one.FastWindowCommand.MainWindowViewModel.WindowPositionUpdater.IsUpdateWindow is true
-                      ? one.FastWindowCommand.StopRefreshWindow()
-                       : Task.CompletedTask; 
+                listViewModels = _fastWindows.Values.Select(x => x.FastWindowCommand.MainWindowViewModel).ToList();
+            }
 
-                Task taskHideWindow = one.FastWindowCommand.MainWindowViewModel.VisibleCondition.CurrentValue == System.Windows.Visibility.Visible
-                      ? one.FastWindowCommand.HideWindow()
-                       : Task.CompletedTask; 
-
-                await taskStopRefreshWindow;
-                await taskHideWindow;
-            });
-            await Task.WhenAll(taskWindowList.ToArray());
-
+            foreach(FastWindowViewModel viewMode in listViewModels) 
+            {
+                if(viewMode.PositionManager.IsUpdateWindow is true) await viewMode.StopUpdateWindow();
+                if(viewMode.VisibleCondition.CurrentValue == System.Windows.Visibility.Visible) viewMode.HideWindow();
+            }
+        
             if(SynchronizationContext.Current.InUIThreadTimeCriticalSection() is true) _ = SynchronizationContext.Current.StopSafeUITimeCriticalSection();          
         }
         private async Task CreateWindowAsync()
@@ -257,7 +309,13 @@ namespace FVH.SSHF.FastWindowArea
             FastWindowCommand fastWindowCommand = new FastWindowCommand(fastWindow.FastWindow, fastWindow.FastWindowViewModel);
             OneFastWindow oneFastWindow = new OneFastWindow(fastWindow.FastWindow, fastWindow.FastWindowViewModelDependencies, fastWindowExternalConditions, fastWindowCommand);
 
-            _fastWindows[_fastWindows.Count + 1] = oneFastWindow;
+
+            using(_lockObjFastWindowsDictionary.EnterScope())
+            {
+                _fastWindows[_fastWindows.Count + 1] = oneFastWindow;
+            }
+
+            _ = Interlocked.Increment(ref _currentIndexFastWindow);
             _currentIndexFastWindow++;
 
             _ = _dispatcher.Invoke(() => fastWindow.FastWindow.Name = $"Fast_index_{_currentIndexFastWindow}");

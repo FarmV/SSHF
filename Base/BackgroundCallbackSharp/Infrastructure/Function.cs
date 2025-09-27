@@ -4,9 +4,9 @@ using static ABI.System.Windows.Input.ICommand_Delegates;
 
 namespace FVH.Background.Input.Infrastructure
 {
-    public record Function 
+    public sealed record Function 
     {
-        internal Function(Func<Task> callback, object? identifier = null, Func<bool>? canExecute = null)
+        internal Function(Func<ValueTask> callback, object? identifier = null, Func<bool>? canExecute = null)
         {
             Callback = callback;
             Identifier = identifier;
@@ -14,7 +14,7 @@ namespace FVH.Background.Input.Infrastructure
             else { CanExecute = canExecute; }
         }
         public object? Identifier { get; }
-        public Func<Task> Callback { get; }
+        public Func<ValueTask> Callback { get; }
         public Func<bool> CanExecute { get; }
     }
 }

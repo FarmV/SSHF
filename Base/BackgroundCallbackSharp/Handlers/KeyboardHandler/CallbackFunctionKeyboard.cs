@@ -1,14 +1,9 @@
 ﻿using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using System.Windows.Input;
 using System.Windows.Threading;
 
 
@@ -25,16 +20,16 @@ namespace FVH.Background.Input
         private readonly Lock _lockObject = new Lock();
         private readonly List<GroupFunctions> _globalCallbackList;
         private readonly LowLevelKeyboard _lowLevelHook;
-        private readonly Dispatcher _toCallbackDispatcher;
+        private readonly SynchronizationContext _synchronizationContext;
         private HashSet<VKeys> _currentPressLogicKeys;
         internal event LowLevelKeyboard.KeyboardEventHandler? NotifyKeyboardEvent;
-        public CallbackFunctionKeyboard(Dispatcher toCallbackDispatcher)
+        public CallbackFunctionKeyboard(SynchronizationContext synchronizationContext)
         {
             _activeCombination = Array.Empty<VKeys>();
             _globalCallbackList = new List<GroupFunctions>();
             _currentPressLogicKeys = new HashSet<VKeys>();
 
-            _toCallbackDispatcher = toCallbackDispatcher;
+            _synchronizationContext = synchronizationContext;
             _lowLevelHook = new LowLevelKeyboard();
             _lowLevelHook.KeyAction += LowLevelHookKeyboardEventHandler;
         }
@@ -51,7 +46,7 @@ namespace FVH.Background.Input
             _lowLevelHook.Dispose();
         }
         public List<GroupFunctions> ReturnGroupRegFunctions() => _globalCallbackList.ToList();
-        public Task AddCallbackTask(VKeys[] keyCombo, Func<Task> callbackTask, object? identifier = null, Func<bool>? canExecute = null)
+        public Task AddCallbackTask(VKeys[] keyCombo, Func<ValueTask> callbackTask, object? identifier = null, Func<bool>? canExecute = null)
         {
             lock(_lockObject)
             {
@@ -179,28 +174,22 @@ namespace FVH.Background.Input
                 NotifyKeyboardEvent?.Invoke(ref e);
             }
         }
-        private bool AnyInvokeFunctions(IEnumerable<Function> toTaskInvoke)
+        private bool AnyInvokeFunctions(List<Function> toTaskInvoke)
         {
-            static async Task StartOrRunTask(Func<Task> taskFunc)
+            List<Function>? toCanExecute = toTaskInvoke.Where(function => function.CanExecute.Invoke()).ToList();
+
+            if(toCanExecute.Count is 0) return false;
+
+            _synchronizationContext.Post(async static (object? state) =>
             {
-                Task task = taskFunc.Invoke();
-                if(task.Status == TaskStatus.Created) task.Start();
-                await task;
-            }
+                List<Function> functionsToRun = (List<Function>)state!;
 
-            bool isAny = false;
+                IEnumerable<Task> tasks = functionsToRun.Select(f => f.Callback().AsTask());
 
-            if(toTaskInvoke.Any() is false) throw new InvalidOperationException("The collection cannot be empty");
+                await Task.WhenAll(tasks);
+            }, toCanExecute);
 
-            IEnumerable<Function> toCanExecute = toTaskInvoke.Where(static (Function f) => f.CanExecute.Invoke() is true);
-
-            isAny = toCanExecute.Any();
-            if(isAny is false) return isAny;
-
-            _ = _toCallbackDispatcher.InvokeAsync(async () => await Task.WhenAll(toCanExecute.Select(static (Function f) => StartOrRunTask(f.Callback))).ConfigureAwait(false),
-             DispatcherPriority.Send).Task.Unwrap().ContinueWith((Task t) => 
-              _ = ThreadPool.QueueUserWorkItem((object? __) => throw t.Exception ?? new AggregateException($"Callback task is faulted. Id task => {t.Id}")),TaskContinuationOptions.OnlyOnFaulted);
-            return isAny;
+            return true;
         }
         internal partial class LowLevelKeyboard : CriticalFinalizerObject, IDisposable
         {

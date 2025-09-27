@@ -31,10 +31,10 @@ namespace FVH.SSHF.Infrastructure.Input
 
             _dispatcher = toCallbackDispatcher;
 
-            _input = new Background.Input.Input(toCallbackDispatcher);
+            _input = new Background.Input.Input(workerContext);
             _input.NotifyKeyboardEvent += InputNotifyKeyboardEvent;
 
-            _subscription =  _hookCanBeActive.ObserveOn(workerContext).Subscribe((bool shouldBeActive) => UpdateHookActivity(shouldBeActive),onCompleted: (Result _) => Dispose());
+            _subscription = _hookCanBeActive.ObserveOn(workerContext).Subscribe((bool shouldBeActive) => UpdateHookActivity(shouldBeActive), onCompleted: (Result _) => Dispose());
         }      
         public void Dispose()
         {
