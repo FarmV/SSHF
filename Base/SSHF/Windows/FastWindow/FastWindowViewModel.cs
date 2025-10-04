@@ -21,6 +21,7 @@ namespace FVH.SSHF.FastWindowArea
         private readonly ImageProvider     _imageProvider;
         private readonly WPFDpiCorrector   _dpiCorrector;
         private readonly WPFDropImageFile  _setImage;
+        private readonly MsScreenClip  _msScreenClip;
 
 #pragma warning disable CS8618 // Empty class constructor for designer only
         public FastWindowViewModel()
@@ -28,12 +29,13 @@ namespace FVH.SSHF.FastWindowArea
         {
             if(App.DesignerMode is not true) throw new InvalidOperationException("Empty class constructor for designer only");
         }
-        public FastWindowViewModel(ImageProvider imageProvider, Win32WPFWindowPositionManager positionManager, WPFDpiCorrector dpiCorrector, WPFDropImageFile setImage)
+        public FastWindowViewModel(ImageProvider imageProvider, Win32WPFWindowPositionManager positionManager, WPFDpiCorrector dpiCorrector, WPFDropImageFile setImage, MsScreenClip msScreenClip)
         {
-            _imageProvider = imageProvider;
+            _imageProvider   = imageProvider;
             _positionManager = positionManager;
-            _dpiCorrector = dpiCorrector;
-            _setImage = setImage;
+            _dpiCorrector    = dpiCorrector;
+            _setImage        = setImage;
+            _msScreenClip    = msScreenClip;
 
             SwitchBlockRefreshCommand = new R3.ReactiveCommand((_) => SwitchBlockRefresh());
 
@@ -65,11 +67,6 @@ namespace FVH.SSHF.FastWindowArea
         public void ShowWindow() => Application.Current.Dispatcher.Invoke(new Action(() => VisibleCondition.Value = Visibility.Visible));
         public void HideWindow() 
         {
-
-            //StackTrace stackTrace = new StackTrace(true);
-            //Debug.WriteLine($"Thread: {Thread.CurrentThread.Name}, ID: {Thread.CurrentThread.ManagedThreadId}");
-            //Debug.WriteLine(stackTrace.ToString());
-
             Application.Current.Dispatcher.Invoke(new Action(() => VisibleCondition.Value = Visibility.Hidden));
         }
         public R3.ReactiveCommand ShowWindowCommand { get; private init; }
@@ -121,7 +118,7 @@ namespace FVH.SSHF.FastWindowArea
         }
         public R3.ReactiveCommand StopWindowUpdaterCommand { get; private init; }
 
-        public void InvokeMsScreenClip() => MsScreenClip.Invoke();       
+        public void InvokeMsScreenClip() => _msScreenClip.Invoke();       
         public R3.ReactiveCommand InvokeMsScreenClipCommand { get; private init; }
 
         private readonly BindableReactiveProperty<double>                _height = new BindableReactiveProperty<double>(0);
