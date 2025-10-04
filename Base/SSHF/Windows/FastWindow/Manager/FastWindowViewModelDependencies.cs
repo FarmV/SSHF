@@ -12,15 +12,18 @@ namespace FVH.SSHF.FastWindowArea
         private Win32WPFWindowPositionManager? _iWindowPositionUpdater;
         private WPFDpiCorrector? _dpiCorrector;
         private WPFDropImageFile? _setImage;
+        private MsScreenClip? _msScreenClip;
 
-        internal FastWindowViewModelDependencies(ImageProvider imageProvider)
+        internal FastWindowViewModelDependencies(ImageProvider imageProvider, MsScreenClip msScreenClip)
         {
             _iGetImage = imageProvider;
+            _msScreenClip = msScreenClip;
         }
-        internal ImageProvider IGetImage { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _iGetImage; } init => _iGetImage = value; }
+        internal ImageProvider ImageProvider { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _iGetImage; } init => _iGetImage = value; }
         internal Win32WPFWindowPositionManager? PositionManager { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _iWindowPositionUpdater; } set => _iWindowPositionUpdater = value; }
         internal WPFDpiCorrector? DpiCorrector { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _dpiCorrector; } set => _dpiCorrector = value; }
         internal WPFDropImageFile? SetImage { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _setImage; } set => _setImage = value; }
+        internal MsScreenClip? MsScreenClip { get { ObjectDisposedException.ThrowIf(IsDisposed, this); return _msScreenClip; } set => _msScreenClip = value; }
         public void Dispose()
         {
             if(IsDisposed is true) return;
@@ -30,4 +33,3 @@ namespace FVH.SSHF.FastWindowArea
         }
     }
 }
-

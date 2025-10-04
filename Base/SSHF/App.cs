@@ -10,11 +10,13 @@ using System.Windows;
 using System.Windows.Resources;
 using System.Windows.Threading;
 
-using R3;
+using FVH.SSHF.Infrastructure;
+using FVH.SSHF.Infrastructure.Win32;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using FVH.SSHF.Infrastructure.Win32;
+using R3;
 
 
 namespace FVH.SSHF
@@ -29,14 +31,22 @@ namespace FVH.SSHF
         private readonly IHost _program;
         private readonly IServiceProvider _serviceProvider;
         internal const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = (nint)(-4);
-        internal const string UiThreadName = "FVH: Main Thread";
+        internal const string UiThreadName = "FVH: Main thread";
         internal volatile static bool DesignerMode = true;
+
+        public static readonly OperatingSystem OperatingSystem;
 #if DEBUG
         internal static TraceSwitch Trace;
         internal static App? GetDEBUG { get; private set; }
         internal static Stopwatch Stopwatch = new Stopwatch();
-        static App() => Trace = new TraceSwitch("Debug", "Debugging only") { Level = TraceLevel.Off };
 #endif
+        static App()
+        {
+#if DEBUG
+            Trace           = new TraceSwitch("Debug", "Debugging only") { Level = TraceLevel.Off };
+#endif
+        OperatingSystem = Environment.OSVersion;
+        }
         private App(IHost program)
         {
             _program = program;
@@ -55,6 +65,13 @@ namespace FVH.SSHF
         [STAThread]
         private static void Main(string[]? args)
         {
+            Version minSupported = new Version(10, 0, 17763, 0);
+            if(OperatingSystem.Version < minSupported)
+            {
+                _ = System.Windows.MessageBox.Show($"Minimum supported operating system version:\n\n\nVersion: 10.0.17763 ", "Error Notification", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.None);                
+                return;               
+            }
+
             args ??= [];
 
             ExtensionStartLogic(args);
@@ -171,7 +188,7 @@ namespace FVH.SSHF
             [LibraryImport("kernel32")]
             internal static partial int GetThreadPriority(nint hThread);
             [LibraryImport("kernel32")]
-            internal static partial nint GetCurrentThread();
+            internal static partial nint GetCurrentThread();                
         }
     }
     internal static partial class AppHelper

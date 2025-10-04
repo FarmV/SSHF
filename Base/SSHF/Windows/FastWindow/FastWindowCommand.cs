@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -9,8 +10,6 @@ using FVH.SSHF.Infrastructure;
 using FVH.SSHF.Infrastructure.Interfaces;
 
 using R3;
-
-
 
 namespace FVH.SSHF.FastWindowArea
 {
@@ -29,18 +28,24 @@ namespace FVH.SSHF.FastWindowArea
         {
             _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
 
-            if(_isExecutePresentNewImage is true) return;
-            _isExecutePresentNewImage = true;
+            if(Interlocked.CompareExchange(ref _isExecutePresentNewImage, true, false) is not false) return;
 
-           if(await MainWindowViewModel.SetNewImage() is false) return;
+            try
+            {
+                _ = SynchronizationContext.Current.StartSafeUITimeCriticalSection();
 
-            await MainWindowViewModel.PositionManager.SetPositionWindowToCursor(MainWindowViewModel.PositionManager.GetMetrics(), Win32Cursor.GetCursorPosition());
+                if(await MainWindowViewModel.SetNewImage() is false) return;
 
-            MainWindowViewModel.ShowWindow();
+                await MainWindowViewModel.PositionManager.SetPositionWindowToCursor(MainWindowViewModel.PositionManager.GetMetrics(), Win32Cursor.GetCursorPosition());
 
-            await MainWindowViewModel.WindowUpdater();
+                MainWindowViewModel.ShowWindow();
+                await MainWindowViewModel.WindowUpdater();
 
-            _isExecutePresentNewImage = false;
+            }
+            catch(Exception ex) { _ = Task.Run(() => ExceptionDispatchInfo.Capture(ex).Throw()); }
+            finally { Volatile.Write(ref _isExecutePresentNewImage, false); }
+
+            _ = Task.Run(() => Volatile.Write(ref _isExecutePresentNewImage, false));
         }
         public ValueTask SwitchBlockRefreshWindow()
         {

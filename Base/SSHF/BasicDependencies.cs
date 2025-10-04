@@ -35,8 +35,10 @@ namespace FVH.SSHF
                 TheThreadWorkerContext theThreadWorkerContext               = new TheThreadWorkerContext(); // IAsyncDisposable
 
                 ObserverExclusiveMode observerExclusiveMode                 = new ObserverExclusiveMode(uiDispatcher);
-                ObserverMsScreenClipExecuting observerMsScreenClipExecuting = new ObserverMsScreenClipExecuting();
-                ShellHookPriorityHandlers shellHookPriorityHandlers         = new ShellHookPriorityHandlers(observerExclusiveMode, observerMsScreenClipExecuting);
+
+                MsScreenClip msScreenClip                                   = new MsScreenClip();
+
+                ShellHookPriorityHandlers shellHookPriorityHandlers         = new ShellHookPriorityHandlers(observerExclusiveMode, msScreenClip);
                 HookManager win32HookManager                                = new HookManager(uiDispatcher,shellHookPriorityHandlers);
 
                 KeyboardHookStateAggregator keyboardHookStateAggregator     = new KeyboardHookStateAggregator(observerExclusiveMode.IsInExclusiveMode);
@@ -50,7 +52,7 @@ namespace FVH.SSHF
 
                 ImageProvider ImageProvider = new ImageProvider();
                 FastWindowManager fastWindowManager = uiDispatcher.Invoke(
-                 () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(ImageProvider), waitingInputProvider, observerExclusiveMode.IsInExclusiveMode, observerMsScreenClipExecuting));
+                 () => _ = new FastWindowManager(uiDispatcher, () => _ = CreateFastWindowViewModelDependencies(ImageProvider, msScreenClip), waitingInputProvider, observerExclusiveMode.IsInExclusiveMode, msScreenClip));
                 if(args?.Length > 0)
                 {
                     if(args.SingleOrDefault(x => x == "--SCR_NotBR") is not null)
@@ -67,32 +69,36 @@ namespace FVH.SSHF
                 IHost host = Host.CreateDefaultBuilder(args).ConfigureAppConfiguration((_, configuration) => { configuration.Sources.Clear(); }).ConfigureLogging((ILoggingBuilder builder) => builder.ClearProviders()).
                 ConfigureServices((__, container) =>
                 {
+#if DEBUG
                     _ = container.AddSingleton<Dispatcher>                 (uiDispatcher);
                     _ = container.AddSingleton<KeyboardHookStateAggregator>(keyboardHookStateAggregator);
                     _ = container.AddSingleton<ImageProvider>              (ImageProvider);
                     _ = container.AddSingleton<FastWindowManager>          (fastWindowManager);
                     _ = container.AddSingleton<WaitingInputProvider>       (waitingInputProvider);
                     _ = container.AddSingleton<TrayIcon>                   (trayIcon);
+                    _ = container.AddSingleton<MsScreenClip>               (msScreenClip);
 
                     _ = container.AddSingleton<ObserverExclusiveMode>(observerExclusiveMode);
                     _ = container.AddSingleton<HookManager>(win32HookManager);
+#endif
                 }).Build();
 
                 CompositeDisposable disposablesDependencies =
                 [
+                     win32HookManager,
                      keyboardHookStateAggregator,
                      observerExclusiveMode,
-                     fastWindowManager,
+                     msScreenClip,
                      waitingInputProvider,
+                     fastWindowManager,
                      trayIcon,
-                     win32HookManager,
                 ];
 
                 CancellationTokenRegistration? tokenApplicationStartedCallback = null;
                 tokenApplicationStartedCallback =
                  host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStarted.Register(() =>
                  {
-                     FastWindow mainWindow = fastWindowManager.CreateMainWindow().GetAwaiter().GetResult();
+                     FastWindow mainWindow = fastWindowManager.CreateMainWindowAsync().GetAwaiter().GetResult();
 
                      _ = uiDispatcher.Invoke(() => System.Windows.Application.Current.MainWindow = mainWindow);
                    
@@ -143,7 +149,7 @@ namespace FVH.SSHF
                 return ValueTask.FromResult(host);
             }
             private static TrayIcon CreateAnIconInTheNotificationArea(Dispatcher uiDispatcher) => uiDispatcher.Invoke(() => _ = new TrayIcon(App.GetResource(Resource.AppIcon).Stream));
-            private static FastWindowViewModelDependencies CreateFastWindowViewModelDependencies(ImageProvider imageProvider) => _ = new FastWindowViewModelDependencies(imageProvider);
+            private static FastWindowViewModelDependencies CreateFastWindowViewModelDependencies(ImageProvider imageProvider,MsScreenClip msScreenClip) => _ = new FastWindowViewModelDependencies(imageProvider, msScreenClip);
         }
     }
 }
