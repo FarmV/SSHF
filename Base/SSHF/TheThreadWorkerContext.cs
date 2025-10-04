@@ -45,7 +45,7 @@ namespace FVH.SSHF
 
             _thread = new Thread(ThreadProc)
             {
-                Name         = $"FVH: WorkerThread: {this.GetHashCode()}",
+                Name         = $"FVH: Worker thread: {this.GetHashCode()}",
                 IsBackground = false,
                 Priority     = priority
             };
