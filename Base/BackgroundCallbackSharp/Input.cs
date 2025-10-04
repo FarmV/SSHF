@@ -34,7 +34,7 @@ namespace FVH.Background.Input
         {
             _synchronizationContext = synchronizationContext;
             _inputDispatcher = CreateDispatcher();
-            _callbackFunctionKeyboard = _inputDispatcher.Invoke(() => new CallbackFunctionKeyboard(synchronizationContext));
+            _callbackFunctionKeyboard = _inputDispatcher.Invoke(() => new CallbackFunctionKeyboard(_synchronizationContext));
             _inputDispatcher.Invoke(() => _callbackFunctionKeyboard.NotifyKeyboardEvent += SendNotifyKeyboardEvent);
         }
         private void SendNotifyKeyboardEvent(ref KeyboardEventArgs e) => NotifyKeyboardEvent?.Invoke(ref e);
@@ -77,7 +77,7 @@ namespace FVH.Background.Input
             {
                 thread = new Thread(() => Dispatcher.Run())
                 {
-                    Name = ".FVH Background Input Handler"
+                    Name = "FVH: Background input handler"
                 };
                 thread.SetApartmentState(ApartmentState.STA);
                 thread.IsBackground = false;
