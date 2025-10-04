@@ -24,10 +24,17 @@ namespace FVH.SSHF.Infrastructure
         {
             _window       = window;
             _dpiCorrector = dpiCorrector;
+     
+            if(window.Dispatcher.CheckAccess() is true) SetUnsafe(this, _window);
+            else { window.Dispatcher.Invoke(() => SetUnsafe(this, _window)); }
 
-            HwndSource hwndSource = HwndSource.FromHwnd(new WindowInteropHelper(_window).Handle);
-            hwndSource.AddHook(OverrideLogicToChangeWindowPosition);
+            static void SetUnsafe(Win32WPFWindowPositionManager manager, System.Windows.Window window)
+            {
+                HwndSource source = HwndSource.FromHwnd(new WindowInteropHelper(window).Handle);
+                source.AddHook(manager.OverrideLogicToChangeWindowPosition);
+            }
         }
+        
         private unsafe nint OverrideLogicToChangeWindowPosition(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
         {
             const int WM_WINDOWPOSCHANGING = 0x0046;
