@@ -41,10 +41,11 @@ namespace FVH.SSHF.FastWindowArea
         _dispatcher.Invoke(() =>
             new FastWindowViewModel
             (
-                fastWindowViewModelDependencies.IGetImage,
+                fastWindowViewModelDependencies.ImageProvider,
                 fastWindowViewModelDependencies.PositionManager!,
                 fastWindowViewModelDependencies.DpiCorrector!,
-                fastWindowViewModelDependencies.SetImage!
+                fastWindowViewModelDependencies.SetImage!,
+                fastWindowViewModelDependencies.MsScreenClip!
             )
         );
     }
